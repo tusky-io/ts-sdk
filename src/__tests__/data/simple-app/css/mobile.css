@@ -1,0 +1,13 @@
+@media (max-width: 600px) {
+  body {
+    background-color: #e0e0e0;
+  }
+
+  header, footer {
+    padding: 5px 0;
+  }
+
+  main {
+    padding: 10px;
+  }
+}
