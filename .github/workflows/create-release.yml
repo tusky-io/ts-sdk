@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+env:
+    GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'ci:')"
+    permissions:
+      contents: write
+    steps:
+    - name: "Checkout source code"
+      uses: "actions/checkout@v2"
+      with:
+        ref: ${{ github.ref }}
+        token: ${{ secrets.PAT_TOKEN }}
+
+    - name: Install Conventional Changelog
+      run: npm install -g conventional-changelog-cli
+
+    - name: Generate Release Notes
+      id: release-notes
+      run: |
+        conventional-changelog -p angular -i CHANGELOG.md -s -r 1
+        cat CHANGELOG.md
+        sed -i '1,2D' CHANGELOG.md
+
+        delimiter="$(openssl rand -hex 8)"
+        release_notes=$(cat CHANGELOG.md)
+        echo "release_notes<<${delimiter}" >> "${GITHUB_OUTPUT}"
+        echo "$release_notes" >> "${GITHUB_OUTPUT}"
+        echo "${delimiter}" >> "${GITHUB_OUTPUT}"
+    
+    - name: "cat package.json"
+      run: cat ./package.json
+    - name: Automated Version Bump
+      id: version-bump
+      uses: phips28/gh-action-bump-version@v9.0.27
+      with:
+        tag-prefix: "v"
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+    - name: "cat package.json"
+      run: cat ./package.json
+    - name: "Output Step"
+      env:
+        NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
+      run: echo "new tag $NEW_TAG"
+      
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ steps.version-bump.outputs.newTag }}
+        release_name: Release ${{ steps.version-bump.outputs.newTag }}
+        body: |
+          **Changelog:**
+          ${{ steps.release-notes.outputs.release_notes }}
+        draft: false
+        prerelease: false
+
+    - name: Notify Discord
+      uses: appleboy/discord-action@master
+      with:
+        webhook_id: ${{ secrets.DISCORD_RELEASE_WEBHOOK_ID }}
+        webhook_token: ${{ secrets.DISCORD_RELEASE_WEBHOOK_TOKEN }}
+        username: GitHub
+        avatar_url: https://github.com/github.png?size=40
+        message: |
+          Release on: ${{ github.event.repository.name }}
+          Release version: ${{ steps.version-bump.outputs.newTag }}
+
+          **Changelog:**
+          ${{ steps.release-notes.outputs.release_notes }}
+    
+    - name: Merge to dev branch
+      uses: devmasx/merge-branch@master
+      with:
+        type: now
+        from_branch: main
+        target_branch: dev
+        github_token: ${{ secrets.PAT_TOKEN }}
