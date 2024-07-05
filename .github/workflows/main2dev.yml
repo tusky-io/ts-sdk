@@ -1,0 +1,25 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: "Checkout source code"
+      uses: "actions/checkout@v2"
+      with:
+        ref: ${{ github.ref }}
+        token: ${{ secrets.PAT_TOKEN }}
+
+    - name: Merge to dev branch
+      uses: devmasx/merge-branch@master
+      with:
+        type: now
+        from_branch: main
+        target_branch: dev
+        github_token: ${{ secrets.PAT_TOKEN }}

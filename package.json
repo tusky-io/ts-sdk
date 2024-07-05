@@ -8,7 +8,9 @@
   "scripts": {
     "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
     "build": "rm -r lib || true && tsc -p .",
-    "prepublish": "yarn build"
+    "prepublish": "yarn build",
+    "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1",
+    "prepare": "npm run co:login"
   },
   "files": [
     "lib/**/*.js",
