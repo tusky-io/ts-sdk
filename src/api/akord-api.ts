@@ -5,7 +5,6 @@ import { ApiClient } from "./api-client";
 import { Logger } from "../logger";
 import { Membership, MembershipKeys, RoleType } from "../types/membership";
 import { ContractInput, ContractState, Tags } from "../types/contract";
-import { NodeType, StorageType } from "../types/node";
 import { Vault } from "../types/vault";
 import { Transaction } from "../types/transaction";
 import { Paginated } from "../types/paginated";
@@ -14,12 +13,11 @@ import { User, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { FileUploadOptions, FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
-import { ZipLog, ZipUploadApiOptions } from "../types/zip";
-import { FileVersion } from "../types";
+import { File } from "../types";
 import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
+import { ObjectType } from "../types/object";
 
 export const defaultFileUploadOptions = {
-  storage: StorageType.ARWEAVE,
   public: false
 };
 
@@ -37,7 +35,7 @@ export default class AkordApi extends Api {
     this.config = apiConfig(config.env);
   }
 
-  public async postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, overrideState?: boolean, metadata?: any): Promise<{ id: string, object: T }> {
+  public async postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<{ id: string, object: T }> {
     let retryCount = 0;
     let lastError: Error;
     while (retryCount < RETRY_MAX) {
@@ -46,6 +44,7 @@ export default class AkordApi extends Api {
           .env(this.config)
           .vaultId(vaultId)
           .metadata(metadata)
+          .file(file)
           .input(input)
           .state(state, overrideState)
           .tags(tags)
@@ -95,10 +94,9 @@ export default class AkordApi extends Api {
     }
     const resource = await new ApiClient()
       .env(this.config)
-      .data(file)
+      .file(file)
       .tags(tags)
       .public(uploadOptions.public)
-      .storage(uploadOptions.storage)
       .progressHook(uploadOptions.progressHook)
       .cancelHook(uploadOptions.cancelHook)
       .uploadFile()
@@ -120,7 +118,7 @@ export default class AkordApi extends Api {
     }
   };
 
-  public async getFiles(options?: ListApiOptions): Promise<Paginated<FileVersion>> {
+  public async getFiles(options?: ListApiOptions): Promise<Paginated<File>> {
     return await new ApiClient()
       .env(this.config)
       .queryParams({ ...options, raw: true })
@@ -153,23 +151,6 @@ export default class AkordApi extends Api {
       vaultId: response.headers.get("x-amz-meta-vault-id")
     };
     return { fileData, metadata };
-  };
-
-  public async getZipLogs(options?: ListPaginatedApiOptions): Promise<Paginated<ZipLog>> {
-    return await new ApiClient()
-      .env(this.config)
-      .queryParams(options)
-      .getZipLogs();
-  }
-
-  public async uploadZip(file: ArrayBuffer, vaultId: string, options: ZipUploadApiOptions = {}): Promise<{ sourceId: string, multipartToken?: string }> {
-    return await new ApiClient()
-      .env(this.config)
-      .data(file)
-      .queryParams({ ...options, vaultId })
-      .progressHook(options.progressHook)
-      .cancelHook(options.cancelHook)
-      .uploadZip();
   };
 
   public async getStorageBalance(): Promise<Storage> {
@@ -211,17 +192,6 @@ export default class AkordApi extends Api {
       .getUser();
   };
 
-
-  public async updateUser(name: string, avatarUri: string[]): Promise<void> {
-    await new ApiClient()
-      .env(this.config)
-      .data({
-        name: name,
-        avatarUri: avatarUri
-      })
-      .updateUser();
-  };
-
   public async deleteVault(vaultId: string): Promise<void> {
     await new ApiClient()
       .env(this.config)
@@ -229,35 +199,7 @@ export default class AkordApi extends Api {
       .deleteVault();
   }
 
-  public async inviteNewUser(vaultId: string, email: string, role: RoleType, message?: string): Promise<{ id: string }> {
-    return await new ApiClient()
-      .env(this.config)
-      .vaultId(vaultId)
-      .data({
-        email: email,
-        role: role
-      })
-      .metadata({ message })
-      .invite();
-  }
-
-  public async revokeInvite(vaultId: string, membershipId: string): Promise<{ id: string }> {
-    return await new ApiClient()
-      .env(this.config)
-      .vaultId(vaultId)
-      .resourceId(membershipId)
-      .revokeInvite();
-  }
-
-  public async inviteResend(vaultId: string, membershipId: string): Promise<{ id: string }> {
-    return await new ApiClient()
-      .env(this.config)
-      .vaultId(vaultId)
-      .resourceId(membershipId)
-      .inviteResend();
-  }
-
-  public async getNode<T>(id: string, type: NodeType): Promise<T> {
+  public async getNode<T>(id: string, type: ObjectType): Promise<T> {
     return await new ApiClient()
       .env(this.config)
       .resourceId(id)
@@ -293,13 +235,6 @@ export default class AkordApi extends Api {
       .getMembershipKeys();
   };
 
-  public async getNodeState(stateId: string): Promise<any> {
-    return await new ApiClient()
-      .env(this.config)
-      .resourceId(stateId)
-      .downloadState()
-  };
-
   public async getContractState(objectId: string): Promise<ContractState> {
     const contract = await new ApiClient()
       .env(this.config)
@@ -330,7 +265,7 @@ export default class AkordApi extends Api {
       .getVaults();
   };
 
-  public async getNodesByVaultId<T>(vaultId: string, type: NodeType, options: ListOptions = {}): Promise<Paginated<T>> {
+  public async getNodesByVaultId<T>(vaultId: string, type: ObjectType, options: ListOptions = {}): Promise<Paginated<T>> {
     return await new ApiClient()
       .env(this.config)
       .vaultId(vaultId)

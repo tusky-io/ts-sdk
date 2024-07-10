@@ -1,4 +1,4 @@
-import { actionRefs, functions, objectType } from "../constants"
+import { actions, functions, objects } from "../constants"
 
 export interface Transaction {
   id: string,
@@ -7,9 +7,9 @@ export interface Transaction {
   address: string,
   publicSigningKey: string,
   vaultId: string,
-  actionRef: actionRefs,
+  actionRef: actions,
   groupRef: string,
   objectId: string,
-  objectType: objectType,
+  type: objects,
   status: string
 }

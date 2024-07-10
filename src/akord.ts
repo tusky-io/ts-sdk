@@ -1,15 +1,12 @@
 import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
 import { ClientConfig } from "./config";
-import { Crypto, Encrypter, Wallet } from "@akord/crypto";
+import { Crypto, Encrypter } from "@akord/crypto";
 import { Logger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
 import { VaultModule } from "./core/vault";
-import { StackModule } from "./core/stack";
-import { ProfileModule } from "./core/profile";
 import { CacheBusters } from "./types/cacheable";
-import { ZipModule } from "./core/zip";
 import { FileModule } from "./core/file";
 import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
@@ -33,17 +30,8 @@ export class Akord {
   get vault(): VaultModule {
     return new VaultModule(this.getConfig());
   }
-  get stack(): StackModule {
-    return new StackModule(this.getConfig());
-  }
-  get profile(): ProfileModule {
-    return new ProfileModule(this.getConfig());
-  }
   get file(): FileModule {
     return new FileModule(this.getConfig());
-  }
-  get zip(): ZipModule {
-    return new ZipModule(this.getConfig());
   }
 
   private getConfig() {

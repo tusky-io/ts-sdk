@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
   "main": "lib/index.js",
-  "repository": "git@github.com:Akord-com/akord-js.git",
+  "repository": "git@github.com:Akord-com/carmella-sdk.git",
   "scripts": {
     "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
     "build": "rm -r lib || true && tsc -p .",
@@ -24,25 +24,26 @@
     "e2ee"
   ],
   "bugs": {
-    "url": "https://github.com/Akord-com/akord-js/issues"
+    "url": "https://github.com/Akord-com/carmella-sdk/issues"
   },
-  "homepage": "https://github.com/Akord-com/akord-js#readme",
+  "homepage": "https://github.com/Akord-com/carmella-sdk#readme",
   "author": "Akord Team",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@akord/akord-auth": "0.30.44",
     "@akord/crypto": "0.21.56",
     "@akord/ts-cacheable": "1.0.13",
     "@esm2cjs/p-queue": "^7.3.0",
     "agentkeepalive": "^4.5.0",
+    "amazon-cognito-identity-js": "6.1.2",
     "axios": "0.27.2",
     "buffer": "^6.0.3",
     "cross-fetch": "^4.0.0",
     "form-data": "^4.0.0",
     "lodash": "^4.17.21",
+    "memorystorage": "^0.12.0",
     "rxjs": "^7.5.6",
     "uuid": "^8.3.2",
     "web-streams-polyfill": "^3.2.1"
@@ -57,6 +58,7 @@
     "@types/uuid": "^8.3.4",
     "dotenv": "^16.0.2",
     "jest": "^28.1.1",
+    "jwt-decode": "^3.1.2",
     "pngjs": "^7.0.0",
     "ts-jest": "^28.0.5",
     "typescript": "4.8.4"

@@ -1,13 +1,11 @@
-import { actionRefs, objectType, status, functions, protocolTags } from "../constants";
+import { actions, objects, functions, protocolTags, membershipStatus } from "../constants";
 import { v4 as uuidv4 } from "uuid";
 import { EncryptedKeys } from "@akord/crypto";
-import { Vault, VaultCreateOptions, VaultCreateResult, VaultUpdateOptions, VaultUpdateResult } from "../types/vault";
+import { Vault, VaultCreateOptions } from "../types/vault";
 import { Tag } from "../types/contract";
 import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
-import { BadRequest } from "../errors/bad-request";
-import lodash from "lodash";
-import {  paginate, processListItems } from "./common";
+import { paginate, processListItems } from "./common";
 import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
@@ -21,7 +19,7 @@ class VaultModule {
 
   protected defaultListOptions = {
     shouldDecrypt: true,
-    filter: { status: { eq: status.ACCEPTED } }
+    filter: { status: { eq: membershipStatus.ACCEPTED } }
   } as ListOptions;
 
   protected defaultGetOptions = {
@@ -35,7 +33,7 @@ class VaultModule {
     description: undefined,
     tags: [],
     cloud: false,
-    arweaveTags: [],
+    txTags: [],
   } as VaultCreateOptions;
 
   /**
@@ -94,9 +92,9 @@ class VaultModule {
   /**
    * @param  {string} name new vault name
    * @param  {VaultCreateOptions} options public/private, terms of access, etc.
-   * @returns Promise with new vault id, owner membership id & corresponding transaction id
+   * @returns Promise with newly created vault
    */
-  public async create(name: string, options: VaultCreateOptions = this.defaultCreateOptions): Promise<VaultCreateResult> {
+  public async create(name: string, options: VaultCreateOptions = this.defaultCreateOptions): Promise<Vault> {
     const createOptions = {
       ...this.defaultCreateOptions,
       ...options
@@ -106,10 +104,10 @@ class VaultModule {
     if (createOptions.cloud) {
       vaultId = uuidv4();
     } else {
-      vaultId = await this.service.api.initContractId([new Tag(protocolTags.NODE_TYPE, objectType.VAULT)]);
+      vaultId = await this.service.api.initContractId([new Tag(protocolTags.NODE_TYPE, objects.VAULT)]);
     }
 
-    this.service.setActionRef(actionRefs.VAULT_CREATE);
+    this.service.setActionRef(actions.VAULT_CREATE);
     this.service.setIsPublic(createOptions.public);
     this.service.setFunction(functions.VAULT_CREATE);
     this.service.setVaultId(vaultId);
@@ -119,11 +117,11 @@ class VaultModule {
     const address = await this.service.signer.getAddress();
     const membershipId = uuidv4();
 
-    this.service.arweaveTags = [
+    this.service.txTags = [
       new Tag(protocolTags.MEMBER_ADDRESS, address),
       new Tag(protocolTags.MEMBERSHIP_ID, membershipId),
     ].concat(await this.service.getTxTags());
-    createOptions.arweaveTags?.map((tag: Tag) => this.service.arweaveTags.push(tag));
+    createOptions.txTags?.map((tag: Tag) => this.service.txTags.push(tag));
 
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
@@ -155,125 +153,82 @@ class VaultModule {
 
     const data = { vault: vaultState, membership: memberState };
 
-    const { id, object } = await this.service.api.postContractTransaction<Vault>(
+    const { object } = await this.service.api.postContractTransaction<Vault>(
       this.service.vaultId,
       { function: this.service.function },
-      this.service.arweaveTags,
+      this.service.txTags,
       data,
+      undefined,
       false,
       { cloud: createOptions.cloud }
     );
     const vault = await this.service.processVault(object, true, this.service.keys);
-    return { vaultId, membershipId, transactionId: id, object: vault };
-  }
-
-  /**
-   * @param  {string} vaultId
-   * @param  {VaultUpdateOptions} options name, description & tags
-   * @returns Promise with corresponding transaction id
-   */
-  public async update(vaultId: string, options: VaultUpdateOptions): Promise<VaultUpdateResult> {
-    if (!options.name && !options.tags && !options.description) {
-      throw new BadRequest("Nothing to update");
-    }
-    await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actionRefs.VAULT_UPDATE_METADATA);
-    this.service.setFunction(functions.VAULT_UPDATE);
-
-    const currentState = await this.service.getCurrentState();
-    const newState = lodash.cloneDeepWith(currentState);
-
-    if (options.name) {
-      newState.name = await this.service.processWriteString(options.name);
-    }
-    if (options.tags) {
-      newState.tags = options.tags;
-    }
-    if (options.description) {
-      newState.description = await this.service.processWriteString(options.description);
-    }
-    this.service.setAkordTags((options.name && this.service.isPublic ? [options.name] : []).concat(options.tags));
-    this.service.arweaveTags = await this.service.getTxTags();
-
-    const { id, object } = await this.service.api.postContractTransaction<Vault>(
-      this.service.vaultId,
-      { function: this.service.function },
-      this.service.arweaveTags,
-      newState,
-      true
-    );
-    const vault = await this.service.processVault(object, true, this.service.keys);
-    return { transactionId: id, object: vault };
+    return vault;
   }
 
   /**
    * @param vaultId
    * @param name new vault name
-   * @returns Promise with corresponding transaction id
+   * @returns Promise with vault object
    */
-  public async rename(vaultId: string, name: string): Promise<VaultUpdateResult> {
+  public async rename(vaultId: string, name: string): Promise<Vault> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actionRefs.VAULT_RENAME);
+    this.service.setActionRef(actions.VAULT_RENAME);
     this.service.setFunction(functions.VAULT_UPDATE);
     const state = {
       name: await this.service.processWriteString(name)
     };
     this.service.setAkordTags(this.service.isPublic ? [name] : []);
-    this.service.arweaveTags = await this.service.getTxTags();
+    this.service.txTags = await this.service.getTxTags();
 
-    const { id, object } = await this.service.api.postContractTransaction<Vault>(
+    const { object } = await this.service.api.postContractTransaction<Vault>(
       this.service.vaultId,
       { function: this.service.function },
-      this.service.arweaveTags,
+      this.service.txTags,
       state
     );
     const vault = await this.service.processVault(object, true, this.service.keys);
-    return { transactionId: id, object: vault };
+    return vault;
   }
 
   /**
+   * The vault will be moved to the trash. All vault data will be permanently deleted within 30 days.
+   * To undo this action, call vault.restore() within the 30-day period.
    * @param  {string} vaultId
-   * @returns Promise with corresponding transaction id
+   * @returns Promise with the updated vault
    */
-  public async archive(vaultId: string): Promise<VaultUpdateResult> {
+  public async delete(vaultId: string): Promise<Vault> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actionRefs.VAULT_ARCHIVE);
-    this.service.setFunction(functions.VAULT_ARCHIVE);
+    this.service.setActionRef(actions.VAULT_DELETE);
+    this.service.setFunction(functions.VAULT_DELETE);
 
-    const { id, object } = await this.service.api.postContractTransaction<Vault>(
+    const { object } = await this.service.api.postContractTransaction<Vault>(
       this.service.vaultId,
       { function: this.service.function },
       await this.service.getTxTags()
     );
     const vault = await this.service.processVault(object, true, this.service.keys);
-    return { transactionId: id, object: vault };
+    return vault;
   }
 
   /**
+   * Restores the vault from the trash, recovering all vault data.
+   * This action must be performed within 30 days of the vault being moved to the trash to prevent permanent deletion.
    * @param  {string} vaultId
-   * @returns Promise with corresponding transaction id
+   * @returns Promise with the updated vault
    */
-  public async restore(vaultId: string): Promise<VaultUpdateResult> {
+  public async restore(vaultId: string): Promise<Vault> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actionRefs.VAULT_RESTORE);
+    this.service.setActionRef(actions.VAULT_RESTORE);
     this.service.setFunction(functions.VAULT_RESTORE);
 
-    const { id, object } = await this.service.api.postContractTransaction<Vault>(
+    const { object } = await this.service.api.postContractTransaction<Vault>(
       this.service.vaultId,
       { function: this.service.function },
       await this.service.getTxTags()
     );
     const vault = await this.service.processVault(object, true, this.service.keys);
-    return { transactionId: id, object: vault };
-  }
-
-  /**
-   * @param  {string} vaultId
-   * @returns Promise with corresponding transaction id
-   */
-  public async delete(vaultId: string): Promise<{ transactionId: string }> {
-    this.service.api.deleteVault(vaultId);
-    return { transactionId: "" };
+    return vault;
   }
 };
 

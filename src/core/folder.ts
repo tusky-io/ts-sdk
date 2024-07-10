@@ -1,19 +1,42 @@
-import { actionRefs, functions } from "../constants";
-import { nodeType, NodeCreateOptions } from "../types/node";
-import { Folder, FolderCreateResult } from "../types/folder";
-import { NodeModule } from "./node";
+import { actions, functions, status } from "../constants";
+import { Folder } from "../types/folder";
 import { isServer } from "../util/platform";
 import { importDynamic } from "../util/import";
 import { BadRequest } from "../errors/bad-request";
 import { Logger } from "../logger";
-import { Tags } from "../types";
 import { FileModule } from "./file";
-import { ServiceConfig } from ".";
+import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
+import { Paginated } from "../types/paginated";
+import { paginate, processListItems } from "./common";
+import { NodeCreateOptions, NodeService, NodeServiceConfig } from "./service/node";
 
-class FolderModule extends NodeModule<Folder> {
+class FolderModule {
+  protected type: "Folder";
 
-  constructor(config?: ServiceConfig) {
-    super({ ...config, objectType: nodeType.FOLDER, nodeType: Folder });
+  protected service: NodeService<Folder>;
+
+  protected parentId?: string;
+
+  protected defaultListOptions = {
+    shouldDecrypt: true,
+    parentId: undefined,
+    filter: {
+      status: { ne: status.DELETED }
+    }
+  } as ListOptions;
+
+  protected defaultGetOptions = {
+    shouldDecrypt: true,
+  } as GetOptions;
+
+  protected defaultCreateOptions = {
+    parentId: undefined,
+    tags: [],
+    txTags: [],
+  } as NodeCreateOptions;
+
+  constructor(config?: NodeServiceConfig) {
+    this.service = new NodeService<Folder>(config);
   }
 
   /**
@@ -22,17 +45,17 @@ class FolderModule extends NodeModule<Folder> {
    * @param  {NodeCreateOptions} [options] parent id, etc.
    * @returns Promise with new folder id & corresponding transaction id
    */
-  public async create(vaultId: string, name: string, options: NodeCreateOptions = this.defaultCreateOptions): Promise<FolderCreateResult> {
+  public async create(vaultId: string, name: string, options: NodeCreateOptions = this.defaultCreateOptions): Promise<Folder> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actionRefs.FOLDER_CREATE);
-    this.service.setFunction(functions.NODE_CREATE);
+    this.service.setActionRef(actions.FOLDER_CREATE);
+    this.service.setFunction(functions.FOLDER_CREATE);
     this.service.setAkordTags((this.service.isPublic ? [name] : []).concat(options.tags));
     const state = {
       name: await this.service.processWriteString(name),
       tags: options.tags || []
     }
-    const { nodeId, transactionId, object } = await this.service.nodeCreate<Folder>(state, { parentId: options.parentId }, options.arweaveTags);
-    return { folderId: nodeId, transactionId, object };
+    const { object } = await this.service.nodeCreate<Folder>(state, { parentId: options.parentId }, options.txTags);
+    return object;
   }
 
   /**
@@ -71,13 +94,125 @@ class FolderModule extends NodeModule<Folder> {
     }
     return {} as any;
   }
+
+  /**
+   * @param  {string} nodeId
+   * @returns Promise with the decrypted node
+   */
+  public async get(nodeId: string, options: GetOptions = this.defaultGetOptions): Promise<Folder> {
+    const getOptions = {
+      ...this.defaultGetOptions,
+      ...options
+    }
+    const nodeProto = await this.service.api.getNode<Folder>(nodeId, this.type, getOptions.vaultId);
+    const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    return node;
+  }
+
+  /**
+   * @param  {string} vaultId
+   * @param  {ListOptions} options
+   * @returns Promise with paginated nodes within given vault
+   */
+  public async list(vaultId: string, options: ListOptions = this.defaultListOptions = this.defaultListOptions): Promise<Paginated<Folder>> {
+    validateListPaginatedApiOptions(options);
+    if (!options.hasOwnProperty('parentId')) {
+      // if parent id not present default to root - vault id
+      options.parentId = vaultId;
+    }
+    const listOptions = {
+      ...this.defaultListOptions,
+      ...options
+    }
+    const response = await this.service.api.getNodesByVaultId<Folder>(vaultId, this.type, listOptions);
+    const items = [];
+    const errors = [];
+    const processItem = async (nodeProto: any) => {
+      try {
+        const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        items.push(node);
+      } catch (error) {
+        errors.push({ id: nodeProto.id, error });
+      };
+    }
+    await processListItems(response.items, processItem);
+    return {
+      items,
+      nextToken: response.nextToken,
+      errors
+    }
+  }
+
+  /**
+   * @param  {string} vaultId
+   * @param  {ListOptions} options
+   * @returns Promise with all nodes within given vault
+   */
+  public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<Folder>> {
+    const list = async (options: ListOptions & { vaultId: string }) => {
+      return await this.list(options.vaultId, options);
+    }
+    return await paginate<Folder>(list, { ...options, vaultId });
+  }
+
+  /**
+   * @param  {string} id folder id
+   * @param  {string} name new name
+   * @returns Promise with corresponding transaction id
+   */
+  public async rename(id: string, name: string): Promise<Folder> {
+    await this.service.setVaultContextFromNodeId(id, this.type);
+    this.service.setActionRef(this.type.toUpperCase() + "_RENAME");
+    this.service.setFunction(functions.FOLDER_CREATE);
+    const state = {
+      name: await this.service.processWriteString(name)
+    };
+    return ((await this.service.nodeUpdate<Folder>()).object);
+  }
+
+  /**
+   * @param  {string} id
+   * @param  {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
+   * @returns Promise with corresponding transaction id
+   */
+  public async move(id: string, parentId?: string, vaultId?: string): Promise<Folder> {
+    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
+    this.service.setActionRef(this.type.toUpperCase() + "_MOVE");
+    this.service.setFunction(functions.FOLDER_MOVE);
+    return ((await this.service.nodeUpdate<Folder>(null, { parentId: parentId ? parentId : vaultId })).object);
+  }
+
+  /**
+   * The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.
+   * To undo this action, call folder.restore() within the 30-day period.
+   * @param  {string} id folder id
+   * @returns Promise with the updated folder
+   */
+  public async delete(id: string, vaultId?: string): Promise<Folder> {
+    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
+    this.service.setActionRef(this.type.toUpperCase() + "_DELETE");
+    this.service.setFunction(functions.FOLDER_DELETE);
+    return ((await this.service.nodeUpdate<Folder>()).object);
+  }
+
+  /**
+   * Restores the folder from the trash, recovering all folder contents.
+   * This action must be performed within 30 days of the folder being moved to the trash to prevent permanent deletion.
+   * @param  {string} id folder id
+   * @returns Promise with the updated folder
+   */
+  public async restore(id: string, vaultId?: string): Promise<Folder> {
+    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
+    this.service.setActionRef(this.type.toUpperCase() + "_RESTORE");
+    this.service.setFunction(functions.FOLDER_RESTORE);
+    return ((await this.service.nodeUpdate<Folder>()).object);
+  }
 };
 
 export type FolderSource = string | FileSystemEntry
 
 export type FolderUploadOptions = {
   cloud?: boolean,
-  arweaveTags?: Tags,
   parentId?: string,
   vaultId?: string,
 }

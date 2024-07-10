@@ -34,35 +34,35 @@ describe("Testing folder functions", () => {
   });
 
   it("should create stacks in different folder levels and list them correctly", async () => {
-    const { stackId } = await akord.stack.create(vaultId, testDataPath + firstFileName);
-    expect(stackId).toBeTruthy();
+    const { id } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
+    expect(id).toBeTruthy();
 
-    const { stackId: rootFolderStackId } = await akord.stack.create(vaultId, testDataPath + firstFileName, { parentId: rootFolderId });
+    const { id: rootFolderStackId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId, parentId: rootFolderId });
     expect(rootFolderStackId).toBeTruthy();
 
-    const { stackId: subFolderStackId } = await akord.stack.create(vaultId, testDataPath + firstFileName, { parentId: subFolderId });
+    const { stackId: subFolderStackId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId, parentId: subFolderId });
     expect(subFolderStackId).toBeTruthy();
 
-    const allStacks = await akord.stack.listAll(vaultId);
+    const allStacks = await akord.file.listAll(vaultId);
     expect(allStacks?.length).toEqual(3);
 
-    const rootFolderStacks = await akord.stack.listAll(vaultId, { parentId: rootFolderId });
+    const rootFolderStacks = await akord.file.listAll(vaultId, { parentId: rootFolderId });
     expect(rootFolderStacks?.length).toEqual(1);
     expect(rootFolderStacks[0].id).toEqual(rootFolderStackId);
 
-    const subFolderStacks = await akord.stack.listAll(vaultId, { parentId: subFolderId });
+    const subFolderStacks = await akord.file.listAll(vaultId, { parentId: subFolderId });
     expect(subFolderStacks?.length).toEqual(1);
     expect(subFolderStacks[0].id).toEqual(subFolderStackId);
   });
 
   it("should revoke root folder", async () => {
-    await akord.folder.revoke(rootFolderId);
+    await akord.folder.delete(rootFolderId);
 
     const rootFolder = await akord.folder.get(rootFolderId);
-    expect(rootFolder.status).toEqual("REVOKED");
+    expect(rootFolder.status).toEqual("DELETED");
 
     const subFolder = await akord.folder.get(subFolderId);
-    expect(subFolder.status).toEqual("REVOKED");
+    expect(subFolder.status).toEqual("DELETED");
   });
 
   it("should fail adding new sub-folder to the revoked root folder", async () => {
@@ -83,7 +83,7 @@ describe("Testing folder functions", () => {
   });
 
   it("should list all root folders", async () => {
-    const folders = await akord.folder.listAll(vaultId, { parentId: "null" });
+    const folders = await akord.folder.listAll(vaultId);
     expect(folders?.length).toEqual(1);
     expect(folders[0]?.id).toEqual(rootFolderId);
   });

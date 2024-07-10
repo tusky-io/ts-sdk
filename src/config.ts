@@ -15,5 +15,5 @@ export interface ClientConfig {
   plugins?: [Plugin]
   authToken?: string
   apiKey?: string,
-  userAgent?: string // client name, goes as App-Name tag to Arweave
+  userAgent?: string
 }

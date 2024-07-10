@@ -1,24 +1,21 @@
 import PQueue, { AbortError } from '@esm2cjs/p-queue';
 import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES, digestRaw, initDigest } from "@akord/crypto";
 import { Service } from "./service/service";
-import { protocolTags, encryptionTags as encTags, fileTags, dataTags, smartweaveTags, objectType } from "../constants";
+import { protocolTags, encryptionTags as encTags, fileTags, dataTags, status, functions, actions, objects } from "../constants";
 import { ApiClient } from "../api/api-client";
-import { FileLike, FileSource } from "../types/file";
+import { FileLike, FileSource, createFileLike } from "../types/file";
 import { Tag, Tags } from "../types/contract";
 import { BadRequest } from "../errors/bad-request";
-import { StorageType } from "../types/node";
 import { StreamConverter } from "../util/stream-converter";
-import { FileVersion, Stack } from "../types";
-import { ListFileOptions, validateListPaginatedApiOptions } from "../types/query-options";
+import { File } from "../types";
+import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
-import { paginate } from "./common";
-import { isServer } from '../util/platform';
-import { getMimeTypeFromFileName } from '../util/mime-types';
-import { StackModule } from './stack';
-import { Logger } from '../logger';
-import { NodeService } from './service/node';
+import { paginate, processListItems } from "./common";
+import { NodeCreateOptions, NodeService, NodeServiceConfig } from './service/node';
 import { BatchModule } from './batch';
-import { ServiceConfig } from "./service/service";
+import { isServer } from '../util/platform';
+import { importDynamic } from '../util/import';
+import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const BYTES_IN_MB = 1000000;
@@ -27,62 +24,57 @@ export const MINIMAL_CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
 export const CHUNKS_CONCURRENCY = 25;
 export const UPLOADER_POLLING_RATE_IN_MILLISECONDS = 2500;
 
+export const EMPTY_FILE_ERROR_MESSAGE = "Cannot upload an empty file";
 
 class FileModule {
   protected contentType = null as string;
   protected client: ApiClient;
+  protected type: "File";
 
-  protected service: Service;
+  protected service: NodeService<File>;
 
-  protected overridedName: string;
+  protected parentId?: string;
 
-  constructor(config?: ServiceConfig) {
-    this.service = new Service(config);
-    this.contentType = config?.contentType;
+  protected defaultListOptions = {
+    shouldDecrypt: true,
+    parentId: undefined,
+    filter: {
+      status: { ne: status.DELETED }
+    }
+  } as ListOptions;
+
+  protected defaultGetOptions = {
+    shouldDecrypt: true,
+  } as GetOptions;
+
+  protected defaultCreateOptions = {
+    parentId: undefined,
+    tags: [],
+    txTags: [],
+  } as NodeCreateOptions;
+
+  constructor(config?: NodeServiceConfig) {
+    this.service = new NodeService<File>(config);
   }
 
-  /**
-   * @param  {ListFileOptions} options
-   * @returns Promise with list of files per query options
-   */
-  public async list(options: ListFileOptions = {}): Promise<Paginated<FileVersion>> {
-    validateListPaginatedApiOptions(options);
-    const { items, nextToken } = await this.service.api.getFiles(options);
-    return {
-      items: items?.map((item: any) => new FileVersion(item)),
-      nextToken: nextToken
-    }
-  }
-
-  /**
-   * @param  {ListFileOptions} options
-   * @returns Promise with list of all files per query options
-   */
-  public async listAll(options: ListFileOptions = {}): Promise<Array<FileVersion>> {
-    const list = async (listOptions: ListFileOptions) => {
-      return await this.list(listOptions);
-    }
-    return await paginate<FileVersion>(list, options);
-  }
-
-  public async create(
-    file: FileLike,
-    options: FileUploadOptions
-  ): Promise<FileUploadResult> {
-    options.public = this.service.isPublic;
-    const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE_IN_BYTES;
-    if (chunkSize < MINIMAL_CHUNK_SIZE_IN_BYTES) {
-      throw new BadRequest("Chunk size can not be smaller than: " + MINIMAL_CHUNK_SIZE_IN_BYTES / BYTES_IN_MB)
-    }
-    if (file.size > chunkSize) {
-      options.chunkSize = chunkSize;
-      const tags = this.getFileTags(file, options);
-      return await this.uploadChunked(file, tags, options);
-    } else {
-      const tags = this.getFileTags(file, options);
-      return await this.uploadInternal(file, tags, options);
-    }
-  }
+  // public async create(
+  //   file: FileLike,
+  //   options: FileUploadOptions
+  // ): Promise<FileUploadResult> {
+  //   options.public = this.service.isPublic;
+  //   const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE_IN_BYTES;
+  //   if (chunkSize < MINIMAL_CHUNK_SIZE_IN_BYTES) {
+  //     throw new BadRequest("Chunk size can not be smaller than: " + MINIMAL_CHUNK_SIZE_IN_BYTES / BYTES_IN_MB)
+  //   }
+  //   if (file.size > chunkSize) {
+  //     options.chunkSize = chunkSize;
+  //     const tags = this.getFileTags(file, options);
+  //     return await this.uploadChunked(file, tags, options);
+  //   } else {
+  //     const tags = this.getFileTags(file, options);
+  //     return await this.uploadInternal(file, tags, options);
+  //   }
+  // }
 
 
   /**
@@ -94,21 +86,40 @@ class FileModule {
   public async upload(
     file: FileSource,
     options: FileUploadOptions = {}
-  ): Promise<{ uri: string, fileId: string }> {
+  ): Promise<File> {
     // validate vault or use/create default one
-    options.vaultId = await new NodeService<Stack>({ ...this.service, objectType: objectType.STACK, nodeType: Stack }).validateOrCreateDefaultVault(options);
+    options.vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
 
-    if (!options.public) {
-      Logger.log("Creating stack...")
-      const stackModule = new StackModule(this.service as any);
-      const { object, uri } = await stackModule.create(options.vaultId, file, { parentId: options.parentId });
-      console.log(uri)
-      return { uri, fileId: object.versions[0].id };
+    await this.service.setVaultContext(options.vaultId);
+    this.service.setParentId(options.parentId ? options.parentId : options.vaultId);
+    this.service.setActionRef(actions.FILE_CREATE);
+    this.service.setFunction(functions.FILE_CREATE);
+
+    const createOptions = {
+      ...options
     }
+
+    const fileService = new FileModule({ ...this.service, contentType: this.contentType });
+
+    const fileLike = await createFileLike(file, { ...options, name: file.name });
+
+    if (fileLike.size === 0) {
+      throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
+    }
+
+    const fileName = options.name || fileLike.name;
+
+    this.service.setAkordTags((this.service.isPublic ? [fileName] : []).concat([]));
+
+    // const fileUploadResult = await fileService.create(fileLike, createOptions);
+    const version = await fileService.newVersion(fileLike);
+
+    const { object } = await this.service.nodeCreate<File>(version, { parentId: createOptions.parentId }, options.txTags, fileLike);
+    return object;
   }
 
   /**
-   * Upload batch of files - will create a stack per file & vault if vaultId not provided in options
+   * Upload batch of files - will use default vault or create one if vaultId not provided in options
    * @param  {{ file: FileSource, options:FileUploadOptions }[] } items files array
    * @param  {FileUploadOptions} options cloud/permanent, public/private, parent id, vault id, etc.
    * @returns Promise with array of data response & errors if any
@@ -116,34 +127,134 @@ class FileModule {
   public async batchUpload(items: {
     file: FileSource,
     options?: FileUploadOptions
-  }[], options: FileUploadOptions = {}): Promise<{ data: { uri: string, fileId: string }[], errors: any[] }> {
+  }[], options: FileUploadOptions = {}): Promise<{ data: File[], errors: any[] }> {
     // validate vault or use/create default one
-    const vaultId = await new NodeService<Stack>({ ...this.service, objectType: objectType.STACK, nodeType: Stack }).validateOrCreateDefaultVault(options);
+    const vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
 
-    if (!options.public) {
-      Logger.log("Creating stacks...")
-      const batchModule = new BatchModule(this.service);
-      const { data, errors } = await batchModule.stackCreate(vaultId, items);
-      return { data: data.map((stackResponse) => ({ fileId: stackResponse.object.versions[0].id, uri: stackResponse.uri })), errors: errors };
+    const batchModule = new BatchModule(this.service);
+    const { data, errors } = await batchModule.batchUpload(vaultId, items);
+    return { data, errors };
+  }
+
+
+  /**
+   * @param  {string} nodeId
+   * @returns Promise with the decrypted node
+   */
+  public async get(nodeId: string, options: GetOptions = this.defaultGetOptions): Promise<File> {
+    const getOptions = {
+      ...this.defaultGetOptions,
+      ...options
+    }
+    const nodeProto = await this.service.api.getNode<File>(nodeId, this.type, getOptions.vaultId);
+    const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    return node;
+  }
+
+  /**
+   * @param  {string} vaultId
+   * @param  {ListOptions} options
+   * @returns Promise with paginated files within given vault
+   */
+  public async list(vaultId: string, options: ListOptions = this.defaultListOptions = this.defaultListOptions): Promise<Paginated<File>> {
+    validateListPaginatedApiOptions(options);
+
+    if (!options.hasOwnProperty('parentId')) {
+      // if parent id not present default to root - vault id
+      options.parentId = vaultId;
+    }
+    const listOptions = {
+      ...this.defaultListOptions,
+      ...options
+    }
+    const response = await this.service.api.getNodesByVaultId<File>(vaultId, this.type, listOptions);
+    const items = [];
+    const errors = [];
+    const processItem = async (nodeProto: any) => {
+      try {
+        const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        items.push(node);
+      } catch (error) {
+        errors.push({ id: nodeProto.id, error });
+      };
+    }
+    await processListItems(response.items, processItem);
+    return {
+      items,
+      nextToken: response.nextToken,
+      errors
     }
   }
 
-  public async newVersion(file: FileLike, uploadResult: FileUploadResult): Promise<FileVersion> {
-    const version = new FileVersion({
-      owner: await this.service.signer.getAddress(),
-      createdAt: JSON.stringify(Date.now()),
-      name: await this.service.processWriteString(this.overridedName || file.name),
-      type: file.type,
-      size: file.size,
-      resourceUri: uploadResult.resourceUri,
-      numberOfChunks: uploadResult.numberOfChunks,
-      chunkSize: uploadResult.chunkSize
-    });
-    return version;
+  /**
+   * @param  {string} vaultId
+   * @param  {ListOptions} options
+   * @returns Promise with all nodes within given vault
+   */
+  public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<File>> {
+    const list = async (options: ListOptions & { vaultId: string }) => {
+      return await this.list(options.vaultId, options);
+    }
+    return await paginate<File>(list, { ...options, vaultId });
   }
 
-  public async download(fileUri: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
-    const file = await this.service.api.downloadFile(fileUri, { responseType: 'stream', public: false });
+  /**
+   * @param  {string} id folder id
+   * @param  {string} name new name
+   * @returns Promise with corresponding transaction id
+   */
+  public async rename(id: string, name: string): Promise<File> {
+    await this.service.setVaultContextFromNodeId(id, this.type);
+    this.service.setActionRef(this.type.toUpperCase() + "_RENAME");
+    this.service.setFunction(functions.FILE_UPDATE);
+    const state = {
+      name: await this.service.processWriteString(name)
+    };
+    return ((await this.service.nodeUpdate<File>()).object);
+  }
+
+  /**
+   * @param  {string} id
+   * @param  {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
+   * @returns Promise with corresponding transaction id
+   */
+  public async move(id: string, parentId?: string, vaultId?: string): Promise<File> {
+    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
+    this.service.setActionRef(this.type.toUpperCase() + "_MOVE");
+    this.service.setFunction(functions.FILE_MOVE);
+    return ((await this.service.nodeUpdate<File>(null, { parentId: parentId ? parentId : vaultId })).object);
+  }
+
+  /**
+   * The file will be moved to the trash. The file will be permanently deleted within 30 days.
+   * To undo this action, call file.restore() within the 30-day period.
+   * @param  {string} id file id
+   * @returns Promise with the updated file
+   */
+  public async delete(id: string, vaultId?: string): Promise<File> {
+    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
+    this.service.setActionRef(this.type.toUpperCase() + "_DELETE");
+    this.service.setFunction(functions.FILE_DELETE);
+    return ((await this.service.nodeUpdate<File>()).object);
+  }
+
+  /**
+   * Restores the file from the trash.
+   * This action must be performed within 30 days of the file being moved to the trash to prevent permanent deletion.
+   * @param  {string} id file id
+   * @returns Promise with the updated file
+   */
+  public async restore(id: string, vaultId?: string): Promise<File> {
+    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
+    this.service.setActionRef(this.type.toUpperCase() + "_RESTORE");
+    this.service.setFunction(functions.FILE_RESTORE);
+    return ((await this.service.nodeUpdate<File>()).object);
+  }
+
+  public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
+    const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
+
+
     let stream: ReadableStream<Uint8Array>;
     if (this.service.isPublic) {
       stream = file.fileData as ReadableStream<Uint8Array>;
@@ -153,6 +264,9 @@ class FileModule {
       const streamChunkSize = options.chunkSize ? options.chunkSize + AUTH_TAG_LENGTH_IN_BYTES + (iv ? 0 : IV_LENGTH_IN_BYTES) : null;
       if (!this.service.keys && file.metadata.vaultId) {
         await this.service.setVaultContext(file.metadata.vaultId);
+      } else {
+        const file = await this.service.api.getNode<File>(id, objects.FILE);
+        await this.service.setVaultContext(file.vaultId);
       }
       stream = await this.service.encrypter.decryptStream(file.fileData as ReadableStream, encryptedKey, streamChunkSize, iv);
     }
@@ -161,6 +275,29 @@ class FileModule {
       return await StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
     }
     return stream;
+  }
+
+  private async saveFile(path: string, type: string, stream: ReadableStream, skipSave: boolean = false): Promise<string> {
+    if (isServer()) {
+      const fs = importDynamic("fs");
+      const Readable = importDynamic("stream").Readable;
+      return new Promise((resolve, reject) =>
+        Readable.from(stream).pipe(fs.createWriteStream(path))
+          .on('error', error => reject(error))
+          .on('finish', () => resolve(path))
+      );
+    } else {
+      const buffer = await StreamConverter.toArrayBuffer(stream)
+      const blob = new Blob([buffer], { type: type });
+      const url = window.URL.createObjectURL(blob);
+      if (!skipSave) {
+        const a = document.createElement("a");
+        a.download = path;
+        a.href = url
+        a.click();
+      }
+      return url;
+    }
   }
 
   private async uploadInternal(
@@ -202,7 +339,6 @@ class FileModule {
       .env(this.service.api.config)
       .public(this.service.isPublic)
       .tags(tags)
-      .storage(options.storage)
       .numberOfChunks(numberOfChunks)
       .totalBytes(fileSize)
       .progressHook(options.progressHook)
@@ -268,6 +404,20 @@ class FileModule {
     };
   }
 
+  public async newVersion(file: FileLike, uploadResult?: FileUploadResult): Promise<File> {
+    const version = new File({
+      owner: await this.service.signer.getAddress(),
+      createdAt: JSON.stringify(Date.now()),
+      name: await this.service.processWriteString(file.name),
+      type: file.type,
+      size: file.size,
+      // resourceUri: uploadResult.resourceUri,
+      // numberOfChunks: uploadResult.numberOfChunks,
+      // chunkSize: uploadResult.chunkSize
+    });
+    return version;
+  }
+
   private async uploadChunk(
     file: FileLike,
     chunkSize: number = DEFAULT_CHUNK_SIZE_IN_BYTES,
@@ -301,7 +451,7 @@ class FileModule {
   private getFileTags(file: FileLike, options: FileUploadOptions = {}): Tags {
     const tags = [] as Tags;
     if (this.service.isPublic) {
-      tags.push(new Tag(fileTags.FILE_NAME, this.overridedName || file.name))
+      tags.push(new Tag(fileTags.FILE_NAME, file.name))
       if (file.lastModified) {
         tags.push(new Tag(fileTags.FILE_MODIFIED_AT, file.lastModified.toString()));
       }
@@ -311,7 +461,7 @@ class FileModule {
     if (options.chunkSize) {
       tags.push(new Tag(fileTags.FILE_CHUNK_SIZE, options.chunkSize));
     }
-    tags.push(new Tag(smartweaveTags.CONTENT_TYPE, this.contentType || file.type || DEFAULT_FILE_TYPE));
+    tags.push(new Tag("Content-Type", this.contentType || file.type || DEFAULT_FILE_TYPE));
     tags.push(new Tag(protocolTags.TIMESTAMP, JSON.stringify(Date.now())));
     tags.push(new Tag(dataTags.DATA_TYPE, "File"));
     tags.push(new Tag(protocolTags.VAULT_ID, this.service.vaultId));
@@ -320,10 +470,10 @@ class FileModule {
     }
 
     if (this.service.userAgent) {
-      tags.push(new Tag(smartweaveTags.APP_NAME, this.service.userAgent));
+      tags.push(new Tag("User-Agent", this.service.userAgent));
     }
 
-    options.arweaveTags?.map((tag: Tag) => tags.push(tag));
+    options.txTags?.map((tag: Tag) => tags.push(tag));
     return tags;
   }
 
@@ -336,42 +486,6 @@ class FileModule {
     ];
   }
 };
-
-async function createFileLike(source: FileSource, options: FileOptions = {})
-  : Promise<FileLike> {
-  const name = options.name || (source as any).name;
-  if (!isServer()) {
-    if (source instanceof File) {
-      return source;
-    }
-    if (!name) {
-      throw new BadRequest("File name is required, please provide it in the file options.");
-    }
-    const mimeType = options.mimeType || getMimeTypeFromFileName(name);
-    if (!mimeType) {
-      console.warn("Missing file mime type. If this is unintentional, please provide it in the file options.");
-    }
-    if (source instanceof Uint8Array || source instanceof ArrayBuffer || source instanceof Blob) {
-      return new File([source as any], name, { type: mimeType, lastModified: options.lastModified });
-    } else if (source instanceof Array) {
-      return new File(source, name, { type: mimeType, lastModified: options.lastModified });
-    }
-  } else {
-    const nodeJsFile = (await import("../types/file")).NodeJs.File;
-    if (typeof source?.read === 'function') {
-      return nodeJsFile.fromReadable(source, name, options.mimeType, options.lastModified);
-    } else if (source instanceof Uint8Array || source instanceof Buffer || source instanceof ArrayBuffer) {
-      return new nodeJsFile([source as any], name, options.mimeType, options.lastModified);
-    } else if (source instanceof nodeJsFile) {
-      return source;
-    } else if (typeof source === "string") {
-      return nodeJsFile.fromPath(source, name, options.mimeType, options.lastModified);
-    } else if (source instanceof Array) {
-      return new nodeJsFile(source, name, options.mimeType, options.lastModified);
-    }
-  }
-  throw new BadRequest("File source is not supported. Please provide a valid source: web File object, file path, buffer or stream.");
-}
 
 export type FileUploadResult = {
   resourceUri: string[],
@@ -395,8 +509,7 @@ export type FileOptions = {
 
 export type FileUploadOptions = Hooks & FileOptions & {
   public?: boolean,
-  storage?: StorageType,
-  arweaveTags?: Tags,
+  txTags?: Tags,
   chunkSize?: number,
   cloud?: boolean,
   parentId?: string,
@@ -419,12 +532,11 @@ export type FileChunkedGetOptions = {
 }
 
 export type FileVersionData = {
-  [K in keyof FileVersion]?: FileVersion[K]
+  [K in keyof File]?: File[K]
 } & {
   data: ReadableStream<Uint8Array> | ArrayBuffer
 }
 
 export {
-  FileModule,
-  createFileLike
+  FileModule
 }

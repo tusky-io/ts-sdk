@@ -57,17 +57,6 @@ export type MembershipCreateOptions = {
   message?: string
 }
 
-export type MembershipCreateResult = {
-  membershipId: string,
-  transactionId: string,
-  object: Membership
-}
-
-export type MembershipUpdateResult = {
-  transactionId: string,
-  object: Membership
-}
-
 export type MembershipAirdropOptions = {
   name?: string
   expirationDate?: Date

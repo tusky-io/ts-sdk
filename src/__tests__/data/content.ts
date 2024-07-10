@@ -19,4 +19,3 @@ export const fileId = 'efb8ed89-3221-48e7-b1e5-9b94eef41319';
 export const firstFileName = "logo.png";
 export const secondFileName =  "avatar.jpeg";
 export const zipFileName =  "archive.zip";
-export const arweaveImportFileTx = "kzGxbFW_oJ3PyYneRs9cPrChQ-k-8Fym5k9PCZNJ_HA";

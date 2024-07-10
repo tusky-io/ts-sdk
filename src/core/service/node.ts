@@ -1,7 +1,6 @@
 import { Service } from './service';
 import { functions, protocolTags, status } from "../../constants";
-import { NodeCreateOptions, NodeLike, NodeType } from '../../types/node';
-import { Object } from "../../types/object";
+import { Object, ObjectType } from "../../types/object";
 import { EncryptedKeys, Encrypter } from '@akord/crypto';
 import { GetOptions, ListOptions } from '../../types/query-options';
 import { ContractInput, Tag, Tags } from '../../types/contract';
@@ -9,24 +8,20 @@ import { v4 as uuidv4 } from "uuid";
 import { IncorrectEncryptionKey } from '../../errors/incorrect-encryption-key';
 import { BadRequest } from '../../errors/bad-request';
 import { Folder } from '../../types/folder';
-import { Stack } from '../../types/stack';
 import { Api } from '../../api/api';
 import { Logger } from '../../logger';
-import { DefaultVaults, Vault } from '../../types';
+import { DefaultVaults, File, Vault } from '../../types';
 import { VaultModule } from '../vault';
 import { Signer } from '../../signer';
 
 class NodeService<T> extends Service {
-  objectType: NodeType;
+  type: ObjectType;
 
   defaultListOptions = {
     shouldDecrypt: true,
     parentId: undefined,
     filter: {
-      status: { ne: status.REVOKED },
-      and: {
-        status: { ne: status.DELETED }
-      }
+      status: { ne: status.DELETED }
     }
   } as ListOptions;
 
@@ -37,27 +32,26 @@ class NodeService<T> extends Service {
   defaultCreateOptions = {
     parentId: undefined,
     tags: [],
-    arweaveTags: [],
+    txTags: [],
   } as NodeCreateOptions;
 
   constructor(config?: NodeServiceConfig) {
     super(config);
-    this.objectType = config.objectType;
+    this.type = config.type;
     this.NodeType = config.nodeType;
   }
 
-  async nodeCreate<T>(state?: any, clientInput?: { parentId?: string }, clientTags?: Tags): Promise<{
+  async nodeCreate<T>(state?: any, clientInput?: { parentId?: string }, clientTags?: Tags, file?: any): Promise<{
     nodeId: string,
     transactionId: string,
     object: T
   }> {
     const nodeId = uuidv4();
     this.setObjectId(nodeId);
-    this.setFunction(functions.NODE_CREATE);
-    this.setParentId(clientInput.parentId);
+    this.setParentId(clientInput.parentId ? clientInput.parentId : this.vaultId);
 
-    this.arweaveTags = await this.getTxTags();
-    clientTags?.map((tag: Tag) => this.arweaveTags.push(tag));
+    this.txTags = await this.getTxTags();
+    clientTags?.map((tag: Tag) => this.txTags.push(tag));
 
     const input = {
       function: this.function,
@@ -67,8 +61,9 @@ class NodeService<T> extends Service {
     const { id, object } = await this.api.postContractTransaction<T>(
       this.vaultId,
       input,
-      this.arweaveTags,
-      state
+      this.txTags,
+      state,
+      file
     );
     const node = await this.processNode(object as any, !this.isPublic, this.keys) as any;
     return { nodeId, transactionId: id, object: node };
@@ -81,13 +76,14 @@ class NodeService<T> extends Service {
     } as ContractInput;
 
     this.setParentId(clientInput?.parentId);
-    this.arweaveTags = await this.getTxTags();
+    this.txTags = await this.getTxTags();
 
     const { id, object } = await this.api.postContractTransaction<T>(
       this.vaultId,
       input,
-      this.arweaveTags,
+      this.txTags,
       stateUpdates,
+      undefined,
       false,
       metadata
     );
@@ -99,8 +95,8 @@ class NodeService<T> extends Service {
     this.parentId = parentId;
   }
 
-  async setVaultContextFromNodeId(nodeId: string, type: NodeType, vaultId?: string) {
-    const object = await this.api.getNode<NodeLike>(nodeId, type, vaultId);
+  async setVaultContextFromNodeId(nodeId: string, type: ObjectType, vaultId?: string) {
+    const object = await this.api.getNode<File | Folder>(nodeId, type, vaultId);
     const vault = await this.api.getVault(object.vaultId);
     this.setVault(vault);
     this.setVaultId(object.vaultId);
@@ -108,19 +104,17 @@ class NodeService<T> extends Service {
     await this.setMembershipKeys(object);
     this.setObject(object);
     this.setObjectId(nodeId);
-    this.setObjectType(type);
+    this.setType(type);
   }
 
   async getTxTags(): Promise<Tags> {
     const tags = await super.getTxTags();
     tags.push(new Tag(protocolTags.NODE_ID, this.objectId))
-    if (this.function === functions.NODE_CREATE || this.function === functions.NODE_MOVE) {
-      tags.push(new Tag(protocolTags.PARENT_ID, this.parentId ? this.parentId : "root"));
-    }
+    tags.push(new Tag(protocolTags.PARENT_ID, this.parentId ? this.parentId : this.vaultId ));
     return tags;
   }
 
-  async processNode(object: NodeLike, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<T> {
+  async processNode(object: File | Folder, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<T> {
     const node = this.nodeInstance(object, keys);
     if (shouldDecrypt) {
       try {
@@ -163,16 +157,15 @@ class NodeService<T> extends Service {
     return vaultId;
   }
 
-  NodeType: new (arg0: any, arg1: EncryptedKeys[]) => NodeLike
+  NodeType: new (arg0: any, arg1: EncryptedKeys[]) => File | Folder
 
-  private nodeInstance(nodeProto: any, keys: Array<EncryptedKeys>): NodeLike {
-    // TODO: use a generic NodeLike constructor
-    if (this.objectType === "Folder") {
+  private nodeInstance(nodeProto: any, keys: Array<EncryptedKeys>): File | Folder {
+    if (this.type === "Folder") {
       return new Folder(nodeProto, keys);
-    } else if (this.objectType === "Stack") {
-      return new Stack(nodeProto, keys);
+    } else if (this.type === "File") {
+      return new File(nodeProto, keys);
     } else {
-      throw new BadRequest("Given type is not supported: " + this.objectType);
+      throw new BadRequest("Given type is not supported: " + this.type);
     }
   }
 }
@@ -183,6 +176,12 @@ export type VaultOptions = {
   public?: boolean
 }
 
+export type NodeCreateOptions = {
+  parentId?: string,
+  tags?: string[],
+  txTags?: Tags
+}
+
 export type NodeServiceConfig = {
   api?: Api,
   signer?: Signer,
@@ -190,8 +189,8 @@ export type NodeServiceConfig = {
   keys?: Array<EncryptedKeys>
   vaultId?: string,
   objectId?: string,
-  objectType?: NodeType,
-  nodeType?: new (arg0: any, arg1: EncryptedKeys[]) => NodeLike,
+  type?: ObjectType,
+  nodeType?: new (arg0: any, arg1: EncryptedKeys[]) => File | Folder,
   function?: functions,
   isPublic?: boolean,
   vault?: Vault,
@@ -199,7 +198,6 @@ export type NodeServiceConfig = {
   actionRef?: string,
   groupRef?: string,
   tags?: string[], // akord tags for easier search
-  arweaveTags?: Tags // arweave tx tags,
   contentType?: string
 }
 
