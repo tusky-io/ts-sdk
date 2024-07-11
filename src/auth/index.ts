@@ -1,6 +1,7 @@
 import { AkordWallet, signString } from "@akord/crypto";
 import { AuthenticationDetails, CognitoUser, CognitoUserAttribute, CognitoUserPool, CognitoUserSession } from "amazon-cognito-identity-js";
 import MemoryStorage from 'memorystorage'
+import { Env } from "../env";
 
 export class Auth {
   public static authToken: string
@@ -634,7 +635,7 @@ export class Auth {
 }
 
 type AuthOptions = {
-  env?: "dev" | "v2" | "carmella"
+  env?: Env
   storage?: Storage
   authToken?: string
   apiKey?: string

@@ -11,12 +11,13 @@ import { FileModule } from "./core/file";
 import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
+import { Env } from "./env";
 
 export class Akord {
   public api: Api;
   private signer: Signer;
   private encrypter: Encrypter;
-  private env: 'dev' | 'v2';
+  private env: Env;
   private userAgent: string;
 
   public static init: (config?: ClientConfig) => Promise<Akord>;

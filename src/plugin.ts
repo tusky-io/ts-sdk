@@ -1,6 +1,8 @@
+import { Env } from "./env";
+
 export interface Plugin {
     key: PluginKey
-    register(env?: 'dev' | 'v2'): void;
+    register(env?: Env): void;
     unregister(): void;
     use(params: any): Promise<void>;
 }
@@ -11,7 +13,7 @@ export enum PluginKey {
 
 export class Plugins {
     static registered: Map<PluginKey, Plugin> = new Map();
-    static register = (candidates: Plugin[], env?: 'dev' | 'v2') => {
+    static register = (candidates: Plugin[], env?: Env) => {
         if (candidates && candidates.length) {
             for (const candidate of candidates) {
                 if (!this.registered.has(candidate.key)) {
