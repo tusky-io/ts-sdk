@@ -152,7 +152,7 @@ export class Auth {
       "custom:publicKey": wallet.publicKey(),
       "custom:publicSigningKey": wallet.signingPublicKey(),
       "custom:address": await wallet.getAddress(),
-      "custom:referrerId": options.referrerId,
+      // "custom:referrerId": options.referrerId,
       "custom:mode": "dark",
       "custom:notifications": "true"
     })) {
@@ -188,10 +188,11 @@ export class Auth {
       "custom:publicKey": wallet.publicKey(),
       "custom:publicSigningKey": wallet.signingPublicKey(),
       "custom:address": address,
-      "custom:referrerId": options.referrerId,
+      // "custom:referrerId": options.referrerId,
       "custom:mode": "dark",
       "custom:notifications": "true",
-      "custom:passwordless": "true"
+      "custom:passwordless": "true",
+      email: address + "@temp.akord.com"
     });
 
     await new Promise((resolve, reject) =>
@@ -689,8 +690,8 @@ function apiConfig(env?: string): ApiConfig {
     default:
       return {
         apiurl: "https://carmella-storage.akord.link",
-        userPoolId: "eu-central-1_OYZKJtYYh",
-        userPoolsWebClientId: "63p48n9qihc1v9a6nctv4k2tif"
+        userPoolId: "eu-central-1_FJAH2e9CF",
+        userPoolsWebClientId: "7m28q32llgn37330u8tvqpn8bu"
       };
   }
 };
