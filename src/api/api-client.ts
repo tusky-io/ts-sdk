@@ -557,11 +557,14 @@ export class ApiClient {
 
     const form = new FormData();
 
-    form.append("input", this._input);
-    form.append("tags", this._tags);
-    form.append("metadata", this._metadata);
-    form.append("state", this._state);
-    form.append("overrideState", this._overrideState);
+    console.log(this)
+
+    form.append("input", JSON.stringify(this._input));
+    form.append("tags", JSON.stringify(this._tags));
+    form.append("metadata", JSON.stringify(this._metadata));
+    form.append("state", JSON.stringify(this._state));
+
+    console.log(form)
 
     if (this._file) {
       const buffer = Buffer.from(this._file);
@@ -613,6 +616,7 @@ export class ApiClient {
       const { id, object } = response.data;
       return { id, object };
     } catch (error) {
+      console.log(error)
       throwError(error.response?.status, error.response?.data?.msg, error);
     }
   }

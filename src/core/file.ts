@@ -88,7 +88,7 @@ class FileModule {
     options: FileUploadOptions = {}
   ): Promise<File> {
     // validate vault or use/create default one
-    options.vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
+    // options.vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
 
     await this.service.setVaultContext(options.vaultId);
     this.service.setParentId(options.parentId ? options.parentId : options.vaultId);
@@ -131,8 +131,8 @@ class FileModule {
     options?: FileUploadOptions
   }[], options: FileUploadOptions = {}): Promise<{ data: File[], errors: any[] }> {
     // validate vault or use/create default one
-    const vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
-
+    // const vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
+    const vaultId = options.vaultId;
     const batchModule = new BatchModule(this.service);
     const { data, errors } = await batchModule.batchUpload(vaultId, items);
     return { data, errors };

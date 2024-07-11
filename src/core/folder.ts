@@ -68,7 +68,7 @@ class FolderModule {
     options: FolderUploadOptions = {}
   ): Promise<any> {
     // validate vault or use/create default one
-    options.vaultId = await this.service.validateOrCreateDefaultVault(options);
+    // options.vaultId = await this.service.validateOrCreateDefaultVault(options);
     if (typeof folder === "string") {
       if (!isServer()) {
         throw new BadRequest("Folder path supported only for node.");

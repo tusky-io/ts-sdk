@@ -1,7 +1,7 @@
 import { AkordWallet } from "@akord/crypto";
 import { Auth } from "..";
 import faker from '@faker-js/faker';
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 jest.setTimeout(3000000);
 

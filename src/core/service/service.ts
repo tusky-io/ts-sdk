@@ -20,10 +20,6 @@ import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 import { getEncryptedPayload } from "../common";
 import { EncryptionMetadata } from "../../types/encryption";
 import { Signer } from "../../signer";
-import { Logger } from "../../logger";
-import { VaultModule } from "../vault";
-import { VaultOptions } from "./node";
-import { BadRequest } from "../../errors/bad-request";
 import { Folder, File } from "../../types";
 
 export const STATE_CONTENT_TYPE = "application/json";
@@ -124,36 +120,36 @@ class Service {
     this.tags = tags?.filter((tag: string) => tag) || [];
   }
 
-  async validateOrCreateDefaultVault(options: VaultOptions = {}): Promise<string> {
-    let vaultId: string;
-    if (options.vaultId) {
-      const vault = await this.api.getVault(options.vaultId);
-      if (vault.cloud && !options.cloud) {
-        throw new BadRequest("Context mismatch. Cloud option colliding with vault provided in the vault id option.")
-      }
-      vaultId = options.vaultId;
-    } else {
-      if (!options.public) {
-        // const { items: defaultVaults } = await this.service.api.getVaults({ default: true });
-        const defaultVaults = [];
-        if (options.cloud) {
-          const defaultPrivateCloudVault = defaultVaults.find((vault) => vault.private && vault.cloud);
-          vaultId = defaultPrivateCloudVault?.id;
-        } else {
-          const defaultPrivatePermaVault = defaultVaults.find((vault) => vault.private && !vault.cloud);
-          vaultId = defaultPrivatePermaVault?.id;
-        }
-        if (!vaultId) {
-          Logger.log("Creating vault...")
-          const vaultModule = new VaultModule(this);
-          const vaultResult = await vaultModule.create(options.cloud ? DefaultVaults.DEFAULT_PRIVATE_CLOUD : DefaultVaults.DEFAULT_PRIVATE_PERMA, { public: false, cloud: options.cloud })
-          console.log(vaultResult.object)
-          vaultId = vaultResult.vaultId;
-        }
-      }
-    }
-    return vaultId;
-  }
+  // async validateOrCreateDefaultVault(options: VaultOptions = {}): Promise<string> {
+  //   let vaultId: string;
+  //   if (options.vaultId) {
+  //     const vault = await this.api.getVault(options.vaultId);
+  //     if (vault.cloud && !options.cloud) {
+  //       throw new BadRequest("Context mismatch. Cloud option colliding with vault provided in the vault id option.")
+  //     }
+  //     vaultId = options.vaultId;
+  //   } else {
+  //     if (!options.public) {
+  //       // const { items: defaultVaults } = await this.service.api.getVaults({ default: true });
+  //       const defaultVaults = [];
+  //       if (options.cloud) {
+  //         const defaultPrivateCloudVault = defaultVaults.find((vault) => vault.private && vault.cloud);
+  //         vaultId = defaultPrivateCloudVault?.id;
+  //       } else {
+  //         const defaultPrivatePermaVault = defaultVaults.find((vault) => vault.private && !vault.cloud);
+  //         vaultId = defaultPrivatePermaVault?.id;
+  //       }
+  //       if (!vaultId) {
+  //         Logger.log("Creating vault...")
+  //         const vaultModule = new VaultModule(this);
+  //         const vaultResult = await vaultModule.create(options.cloud ? DefaultVaults.DEFAULT_PRIVATE_CLOUD : DefaultVaults.DEFAULT_PRIVATE_PERMA, { public: false, cloud: options.cloud })
+  //         console.log(vaultResult.object)
+  //         vaultId = vaultResult.vaultId;
+  //       }
+  //     }
+  //   }
+  //   return vaultId;
+  // }
 
   async processWriteString(data: string): Promise<string> {
     if (this.isPublic) return data;
