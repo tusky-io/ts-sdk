@@ -15,9 +15,9 @@ export const apiConfig = (env: string) => {
     case "carmella":
     default:
       return {
-        apiurl: "https://carmella.akord.link",
+        apiurl: "https://carmella-storage.akord.link",
         gatewayurl: "https://akrd.io",
-        uploadsurl: "https://carmella.akord.link"
+        uploadsurl: "https://carmella-storage.akord.link"
       };
   }
 };

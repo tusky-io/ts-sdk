@@ -688,7 +688,7 @@ function apiConfig(env?: string): ApiConfig {
     case "carmella":
     default:
       return {
-        apiurl: "https://carmella.akord.link",
+        apiurl: "https://carmella-storage.akord.link",
         userPoolId: "eu-central-1_OYZKJtYYh",
         userPoolsWebClientId: "63p48n9qihc1v9a6nctv4k2tif"
       };
