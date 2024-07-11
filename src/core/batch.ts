@@ -170,10 +170,11 @@ class BatchModule {
         };
         const fileService = new FileModule(service);
         const version = await fileService.newVersion(item.file);
+        const tags = fileService.getFileTags(item.file, item.options);
         const { object } = await service.api.postContractTransaction<File>(
           service.vaultId,
           input,
-          service.txTags,
+          tags.concat(service.txTags),
           version,
           item.file
         );

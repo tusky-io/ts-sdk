@@ -114,7 +114,9 @@ class FileModule {
     // const fileUploadResult = await fileService.create(fileLike, createOptions);
     const version = await fileService.newVersion(fileLike);
 
-    const { object } = await this.service.nodeCreate<File>(version, { parentId: createOptions.parentId }, options.txTags, fileLike);
+    const tags = this.getFileTags(file, options);
+
+    const { object } = await this.service.nodeCreate<File>(version, { parentId: createOptions.parentId }, tags.concat(options.txTags), fileLike);
     return object;
   }
 
@@ -448,7 +450,7 @@ class FileModule {
     return { ...res, tags: data.encryptionTags };
   }
 
-  private getFileTags(file: FileLike, options: FileUploadOptions = {}): Tags {
+  getFileTags(file: FileLike, options: FileUploadOptions = {}): Tags {
     const tags = [] as Tags;
     if (this.service.isPublic) {
       tags.push(new Tag(fileTags.FILE_NAME, file.name))

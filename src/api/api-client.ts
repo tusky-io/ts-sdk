@@ -563,7 +563,6 @@ export class ApiClient {
     form.append("state", this._state);
     form.append("overrideState", this._overrideState);
 
-    form.append
     if (this._file) {
       const buffer = Buffer.from(this._file);
       const blob = new Blob([buffer], { type: "application/octet-stream" });
