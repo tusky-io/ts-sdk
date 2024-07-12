@@ -1,12 +1,11 @@
-import { actionRefs, status, functions, protocolTags } from "../constants";
+import { actions, functions, protocolTags, membershipStatus } from "../constants";
 import { v4 as uuidv4 } from "uuid";
-import { Membership, MembershipAirdropOptions, MembershipCreateOptions, MembershipCreateResult, MembershipUpdateResult, RoleType } from "../types/membership";
+import { Membership, MembershipAirdropOptions, RoleType } from "../types/membership";
 import { deriveAddress, base64ToArray } from "@akord/crypto";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { ServiceConfig } from "./service/service";
 import { MembershipInput, Tag, Tags } from "../types/contract";
 import { Paginated } from "../types/paginated";
-import { BadRequest } from "../errors/bad-request";
 import { paginate } from "./common";
 import { MembershipService } from "./service/membership";
 
@@ -21,8 +20,8 @@ class MembershipModule {
     shouldDecrypt: true,
     filter: {
       or: [
-        { status: { eq: status.ACCEPTED } },
-        { status: { eq: status.PENDING } }
+        { status: { eq: membershipStatus.ACCEPTED } },
+        { status: { eq: membershipStatus.PENDING } }
       ]
     }
   } as ListOptions;
@@ -75,47 +74,6 @@ class MembershipModule {
   }
 
   /**
-   * Invite user with an Akord account
-   * @param  {string} vaultId
-   * @param  {string} email invitee's email
-   * @param  {RoleType} role VIEWER/CONTRIBUTOR/OWNER
-   * @param  {MembershipCreateOptions} [options] invitation email message, etc.
-   * @returns Promise with new membership id & corresponding transaction id
-   */
-  public async invite(vaultId: string, email: string, role: RoleType, options: MembershipCreateOptions = {}): Promise<MembershipCreateResult> {
-    await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actionRefs.MEMBERSHIP_INVITE);
-    this.service.setFunction(functions.MEMBERSHIP_INVITE);
-    const membershipId = uuidv4();
-    this.service.setObjectId(membershipId);
-
-    const { address, publicKey, publicSigningKey } = await this.service.api.getUserPublicData(email);
-    const state = {
-      keys: await this.service.prepareMemberKeys(publicKey),
-      encPublicSigningKey: await this.service.processWriteString(publicSigningKey)
-    };
-
-    this.service.arweaveTags = [new Tag(protocolTags.MEMBER_ADDRESS, address)]
-      .concat(await this.service.getTxTags());
-
-    const input = {
-      function: this.service.function,
-      address,
-      role,
-    }
-
-    const { id, object } = await this.service.api.postContractTransaction<Membership>(
-      this.service.vaultId,
-      input,
-      this.service.arweaveTags,
-      state,
-      false,
-      { message: options.message }
-    );
-    return { membershipId, transactionId: id, object: object };
-  }
-
-  /**
    * Airdrop access to the vault directly through public keys
    * @param  {string} vaultId
    * @param  {{publicKey:string,publicSigningKey:string,role:RoleType,options:MembershipAirdropOptions}[]} members
@@ -125,12 +83,11 @@ class MembershipModule {
     vaultId: string,
     members: Array<{ publicKey: string, publicSigningKey: string, role: RoleType, options?: MembershipAirdropOptions }>,
   ): Promise<{
-    transactionId: string,
-    members: Array<{ id: string, address: string }>
+    items: Array<Membership>
   }> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef("MEMBERSHIP_AIRDROP");
-    this.service.setFunction(functions.MEMBERSHIP_ADD);
+    this.service.setActionRef(actions.MEMBERSHIP_AIRDROP_ACCESS);
+    this.service.setFunction(functions.MEMBERSHIP_AIRDROP_ACCESS);
     const memberArray = [] as MembershipInput[];
     const membersMetadata = [];
     const dataArray = [] as { id: string, data: any }[];
@@ -163,122 +120,55 @@ class MembershipModule {
       memberTags.push(new Tag(protocolTags.MEMBERSHIP_ID, membershipId));
     }
 
-    this.service.arweaveTags = memberTags.concat(await this.service.getTxTags());
+    this.service.txTags = memberTags.concat(await this.service.getTxTags());
 
     const input = {
       function: this.service.function,
       members: memberArray
     };
 
-    const { id } = await this.service.api.postContractTransaction(
+    const object = await this.service.api.postContractTransaction(
       this.service.vaultId,
       input,
-      this.service.arweaveTags,
+      this.service.txTags,
       dataArray,
+      undefined,
       false,
       { members: membersMetadata }
     );
-    return { members: input.members, transactionId: id };
+    return { items: input.members as any };
   }
 
   /**
-   * @param  {string} membershipId
+   * Leave the vault by the currently authenticated user
+   * @param  {string} id membership id
    * @returns Promise with corresponding transaction id
    */
-  public async accept(membershipId: string): Promise<MembershipUpdateResult> {
-    await this.service.setVaultContextFromMembershipId(membershipId);
-    const state = {
-      encPublicSigningKey: await this.service.processWriteString(await this.service.signer.signingPublicKey())
-    }
-    this.service.setActionRef(actionRefs.MEMBERSHIP_ACCEPT);
-    this.service.setFunction(functions.MEMBERSHIP_ACCEPT);
+  public async leave(id: string): Promise<Membership> {
+    await this.service.setVaultContextFromMembershipId(id);
+    this.service.setActionRef(actions.MEMBERSHIP_LEAVE);
+    this.service.setFunction(functions.MEMBERSHIP_LEAVE);
 
-    const { id, object } = await this.service.api.postContractTransaction<Membership>(
-      this.service.vaultId,
-      { function: this.service.function },
-      await this.service.getTxTags(),
-      state
-    );
-    return { transactionId: id, object: new Membership(object) };
-  }
-
-  /**
-   * @param  {string} membershipId
-   * @returns Promise with corresponding transaction id
-   */
-  public async confirm(membershipId: string): Promise<MembershipUpdateResult> {
-    await this.service.setVaultContextFromMembershipId(membershipId);
-    this.service.setActionRef(actionRefs.MEMBERSHIP_CONFIRM);
-    this.service.setFunction(functions.MEMBERSHIP_INVITE);
-    const { address, publicKey, publicSigningKey } = await this.service.api.getUserPublicData(this.service.object.email);
-
-    const state = {
-      keys: await this.service.prepareMemberKeys(publicKey),
-      encPublicSigningKey: await this.service.processWriteString(publicSigningKey)
-    };
-
-    this.service.arweaveTags = [new Tag(protocolTags.MEMBER_ADDRESS, address)]
-      .concat(await this.service.getTxTags());
-
-    const input = {
-      function: this.service.function,
-      address,
-      role: this.service.object.role
-    }
-
-    const { id, object } = await this.service.api.postContractTransaction<Membership>(
-      this.service.vaultId,
-      input,
-      this.service.arweaveTags,
-      state
-    );
-    return { transactionId: id, object: new Membership(object) };
-  }
-
-  /**
-   * @param  {string} membershipId
-   * @returns Promise with corresponding transaction id
-   */
-  public async reject(membershipId: string): Promise<MembershipUpdateResult> {
-    await this.service.setVaultContextFromMembershipId(membershipId);
-    this.service.setActionRef(actionRefs.MEMBERSHIP_REJECT);
-    this.service.setFunction(functions.MEMBERSHIP_REJECT);
-
-    const { id, object } = await this.service.api.postContractTransaction<Membership>(
+    const { object } = await this.service.api.postContractTransaction<Membership>(
       this.service.vaultId,
       { function: this.service.function },
       await this.service.getTxTags()
     );
-    return { transactionId: id, object: new Membership(object) };
+    return new Membership(object);
   }
 
   /**
-   * @param  {string} membershipId
-   * @returns Promise with corresponding transaction id
+   * Revoke member access
+   * If private vault, vault keys will be rotated & distributed to all valid members
+   * @param  {string} id membership id
+   * @returns Promise with the updated membership
    */
-  public async leave(membershipId: string): Promise<MembershipUpdateResult> {
-    await this.service.setVaultContextFromMembershipId(membershipId);
-    this.service.setActionRef(actionRefs.MEMBERSHIP_LEAVE);
-    this.service.setFunction(functions.MEMBERSHIP_REJECT);
+  public async revoke(id: string): Promise<Membership> {
+    await this.service.setVaultContextFromMembershipId(id);
+    this.service.setActionRef(actions.MEMBERSHIP_REVOKE_ACCESS);
+    this.service.setFunction(functions.MEMBERSHIP_REVOKE_ACCESS);
 
-    const { id, object } = await this.service.api.postContractTransaction<Membership>(
-      this.service.vaultId,
-      { function: this.service.function },
-      await this.service.getTxTags()
-    );
-    return { transactionId: id, object: new Membership(object) };
-  }
-
-  /**
-   * @param  {string} membershipId
-   * @returns Promise with corresponding transaction id
-   */
-  public async revoke(membershipId: string): Promise<MembershipUpdateResult> {
-    await this.service.setVaultContextFromMembershipId(membershipId);
-    this.service.setActionRef(actionRefs.MEMBERSHIP_REVOKE);
-    this.service.setFunction(functions.MEMBERSHIP_REVOKE);
-
-    this.service.arweaveTags = await this.service.getTxTags();
+    this.service.txTags = await this.service.getTxTags();
 
     let data: { id: string, value: any }[];
     if (!this.service.isPublic) {
@@ -286,7 +176,7 @@ class MembershipModule {
 
       const activeMembers = memberships.filter((member: Membership) =>
         member.id !== this.service.objectId
-        && (member.status === status.ACCEPTED || member.status === status.PENDING));
+        && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
 
       // rotate keys for all active members
       const memberPublicKeys = new Map<string, string>();
@@ -307,68 +197,31 @@ class MembershipModule {
       }));
     }
 
-    const { id, object } = await this.service.api.postContractTransaction<Membership>(
+    const { object } = await this.service.api.postContractTransaction<Membership>(
       this.service.vaultId,
       { function: this.service.function },
-      this.service.arweaveTags,
+      this.service.txTags,
       data
     );
-    return { transactionId: id, object: new Membership(object) };
+    return new Membership(object);
   }
 
   /**
-   * @param  {string} membershipId
+   * @param  {string} id membership id
    * @param  {RoleType} role VIEWER/CONTRIBUTOR/OWNER
    * @returns Promise with corresponding transaction id
    */
-  public async changeRole(membershipId: string, role: RoleType): Promise<MembershipUpdateResult> {
-    await this.service.setVaultContextFromMembershipId(membershipId);
-    this.service.setActionRef(actionRefs.MEMBERSHIP_CHANGE_ROLE);
-    this.service.setFunction(functions.MEMBERSHIP_CHANGE_ROLE);
+  public async changeAccess(id: string, role: RoleType): Promise<Membership> {
+    await this.service.setVaultContextFromMembershipId(id);
+    this.service.setActionRef(actions.MEMBERSHIP_CHANGE_ACCESS);
+    this.service.setFunction(functions.MEMBERSHIP_CHANGE_ACCESS);
 
-    const { id, object } = await this.service.api.postContractTransaction<Membership>(
+    const { object } = await this.service.api.postContractTransaction<Membership>(
       this.service.vaultId,
       { function: this.service.function, role },
       await this.service.getTxTags()
     );
-    return { transactionId: id, object: new Membership(object) };
-  }
-
-  /**
-   * Invite user without an Akord account
-   * @param  {string} vaultId
-   * @param  {string} email invitee's email
-   * @param  {string} role CONTRIBUTOR or VIEWER
-   * @param  {MembershipCreateOptions} [options] invitation email message, etc.
-   * @returns Promise with new membership id & corresponding transaction id
-   */
-  public async inviteNewUser(vaultId: string, email: string, role: RoleType, options: MembershipCreateOptions = {}): Promise<{
-    membershipId: string
-  }> {
-    const { id } = await this.service.api.inviteNewUser(vaultId, email, role, options.message);
-    return { membershipId: id };
-  }
-
-  /**
- * Revoke invite for user without an Akord account
- * @param  {string} vaultId
- * @param  {string} membershipId
- */
-  public async revokeInvite(vaultId: string, membershipId: string): Promise<void> {
-    await this.service.api.revokeInvite(vaultId, membershipId);
-  }
-
-  /**
-   * @param  {string} membershipId
-   * @returns Promise with corresponding transaction id
-   */
-  public async inviteResend(membershipId: string): Promise<void> {
-    const membership = await this.service.api.getMembership(membershipId);
-    if (membership.status !== status.PENDING && membership.status !== status.INVITED) {
-      throw new BadRequest("Cannot resend the invitation for member: " + membershipId +
-        ". Found invalid status: " + membership.status);
-    }
-    await this.service.api.inviteResend(membership.vaultId, membershipId);
+    return new Membership(object);
   }
 };
 

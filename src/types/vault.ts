@@ -1,8 +1,7 @@
 import { Encryptable, encrypted, EncryptedKeys } from "@akord/crypto";
 import { Membership } from "./membership";
-import { NodeLike } from "./node";
 import { Folder } from "./folder";
-import { Stack } from "./stack";
+import { File } from "./file-version";
 import { Tags } from "./contract";
 
 export class Vault extends Encryptable {
@@ -21,9 +20,8 @@ export class Vault extends Encryptable {
   @encrypted() description?: string;
 
   memberships?: Array<Membership>;
-  stacks?: Array<Stack>;
+  files?: Array<File>;
   folders?: Array<Folder>;
-  nodes?: Array<NodeLike>;
 
   constructor(vaultProto: any, keys: Array<EncryptedKeys>) {
     super(keys, null);
@@ -42,7 +40,7 @@ export class Vault extends Encryptable {
     this.cloud = vaultProto.cloud;
     this.tags = vaultProto.tags;
     this.memberships = vaultProto?.memberships?.map((membership: Membership) => new Membership(membership, keys));
-    this.stacks = vaultProto?.stacks?.map((stack: Stack) => new Stack(stack, keys));
+    this.files = vaultProto?.files?.map((file: File) => new File(file, keys));
     this.folders = vaultProto?.folders?.map((folder: Folder) => new Folder(folder, keys));
   }
 }
@@ -53,25 +51,7 @@ export type VaultCreateOptions = {
   description?: string,
   tags?: string[],
   cloud?: boolean,
-  arweaveTags?: Tags
-}
-
-export type VaultUpdateOptions = {
-  name?: string,
-  description?: string,
-  tags?: string[]
-}
-
-export type VaultCreateResult = {
-  vaultId: string,
-  membershipId: string,
-  transactionId: string,
-  object: Vault
-}
-
-export type VaultUpdateResult = {
-  transactionId: string,
-  object: Vault
+  txTags?: Tags
 }
 
 export enum DefaultVaults {

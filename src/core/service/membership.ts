@@ -1,4 +1,4 @@
-import { objectType, protocolTags } from "../../constants";
+import { objects, protocolTags } from "../../constants";
 import { EncryptedKeys, Encrypter, base64ToArray, generateKeyPair, Keys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
 import { Tag, Tags } from "../../types/contract";
@@ -8,7 +8,7 @@ class MembershipService extends Service {
 
   constructor(config?: ServiceConfig) {
     super(config);
-    this.objectType = objectType.MEMBERSHIP;
+    this.type = objects.MEMBERSHIP;
   }
 
   async setVaultContextFromMembershipId(membershipId: string, vaultId?: string) {
@@ -20,7 +20,7 @@ class MembershipService extends Service {
     await this.setMembershipKeys(membership);
     this.setObject(membership);
     this.setObjectId(membershipId);
-    this.setObjectType(this.objectType);
+    this.setType(this.type);
   }
 
   async getTxTags(): Promise<Tags> {

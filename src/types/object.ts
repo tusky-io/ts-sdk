@@ -1,8 +1,9 @@
 
-import { NodeLike, NodeType } from "./node";
 import { Vault } from "./vault";
 import { Membership } from "./membership";
+import { Folder } from "./folder";
+import { File } from "./file-version";
 
-export type Object = NodeLike | Vault | Membership;
+export type Object = Folder | File | Vault | Membership;
 
-export type ObjectType = NodeType | "Vault" | "Membership" | "Profile";
+export type ObjectType = "File" | "Folder" | "Vault" | "Membership";

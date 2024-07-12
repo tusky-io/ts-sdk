@@ -3,13 +3,13 @@ import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 import { NotFound } from "../../errors/not-found";
 import { Vault } from "../../types";
-import { objectType } from "../../constants";
+import { objects } from "../../constants";
 
 class VaultService extends Service {
 
   constructor(config?: ServiceConfig) {
     super(config);
-    this.objectType = objectType.VAULT;
+    this.type = objects.VAULT;
   }
 
   async setVaultContext(vaultId: string): Promise<void> {

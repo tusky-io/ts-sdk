@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios"
 
-const PAGINATION_HEADER = 'next-page'
+const PAGINATION_TOKEN = 'nextToken'
 
 export type Paginated<T> = {
   items: Array<T>
@@ -14,9 +14,9 @@ export type ErrorItem = {
 }
 
 export const isPaginated = (response: AxiosResponse) => {
-  return response.headers[PAGINATION_HEADER] !== undefined
+  return response.data[PAGINATION_TOKEN] !== undefined
 }
 
 export const nextToken = (response: AxiosResponse) => {
-  return response.headers[PAGINATION_HEADER] === "null" ? "" : response.headers[PAGINATION_HEADER]
+  return response.data[PAGINATION_TOKEN] === "null" ? "" : response.headers[PAGINATION_TOKEN]
 }

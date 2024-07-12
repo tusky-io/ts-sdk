@@ -1,9 +1,8 @@
 import { Encryptable, encrypted } from "@akord/crypto";
 import { functions } from "../constants";
 import { Membership } from "./membership";
-import { NodeLike } from "./node";
 import { Folder } from "./folder";
-import { Stack } from "./stack";
+import { File } from "./file-version";
 import { BadRequest } from "../errors/bad-request";
 
 export interface Contract {
@@ -22,8 +21,7 @@ export class ContractState extends Encryptable {
   data: string[];
   memberships: Array<Membership>;
   folders: Array<Folder>;
-  stacks: Array<Stack>;
-  nodes: Array<NodeLike>;
+  files: Array<File>;
 }
 
 export class Tag {

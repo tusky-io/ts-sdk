@@ -1,6 +1,6 @@
 import { Akord } from "./akord";
 import { ClientConfig } from "./config";
-import { Auth } from "@akord/akord-auth";
+import { Auth } from "./auth";
 
 /**
  * @param  {ClientConfig={}} config
