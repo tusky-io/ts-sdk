@@ -503,9 +503,9 @@ export class ApiClient {
     return await retry(async () => {
       try {
         const response = await this._httpClient(config);
-        if (isPaginated(response)) {
-          return { items: response.data, nextToken: nextToken(response) };
-        }
+        // if (isPaginated(response)) {
+        //   return { items: response.data, nextToken: nextToken(response) };
+        // }
         return response.data;
       } catch (error) {
         throwError(error.response?.status, error.response?.data?.msg, error);
