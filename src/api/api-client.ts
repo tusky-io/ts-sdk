@@ -800,7 +800,7 @@ export class ApiClient {
       };
     }
 
-    const url = `${this._apiurl}/files/${this._resourceId}`;
+    const url = `${this._apiurl}/files/${this._resourceId}/data`;
 
     Logger.log(`Request ${config.method}: ` + url);
 
