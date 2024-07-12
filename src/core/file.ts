@@ -115,7 +115,7 @@ class FileModule {
 
     const tags = this.getFileTags(fileLike, options);
 
-    const { object } = await this.service.nodeCreate<File>(version, { parentId: createOptions.parentId }, tags.concat(options.txTags), fileLike);
+    const object = await this.service.nodeCreate<File>(version, { parentId: createOptions.parentId }, tags.concat(options.txTags), fileLike);
     return object;
   }
 

@@ -39,11 +39,7 @@ class NodeService<T> extends Service {
     this.NodeType = config.nodeType;
   }
 
-  async nodeCreate<T>(state?: any, clientInput?: { parentId?: string }, clientTags?: Tags, file?: any): Promise<{
-    nodeId: string,
-    transactionId: string,
-    object: T
-  }> {
+  async nodeCreate<T>(state?: any, clientInput?: { parentId?: string }, clientTags?: Tags, file?: any): Promise<T> {
     const nodeId = uuidv4();
     this.setObjectId(nodeId);
     this.setParentId(clientInput.parentId ? clientInput.parentId : this.vaultId);
@@ -67,7 +63,7 @@ class NodeService<T> extends Service {
     return node;
   }
 
-  async nodeUpdate<T>(stateUpdates?: any, clientInput?: { parentId?: string }, metadata?: any): Promise<{ transactionId: string, object: T }> {
+  async nodeUpdate<T>(stateUpdates?: any, clientInput?: { parentId?: string }, metadata?: any): Promise<T> {
     const input = {
       function: this.function,
       ...clientInput
