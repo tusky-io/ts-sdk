@@ -99,13 +99,7 @@ class VaultModule {
       ...this.defaultCreateOptions,
       ...options
     }
-
-    let vaultId: string
-    if (createOptions.cloud) {
-      vaultId = uuidv4();
-    } else {
-      vaultId = await this.service.api.initContractId([new Tag(protocolTags.NODE_TYPE, objects.VAULT)]);
-    }
+    const vaultId = uuidv4();
 
     this.service.setActionRef(actions.VAULT_CREATE);
     this.service.setIsPublic(createOptions.public);
