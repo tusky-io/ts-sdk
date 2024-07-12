@@ -1,11 +1,11 @@
-import { StackCreateItem } from "../core/batch";
 import { NotEnoughStorage } from "../errors/not-enough-storage";
 import { Akord, Auth } from "../index";
 import { cleanup, initInstance, setupVault, testDataPath } from './common';
-import { email2, email3, password } from './data/test-credentials';
+import { password } from './data/test-credentials';
 import { AkordWallet } from "@akord/crypto";
 import fs from "fs";
 import { firstFileName } from "./data/content";
+import { BatchUploadItem } from "../core/batch";
 
 let akord: Akord;
 
@@ -28,18 +28,6 @@ describe("Testing airdrop actions", () => {
   });
 
   describe("Airdrop access tests", () => {
-    it("should airdrop to existing Akord users", async () => {
-      const user1 = await akord.api.getUserPublicData(email2);
-      const user2 = await akord.api.getUserPublicData(email3);
-
-      const result = await akord.membership.airdrop(vaultId, [{ ...user1, role: "VIEWER" }, { ...user2, role: "CONTRIBUTOR" }]);
-      expect(result.transactionId).toBeTruthy();
-      expect(result.members[0].address).toEqual(user1.address);
-      expect(result.members[0].id).toBeTruthy();
-      expect(result.members[1].address).toEqual(user2.address);
-      expect(result.members[1].id).toBeTruthy();
-    });
-
     it("should airdrop to Akord wallets", async () => {
       const wallet1 = await AkordWallet.create(password);
       const wallet2 = await AkordWallet.create(password);
@@ -47,11 +35,10 @@ describe("Testing airdrop actions", () => {
       const user2 = { publicSigningKey: wallet2.signingPublicKey(), publicKey: wallet2.publicKey() };
 
       const result = await akord.membership.airdrop(vaultId, [{ ...user1, role: "VIEWER" }, { ...user2, role: "CONTRIBUTOR" }]);
-      expect(result.transactionId).toBeTruthy();
-      expect(result.members[0].address).toEqual(await wallet1.getAddress());
-      expect(result.members[0].id).toBeTruthy();
-      expect(result.members[1].address).toEqual(await wallet2.getAddress());
-      expect(result.members[1].id).toBeTruthy();
+      expect(result.items[0].address).toEqual(await wallet1.getAddress());
+      expect(result.items[0].id).toBeTruthy();
+      expect(result.items[1].address).toEqual(await wallet2.getAddress());
+      expect(result.items[1].id).toBeTruthy();
     });
   });
 
@@ -82,7 +69,7 @@ describe("Testing airdrop actions", () => {
       const fileName = "logo.png";
       const fileBuffer = fs.readFileSync(testDataPath + fileName);
 
-      const items = [] as StackCreateItem[];
+      const items = [] as BatchUploadItem[];
 
       for (let i = 0; i < 10; i++) {
         items.push({ file: fileBuffer, options: { name: fileName } });
@@ -106,7 +93,7 @@ describe("Testing airdrop actions", () => {
         const type = "image/png";
         const fileName = "screenshot.png";
         const fileBuffer = fs.readFileSync(testDataPath + fileName);
-        await airdropeeAkordInstance.stack.create(vaultId, fileBuffer, { name: fileName, mimeType: type });
+        await airdropeeAkordInstance.file.upload(fileBuffer, { vaultId: vaultId, name: fileName, mimeType: type });
       }).rejects.toThrow(NotEnoughStorage);
     });
   });
@@ -130,7 +117,7 @@ describe("Testing airdrop actions", () => {
         }
       ]);
 
-      const items = [] as StackCreateItem[];
+      const items = [] as BatchUploadItem[];
 
       for (let i = 0; i < batchSize; i++) {
         items.push({ file: testDataPath + firstFileName });

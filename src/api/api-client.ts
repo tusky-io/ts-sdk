@@ -5,21 +5,22 @@ import { Membership, MembershipKeys } from "../types/membership";
 import { Transaction } from "../types/transaction";
 import { nextToken, isPaginated, Paginated } from "../types/paginated";
 import { Vault } from "../types/vault";
-import { Auth } from "@akord/akord-auth";
+import { Auth } from "../auth";
 import { Unauthorized } from "../errors/unauthorized";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { NotFound } from "../errors/not-found";
 import { User, UserPublicInfo } from "../types/user";
-import { FileVersion, StorageType } from "../types";
+import { File } from "../types";
 import fetch from "cross-fetch";
 import { jsonToBase64 } from "@akord/crypto";
-import { ZipLog } from "../types/zip";
 import { Storage } from "../types/storage";
 import { Logger } from "../logger";
 import FormData from "form-data";
 import { Buffer } from "buffer";
 import { httpClient } from "./http";
+import { StreamConverter } from "../util/stream-converter";
+import { FileLike } from "../types/file";
 
 
 const CONTENT_RANGE_HEADER = "Content-Range";
@@ -47,6 +48,7 @@ export class ApiClient {
   private _parentId: string;
 
   // request body
+  private _file: FileLike;
   private _tags: Tags;
   private _state: any; // vault/node/membership json state
   private _overrideState: boolean // if true, the state will be overwritten instead of being merged
@@ -71,7 +73,6 @@ export class ApiClient {
   private _isPublic: boolean;
   private _totalBytes: number;
   private _uploadedBytes: number;
-  private _storage: StorageType;
 
   constructor() {
     this._httpClient = httpClient;
@@ -97,7 +98,6 @@ export class ApiClient {
     clone._isPublic = this._isPublic;
     clone._totalBytes = this._totalBytes;
     clone._uploadedBytes = this._uploadedBytes;
-    clone._storage = this._storage;
     return clone;
   }
 
@@ -127,11 +127,6 @@ export class ApiClient {
     return this;
   }
 
-  storage(storage: StorageType): ApiClient {
-    this._storage = storage;
-    return this;
-  }
-
   vaultId(vaultId: string): ApiClient {
     this._vaultId = vaultId;
     return this;
@@ -144,6 +139,11 @@ export class ApiClient {
 
   data(data: any): ApiClient {
     this._data = data;
+    return this;
+  }
+
+  file(file: any): ApiClient {
+    this._file = file;
     return this;
   }
 
@@ -285,15 +285,6 @@ export class ApiClient {
   /**
    *
    * @uses:
-   * - data()
-   */
-  async updateUser(): Promise<any> {
-    return await this.fetch("put", `${this._apiurl}/${this._userUri}`);
-  }
-
-  /**
-   *
-   * @uses:
    * - vaultId()
    */
   async deleteVault(): Promise<void> {
@@ -424,20 +415,10 @@ export class ApiClient {
    * Get files for currently authenticated user
    * @uses:
    * - queryParams() - limit, nextToken
-   * @returns {Promise<Paginated<FileVersion>>}
+   * @returns {Promise<Paginated<File>>}
    */
-  async getFiles(): Promise<Paginated<FileVersion>> {
+  async getFiles(): Promise<Paginated<File>> {
     return await this.get(`${this._uploadsurl}/${this._fileUri}`);
-  }
-
-  /**
-   * Get zip upload logs for currently authenticated user
-   * @uses:
-   * - queryParams() - limit, nextToken
-   * @returns {Promise<Paginated<ZipLog>>}
-   */
-  async getZipLogs(): Promise<Paginated<ZipLog>> {
-    return await this.get(`${this._apiurl}/${this._zipsUri}`);
   }
 
   async getTransactionTags(): Promise<Tags> {
@@ -548,7 +529,7 @@ export class ApiClient {
    * - metadata()
    * @returns {Promise<{ id: string, object: T }>}
    */
-  async transaction<T>(): Promise<{ id: string; object: T }> {
+  async transaction<T>(): Promise<T> {
     if (!this._vaultId) {
       throw new BadRequest(
         "Missing vault id to post transaction. Use ApiClient#vaultId() to add it"
@@ -565,17 +546,83 @@ export class ApiClient {
       );
     }
 
-    this.data({
-      input: this._input,
-      tags: this._tags,
-      metadata: this._metadata,
-      state: this._state,
-      overrideState: this._overrideState
-    });
-    const { id, object } = await this.post(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}`
-    );
-    return { id, object };
+    const auth = await Auth.getAuthorization();
+    if (!auth) {
+      throw new Unauthorized("Authentication is required to use Akord API");
+    }
+
+    const me = this;
+    let headers = {
+      Authorization: auth,
+      "Content-Type": "multipart/form-data",
+    } as Record<string, string>;
+
+    const form = new FormData();
+
+    console.log(this)
+
+    form.append("input", JSON.stringify(this._input));
+    form.append("tags", JSON.stringify(this._tags));
+    if (this._metadata) {
+      form.append("metadata", JSON.stringify(this._metadata));
+    }
+    if (this._state) {
+      form.append("state", JSON.stringify(this._state));
+    }
+
+    console.log(form)
+
+    if (this._file) {
+      try {
+        const buffer = await this._file.arrayBuffer()
+        // const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        form.append("file", Buffer.from(buffer), { filename: this._file.name });
+      } catch (e) {
+        form.append("file", this._file, {
+          filename: "file",
+          contentType: "application/octet-stream",
+        });
+        headers = { ...headers, ...form.getHeaders() };
+      }
+    }
+
+    const config = {
+      method: "post",
+      url: `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}?${new URLSearchParams(
+        this._queryParams
+      ).toString()}`,
+      data: form,
+      headers: headers,
+      signal: this._cancelHook ? this._cancelHook.signal : null,
+      onUploadProgress(progressEvent) {
+        if (me._progressHook) {
+          let percentageProgress;
+          let bytesProgress;
+          if (me._totalBytes) {
+            bytesProgress = progressEvent.loaded;
+            percentageProgress = Math.round(
+              (bytesProgress / me._totalBytes) * 100
+            );
+          } else {
+            bytesProgress = progressEvent.loaded;
+            percentageProgress = Math.round(
+              (bytesProgress / progressEvent.total) * 100
+            );
+          }
+          me._progressHook(percentageProgress, bytesProgress, me._progressId);
+        }
+      },
+    } as AxiosRequestConfig;
+
+    Logger.log(`Request ${config.method}: ` + config.url);
+
+    try {
+      const response = await this._httpClient(config);
+      return response.data;
+    } catch (error) {
+      console.log(error)
+      throwError(error.response?.status, error.response?.data?.msg, error);
+    }
   }
 
   /**
@@ -635,7 +682,6 @@ export class ApiClient {
     const headers = {
       Authorization: auth,
       Tags: jsonToBase64(this._tags),
-      "Storage-Class": this._storage?.replace(":", ""),
       "Content-Type": "application/octet-stream",
     } as Record<string, string>;
 
@@ -754,88 +800,13 @@ export class ApiClient {
       };
     }
 
-    const url = `${this._apiurl}/files/${this._resourceId}`;
+    const url = `${this._apiurl}/files/${this._resourceId}/data`;
 
     Logger.log(`Request ${config.method}: ` + url);
 
     try {
       const response = await fetch(url, config);
       return { resourceUrl: this._resourceId, response: response };
-    } catch (error) {
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
-  }
-
-  /**
-   *
-   * @requires:
-   * - data()
-   * @uses:
-   * - progressHook()
-   * - cancelHook()
-   * @returns {Promise<string[]>}
-   */
-  async uploadZip(): Promise<{ sourceId: string; multipartToken?: string }> {
-    const auth = await Auth.getAuthorization();
-    if (!auth) {
-      throw new Unauthorized("Authentication is required to use Akord API");
-    }
-    const me = this;
-    let headers;
-    headers = {
-      Authorization: auth,
-      "Content-Type": "multipart/form-data",
-    } as Record<string, string>;
-
-    let form;
-    const buffer = this._data ? Buffer.from(this._data) : Buffer.alloc(0);
-    const blob = new Blob([buffer], { type: "application/octet-stream" });
-
-    try {
-      form = new FormData();
-      form.append("file", blob, "file");
-    } catch (e) {
-      form = new FormData();
-      form.append("file", buffer, {
-        filename: "file",
-        contentType: "application/octet-stream",
-      });
-      headers = { ...headers, ...form.getHeaders() };
-    }
-
-    const config = {
-      method: "post",
-      url: `${this._uploadsurl}/${this._zipsUri}?${new URLSearchParams(
-        this._queryParams
-      ).toString()}`,
-      data: form,
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-      onUploadProgress(progressEvent) {
-        if (me._progressHook) {
-          let percentageProgress;
-          let bytesProgress;
-          if (me._totalBytes) {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / me._totalBytes) * 100
-            );
-          } else {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / progressEvent.total) * 100
-            );
-          }
-          me._progressHook(percentageProgress, bytesProgress, me._progressId);
-        }
-      },
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    try {
-      const response = await this._httpClient(config);
-      return response.data;
     } catch (error) {
       throwError(error.response?.status, error.response?.data?.msg, error);
     }

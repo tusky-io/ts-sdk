@@ -10,10 +10,9 @@ import {
   deriveAddress,
   EncryptedKeys
 } from "@akord/crypto";
-import { protocolTags, functions, encryptionTags, smartweaveTags } from '../../constants';
-import { Vault } from "../../types/vault";
+import { protocolTags, functions, encryptionTags } from '../../constants';
+import { DefaultVaults, Vault } from "../../types/vault";
 import { Tag, Tags } from "../../types/contract";
-import { NodeLike } from "../../types/node";
 import { Membership } from "../../types/membership";
 import { Object, ObjectType } from "../../types/object";
 import { EncryptOptions, EncryptedPayload } from "@akord/crypto/lib/types";
@@ -21,6 +20,7 @@ import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 import { getEncryptedPayload } from "../common";
 import { EncryptionMetadata } from "../../types/encryption";
 import { Signer } from "../../signer";
+import { Folder, File } from "../../types";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
@@ -35,7 +35,7 @@ class Service {
   vaultId: string
   parentId: string
   objectId: string
-  objectType: ObjectType
+  type: ObjectType
   isPublic: boolean
   vault: Vault
   object: Object
@@ -44,7 +44,7 @@ class Service {
 
   function: functions
   tags: string[] // akord tags for easier search
-  arweaveTags: Tags // arweave tx tags
+  txTags: Tags // transaction tags
   userAgent: string // client name
 
   constructor(config: ServiceConfig) {
@@ -59,10 +59,11 @@ class Service {
     this.actionRef = config.actionRef;
     this.objectId = config.objectId;
     this.isPublic = config.isPublic;
+    this.type = config.type;
     this.object = config.object;
     this.groupRef = config.groupRef;
     this.tags = config.tags || [];
-    this.arweaveTags = config.arweaveTags || [];
+    this.txTags = config.txTags || [];
     this.userAgent = config.userAgent;
   }
 
@@ -91,15 +92,15 @@ class Service {
     this.actionRef = actionRef;
   }
 
-  setObjectType(objectType: ObjectType) {
-    this.objectType = objectType;
+  setType(type: ObjectType) {
+    this.type = type;
   }
 
   setFunction(functionName: functions) {
     this.function = functionName;
   }
 
-  setObject(object: NodeLike | Membership | Vault) {
+  setObject(object: File | Folder | Membership | Vault) {
     this.object = object;
   }
 
@@ -119,6 +120,37 @@ class Service {
     // remove falsy values
     this.tags = tags?.filter((tag: string) => tag) || [];
   }
+
+  // async validateOrCreateDefaultVault(options: VaultOptions = {}): Promise<string> {
+  //   let vaultId: string;
+  //   if (options.vaultId) {
+  //     const vault = await this.api.getVault(options.vaultId);
+  //     if (vault.cloud && !options.cloud) {
+  //       throw new BadRequest("Context mismatch. Cloud option colliding with vault provided in the vault id option.")
+  //     }
+  //     vaultId = options.vaultId;
+  //   } else {
+  //     if (!options.public) {
+  //       // const { items: defaultVaults } = await this.service.api.getVaults({ default: true });
+  //       const defaultVaults = [];
+  //       if (options.cloud) {
+  //         const defaultPrivateCloudVault = defaultVaults.find((vault) => vault.private && vault.cloud);
+  //         vaultId = defaultPrivateCloudVault?.id;
+  //       } else {
+  //         const defaultPrivatePermaVault = defaultVaults.find((vault) => vault.private && !vault.cloud);
+  //         vaultId = defaultPrivatePermaVault?.id;
+  //       }
+  //       if (!vaultId) {
+  //         Logger.log("Creating vault...")
+  //         const vaultModule = new VaultModule(this);
+  //         const vaultResult = await vaultModule.create(options.cloud ? DefaultVaults.DEFAULT_PRIVATE_CLOUD : DefaultVaults.DEFAULT_PRIVATE_PERMA, { public: false, cloud: options.cloud })
+  //         console.log(vaultResult.object)
+  //         vaultId = vaultResult.vaultId;
+  //       }
+  //     }
+  //   }
+  //   return vaultId;
+  // }
 
   async processWriteString(data: string): Promise<string> {
     if (this.isPublic) return data;
@@ -175,7 +207,7 @@ class Service {
       new Tag(protocolTags.SIGNER_ADDRESS, await this.signer.getAddress()),
       new Tag(protocolTags.VAULT_ID, this.vaultId),
       new Tag(protocolTags.TIMESTAMP, JSON.stringify(Date.now())),
-      new Tag(protocolTags.NODE_TYPE, this.objectType),
+      new Tag(protocolTags.NODE_TYPE, this.type),
       new Tag(protocolTags.PUBLIC, this.isPublic ? "true" : "false"),
     ]
     if (this.groupRef) {
@@ -185,7 +217,7 @@ class Service {
       tags.push(new Tag(protocolTags.ACTION_REF, this.actionRef));
     }
     if (this.userAgent) {
-      tags.push(new Tag(smartweaveTags.APP_NAME, this.userAgent));
+      tags.push(new Tag("User-Agent", this.userAgent));
     }
     this.tags
       ?.filter(tag => tag)
@@ -254,12 +286,6 @@ class Service {
     };
   }
 
-  async getCurrentState(): Promise<any> {
-    return this.object?.data?.length > 0
-      ? await this.api.getNodeState(this.object.data[this.object.data.length - 1])
-      : {};
-  }
-
   private async signData(data: any): Promise<string> {
     const signature = await this.signer.sign(jsonToBase64(data));
     return signature;
@@ -273,7 +299,7 @@ export type ServiceConfig = {
   keys?: Array<EncryptedKeys>
   vaultId?: string,
   objectId?: string,
-  objectType?: ObjectType,
+  type?: ObjectType,
   function?: functions,
   isPublic?: boolean,
   vault?: Vault,
@@ -281,7 +307,7 @@ export type ServiceConfig = {
   actionRef?: string,
   groupRef?: string,
   tags?: string[], // akord tags for easier search
-  arweaveTags?: Tags // arweave tx tags,
+  txTags?: Tags // transaction tags,
   contentType?: string,
   userAgent?: string
 }

@@ -1,21 +1,41 @@
-import { encrypted, EncryptedKeys } from "@akord/crypto";
-import { Node } from "./node";
+import { Encryptable, encrypted, EncryptedKeys } from "@akord/crypto";
 
-export class Folder extends Node {
+export class Folder extends Encryptable {
   @encrypted() name: string;
   size: number;
 
-  constructor(nodeLike: any, keys: Array<EncryptedKeys>) {
-    super(nodeLike, keys);
-    this.name = nodeLike.name;
-    this.size = nodeLike.size;
+  id: string;
+  type: string;
+  owner: string;
+  createdAt: string;
+  updatedAt: string;
+  status: string;
+
+  vaultId: string;
+  parentId?: string;
+  tags?: string[];
+
+  // vault context
+  __public__?: boolean;
+  __cloud__?: boolean;
+
+  constructor(folder: any, keys?: Array<EncryptedKeys>) {
+    super(
+      keys ? keys : folder.__keys__,
+      folder.__publicKey__
+    );
+    this.id = folder.id;
+    this.owner = folder.owner;
+    this.createdAt = folder.createdAt;
+    this.updatedAt = folder.updatedAt;
+    this.type = folder.type;
+    this.size = folder.size;
+    this.name = folder.name;
+    this.status = folder.status;
+    this.vaultId = folder.vaultId;
+    this.parentId = folder.parentId;
+    this.tags = folder.tags;
+    this.__public__ = folder.__public__;
+    this.__cloud__ = folder.__cloud__;
   }
 }
-
-export type FolderCreateResult = {
-  folderId: string,
-  transactionId: string,
-  object: Folder
-}
-
-export const ROOT_FOLDER = "null";

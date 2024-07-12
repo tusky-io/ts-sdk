@@ -8,8 +8,7 @@ import { User, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { ApiConfig } from "./config";
 import { FileGetOptions, FileUploadOptions } from "../core/file";
-import { ZipLog, ZipUploadApiOptions } from "../types/zip";
-import { FileVersion } from "../types";
+import { File} from "../types";
 import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
 
 abstract class Api {
@@ -17,7 +16,7 @@ abstract class Api {
 
   constructor() { }
 
-  abstract postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, overrideState?: boolean, metadata?: any): Promise<{ id: string, object: T }>
+  abstract postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<T>
 
   abstract initContractId(tags: Tags, state?: any): Promise<string>
 
@@ -25,13 +24,9 @@ abstract class Api {
 
   abstract getUploadState(id: string): Promise<{ resourceUri: string[] }>
 
-  abstract getZipLogs(options?: ListPaginatedApiOptions): Promise<Paginated<ZipLog>>
-
-  abstract uploadZip(file: ArrayBuffer, vaultId: string, options?: ZipUploadApiOptions): Promise<{ sourceId: string, multipartToken?: string }>
-
   abstract getContractState(vaultId: string): Promise<ContractState>
 
-  abstract getFiles(options?: ListApiOptions): Promise<Paginated<FileVersion>>
+  abstract getFiles(options?: ListApiOptions): Promise<Paginated<File>>
 
   abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
 
@@ -55,8 +50,6 @@ abstract class Api {
 
   abstract getVault(id: string, options?: VaultApiGetOptions): Promise<Vault>
 
-  abstract getNodeState(stateId: string): Promise<any>
-
   abstract getVaults(options?: ListOptions): Promise<Paginated<Vault>>
 
   abstract getMemberships(options?: ListOptions): Promise<Paginated<Membership>>
@@ -71,15 +64,7 @@ abstract class Api {
 
   abstract getTransactionTags(id: string): Promise<Tags>
 
-  abstract updateUser(name: string, avatarUri: string[]): Promise<void>
-
   abstract deleteVault(vaultId: string): Promise<void>
-
-  abstract inviteNewUser(vaultId: string, email: string, role: string, message?: string): Promise<{ id: string }>
-
-  abstract revokeInvite(vaultId: string, membershipId: string): Promise<{ id: string }>
-
-  abstract inviteResend(vaultId: string, membershipId: string): Promise<{ id: string }>
 }
 
 export {
