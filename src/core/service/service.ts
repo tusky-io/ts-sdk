@@ -59,6 +59,7 @@ class Service {
     this.actionRef = config.actionRef;
     this.objectId = config.objectId;
     this.isPublic = config.isPublic;
+    this.type = config.type;
     this.object = config.object;
     this.groupRef = config.groupRef;
     this.tags = config.tags || [];
@@ -206,7 +207,7 @@ class Service {
       new Tag(protocolTags.SIGNER_ADDRESS, await this.signer.getAddress()),
       new Tag(protocolTags.VAULT_ID, this.vaultId),
       new Tag(protocolTags.TIMESTAMP, JSON.stringify(Date.now())),
-      //new Tag(protocolTags.NODE_TYPE, this.type),
+      new Tag(protocolTags.NODE_TYPE, this.type),
       new Tag(protocolTags.PUBLIC, this.isPublic ? "true" : "false"),
     ]
     if (this.groupRef) {
