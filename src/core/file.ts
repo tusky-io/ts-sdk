@@ -1,6 +1,5 @@
 import PQueue, { AbortError } from '@esm2cjs/p-queue';
 import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES, digestRaw, initDigest } from "@akord/crypto";
-import { Service } from "./service/service";
 import { protocolTags, encryptionTags as encTags, fileTags, dataTags, status, functions, actions, objects } from "../constants";
 import { ApiClient } from "../api/api-client";
 import { FileLike, FileSource, createFileLike } from "../types/file";
@@ -54,7 +53,7 @@ class FileModule {
   } as NodeCreateOptions;
 
   constructor(config?: NodeServiceConfig) {
-    this.service = new NodeService<File>(config);
+    this.service = new NodeService<File>({ ...config, type: objects.FILE, nodeType: File });
   }
 
   // public async create(

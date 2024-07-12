@@ -1,4 +1,4 @@
-import { actions, functions, status } from "../constants";
+import { actions, functions, objects, status } from "../constants";
 import { Folder } from "../types/folder";
 import { isServer } from "../util/platform";
 import { importDynamic } from "../util/import";
@@ -36,7 +36,7 @@ class FolderModule {
   } as NodeCreateOptions;
 
   constructor(config?: NodeServiceConfig) {
-    this.service = new NodeService<Folder>(config);
+    this.service = new NodeService<Folder>({ ...config, type: objects.FOLDER, nodeType: Folder });
   }
 
   /**
