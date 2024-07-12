@@ -228,11 +228,11 @@ class BatchModule {
       service.setObjectId(item.id);
       service.setType(item.type);
       service.txTags = await service.getTxTags();
-      const { id, object } = await this.service.api.postContractTransaction<T>(service.vaultId, item.input, service.txTags);
+      const object = await this.service.api.postContractTransaction<T>(service.vaultId, item.input, service.txTags);
       const processedObject = item.type === objects.MEMBERSHIP
         ? new Membership(object)
         : await (<NodeService<T>>service).processNode(object as any, !this.service.isPublic, this.service.keys) as any;
-      result.push({ transactionId: id, object: processedObject });
+      result.push(processedObject);
     }
     return result;
   }

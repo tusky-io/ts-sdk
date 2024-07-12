@@ -56,7 +56,7 @@ class NodeService<T> extends Service {
       ...clientInput
     } as ContractInput;
 
-    const { id, object } = await this.api.postContractTransaction<T>(
+    const object = await this.api.postContractTransaction<T>(
       this.vaultId,
       input,
       this.txTags,
@@ -64,7 +64,7 @@ class NodeService<T> extends Service {
       file
     );
     const node = await this.processNode(object as any, !this.isPublic, this.keys) as any;
-    return { nodeId, transactionId: id, object: node };
+    return node;
   }
 
   async nodeUpdate<T>(stateUpdates?: any, clientInput?: { parentId?: string }, metadata?: any): Promise<{ transactionId: string, object: T }> {
@@ -76,7 +76,7 @@ class NodeService<T> extends Service {
     this.setParentId(clientInput?.parentId);
     this.txTags = await this.getTxTags();
 
-    const { id, object } = await this.api.postContractTransaction<T>(
+    const object = await this.api.postContractTransaction<T>(
       this.vaultId,
       input,
       this.txTags,
@@ -86,7 +86,7 @@ class NodeService<T> extends Service {
       metadata
     );
     const node = await this.processNode(object as any, !this.isPublic, this.keys) as any;
-    return { transactionId: id, object: node };
+    return node;
   }
 
   setParentId(parentId?: string) {

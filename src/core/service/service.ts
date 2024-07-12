@@ -206,7 +206,7 @@ class Service {
       new Tag(protocolTags.SIGNER_ADDRESS, await this.signer.getAddress()),
       new Tag(protocolTags.VAULT_ID, this.vaultId),
       new Tag(protocolTags.TIMESTAMP, JSON.stringify(Date.now())),
-      new Tag(protocolTags.NODE_TYPE, this.type),
+      //new Tag(protocolTags.NODE_TYPE, this.type),
       new Tag(protocolTags.PUBLIC, this.isPublic ? "true" : "false"),
     ]
     if (this.groupRef) {

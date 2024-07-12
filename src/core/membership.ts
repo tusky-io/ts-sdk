@@ -127,7 +127,7 @@ class MembershipModule {
       members: memberArray
     };
 
-    const { id } = await this.service.api.postContractTransaction(
+    const object = await this.service.api.postContractTransaction(
       this.service.vaultId,
       input,
       this.service.txTags,

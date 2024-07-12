@@ -36,17 +36,17 @@ export async function cleanup(vaultId: string): Promise<void> {
 
 export const vaultCreate = async (akord: Akord, cloud = true) => {
   const name = faker.random.words();
-  const termsOfAccess = faker.lorem.sentences();
-  const { vaultId, membershipId } = await akord.vault.create(name, { termsOfAccess, cloud: cloud });
+  //const termsOfAccess = faker.lorem.sentences();
+  const { id } = await akord.vault.create(name, { cloud: cloud });
 
-  const membership = await akord.membership.get(membershipId);
-  expect(membership.status).toEqual("ACCEPTED");
-  expect(membership.role).toEqual("OWNER");
+  // const membership = await akord.membership.get(membershipId);
+  // expect(membership.status).toEqual("ACCEPTED");
+  // expect(membership.role).toEqual("OWNER");
 
-  const vault = await akord.vault.get(vaultId);
+  const vault = await akord.vault.get(id);
   expect(vault.status).toEqual("ACTIVE");
   expect(vault.name).toEqual(name);
-  return { vaultId, membershipId };
+  return vault;
 }
 
 export const folderCreate = async (akord: Akord, vaultId: string, parentId?: string) => {

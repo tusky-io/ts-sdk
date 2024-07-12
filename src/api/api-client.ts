@@ -19,6 +19,8 @@ import { Logger } from "../logger";
 import FormData from "form-data";
 import { Buffer } from "buffer";
 import { httpClient } from "./http";
+import { StreamConverter } from "../util/stream-converter";
+import { FileLike } from "../types/file";
 
 
 const CONTENT_RANGE_HEADER = "Content-Range";
@@ -46,7 +48,7 @@ export class ApiClient {
   private _parentId: string;
 
   // request body
-  private _file: any;
+  private _file: FileLike;
   private _tags: Tags;
   private _state: any; // vault/node/membership json state
   private _overrideState: boolean // if true, the state will be overwritten instead of being merged
@@ -527,7 +529,7 @@ export class ApiClient {
    * - metadata()
    * @returns {Promise<{ id: string, object: T }>}
    */
-  async transaction<T>(): Promise<{ id: string; object: T }> {
+  async transaction<T>(): Promise<T> {
     if (!this._vaultId) {
       throw new BadRequest(
         "Missing vault id to post transaction. Use ApiClient#vaultId() to add it"
@@ -561,19 +563,22 @@ export class ApiClient {
 
     form.append("input", JSON.stringify(this._input));
     form.append("tags", JSON.stringify(this._tags));
-    form.append("metadata", JSON.stringify(this._metadata));
-    form.append("state", JSON.stringify(this._state));
+    if (this._metadata) {
+      form.append("metadata", JSON.stringify(this._metadata));
+    }
+    if (this._state) {
+      form.append("state", JSON.stringify(this._state));
+    }
 
     console.log(form)
 
     if (this._file) {
-      const buffer = Buffer.from(this._file);
-      const blob = new Blob([buffer], { type: "application/octet-stream" });
-
       try {
-        form.append("file", blob, "file");
+        const buffer = await this._file.arrayBuffer()
+        // const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        form.append("file", Buffer.from(buffer), { filename: this._file.name });
       } catch (e) {
-        form.append("file", buffer, {
+        form.append("file", this._file, {
           filename: "file",
           contentType: "application/octet-stream",
         });
@@ -613,8 +618,7 @@ export class ApiClient {
 
     try {
       const response = await this._httpClient(config);
-      const { id, object } = response.data;
-      return { id, object };
+      return response.data;
     } catch (error) {
       console.log(error)
       throwError(error.response?.status, error.response?.data?.msg, error);

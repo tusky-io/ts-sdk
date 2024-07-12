@@ -35,12 +35,12 @@ export default class AkordApi extends Api {
     this.config = apiConfig(config.env);
   }
 
-  public async postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<{ id: string, object: T }> {
+  public async postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<T> {
     let retryCount = 0;
     let lastError: Error;
     while (retryCount < RETRY_MAX) {
       try {
-        const { id, object } = await new ApiClient()
+        const object = await new ApiClient()
           .env(this.config)
           .vaultId(vaultId)
           .metadata(metadata)
@@ -49,8 +49,7 @@ export default class AkordApi extends Api {
           .state(state, overrideState)
           .tags(tags)
           .transaction<T>()
-        Logger.log("Uploaded contract interaction with id: " + id);
-        return { id, object };
+        return object;
       } catch (error: any) {
         lastError = error;
         Logger.error(error);

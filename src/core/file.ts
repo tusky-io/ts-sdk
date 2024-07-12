@@ -114,7 +114,7 @@ class FileModule {
     // const fileUploadResult = await fileService.create(fileLike, createOptions);
     const version = await fileService.newVersion(fileLike);
 
-    const tags = this.getFileTags(file, options);
+    const tags = this.getFileTags(fileLike, options);
 
     const { object } = await this.service.nodeCreate<File>(version, { parentId: createOptions.parentId }, tags.concat(options.txTags), fileLike);
     return object;

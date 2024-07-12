@@ -22,19 +22,20 @@ describe("Testing file & folder upload functions", () => {
     Auth.configure({ env: "carmella" });
     await Auth.signUpWithWallet(wallet);
     await Auth.signInWithWallet(wallet);
-    akord = new Akord({ signer: wallet, encrypter: wallet, env: "carmella" });
-    vaultId = (await vaultCreate(akord, true)).vaultId;
+    akord = new Akord({ signer: wallet, encrypter: wallet, env: "local" });
+    vaultId = (await vaultCreate(akord, true)).id;
+    console.log(vaultId)
   });
 
   afterAll(async () => {
     await cleanup(vaultId);
   });
   
-  // it("should upload file from path", async () => {
-  //   const { uri, fileId: responseFileId } = await akord.file.upload(testDataPath + firstFileName, { cloud: true });
-  //   fileId = responseFileId;
-  //   fileUri = uri;
-  // });
+  it("should upload file from path", async () => {
+    const { uri, fileId: responseFileId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId});
+    fileId = responseFileId;
+    fileUri = uri;
+  });
 
   // it("should download file from uri", async () => {
   //   const response = await akord.file.download(fileId);

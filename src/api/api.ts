@@ -16,7 +16,7 @@ abstract class Api {
 
   constructor() { }
 
-  abstract postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<{ id: string, object: T }>
+  abstract postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<T>
 
   abstract initContractId(tags: Tags, state?: any): Promise<string>
 

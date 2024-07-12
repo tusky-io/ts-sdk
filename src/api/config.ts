@@ -12,6 +12,12 @@ export const apiConfig = (env: string) => {
         gatewayurl: "https://akrd.io",
         uploadsurl: "https://uploads.akord.link"
       };
+    case "local":
+      return {
+        apiurl: "http://localhost:3000",
+        gatewayurl: "https://akrd.io",
+        uploadsurl: "http://localhost:3000"
+      };
     case "carmella":
     default:
       return {

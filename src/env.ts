@@ -1,1 +1,1 @@
-export type Env = 'dev' | 'v2' | 'carmella';
+export type Env = 'dev' | 'v2' | 'carmella' | 'local';

@@ -141,9 +141,9 @@ class VaultModule {
 
     const vaultState = {
       name: await this.service.processWriteString(name),
-      termsOfAccess: createOptions.termsOfAccess,
+      //termsOfAccess: createOptions.termsOfAccess,
       description: createOptions.description ? await this.service.processWriteString(createOptions.description) : undefined,
-      tags: createOptions.tags || []
+      //tags: createOptions.tags || []
     }
 
     const memberState = {
@@ -153,7 +153,7 @@ class VaultModule {
 
     const data = { vault: vaultState, membership: memberState };
 
-    const { object } = await this.service.api.postContractTransaction<Vault>(
+    const object = await this.service.api.postContractTransaction<Vault>(
       this.service.vaultId,
       { function: this.service.function },
       this.service.txTags,
