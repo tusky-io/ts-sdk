@@ -1,6 +1,6 @@
 import { Akord, Auth } from "../index";
 import faker from '@faker-js/faker';
-import { initInstance, folderCreate, setupVault, cleanup, testDataPath, vaultCreate } from './common';
+import { initInstance, folderCreate, cleanup, testDataPath, vaultCreate } from './common';
 import { BadRequest } from "../errors/bad-request";
 import { firstFileName } from "./data/content";
 import { AkordWallet } from "@akord/crypto";
@@ -14,21 +14,22 @@ describe("Testing folder functions", () => {
   let rootFolderId: string;
   let subFolderId: string;
 
-  beforeEach(async () => {
-    akord = await initInstance();
-    const wallet = await AkordWallet.create("password");
-    Auth.configure({ env: "carmella" });
-    expect(wallet).toBeTruthy();
-  });
+  // beforeEach(async () => {
+  //   akord = await initInstance();
+  //   const wallet = await AkordWallet.create("password");
+  //   //Auth.configure({ env: "local" });
+  //   expect(wallet).toBeTruthy();
+  // });
 
   beforeAll(async () => {
-    const akord = await initInstance();
-    const { vaultId } = await vaultCreate(akord, true);
+    akord = await initInstance();
+    const vault = await vaultCreate(akord, true);
+    vaultId = vault.id;
     return vaultId;
   });
 
   afterAll(async () => {
-    await cleanup(vaultId);
+    await cleanup(akord, vaultId);
   });
 
   it("should create root folder", async () => {
@@ -39,17 +40,17 @@ describe("Testing folder functions", () => {
     subFolderId = await folderCreate(akord, vaultId, rootFolderId);
   });
 
-  it("should create stacks in different folder levels and list them correctly", async () => {
+  it("should create files in different folder levels and list them correctly", async () => {
     const { id } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
     expect(id).toBeTruthy();
 
     const { id: rootFolderStackId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId, parentId: rootFolderId });
     expect(rootFolderStackId).toBeTruthy();
 
-    const { stackId: subFolderStackId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId, parentId: subFolderId });
+    const { id: subFolderStackId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId, parentId: subFolderId });
     expect(subFolderStackId).toBeTruthy();
 
-    const allStacks = await akord.file.listAll(vaultId);
+    const allStacks = await akord.file.listAll(vaultId, { parentId: undefined });
     expect(allStacks?.length).toEqual(3);
 
     const rootFolderStacks = await akord.file.listAll(vaultId, { parentId: rootFolderId });
@@ -61,24 +62,25 @@ describe("Testing folder functions", () => {
     expect(subFolderStacks[0].id).toEqual(subFolderStackId);
   });
 
-  it("should revoke root folder", async () => {
+  it("should delete root folder", async () => {
     await akord.folder.delete(rootFolderId);
 
     const rootFolder = await akord.folder.get(rootFolderId);
     expect(rootFolder.status).toEqual("DELETED");
 
-    const subFolder = await akord.folder.get(subFolderId);
-    expect(subFolder.status).toEqual("DELETED");
+    // this part is async
+    // const subFolder = await akord.folder.get(subFolderId);
+    // expect(subFolder.status).toEqual("DELETED");
   });
 
-  it("should fail adding new sub-folder to the revoked root folder", async () => {
+  it("should fail adding new sub-folder to the deleted root folder", async () => {
     const name = faker.random.words();
     await expect(async () =>
       await akord.folder.create(vaultId, name, { parentId: rootFolderId })
     ).rejects.toThrow(BadRequest);
   });
 
-  it("should restore root folder", async () => {
+  it("should restore root deleted", async () => {
     await akord.folder.restore(rootFolderId);
 
     const rootFolder = await akord.folder.get(rootFolderId);

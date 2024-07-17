@@ -1,9 +1,8 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { AxiosInstance, AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { Contract, ContractInput, Tag, Tags } from "../types/contract";
 import { Membership, MembershipKeys } from "../types/membership";
-import { Transaction } from "../types/transaction";
-import { nextToken, isPaginated, Paginated } from "../types/paginated";
+import { Transaction, TxPayload } from "../types/transaction";
+import { Paginated } from "../types/paginated";
 import { Vault } from "../types/vault";
 import { Auth } from "../auth";
 import { Unauthorized } from "../errors/unauthorized";
@@ -13,18 +12,13 @@ import { NotFound } from "../errors/not-found";
 import { User, UserPublicInfo } from "../types/user";
 import { File, Folder } from "../types";
 import fetch from "cross-fetch";
-import { jsonToBase64 } from "@akord/crypto";
 import { Storage } from "../types/storage";
 import { Logger } from "../logger";
 import FormData from "form-data";
 import { Buffer } from "buffer";
 import { httpClient } from "./http";
-import { StreamConverter } from "../util/stream-converter";
 import { FileLike } from "../types/file";
 
-
-const CONTENT_RANGE_HEADER = "Content-Range";
-const CONTENT_LOCATION_HEADER = "Content-Location";
 const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
 
 export class ApiClient {
@@ -45,19 +39,13 @@ export class ApiClient {
   // path params
   private _resourceId: string;
   private _vaultId: string;
-  private _parentId: string;
 
   // request body
   private _file: FileLike;
-  private _tags: Tags;
-  private _state: any; // vault/node/membership json state
-  private _overrideState: boolean // if true, the state will be overwritten instead of being merged
-  private _input: ContractInput;
-  private _metadata: any;
+  private _payload: TxPayload;
   private _numberOfChunks: number;
 
   // axios
-  private _data: AxiosRequestConfig["data"];
   private _httpClient: AxiosInstance;
 
   private _queryParams: any = {};
@@ -85,12 +73,9 @@ export class ApiClient {
     clone._uploadsurl = this._uploadsurl;
     clone._resourceId = this._resourceId;
     clone._vaultId = this._vaultId;
-    clone._tags = this._tags;
-    clone._state = this._state;
-    clone._input = this._input;
-    clone._metadata = this._metadata;
     clone._numberOfChunks = this._numberOfChunks;
-    clone._data = this._data;
+    clone._file = this._file;
+    clone._payload = this._payload;
     clone._queryParams = this._queryParams;
     clone._progressId = this._progressId;
     clone._progressHook = this._progressHook;
@@ -122,42 +107,18 @@ export class ApiClient {
     return this;
   }
 
-  cloud(cloud: boolean): ApiClient {
-    this.queryParams({ cloud: cloud });
-    return this;
-  }
-
   vaultId(vaultId: string): ApiClient {
     this._vaultId = vaultId;
     return this;
   }
 
-  parentId(parentId: string): ApiClient {
-    this._parentId = parentId;
-    return this;
-  }
-
-  data(data: any): ApiClient {
-    this._data = data;
+  payload(payload: any): ApiClient {
+    this._payload = payload;
     return this;
   }
 
   file(file: any): ApiClient {
     this._file = file;
-    return this;
-  }
-
-  metadata(metadata: any): ApiClient {
-    this._metadata = metadata;
-    if (metadata?.cloud) {
-      this.cloud(metadata.cloud);
-    }
-    return this;
-  }
-
-  state(state: any, override?: boolean): ApiClient {
-    this._state = state;
-    this._overrideState = override;
     return this;
   }
 
@@ -170,11 +131,6 @@ export class ApiClient {
     } else {
       this._queryParams = {};
     }
-    return this;
-  }
-
-  tags(tags: Tags): ApiClient {
-    this._tags = tags;
     return this;
   }
 
@@ -206,45 +162,27 @@ export class ApiClient {
     return this;
   }
 
-  input(input: ContractInput): ApiClient {
-    this._input = input;
-    return this;
-  }
-
   numberOfChunks(numberOfChunks: number): ApiClient {
     this._numberOfChunks = numberOfChunks;
     return this;
   }
 
-  /**
-   * Initialize a vault smart contract
-   * @uses:
-   * - tags()
-   * - state()
-   * @returns {Promise<string>}
-   */
-  async contract(): Promise<string> {
-    this.data({ tags: this._tags, state: this._state });
-    const response = await this.post(`${this._apiurl}/${this._vaultUri}`);
-    return response.id;
-  }
-
-  /**
-   * Get current vault contract state
-   * @requires:
-   * - vaultId()
-   * @returns {Promise<Contract>}
-   */
-  async getContract(): Promise<Contract> {
-    if (!this._vaultId) {
-      throw new BadRequest(
-        "Missing vault id to get contract state. Use ApiClient#vaultId() to add it"
-      );
-    }
-    return await this.public(true).get(
-      `${this._gatewayurl}/${this._contractUri}/${this._vaultId}`
-    );
-  }
+  // /**
+  //  * Get current vault contract state
+  //  * @requires:
+  //  * - vaultId()
+  //  * @returns {Promise<Contract>}
+  //  */
+  // async getContract(): Promise<Contract> {
+  //   if (!this._vaultId) {
+  //     throw new BadRequest(
+  //       "Missing vault id to get contract state. Use ApiClient#vaultId() to add it"
+  //     );
+  //   }
+  //   return await this.public(true).get(
+  //     `${this._gatewayurl}/${this._contractUri}/${this._vaultId}`
+  //   );
+  // }
 
   /**
    *
@@ -446,27 +384,6 @@ export class ApiClient {
     return await this.get(`${this._uploadsurl}/${this._fileUri}`);
   }
 
-  async getTransactionTags(): Promise<Tags> {
-    try {
-      const config = {
-        method: "head",
-        url: `${this._apiurl}/files/${this._resourceId}`,
-      };
-      Logger.log(`Request ${config.method}: ` + config.url);
-      const response = await this._httpClient(config);
-      return Object.keys(response.headers)
-        .filter((header) => header.startsWith(GATEWAY_HEADER_PREFIX))
-        .map((header) => {
-          return new Tag(
-            header.replace(GATEWAY_HEADER_PREFIX, ""),
-            response.headers[header]
-          );
-        });
-    } catch (error) {
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
-  }
-
   async invite(): Promise<{ id: string }> {
     const response = await this.post(
       `${this._apiurl}/${this._vaultUri}/${this._vaultId}/members`
@@ -520,8 +437,8 @@ export class ApiClient {
         "Content-Type": "application/json",
       },
     } as AxiosRequestConfig;
-    if (this._data) {
-      config.data = this._data;
+    if (this._payload) {
+      config.data = this._payload;
     }
     Logger.log(`Request ${config.method}: ` + config.url);
 
@@ -560,16 +477,6 @@ export class ApiClient {
         "Missing vault id to post transaction. Use ApiClient#vaultId() to add it"
       );
     }
-    if (!this._input) {
-      throw new BadRequest(
-        "Missing input to post transaction. Use ApiClient#input() to add it"
-      );
-    }
-    if (!this._tags) {
-      throw new BadRequest(
-        "Missing tags to post transaction. Use ApiClient#tags() to add it"
-      );
-    }
 
     const auth = await Auth.getAuthorization();
     if (!auth) {
@@ -586,13 +493,8 @@ export class ApiClient {
 
     console.log(this)
 
-    form.append("input", JSON.stringify(this._input));
-    form.append("tags", JSON.stringify(this._tags));
-    if (this._metadata) {
-      form.append("metadata", JSON.stringify(this._metadata));
-    }
-    if (this._state) {
-      form.append("state", JSON.stringify(this._state));
+    if (this._payload) {
+      form.append("payload", JSON.stringify(this._payload));
     }
 
     console.log(form)
@@ -648,148 +550,6 @@ export class ApiClient {
       console.log(error)
       throwError(error.response?.status, error.response?.data?.msg, error);
     }
-  }
-
-  /**
-   * Schedules transaction posting
-   * @requires:
-   * - resourceId()
-   * @uses:
-   * - tags()
-   * - public()
-   * - numberOfChunks()
-   */
-  async asyncTransaction() {
-    if (!this._resourceId) {
-      throw new BadRequest(
-        "Missing resource id to schedule transaction posting. Use ApiClient#resourceId() to add it"
-      );
-    }
-
-    this.data({
-      resourceUrl: this._resourceId,
-      tags: this._tags,
-      async: true,
-      numberOfChunks: this._numberOfChunks,
-    });
-    await this.post(`${this._apiurl}/${this._transactionUri}/${this._fileUri}`);
-  }
-
-  /**
-   *
-   * @requires:
-   * - data()
-   * @uses:
-   * - resourceId()
-   * - tags()
-   * - storage()
-   * - public()
-   * - progressHook()
-   * - cancelHook()
-   * @returns {Promise<string[]>}
-   */
-  async uploadFile(): Promise<{
-    resourceUri: string[];
-    resourceLocation: string;
-    resourceSize: number;
-  }> {
-    const auth = await Auth.getAuthorization();
-    if (!auth) {
-      throw new Unauthorized("Authentication is required to use Akord API");
-    }
-    if (!this._data) {
-      throw new BadRequest(
-        "Missing data to upload. Use ApiClient#data() to add it"
-      );
-    }
-
-    const me = this;
-    const headers = {
-      Authorization: auth,
-      Tags: jsonToBase64(this._tags),
-      "Content-Type": "application/octet-stream",
-    } as Record<string, string>;
-
-    if (this._numberOfChunks > 1) {
-      headers[CONTENT_RANGE_HEADER] = `bytes ${this._uploadedBytes}-${this._uploadedBytes + (this._data as ArrayBuffer).byteLength
-        }/${this._totalBytes}`;
-    }
-    if (this._resourceId) {
-      headers[CONTENT_LOCATION_HEADER] = this._resourceId;
-    }
-
-    this._progressId = uuidv4();
-
-    const config = {
-      method: "post",
-      url: `${this._uploadsurl}/files`,
-      data: this._data,
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-      onUploadProgress(progressEvent) {
-        if (me._progressHook) {
-          let percentageProgress;
-          let bytesProgress;
-          if (me._totalBytes) {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / me._totalBytes) * 100
-            );
-          } else {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / progressEvent.total) * 100
-            );
-          }
-          me._progressHook(percentageProgress, bytesProgress, me._progressId);
-        }
-      },
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    return await retry(async () => {
-      try {
-        const response = await this._httpClient(config);
-        console.log(response.data)
-        return {
-          resourceUri: response.data.resourceUri,
-          resourceLocation:
-            response.headers[CONTENT_LOCATION_HEADER.toLocaleLowerCase()],
-          resourceSize: this._data.byteLength,
-        };
-      } catch (error) {
-        throwError(error.response?.status, error.response?.data?.msg, error);
-      }
-    });
-  }
-
-  async getUploadState(): Promise<{ resourceUri: string[] }> {
-    if (!this._resourceId) {
-      throw new BadRequest(
-        "Missing resource id to download. Use ApiClient#resourceId() to add it"
-      );
-    }
-    const data = await this.get(
-      `${this._apiurl}/files/uploader/${this._resourceId}`
-    );
-    return {
-      resourceUri: data.resourceUri,
-    };
-  }
-
-  /**
-   *
-   * @requires:
-   * - resourceId()
-   */
-  async downloadState() {
-    if (!this._resourceId) {
-      throw new BadRequest(
-        "Missing resource id to download. Use ApiClient#resourceId() to add it"
-      );
-    }
-    return await this.get(`${this._apiurl}/states/${this._resourceId}`);
   }
 
   /**

@@ -21,7 +21,6 @@ class FolderModule {
 
   protected defaultListOptions = {
     shouldDecrypt: true,
-    parentId: undefined,
     filter: {
       status: { ne: status.DELETED }
     }

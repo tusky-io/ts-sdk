@@ -150,7 +150,7 @@ class VaultModule {
 
     const tx = await this.service.formatTransaction();
 
-    const { object } = await this.service.api.postContractTransaction<Vault>(tx);
+    const object = await this.service.api.postContractTransaction<Vault>(tx);
     const vault = await this.service.processVault(object, true, this.service.keys);
     return vault;
   }
@@ -167,7 +167,7 @@ class VaultModule {
 
     const tx = await this.service.formatTransaction();
 
-    const { object } = await this.service.api.postContractTransaction<Vault>(tx);
+    const object = await this.service.api.postContractTransaction<Vault>(tx);
     const vault = await this.service.processVault(object, true, this.service.keys);
     return vault;
   }
@@ -184,7 +184,7 @@ class VaultModule {
 
     const tx = await this.service.formatTransaction();
 
-    const { object } = await this.service.api.postContractTransaction<Vault>(tx);
+    const object = await this.service.api.postContractTransaction<Vault>(tx);
     const vault = await this.service.processVault(object, true, this.service.keys);
     return vault;
   }

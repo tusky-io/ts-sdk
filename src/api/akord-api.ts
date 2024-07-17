@@ -4,7 +4,6 @@ import { apiConfig, ApiConfig } from "./config";
 import { ApiClient } from "./api-client";
 import { Logger } from "../logger";
 import { Membership, MembershipKeys } from "../types/membership";
-import { ContractState, Tags } from "../types/contract";
 import { Vault } from "../types/vault";
 import { Transaction, TxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
@@ -34,7 +33,7 @@ export default class AkordApi extends Api {
     this.config = apiConfig(config.env);
   }
 
-  public async postContractTransaction<T>(tx: TxPayload, file?: any, metadata?: any): Promise<T> {
+  public async postContractTransaction<T>(tx: TxPayload, file?: any): Promise<T> {
     let retryCount = 0;
     let lastError: Error;
     while (retryCount < RETRY_MAX) {
@@ -42,10 +41,8 @@ export default class AkordApi extends Api {
         const object = await new ApiClient()
           .env(this.config)
           .vaultId(tx.vaultId)
-          .metadata(metadata)
           .file(file)
-          // .state(state, overrideState)
-          // .tags(tags)
+          .payload(tx)
           .transaction<T>()
         return object;
       } catch (error: any) {
@@ -72,47 +69,6 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .getMembers();
-  };
-
-  public async initContractId(tags: Tags, state?: any): Promise<string> {
-    const contractId = await new ApiClient()
-      .env(this.config)
-      .tags(tags)
-      .state(state)
-      .contract()
-    Logger.log("Created contract with id: " + contractId);
-    return contractId;
-  };
-
-  public async uploadFile(file: ArrayBuffer, tags: Tags, options: FileUploadOptions = defaultFileUploadOptions): Promise<{ resourceUri: string[], resourceLocation: string }> {
-    const uploadOptions = {
-      ...defaultFileUploadOptions,
-      ...options
-    }
-    const resource = await new ApiClient()
-      .env(this.config)
-      .file(file)
-      .tags(tags)
-      .public(uploadOptions.public)
-      .progressHook(uploadOptions.progressHook)
-      .cancelHook(uploadOptions.cancelHook)
-      .uploadFile()
-    Logger.log("Uploaded file with uri: " + resource.resourceUri);
-
-    return resource;
-  };
-
-  public async getUploadState(id: string): Promise<{ resourceUri: string[] }> {
-    try {
-      const resource = await new ApiClient()
-        .env(this.config)
-        .resourceId(id)
-        .getUploadState()
-
-      return resource;
-    } catch (error) {
-      return null; // upload state not saved yet
-    }
   };
 
   public async getFiles(options?: ListApiOptions): Promise<Paginated<File>> {
@@ -159,7 +115,7 @@ export default class AkordApi extends Api {
   public async initPayment(amountInGbs: number, options: StorageBuyOptions = {}): Promise<StorageBuyResponse> {
     return await new ApiClient()
       .env(this.config)
-      .data({ quantity: amountInGbs, ...options })
+     // .data({ quantity: amountInGbs, ...options })
       .postPayments();
   }
 
@@ -238,14 +194,6 @@ export default class AkordApi extends Api {
       .getMembershipKeys();
   };
 
-  public async getContractState(objectId: string): Promise<ContractState> {
-    const contract = await new ApiClient()
-      .env(this.config)
-      .vaultId(objectId)
-      .getContract();
-    return contract.state;
-  };
-
   public async getMemberships(options: ListOptions = {}): Promise<Paginated<Membership>> {
     return await new ApiClient()
       .env(this.config)
@@ -273,6 +221,7 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
+        parentId: options.parentId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
@@ -285,6 +234,7 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
+        parentId: options.parentId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
@@ -309,13 +259,6 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .getTransactions();
-  }
-
-  public async getTransactionTags(id: string): Promise<Tags> {
-    return await new ApiClient()
-      .env(this.config)
-      .resourceId(id)
-      .getTransactionTags();
   }
 }
 
