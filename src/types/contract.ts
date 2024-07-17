@@ -1,5 +1,5 @@
 import { Encryptable, encrypted } from "@akord/crypto";
-import { functions } from "../constants";
+import { actions } from "../constants";
 import { Membership } from "./membership";
 import { Folder } from "./folder";
 import { File } from "./file-version";
@@ -50,7 +50,7 @@ export class Tag {
 export type Tags = Tag[];
 
 export interface ContractInput {
-  function: functions,
+  function: actions,
   data?: DataInput,
   parentId?: string,
   address?: string,

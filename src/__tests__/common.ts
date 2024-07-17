@@ -37,7 +37,7 @@ export async function cleanup(vaultId: string): Promise<void> {
 export const vaultCreate = async (akord: Akord, cloud = true) => {
   const name = faker.random.words();
   //const termsOfAccess = faker.lorem.sentences();
-  const { id } = await akord.vault.create(name, { cloud: cloud });
+  const { id } = await akord.vault.create(name);
 
   // const membership = await akord.membership.get(membershipId);
   // expect(membership.status).toEqual("ACCEPTED");

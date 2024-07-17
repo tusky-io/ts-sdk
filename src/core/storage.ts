@@ -1,7 +1,6 @@
 import { Service, ServiceConfig } from "./service/service";
 import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
 
-
 class StorageModule {
   protected service: Service;
 

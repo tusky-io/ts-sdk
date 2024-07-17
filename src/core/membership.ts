@@ -1,10 +1,10 @@
-import { actions, functions, protocolTags, membershipStatus } from "../constants";
+import { actions, membershipStatus } from "../constants";
 import { v4 as uuidv4 } from "uuid";
 import { Membership, MembershipAirdropOptions, RoleType } from "../types/membership";
 import { deriveAddress, base64ToArray } from "@akord/crypto";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { ServiceConfig } from "./service/service";
-import { MembershipInput, Tag, Tags } from "../types/contract";
+import { MembershipInput } from "../types/contract";
 import { Paginated } from "../types/paginated";
 import { paginate } from "./common";
 import { MembershipService } from "./service/membership";
@@ -86,12 +86,11 @@ class MembershipModule {
     items: Array<Membership>
   }> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actions.MEMBERSHIP_AIRDROP_ACCESS);
-    this.service.setFunction(functions.MEMBERSHIP_AIRDROP_ACCESS);
+    this.service.setAction(actions.MEMBERSHIP_AIRDROP_ACCESS);
     const memberArray = [] as MembershipInput[];
     const membersMetadata = [];
     const dataArray = [] as { id: string, data: any }[];
-    const memberTags = [] as Tags;
+    const memberTags = [] as any;
     for (const member of members) {
       const membershipId = uuidv4();
       this.service.setObjectId(membershipId);
@@ -116,26 +115,18 @@ class MembershipModule {
         ...member.options
       })
       memberArray.push({ address: memberAddress, id: membershipId, role: member.role });
-      memberTags.push(new Tag(protocolTags.MEMBER_ADDRESS, memberAddress));
-      memberTags.push(new Tag(protocolTags.MEMBERSHIP_ID, membershipId));
+      // memberTags.push(new Tag(protocolTags.MEMBER_ADDRESS, memberAddress));
+      // memberTags.push(new Tag(protocolTags.MEMBERSHIP_ID, membershipId));
     }
 
-    this.service.txTags = memberTags.concat(await this.service.getTxTags());
-
     const input = {
-      function: this.service.function,
+      function: this.service.action,
       members: memberArray
     };
 
-    const object = await this.service.api.postContractTransaction(
-      this.service.vaultId,
-      input,
-      this.service.txTags,
-      dataArray,
-      undefined,
-      false,
-      { members: membersMetadata }
-    );
+    const tx = await this.service.formatTransaction();
+
+    const object = await this.service.api.postContractTransaction(tx);
     return { items: input.members as any };
   }
 
@@ -146,14 +137,11 @@ class MembershipModule {
    */
   public async leave(id: string): Promise<Membership> {
     await this.service.setVaultContextFromMembershipId(id);
-    this.service.setActionRef(actions.MEMBERSHIP_LEAVE);
-    this.service.setFunction(functions.MEMBERSHIP_LEAVE);
+    this.service.setAction(actions.MEMBERSHIP_LEAVE);
 
-    const { object } = await this.service.api.postContractTransaction<Membership>(
-      this.service.vaultId,
-      { function: this.service.function },
-      await this.service.getTxTags()
-    );
+    const tx = await this.service.formatTransaction();
+
+    const object = await this.service.api.postContractTransaction<Membership>(tx);
     return new Membership(object);
   }
 
@@ -165,10 +153,7 @@ class MembershipModule {
    */
   public async revoke(id: string): Promise<Membership> {
     await this.service.setVaultContextFromMembershipId(id);
-    this.service.setActionRef(actions.MEMBERSHIP_REVOKE_ACCESS);
-    this.service.setFunction(functions.MEMBERSHIP_REVOKE_ACCESS);
-
-    this.service.txTags = await this.service.getTxTags();
+    this.service.setAction(actions.MEMBERSHIP_REVOKE_ACCESS);
 
     let data: { id: string, value: any }[];
     if (!this.service.isPublic) {
@@ -197,12 +182,9 @@ class MembershipModule {
       }));
     }
 
-    const { object } = await this.service.api.postContractTransaction<Membership>(
-      this.service.vaultId,
-      { function: this.service.function },
-      this.service.txTags,
-      data
-    );
+    const tx = await this.service.formatTransaction();
+
+    const object = await this.service.api.postContractTransaction<Membership>(tx);
     return new Membership(object);
   }
 
@@ -213,14 +195,11 @@ class MembershipModule {
    */
   public async changeAccess(id: string, role: RoleType): Promise<Membership> {
     await this.service.setVaultContextFromMembershipId(id);
-    this.service.setActionRef(actions.MEMBERSHIP_CHANGE_ACCESS);
-    this.service.setFunction(functions.MEMBERSHIP_CHANGE_ACCESS);
+    this.service.setAction(actions.MEMBERSHIP_CHANGE_ACCESS);
 
-    const { object } = await this.service.api.postContractTransaction<Membership>(
-      this.service.vaultId,
-      { function: this.service.function, role },
-      await this.service.getTxTags()
-    );
+    const tx = await this.service.formatTransaction();
+
+    const object = await this.service.api.postContractTransaction<Membership>(tx);
     return new Membership(object);
   }
 };
