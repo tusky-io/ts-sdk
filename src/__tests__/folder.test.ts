@@ -1,8 +1,9 @@
-import { Akord } from "../index";
+import { Akord, Auth } from "../index";
 import faker from '@faker-js/faker';
-import { initInstance, folderCreate, setupVault, cleanup, testDataPath } from './common';
+import { initInstance, folderCreate, setupVault, cleanup, testDataPath, vaultCreate } from './common';
 import { BadRequest } from "../errors/bad-request";
 import { firstFileName } from "./data/content";
+import { AkordWallet } from "@akord/crypto";
 
 let akord: Akord;
 
@@ -15,10 +16,15 @@ describe("Testing folder functions", () => {
 
   beforeEach(async () => {
     akord = await initInstance();
+    const wallet = await AkordWallet.create("password");
+    Auth.configure({ env: "carmella" });
+    expect(wallet).toBeTruthy();
   });
 
   beforeAll(async () => {
-    vaultId = await setupVault();
+    const akord = await initInstance();
+    const { vaultId } = await vaultCreate(akord, true);
+    return vaultId;
   });
 
   afterAll(async () => {

@@ -1,14 +1,14 @@
 import { ContractInput, ContractState, Tags } from "../types/contract";
 import { Vault } from "../types/vault";
 import { Membership, MembershipKeys } from "../types/membership";
-import { Transaction } from "../types/transaction";
+import { Transaction, TxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, ListPaginatedApiOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { ApiConfig } from "./config";
 import { FileGetOptions, FileUploadOptions } from "../core/file";
-import { File} from "../types";
+import { File, Folder} from "../types";
 import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
 
 abstract class Api {
@@ -16,9 +16,7 @@ abstract class Api {
 
   constructor() { }
 
-  abstract postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<T>
-
-  abstract initContractId(tags: Tags, state?: any): Promise<string>
+  abstract postContractTransaction<T>(tx: TxPayload, file?: any, metadata?: any): Promise<T>
 
   abstract uploadFile(file: ArrayBuffer, tags: Tags, options?: FileUploadOptions): Promise<{ resourceUri: string[], resourceLocation: string }>
 
@@ -44,7 +42,9 @@ abstract class Api {
 
   abstract getUserPublicData(email: string): Promise<UserPublicInfo>
 
-  abstract getNode<T>(id: string, type: string, vaultId?: string): Promise<T>
+  abstract getFile(id: string): Promise<File>
+
+  abstract getFolder(id: string): Promise<Folder>
 
   abstract getMembership(id: string, vaultId?: string): Promise<Membership>
 
@@ -54,7 +54,9 @@ abstract class Api {
 
   abstract getMemberships(options?: ListOptions): Promise<Paginated<Membership>>
 
-  abstract getNodesByVaultId<T>(vaultId: string, type: string, options?: ListOptions): Promise<Paginated<T>>
+  abstract getFilesByVaultId(vaultId: string, options?: ListOptions): Promise<Paginated<File>>
+
+  abstract getFoldersByVaultId(vaultId: string, options?: ListOptions): Promise<Paginated<Folder>>
 
   abstract getMembershipsByVaultId(vaultId: string, options?: ListOptions): Promise<Paginated<Membership>>
 

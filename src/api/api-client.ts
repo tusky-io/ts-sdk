@@ -11,7 +11,7 @@ import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { NotFound } from "../errors/not-found";
 import { User, UserPublicInfo } from "../types/user";
-import { File } from "../types";
+import { File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { jsonToBase64 } from "@akord/crypto";
 import { Storage } from "../types/storage";
@@ -336,15 +336,29 @@ export class ApiClient {
   }
 
   /**
-   * Get nodes by vault id and type
+   * Get files by vault id
    * @uses:
    * - vaultId()
    * - queryParams() - type, parentId, limit, nextToken, tags, filter
    * @returns {Promise<Paginated<T>>}
    */
-  async getNodesByVaultId<T>(): Promise<Paginated<T>> {
+  async getFilesByVaultId<T>(): Promise<Paginated<T>> {
     return await this.public(true).get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._nodeUri}`
+      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/files`
+    );
+  }
+
+
+  /**
+   * Get folders by vault id
+   * @uses:
+   * - vaultId()
+   * - queryParams() - type, parentId, limit, nextToken, tags, filter
+   * @returns {Promise<Paginated<T>>}
+   */
+  async getFoldersByVaultId<T>(): Promise<Paginated<T>> {
+    return await this.public(true).get(
+      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/folders`
     );
   }
 
@@ -362,15 +376,26 @@ export class ApiClient {
   }
 
   /**
-   * Get node by id and type
+   * Get file by id
    * @uses:
    * - resourceId()
-   * - queryParams() - type
-   * @returns {Promise<T>}
+   * @returns {Promise<File>}
    */
-  async getNode<T>(): Promise<T> {
-    return await this.public(true).get(
-      `${this._apiurl}/${this._nodeUri}/${this._resourceId}`
+    async getFile(): Promise<File> {
+      return await this.get(
+        `${this._apiurl}/files/${this._resourceId}`
+      );
+    }
+
+  /**
+   * Get folder by id
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<Folder>}
+   */
+  async getFolder(): Promise<Folder> {
+    return await this.get(
+      `${this._apiurl}/folders/${this._resourceId}`
     );
   }
 

@@ -1,8 +1,7 @@
-import { actions, objects, functions, protocolTags, membershipStatus } from "../constants";
+import { actions, membershipStatus } from "../constants";
 import { v4 as uuidv4 } from "uuid";
 import { EncryptedKeys } from "@akord/crypto";
 import { Vault, VaultCreateOptions } from "../types/vault";
-import { Tag } from "../types/contract";
 import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
@@ -31,9 +30,6 @@ class VaultModule {
     public: false,
     termsOfAccess: undefined,
     description: undefined,
-    tags: [],
-    cloud: false,
-    txTags: [],
   } as VaultCreateOptions;
 
   /**
@@ -101,21 +97,15 @@ class VaultModule {
     }
     const vaultId = uuidv4();
 
-    this.service.setActionRef(actions.VAULT_CREATE);
+    this.service.setAction(actions.VAULT_CREATE);
     this.service.setIsPublic(createOptions.public);
-    this.service.setFunction(functions.VAULT_CREATE);
     this.service.setVaultId(vaultId);
     this.service.setObjectId(vaultId);
-    this.service.setAkordTags((this.service.isPublic ? [name] : []).concat(createOptions.tags));
 
     const address = await this.service.signer.getAddress();
     const membershipId = uuidv4();
 
-    this.service.txTags = [
-      new Tag(protocolTags.MEMBER_ADDRESS, address),
-      new Tag(protocolTags.MEMBERSHIP_ID, membershipId),
-    ].concat(await this.service.getTxTags());
-    createOptions.txTags?.map((tag: Tag) => this.service.txTags.push(tag));
+    this.service.setMembershipId(membershipId);
 
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
@@ -133,29 +123,17 @@ class VaultModule {
       memberService.setKeys([{ encPublicKey: keys[0].encPublicKey, encPrivateKey: keys[0].encPrivateKey }]);
     }
 
-    const vaultState = {
-      name: await this.service.processWriteString(name),
-      //termsOfAccess: createOptions.termsOfAccess,
-      description: createOptions.description ? await this.service.processWriteString(createOptions.description) : undefined,
-      //tags: createOptions.tags || []
-    }
+    this.service.setName(name);
+    this.service.setDescription(createOptions.description);
 
     const memberState = {
       keys,
       encPublicSigningKey: await memberService.processWriteString(await this.service.signer.signingPublicKey())
     }
 
-    const data = { vault: vaultState, membership: memberState };
+    const tx = await this.service.formatTransaction();
 
-    const object = await this.service.api.postContractTransaction<Vault>(
-      this.service.vaultId,
-      { function: this.service.function },
-      this.service.txTags,
-      data,
-      undefined,
-      false,
-      { cloud: createOptions.cloud }
-    );
+    const object = await this.service.api.postContractTransaction<Vault>(tx);
     const vault = await this.service.processVault(object, true, this.service.keys);
     return vault;
   }
@@ -167,20 +145,12 @@ class VaultModule {
    */
   public async rename(vaultId: string, name: string): Promise<Vault> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actions.VAULT_RENAME);
-    this.service.setFunction(functions.VAULT_UPDATE);
-    const state = {
-      name: await this.service.processWriteString(name)
-    };
-    this.service.setAkordTags(this.service.isPublic ? [name] : []);
-    this.service.txTags = await this.service.getTxTags();
+    this.service.setAction(actions.VAULT_UPDATE);
+    this.service.setName(name);
 
-    const { object } = await this.service.api.postContractTransaction<Vault>(
-      this.service.vaultId,
-      { function: this.service.function },
-      this.service.txTags,
-      state
-    );
+    const tx = await this.service.formatTransaction();
+
+    const { object } = await this.service.api.postContractTransaction<Vault>(tx);
     const vault = await this.service.processVault(object, true, this.service.keys);
     return vault;
   }
@@ -193,14 +163,11 @@ class VaultModule {
    */
   public async delete(vaultId: string): Promise<Vault> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actions.VAULT_DELETE);
-    this.service.setFunction(functions.VAULT_DELETE);
+    this.service.setAction(actions.VAULT_DELETE);
 
-    const { object } = await this.service.api.postContractTransaction<Vault>(
-      this.service.vaultId,
-      { function: this.service.function },
-      await this.service.getTxTags()
-    );
+    const tx = await this.service.formatTransaction();
+
+    const { object } = await this.service.api.postContractTransaction<Vault>(tx);
     const vault = await this.service.processVault(object, true, this.service.keys);
     return vault;
   }
@@ -213,14 +180,11 @@ class VaultModule {
    */
   public async restore(vaultId: string): Promise<Vault> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actions.VAULT_RESTORE);
-    this.service.setFunction(functions.VAULT_RESTORE);
+    this.service.setAction(actions.VAULT_RESTORE);
 
-    const { object } = await this.service.api.postContractTransaction<Vault>(
-      this.service.vaultId,
-      { function: this.service.function },
-      await this.service.getTxTags()
-    );
+    const tx = await this.service.formatTransaction();
+
+    const { object } = await this.service.api.postContractTransaction<Vault>(tx);
     const vault = await this.service.processVault(object, true, this.service.keys);
     return vault;
   }

@@ -2,7 +2,6 @@ import { Encryptable, encrypted, EncryptedKeys } from "@akord/crypto";
 import { Membership } from "./membership";
 import { Folder } from "./folder";
 import { File } from "./file-version";
-import { Tags } from "./contract";
 
 export class Vault extends Encryptable {
   id: string;
@@ -49,9 +48,6 @@ export type VaultCreateOptions = {
   public?: boolean,
   termsOfAccess?: string // if the vault is intended for professional or legal use, you can add terms of access and they must be digitally signed before accessing the vault
   description?: string,
-  tags?: string[],
-  cloud?: boolean,
-  txTags?: Tags
 }
 
 export enum DefaultVaults {

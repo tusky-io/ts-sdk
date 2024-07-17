@@ -10,17 +10,15 @@ import {
   deriveAddress,
   EncryptedKeys
 } from "@akord/crypto";
-import { protocolTags, functions, encryptionTags } from '../../constants';
-import { DefaultVaults, Vault } from "../../types/vault";
-import { Tag, Tags } from "../../types/contract";
-import { Membership } from "../../types/membership";
+import { actions } from '../../constants';
+import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
 import { EncryptOptions, EncryptedPayload } from "@akord/crypto/lib/types";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 import { getEncryptedPayload } from "../common";
 import { EncryptionMetadata } from "../../types/encryption";
 import { Signer } from "../../signer";
-import { Folder, File } from "../../types";
+import { TxPayload, TxPayloads } from "../../types";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
@@ -39,12 +37,9 @@ class Service {
   isPublic: boolean
   vault: Vault
   object: Object
-  actionRef: string
   groupRef: string
 
-  function: functions
-  tags: string[] // akord tags for easier search
-  txTags: Tags // transaction tags
+  action: actions
   userAgent: string // client name
 
   constructor(config: ServiceConfig) {
@@ -55,15 +50,12 @@ class Service {
     this.vault = config.vault;
     this.vaultId = config.vaultId;
     this.keys = config.keys;
-    this.function = config.function;
-    this.actionRef = config.actionRef;
+    this.action = config.action;
     this.objectId = config.objectId;
     this.isPublic = config.isPublic;
     this.type = config.type;
     this.object = config.object;
     this.groupRef = config.groupRef;
-    this.tags = config.tags || [];
-    this.txTags = config.txTags || [];
     this.userAgent = config.userAgent;
   }
 
@@ -88,19 +80,15 @@ class Service {
     this.groupRef = groupRef;
   }
 
-  setActionRef(actionRef: string) {
-    this.actionRef = actionRef;
-  }
-
   setType(type: ObjectType) {
     this.type = type;
   }
 
-  setFunction(functionName: functions) {
-    this.function = functionName;
+  setAction(action: actions) {
+    this.action = action;
   }
 
-  setObject(object: File | Folder | Membership | Vault) {
+  setObject(object: Object) {
     this.object = object;
   }
 
@@ -114,11 +102,6 @@ class Service {
 
   setRawDataEncryptionPublicKey(publicKey: Uint8Array) {
     this.encrypter.setRawPublicKey(publicKey);
-  }
-
-  setAkordTags(tags: string[]) {
-    // remove falsy values
-    this.tags = tags?.filter((tag: string) => tag) || [];
   }
 
   // async validateOrCreateDefaultVault(options: VaultOptions = {}): Promise<string> {
@@ -201,41 +184,30 @@ class Service {
     return this.vault.cloud;
   }
 
-  async getTxTags(): Promise<Tags> {
-    const tags = [
-      new Tag(protocolTags.FUNCTION_NAME, this.function),
-      new Tag(protocolTags.SIGNER_ADDRESS, await this.signer.getAddress()),
-      new Tag(protocolTags.VAULT_ID, this.vaultId),
-      new Tag(protocolTags.TIMESTAMP, JSON.stringify(Date.now())),
-      new Tag(protocolTags.NODE_TYPE, this.type),
-      new Tag(protocolTags.PUBLIC, this.isPublic ? "true" : "false"),
-    ]
+  async formatTransaction(): Promise<TxPayloads> {
+    const tx = {
+      action: this.action,
+      owner: await this.signer.getAddress(),
+      vaultId: this.vaultId,
+      timestamp: JSON.stringify(Date.now()),
+      type: this.type,
+      public: this.isPublic,
+      objectId: this.objectId,
+      parentId: this.parentId ? this.parentId : this.vaultId,
+    } as TxPayload;
+
     if (this.groupRef) {
-      tags.push(new Tag(protocolTags.GROUP_REF, this.groupRef));
-    }
-    if (this.actionRef) {
-      tags.push(new Tag(protocolTags.ACTION_REF, this.actionRef));
+      tx.groupId = this.groupRef;
     }
     if (this.userAgent) {
-      tags.push(new Tag("User-Agent", this.userAgent));
+      tx.userAgent = this.userAgent;
     }
-    this.tags
-      ?.filter(tag => tag)
-      ?.map((tag: string) =>
-        tag?.split(" ").join(",").split(".").join(",").split(",")
-          // remove falsy values
-          .filter((tag: string) => tag)
-          .map(
-            (value: string) =>
-              tags.push(new Tag("Topic" + ":" + value.toLowerCase(), value.toLowerCase())))
-      );
-    // remove duplicates
-    return [...new Map(tags.map(item => [item.value, item])).values()];
+    return tx;
   }
 
   async processWriteRaw(data: ArrayBuffer, options?: EncryptOptions) {
     let processedData: ArrayBuffer;
-    const tags = [] as Tags;
+    const encryptionMetadata = {} as EncryptionMetadata;
     if (this.isPublic) {
       processedData = data;
     } else {
@@ -246,14 +218,10 @@ class Service {
         throw new IncorrectEncryptionKey(error);
       }
       processedData = encryptedFile.encryptedData.ciphertext as ArrayBuffer;
-      const { address } = await this.getActiveKey();
-      tags.push(new Tag(encryptionTags.PUBLIC_ADDRESS, address));
-      tags.push(new Tag(encryptionTags.ENCRYPTED_KEY, encryptedFile.encryptedKey));
-      if (!options?.prefixCiphertextWithIv) {
-        tags.push(new Tag(encryptionTags.IV, arrayToBase64(encryptedFile.encryptedData.iv)))
-      }
+      encryptionMetadata.iv = arrayToBase64(encryptedFile.encryptedData.iv);
+      encryptionMetadata.encryptedKey = encryptedFile.encryptedKey
     }
-    return { processedData, encryptionTags: tags }
+    return { processedData, encryptionMetadata }
   }
 
   async processReadRaw(data: ArrayBuffer | string, metadata: EncryptionMetadata, shouldDecrypt = true): Promise<ArrayBuffer> {
@@ -271,6 +239,14 @@ class Service {
     } catch (error) {
       throw new IncorrectEncryptionKey(error);
     }
+  }
+
+  async nodeUpdate<T>(stateUpdates?: any, clientInput?: { parentId?: string }, metadata?: any): Promise<T> {
+    this.setParentId(clientInput?.parentId);
+
+    const tx = await this.formatTransaction();
+    const object = await this.api.postContractTransaction<T>(tx);
+    return object;
   }
 
   async processReadString(data: string, shouldDecrypt = true): Promise<string> {
@@ -300,16 +276,20 @@ export type ServiceConfig = {
   vaultId?: string,
   objectId?: string,
   type?: ObjectType,
-  function?: functions,
+  action?: actions,
   isPublic?: boolean,
   vault?: Vault,
   object?: Object,
   actionRef?: string,
   groupRef?: string,
-  tags?: string[], // akord tags for easier search
-  txTags?: Tags // transaction tags,
   contentType?: string,
   userAgent?: string
+}
+
+export type VaultOptions = {
+  vaultId?: string,
+  cloud?: boolean,
+  public?: boolean
 }
 
 export { Service };

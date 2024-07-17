@@ -25,7 +25,7 @@ jobs:
     - name: Generate Release Notes
       id: release-notes
       run: |
-        conventional-changelog -p angular -i CHANGELOG.md -s -r 1
+        conventional-changelog -p angular -i CHANGELOG.md -s -r 1 -debug
         cat CHANGELOG.md
         sed -i '1,2D' CHANGELOG.md
 

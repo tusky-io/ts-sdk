@@ -3,7 +3,8 @@ import { Encryptable, encrypted, EncryptedKeys } from "@akord/crypto";
 export class File extends Encryptable {
   @encrypted() name: string;
   id: string;
-  blobId: string; // file reference on chain
+  blobId: string; // file reference off chain
+  refId: string; // file reference on chain
   type: string;
   owner: string;
   createdAt: string;
@@ -29,6 +30,7 @@ export class File extends Encryptable {
     );
     this.id = file.id;
     this.blobId = file.blobId;
+    this.refId = file.refId;
     this.owner = file.owner;
     this.createdAt = file.createdAt;
     this.updatedAt = file.updatedAt;

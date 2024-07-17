@@ -3,19 +3,18 @@ import { Api } from "./api";
 import { apiConfig, ApiConfig } from "./config";
 import { ApiClient } from "./api-client";
 import { Logger } from "../logger";
-import { Membership, MembershipKeys, RoleType } from "../types/membership";
-import { ContractInput, ContractState, Tags } from "../types/contract";
+import { Membership, MembershipKeys } from "../types/membership";
+import { ContractState, Tags } from "../types/contract";
 import { Vault } from "../types/vault";
-import { Transaction } from "../types/transaction";
+import { Transaction, TxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, ListPaginatedApiOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { FileUploadOptions, FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
-import { File } from "../types";
+import { File, Folder } from "../types";
 import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
-import { ObjectType } from "../types/object";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -35,19 +34,18 @@ export default class AkordApi extends Api {
     this.config = apiConfig(config.env);
   }
 
-  public async postContractTransaction<T>(vaultId: string, input: ContractInput, tags: Tags, state?: any, file?: any, overrideState?: boolean, metadata?: any): Promise<T> {
+  public async postContractTransaction<T>(tx: TxPayload, file?: any, metadata?: any): Promise<T> {
     let retryCount = 0;
     let lastError: Error;
     while (retryCount < RETRY_MAX) {
       try {
         const object = await new ApiClient()
           .env(this.config)
-          .vaultId(vaultId)
+          .vaultId(tx.vaultId)
           .metadata(metadata)
           .file(file)
-          .input(input)
-          .state(state, overrideState)
-          .tags(tags)
+          // .state(state, overrideState)
+          // .tags(tags)
           .transaction<T>()
         return object;
       } catch (error: any) {
@@ -198,12 +196,18 @@ export default class AkordApi extends Api {
       .deleteVault();
   }
 
-  public async getNode<T>(id: string, type: ObjectType): Promise<T> {
+  public async getFile(id: string): Promise<File> {
     return await new ApiClient()
       .env(this.config)
       .resourceId(id)
-      .queryParams({ type })
-      .getNode();
+      .getFile();
+  };
+
+  public async getFolder(id: string): Promise<Folder> {
+    return await new ApiClient()
+      .env(this.config)
+      .resourceId(id)
+      .getFolder();
   };
 
   public async getMembership(id: string): Promise<Membership> {
@@ -264,19 +268,28 @@ export default class AkordApi extends Api {
       .getVaults();
   };
 
-  public async getNodesByVaultId<T>(vaultId: string, type: ObjectType, options: ListOptions = {}): Promise<Paginated<T>> {
+  public async getFilesByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<File>> {
     return await new ApiClient()
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
-        type,
-        parentId: options.parentId,
-        tags: JSON.stringify(options.tags ? options.tags : {}),
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
-      .getNodesByVaultId<T>();
+      .getFilesByVaultId();
+  };
+
+  public async getFoldersByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Folder>> {
+    return await new ApiClient()
+      .env(this.config)
+      .vaultId(vaultId)
+      .queryParams({
+        filter: JSON.stringify(options.filter ? options.filter : {}),
+        limit: options.limit || DEFAULT_LIMIT,
+        nextToken: options.nextToken
+      })
+      .getFoldersByVaultId();
   };
 
   public async getMembershipsByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Membership>> {

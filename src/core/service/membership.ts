@@ -1,7 +1,6 @@
-import { objects, protocolTags } from "../../constants";
+import { objects } from "../../constants";
 import { EncryptedKeys, Encrypter, base64ToArray, generateKeyPair, Keys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
-import { Tag, Tags } from "../../types/contract";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 
 class MembershipService extends Service {
@@ -21,11 +20,6 @@ class MembershipService extends Service {
     this.setObject(membership);
     this.setObjectId(membershipId);
     this.setType(this.type);
-  }
-
-  async getTxTags(): Promise<Tags> {
-    const tags = await super.getTxTags();
-    return tags.concat(new Tag(protocolTags.MEMBERSHIP_ID, this.objectId));
   }
 
   async prepareMemberKeys(publicKey: string): Promise<EncryptedKeys[]> {

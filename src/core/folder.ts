@@ -1,4 +1,4 @@
-import { actions, functions, objects, status } from "../constants";
+import { actions, status } from "../constants";
 import { Folder } from "../types/folder";
 import { isServer } from "../util/platform";
 import { importDynamic } from "../util/import";
@@ -8,12 +8,14 @@ import { FileModule } from "./file";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
-import { NodeCreateOptions, NodeService, NodeServiceConfig } from "./service/node";
+import { FolderService } from "./service/folder";
+import { ServiceConfig } from ".";
+import { v4 as uuidv4 } from "uuid";
 
 class FolderModule {
   protected type: "Folder";
 
-  protected service: NodeService<Folder>;
+  protected service: FolderService;
 
   protected parentId?: string;
 
@@ -30,13 +32,11 @@ class FolderModule {
   } as GetOptions;
 
   protected defaultCreateOptions = {
-    parentId: undefined,
-    tags: [],
-    txTags: [],
-  } as NodeCreateOptions;
+    parentId: undefined
+  } as any;
 
-  constructor(config?: NodeServiceConfig) {
-    this.service = new NodeService<Folder>({ ...config, type: objects.FOLDER, nodeType: Folder });
+  constructor(config?: ServiceConfig) {
+    this.service = new FolderService(config);
   }
 
   /**
@@ -45,17 +45,22 @@ class FolderModule {
    * @param  {NodeCreateOptions} [options] parent id, etc.
    * @returns Promise with new folder id & corresponding transaction id
    */
-  public async create(vaultId: string, name: string, options: NodeCreateOptions = this.defaultCreateOptions): Promise<Folder> {
+  public async create(vaultId: string, name: string, options: any = this.defaultCreateOptions): Promise<Folder> {
     await this.service.setVaultContext(vaultId);
-    this.service.setActionRef(actions.FOLDER_CREATE);
-    this.service.setFunction(functions.FOLDER_CREATE);
-    this.service.setAkordTags((this.service.isPublic ? [name] : []).concat(options.tags));
-    const state = {
-      name: await this.service.processWriteString(name),
-      tags: options.tags || []
-    }
-    const { object } = await this.service.nodeCreate<Folder>(state, { parentId: options.parentId }, options.txTags);
-    return object;
+    this.service.setAction(actions.FOLDER_CREATE);
+
+    this.service.setName(name);
+
+    const folderId = uuidv4();
+    this.service.setObjectId(folderId);
+
+    this.service.setParentId(options.parentId);
+
+    const tx = await this.service.formatTransaction();
+
+    const object = await this.service.api.postContractTransaction<File>(tx);
+    const folder = await this.service.processFolder(object as any, !this.service.isPublic, this.service.keys) as any;
+    return folder;
   }
 
   /**
@@ -104,8 +109,8 @@ class FolderModule {
       ...this.defaultGetOptions,
       ...options
     }
-    const nodeProto = await this.service.api.getNode<Folder>(nodeId, this.type, getOptions.vaultId);
-    const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    const nodeProto = await this.service.api.getFolder(nodeId);
+    const node = await this.service.processFolder(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
     return node;
   }
 
@@ -124,12 +129,12 @@ class FolderModule {
       ...this.defaultListOptions,
       ...options
     }
-    const response = await this.service.api.getNodesByVaultId<Folder>(vaultId, this.type, listOptions);
+    const response = await this.service.api.getFoldersByVaultId(vaultId, listOptions);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
       try {
-        const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        const node = await this.service.processFolder(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
         items.push(node);
       } catch (error) {
         errors.push({ id: nodeProto.id, error });
@@ -162,8 +167,7 @@ class FolderModule {
    */
   public async rename(id: string, name: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id, this.type);
-    this.service.setActionRef(this.type.toUpperCase() + "_RENAME");
-    this.service.setFunction(functions.FOLDER_CREATE);
+    this.service.setAction(actions.FOLDER_UPDATE);
     const state = {
       name: await this.service.processWriteString(name)
     };
@@ -176,9 +180,8 @@ class FolderModule {
    * @returns Promise with corresponding transaction id
    */
   public async move(id: string, parentId?: string, vaultId?: string): Promise<Folder> {
-    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
-    this.service.setActionRef(this.type.toUpperCase() + "_MOVE");
-    this.service.setFunction(functions.FOLDER_MOVE);
+    await this.service.setVaultContextFromNodeId(id, vaultId);
+    this.service.setAction(actions.FOLDER_MOVE);
     return ((await this.service.nodeUpdate<Folder>(null, { parentId: parentId ? parentId : vaultId })).object);
   }
 
@@ -189,9 +192,8 @@ class FolderModule {
    * @returns Promise with the updated folder
    */
   public async delete(id: string, vaultId?: string): Promise<Folder> {
-    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
-    this.service.setActionRef(this.type.toUpperCase() + "_DELETE");
-    this.service.setFunction(functions.FOLDER_DELETE);
+    await this.service.setVaultContextFromNodeId(id, vaultId);
+    this.service.setAction(actions.FOLDER_DELETE);
     return ((await this.service.nodeUpdate<Folder>()).object);
   }
 
@@ -202,9 +204,8 @@ class FolderModule {
    * @returns Promise with the updated folder
    */
   public async restore(id: string, vaultId?: string): Promise<Folder> {
-    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
-    this.service.setActionRef(this.type.toUpperCase() + "_RESTORE");
-    this.service.setFunction(functions.FOLDER_RESTORE);
+    await this.service.setVaultContextFromNodeId(id, vaultId);
+    this.service.setAction(actions.FOLDER_RESTORE);
     return ((await this.service.nodeUpdate<Folder>()).object);
   }
 };
