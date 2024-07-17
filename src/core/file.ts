@@ -1,20 +1,21 @@
 import PQueue, { AbortError } from '@esm2cjs/p-queue';
 import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES, digestRaw, initDigest } from "@akord/crypto";
-import { protocolTags, encryptionTags as encTags, fileTags, dataTags, status, functions, actions, objects } from "../constants";
+import { status, actions } from "../constants";
 import { ApiClient } from "../api/api-client";
 import { FileLike, FileSource, createFileLike } from "../types/file";
-import { Tag, Tags } from "../types/contract";
 import { BadRequest } from "../errors/bad-request";
 import { StreamConverter } from "../util/stream-converter";
 import { File } from "../types";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
-import { NodeCreateOptions, NodeService, NodeServiceConfig } from './service/node';
 import { BatchModule } from './batch';
 import { isServer } from '../util/platform';
 import { importDynamic } from '../util/import';
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
+import { FileService } from './service/file';
+import { ServiceConfig } from './service/service';
+import { v4 as uuidv4 } from "uuid";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const BYTES_IN_MB = 1000000;
@@ -30,7 +31,7 @@ class FileModule {
   protected client: ApiClient;
   protected type: "File";
 
-  protected service: NodeService<File>;
+  protected service: FileService;
 
   protected parentId?: string;
 
@@ -48,13 +49,10 @@ class FileModule {
 
   protected defaultCreateOptions = {
     parentId: undefined,
-    tags: [],
-    txTags: [],
-  } as NodeCreateOptions;
+  };
 
-  constructor(config?: NodeServiceConfig) {
-    this.service = new NodeService<File>({ ...config, type: objects.FILE, nodeType: File });
-  }
+  constructor(config?: ServiceConfig) {
+    this.service = new FileService(config);  }
 
   // public async create(
   //   file: FileLike,
@@ -91,31 +89,22 @@ class FileModule {
 
     await this.service.setVaultContext(options.vaultId);
     this.service.setParentId(options.parentId ? options.parentId : options.vaultId);
-    this.service.setActionRef(actions.FILE_CREATE);
-    this.service.setFunction(functions.FILE_CREATE);
+    this.service.setAction(actions.FILE_CREATE);
 
-    const createOptions = {
-      ...options
-    }
-
-    const fileService = new FileModule({ ...this.service, contentType: this.contentType });
-
-    const fileLike = await createFileLike(file, { ...options, name: file.name });
+    const fileLike = await createFileLike(file, { name: file.name, ...options });
 
     if (fileLike.size === 0) {
       throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
     }
 
-    const fileName = options.name || fileLike.name;
+    const fileId = uuidv4();
+    this.service.setObjectId(fileId);
 
-    this.service.setAkordTags((this.service.isPublic ? [fileName] : []).concat([]));
+    this.service.setFile(fileLike);
 
-    // const fileUploadResult = await fileService.create(fileLike, createOptions);
-    const version = await fileService.newVersion(fileLike);
+    const tx = await this.service.formatTransaction();
 
-    const tags = this.getFileTags(fileLike, options);
-
-    const object = await this.service.nodeCreate<File>(version, { parentId: createOptions.parentId }, tags.concat(options.txTags), fileLike);
+    const object = await this.service.api.postContractTransaction<File>(tx, fileLike);
     return object;
   }
 
@@ -147,8 +136,8 @@ class FileModule {
       ...this.defaultGetOptions,
       ...options
     }
-    const nodeProto = await this.service.api.getNode<File>(nodeId, this.type, getOptions.vaultId);
-    const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    const nodeProto = await this.service.api.getFile(nodeId);
+    const node = await this.service.processFile(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
     return node;
   }
 
@@ -168,12 +157,12 @@ class FileModule {
       ...this.defaultListOptions,
       ...options
     }
-    const response = await this.service.api.getNodesByVaultId<File>(vaultId, this.type, listOptions);
+    const response = await this.service.api.getFilesByVaultId(vaultId,listOptions);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
       try {
-        const node = await this.service.processNode(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        const node = await this.service.processFile(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
         items.push(node);
       } catch (error) {
         errors.push({ id: nodeProto.id, error });
@@ -206,11 +195,8 @@ class FileModule {
    */
   public async rename(id: string, name: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id, this.type);
-    this.service.setActionRef(this.type.toUpperCase() + "_RENAME");
-    this.service.setFunction(functions.FILE_UPDATE);
-    const state = {
-      name: await this.service.processWriteString(name)
-    };
+    this.service.setAction(actions.FILE_UPDATE);
+    this.service.setName(actions.FILE_UPDATE);
     return ((await this.service.nodeUpdate<File>()).object);
   }
 
@@ -220,9 +206,8 @@ class FileModule {
    * @returns Promise with corresponding transaction id
    */
   public async move(id: string, parentId?: string, vaultId?: string): Promise<File> {
-    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
-    this.service.setActionRef(this.type.toUpperCase() + "_MOVE");
-    this.service.setFunction(functions.FILE_MOVE);
+    await this.service.setVaultContextFromNodeId(id, vaultId);
+    this.service.setAction(actions.FILE_MOVE);
     return ((await this.service.nodeUpdate<File>(null, { parentId: parentId ? parentId : vaultId })).object);
   }
 
@@ -233,9 +218,8 @@ class FileModule {
    * @returns Promise with the updated file
    */
   public async delete(id: string, vaultId?: string): Promise<File> {
-    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
-    this.service.setActionRef(this.type.toUpperCase() + "_DELETE");
-    this.service.setFunction(functions.FILE_DELETE);
+    await this.service.setVaultContextFromNodeId(id, vaultId);
+    this.service.setAction(actions.FILE_DELETE);
     return ((await this.service.nodeUpdate<File>()).object);
   }
 
@@ -246,9 +230,8 @@ class FileModule {
    * @returns Promise with the updated file
    */
   public async restore(id: string, vaultId?: string): Promise<File> {
-    await this.service.setVaultContextFromNodeId(id, this.type, vaultId);
-    this.service.setActionRef(this.type.toUpperCase() + "_RESTORE");
-    this.service.setFunction(functions.FILE_RESTORE);
+    await this.service.setVaultContextFromNodeId(id, vaultId);
+    this.service.setAction(actions.FILE_RESTORE);
     return ((await this.service.nodeUpdate<File>()).object);
   }
 
@@ -266,7 +249,7 @@ class FileModule {
       if (!this.service.keys && file.metadata.vaultId) {
         await this.service.setVaultContext(file.metadata.vaultId);
       } else {
-        const file = await this.service.api.getNode<File>(id, objects.FILE);
+        const file = await this.service.api.getFile(id);
         await this.service.setVaultContext(file.vaultId);
       }
       stream = await this.service.encrypter.decryptStream(file.fileData as ReadableStream, encryptedKey, streamChunkSize, iv);
@@ -303,30 +286,31 @@ class FileModule {
 
   private async uploadInternal(
     file: FileLike,
-    tags: Tags,
+    tags: any,
     options: FileUploadOptions = {}
   ): Promise<FileUploadResult> {
     const isPublic = options.public || this.service.isPublic;
     let encryptedKey: string;
-    const { processedData, encryptionTags } = await this.service.processWriteRaw(await file.arrayBuffer(), { prefixCiphertextWithIv: true, encode: false });
-    const resourceHash = await digestRaw(new Uint8Array(processedData));
-    const fileSignatureTags = await this.getFileSignatureTags(resourceHash)
-    const resource = await this.service.api.uploadFile(processedData, tags.concat(encryptionTags).concat(fileSignatureTags), options);
+    const { processedData, encryptionMetadata } = await this.service.processWriteRaw(await file.arrayBuffer(), { prefixCiphertextWithIv: true, encode: false });
+    const fileHash = await digestRaw(new Uint8Array(processedData));
+    const fileSignature = await this.service.signer.sign(fileHash);
+    // TODO: signature & encryption metadata
+    const resource = await this.service.api.uploadFile(processedData, []);
     const resourceUri = resource.resourceUri;
-    resourceUri.push(`hash:${resourceHash}`);
+    resourceUri.push(`hash:${fileHash}`);
     if (!isPublic) {
-      encryptedKey = encryptionTags.find((tag) => tag.name === encTags.ENCRYPTED_KEY).value;
+      encryptedKey = encryptionMetadata.encryptedKey;
     }
     return {
       resourceUri: resourceUri,
-      resourceHash: resourceHash,
+      resourceHash: fileHash,
       encryptedKey: encryptedKey,
     }
   }
 
   private async uploadChunked(
     file: FileLike,
-    tags: Tags,
+    tags: any,
     options: FileUploadOptions
   ): Promise<FileUploadResult> {
 
@@ -350,7 +334,7 @@ class FileModule {
     // upload the first chunk
     const chunkedResource = await this.uploadChunk(file, chunkSize, 0, { digestObject, tags: tags });
     const resourceChunkSize = chunkedResource.resourceSize;
-    const encryptedKey = chunkedResource.tags.find((tag) => tag.name === encTags.ENCRYPTED_KEY)?.value;
+    const encryptedKey = chunkedResource.encryptionMetadata.encryptedKey;
 
     // upload the chunks in parallel
     let sourceOffset = chunkSize;
@@ -378,10 +362,10 @@ class FileModule {
     }
 
     // upload the last chunk
-    const resourceHash = digestObject.getHash("B64")
-    const fileSignatureTags = await this.getFileSignatureTags(resourceHash)
-    const fileTags = tags.concat(fileSignatureTags);
-    const resource = await this.uploadChunk(file, chunkSize, sourceOffset, { digestObject, encryptedKey, targetOffset, tags: fileTags, location: chunkedResource.resourceLocation });
+    const fileHash = digestObject.getHash("B64")
+    const fileSignature = await this.service.signer.sign(fileHash);
+    // TODO: signature & encryption metadata
+    const resource = await this.uploadChunk(file, chunkSize, sourceOffset, { digestObject, encryptedKey, targetOffset, tags: [], location: chunkedResource.resourceLocation });
 
     // polling loop
     if (!options.cloud) {
@@ -401,29 +385,15 @@ class FileModule {
       numberOfChunks: numberOfChunks,
       chunkSize: chunkSizeWithNonceAndIv,
       encryptedKey: encryptedKey,
-      resourceHash: resourceHash,
+      resourceHash: fileHash,
     };
-  }
-
-  public async newVersion(file: FileLike, uploadResult?: FileUploadResult): Promise<File> {
-    const version = new File({
-      owner: await this.service.signer.getAddress(),
-      createdAt: JSON.stringify(Date.now()),
-      name: await this.service.processWriteString(file.name),
-      type: file.type,
-      size: file.size,
-      // resourceUri: uploadResult.resourceUri,
-      // numberOfChunks: uploadResult.numberOfChunks,
-      // chunkSize: uploadResult.chunkSize
-    });
-    return version;
   }
 
   private async uploadChunk(
     file: FileLike,
     chunkSize: number = DEFAULT_CHUNK_SIZE_IN_BYTES,
     offset: number = 0,
-    options: { digestObject?: any, encryptedKey?: string, location?: string, tags?: Tags, targetOffset?: number } = {}) {
+    options: { digestObject?: any, encryptedKey?: string, location?: string, tags?: any, targetOffset?: number } = {}) {
     const chunk = file.slice(offset, offset + chunkSize);
     const arrayBuffer = await chunk.arrayBuffer();
     const data = await this.service.processWriteRaw(arrayBuffer, { encryptedKey: options.encryptedKey, prefixCiphertextWithIv: true, encode: false });
@@ -441,50 +411,8 @@ class FileModule {
       client.resourceId(options.location);
     }
 
-    if (options.tags && options.tags.length > 0) {
-      client.tags([...options.tags, ...data.encryptionTags]);
-    }
-
     const res = await client.uploadFile();
-    return { ...res, tags: data.encryptionTags };
-  }
-
-  getFileTags(file: FileLike, options: FileUploadOptions = {}): Tags {
-    const tags = [] as Tags;
-    if (this.service.isPublic) {
-      tags.push(new Tag(fileTags.FILE_NAME, file.name))
-      if (file.lastModified) {
-        tags.push(new Tag(fileTags.FILE_MODIFIED_AT, file.lastModified.toString()));
-      }
-    }
-    tags.push(new Tag(fileTags.FILE_SIZE, file.size));
-    tags.push(new Tag(fileTags.FILE_TYPE, file.type || DEFAULT_FILE_TYPE));
-    if (options.chunkSize) {
-      tags.push(new Tag(fileTags.FILE_CHUNK_SIZE, options.chunkSize));
-    }
-    tags.push(new Tag("Content-Type", this.contentType || file.type || DEFAULT_FILE_TYPE));
-    tags.push(new Tag(protocolTags.TIMESTAMP, JSON.stringify(Date.now())));
-    tags.push(new Tag(dataTags.DATA_TYPE, "File"));
-    tags.push(new Tag(protocolTags.VAULT_ID, this.service.vaultId));
-    if (this.service.parentId) {
-      tags.push(new Tag(protocolTags.PARENT_ID, this.service.parentId));
-    }
-
-    if (this.service.userAgent) {
-      tags.push(new Tag("User-Agent", this.service.userAgent));
-    }
-
-    options.txTags?.map((tag: Tag) => tags.push(tag));
-    return tags;
-  }
-
-  private async getFileSignatureTags(resourceHash: string): Promise<Tags> {
-    const signature = await this.service.signer.sign(resourceHash);
-    return [
-      new Tag(protocolTags.SIGNER_ADDRESS, await this.service.signer.getAddress()),
-      new Tag(protocolTags.SIGNATURE, signature),
-      new Tag(fileTags.FILE_HASH, resourceHash)
-    ];
+    return { ...res, encryptionMetadata: data.encryptionMetadata };
   }
 };
 
@@ -510,7 +438,6 @@ export type FileOptions = {
 
 export type FileUploadOptions = Hooks & FileOptions & {
   public?: boolean,
-  txTags?: Tags,
   chunkSize?: number,
   cloud?: boolean,
   parentId?: string,

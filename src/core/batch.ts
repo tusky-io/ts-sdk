@@ -1,17 +1,16 @@
 import { v4 as uuidv4 } from "uuid";
 import PQueue, { AbortError } from "@esm2cjs/p-queue";
 import { Service, ServiceConfig } from "../core";
-import { NodeService } from "./service/node";
 import { FileLike, FileSource, createFileLike } from "../types/file";
-import { Membership } from "../types/membership";
 import { EMPTY_FILE_ERROR_MESSAGE, FileModule, FileUploadOptions, Hooks } from "./file";
-import { actions, functions, objects } from "../constants";
+import { actions, objects } from "../constants";
 import { ContractInput, Tags } from "../types/contract";
 import { ObjectType } from "../types/object";
 import { BadRequest } from "../errors/bad-request";
 import { File, Folder } from "../types";
 import lodash from "lodash";
-import { MembershipService } from "./service/membership";
+import { FileService } from "./service/file";
+import { FolderService } from "./service/folder";
 
 class BatchModule {
 
@@ -95,8 +94,7 @@ class BatchModule {
     this.service.setIsPublic(vault.public);
     await this.service.setMembershipKeys(vault);
     this.setGroupRef(items);
-    this.service.setActionRef(actions.FILE_CREATE);
-    this.service.setFunction(functions.FILE_CREATE);
+    this.service.setAction(actions.FILE_CREATE);
 
     const mergedOptions = {
       ...options,
@@ -143,18 +141,15 @@ class BatchModule {
 
       const name = createOptions.name ? createOptions.name : item.file.name;
 
-      const service = new NodeService<File>({ ...this.service, type: objects.FILE, nodeType: File });
-
+      const service = new FileService(this.service);
 
       const nodeId = uuidv4();
       service.setObjectId(nodeId);
 
-      service.setAkordTags(service.isPublic ? [name] : []);
       service.setParentId(createOptions.parentId ? createOptions.parentId : service.vaultId);
-      service.txTags = await service.getTxTags();
 
       try {
-        postTxQ.add(() => uploadFileTx(service as NodeService<File>, item, options, name), { signal: options.cancelHook?.signal })
+        postTxQ.add(() => uploadFileTx(service, item, options, name), { signal: options.cancelHook?.signal })
       } catch (error) {
         if (!(error instanceof AbortError) && !options.cancelHook?.signal?.aborted) {
           errors.push({ name: name, message: error.toString(), error });
@@ -162,24 +157,11 @@ class BatchModule {
       }
     }
 
-    const uploadFileTx = async (service: NodeService<File>, item: UploadItem, options: BatchUploadOptions, name: string) => {
+    const uploadFileTx = async (service: FileService, item: UploadItem, options: BatchUploadOptions, name: string) => {
       try {
-        const input = {
-          function: service.function,
-          parentId: item.options?.parentId
-        };
-        const fileService = new FileModule(service);
-        const version = await fileService.newVersion(item.file);
-        const tags = fileService.getFileTags(item.file, item.options);
-        const { object } = await service.api.postContractTransaction<File>(
-          service.vaultId,
-          input,
-          tags.concat(service.txTags),
-          version,
-          item.file
-        );
-        const file = await new NodeService<File>({ ...service, type: objects.FILE, nodeType: File })
-          .processNode(object, !service.isPublic, service.keys);
+        const fileModule = new FileModule(service);
+        const object = await fileModule.upload(item.file, item.options);
+        const file = await new FileService(service).processFile(object, !service.isPublic, service.keys);
         if (options.onFileCreated) {
           await options.onFileCreated(file);
         }
@@ -209,29 +191,29 @@ class BatchModule {
     this.setGroupRef(items);
     const result = [] as { transactionId: string, object: T }[];
     for (const [itemIndex, item] of items.entries()) {
-      const node = item.type === objects.MEMBERSHIP
-        ? await this.service.api.getMembership(item.id)
-        : await this.service.api.getNode<File | Folder>(item.id, item.type);
+
+      const node = item.type === objects.FOLDER
+        ? await this.service.api.getFile(item.id)
+        : await this.service.api.getFolder(item.id);
 
       if (itemIndex === 0 || this.service.vaultId !== node.vaultId) {
         this.service.setVaultId(node.vaultId);
         this.service.setIsPublic(node.__public__);
         await this.service.setMembershipKeys(node);
       }
-      const service = item.type === objects.MEMBERSHIP
-        ? new MembershipService(this.service)
-        : new NodeService<T>(<any>this.service);
+      const service = item.type === objects.FOLDER
+        ? new FolderService(this.service)
+        : new FileService(this.service);
 
-      service.setFunction(item.input.function);
-      service.setActionRef(item.actionRef);
+      service.setAction(item.input.function);
       service.setObject(node);
       service.setObjectId(item.id);
       service.setType(item.type);
-      service.txTags = await service.getTxTags();
-      const object = await this.service.api.postContractTransaction<T>(service.vaultId, item.input, service.txTags);
-      const processedObject = item.type === objects.MEMBERSHIP
-        ? new Membership(object)
-        : await (<NodeService<T>>service).processNode(object as any, !this.service.isPublic, this.service.keys) as any;
+      const tx = await service.formatTransaction();
+      const object = await this.service.api.postContractTransaction<T>(tx);
+      const processedObject = item.type === objects.FOLDER
+        ? await new FolderService().processFolder(object as any, !this.service.isPublic, this.service.keys)
+        : await new FileService().processFile(object as any, !this.service.isPublic, this.service.keys) as any;
       result.push(processedObject);
     }
     return result;
