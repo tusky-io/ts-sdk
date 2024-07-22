@@ -4,10 +4,17 @@ import { Membership, MembershipAirdropOptions, RoleType } from "../types/members
 import { deriveAddress, base64ToArray } from "@akord/crypto";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { ServiceConfig } from "./service/service";
-import { MembershipInput } from "../types/contract";
 import { Paginated } from "../types/paginated";
 import { paginate } from "./common";
 import { MembershipService } from "./service/membership";
+
+type MembershipInput = {
+  id: string,
+  address: string,
+  role: string,
+  data?: string
+}
+
 
 class MembershipModule {
   protected service: MembershipService;

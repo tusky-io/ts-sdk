@@ -157,7 +157,7 @@ class FileModule {
       ...this.defaultListOptions,
       ...options
     }
-    const response = await this.service.api.getFilesByVaultId(vaultId,listOptions);
+    const response = await this.service.api.getFilesByVaultId(vaultId, listOptions);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
@@ -283,138 +283,7 @@ class FileModule {
       return url;
     }
   }
-
-  private async uploadInternal(
-    file: FileLike,
-    tags: any,
-    options: FileUploadOptions = {}
-  ): Promise<FileUploadResult> {
-    const isPublic = options.public || this.service.isPublic;
-    let encryptedKey: string;
-    const { processedData, encryptionMetadata } = await this.service.processWriteRaw(await file.arrayBuffer(), { prefixCiphertextWithIv: true, encode: false });
-    const fileHash = await digestRaw(new Uint8Array(processedData));
-    const fileSignature = await this.service.signer.sign(fileHash);
-    // TODO: signature & encryption metadata
-    const resource = await this.service.api.uploadFile(processedData, []);
-    const resourceUri = resource.resourceUri;
-    resourceUri.push(`hash:${fileHash}`);
-    if (!isPublic) {
-      encryptedKey = encryptionMetadata.encryptedKey;
-    }
-    return {
-      resourceUri: resourceUri,
-      resourceHash: fileHash,
-      encryptedKey: encryptedKey,
-    }
-  }
-
-  private async uploadChunked(
-    file: FileLike,
-    tags: any,
-    options: FileUploadOptions
-  ): Promise<FileUploadResult> {
-
-    const isPublic = options.public || this.service.isPublic
-    const chunkSize = options.chunkSize || DEFAULT_CHUNK_SIZE_IN_BYTES;
-    const chunkSizeWithNonceAndIv = isPublic ? chunkSize : chunkSize + AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES;
-    const numberOfChunks = Math.ceil(file.size / chunkSize);
-    const fileSize = isPublic ? file.size : file.size + numberOfChunks * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES);
-
-    this.client = new ApiClient()
-      .env(this.service.api.config)
-      .public(this.service.isPublic)
-      .tags(tags)
-      .numberOfChunks(numberOfChunks)
-      .totalBytes(fileSize)
-      .progressHook(options.progressHook)
-      .cancelHook(options.cancelHook)
-
-    const digestObject = initDigest();
-
-    // upload the first chunk
-    const chunkedResource = await this.uploadChunk(file, chunkSize, 0, { digestObject, tags: tags });
-    const resourceChunkSize = chunkedResource.resourceSize;
-    const encryptedKey = chunkedResource.encryptionMetadata.encryptedKey;
-
-    // upload the chunks in parallel
-    let sourceOffset = chunkSize;
-    let targetOffset = resourceChunkSize;
-    const chunksQ = new PQueue({ concurrency: CHUNKS_CONCURRENCY });
-    const chunks = [];
-    while (sourceOffset + chunkSize < file.size) {
-      const localSourceOffset = sourceOffset;
-      const localTargetOffset = targetOffset;
-      chunks.push(
-        () => this.uploadChunk(file, chunkSize, localSourceOffset, { digestObject, encryptedKey, targetOffset: localTargetOffset, location: chunkedResource.resourceLocation }),
-      )
-      sourceOffset += chunkSize;
-      targetOffset += resourceChunkSize;
-    }
-    try {
-      await chunksQ.addAll(chunks, { signal: options.cancelHook?.signal });
-    } catch (error) {
-      if (!(error instanceof AbortError) && !options.cancelHook?.signal?.aborted) {
-        throw error;
-      }
-    }
-    if (options.cancelHook?.signal?.aborted) {
-      throw new AbortError();
-    }
-
-    // upload the last chunk
-    const fileHash = digestObject.getHash("B64")
-    const fileSignature = await this.service.signer.sign(fileHash);
-    // TODO: signature & encryption metadata
-    const resource = await this.uploadChunk(file, chunkSize, sourceOffset, { digestObject, encryptedKey, targetOffset, tags: [], location: chunkedResource.resourceLocation });
-
-    // polling loop
-    if (!options.cloud) {
-      const uri = chunkedResource.resourceLocation.split(":")[0];
-      while (true) {
-        await new Promise(resolve => setTimeout(resolve, UPLOADER_POLLING_RATE_IN_MILLISECONDS));
-        const state = await this.service.api.getUploadState(uri);
-        if (state && state.resourceUri) {
-          resource.resourceUri = state.resourceUri;
-          break;
-        }
-      }
-    }
-
-    return {
-      resourceUri: resource.resourceUri,
-      numberOfChunks: numberOfChunks,
-      chunkSize: chunkSizeWithNonceAndIv,
-      encryptedKey: encryptedKey,
-      resourceHash: fileHash,
-    };
-  }
-
-  private async uploadChunk(
-    file: FileLike,
-    chunkSize: number = DEFAULT_CHUNK_SIZE_IN_BYTES,
-    offset: number = 0,
-    options: { digestObject?: any, encryptedKey?: string, location?: string, tags?: any, targetOffset?: number } = {}) {
-    const chunk = file.slice(offset, offset + chunkSize);
-    const arrayBuffer = await chunk.arrayBuffer();
-    const data = await this.service.processWriteRaw(arrayBuffer, { encryptedKey: options.encryptedKey, prefixCiphertextWithIv: true, encode: false });
-    if (options.digestObject) {
-      options.digestObject.update(new Uint8Array(data.processedData));
-    }
-
-    const loadedBytes = options.targetOffset ?? offset;
-    const client = this.client
-      .clone()
-      .data(data.processedData)
-      .loadedBytes(loadedBytes);
-
-    if (options.location) {
-      client.resourceId(options.location);
-    }
-
-    const res = await client.uploadFile();
-    return { ...res, encryptionMetadata: data.encryptionMetadata };
-  }
-};
+}
 
 export type FileUploadResult = {
   resourceUri: string[],

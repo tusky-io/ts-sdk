@@ -1,13 +1,12 @@
-import { ContractInput, ContractState, Tags } from "../types/contract";
 import { Vault } from "../types/vault";
 import { Membership, MembershipKeys } from "../types/membership";
 import { Transaction, TxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
-import { ListApiOptions, ListOptions, ListPaginatedApiOptions, VaultApiGetOptions } from "../types/query-options";
+import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { ApiConfig } from "./config";
-import { FileGetOptions, FileUploadOptions } from "../core/file";
+import { FileGetOptions } from "../core/file";
 import { File, Folder} from "../types";
 import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
 
@@ -17,12 +16,6 @@ abstract class Api {
   constructor() { }
 
   abstract postContractTransaction<T>(tx: TxPayload, file?: any, metadata?: any): Promise<T>
-
-  abstract uploadFile(file: ArrayBuffer, tags: Tags, options?: FileUploadOptions): Promise<{ resourceUri: string[], resourceLocation: string }>
-
-  abstract getUploadState(id: string): Promise<{ resourceUri: string[] }>
-
-  abstract getContractState(vaultId: string): Promise<ContractState>
 
   abstract getFiles(options?: ListApiOptions): Promise<Paginated<File>>
 
@@ -63,8 +56,6 @@ abstract class Api {
   abstract getMembers(vaultId: string): Promise<Array<Membership>>
 
   abstract getTransactions(vaultId: string): Promise<Array<Transaction>>
-
-  abstract getTransactionTags(id: string): Promise<Tags>
 
   abstract deleteVault(vaultId: string): Promise<void>
 }

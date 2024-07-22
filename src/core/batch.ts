@@ -4,7 +4,6 @@ import { Service, ServiceConfig } from "../core";
 import { FileLike, FileSource, createFileLike } from "../types/file";
 import { EMPTY_FILE_ERROR_MESSAGE, FileModule, FileUploadOptions, Hooks } from "./file";
 import { actions, objects } from "../constants";
-import { ContractInput, Tags } from "../types/contract";
 import { ObjectType } from "../types/object";
 import { BadRequest } from "../errors/bad-request";
 import { File, Folder } from "../types";
@@ -186,7 +185,7 @@ class BatchModule {
     return { data, errors, cancelled: 0 };
   }
 
-  private async batchUpdate<T>(items: { id: string, type: ObjectType, input: ContractInput, actionRef: string }[])
+  private async batchUpdate<T>(items: { id: string, type: ObjectType, actionRef: string }[])
     : Promise<{ transactionId: string, object: T }[]> {
     this.setGroupRef(items);
     const result = [] as { transactionId: string, object: T }[];
@@ -205,7 +204,7 @@ class BatchModule {
         ? new FolderService(this.service)
         : new FileService(this.service);
 
-      service.setAction(item.input.function);
+     // service.setAction(item.input.function);
       service.setObject(node);
       service.setObjectId(item.id);
       service.setType(item.type);
@@ -252,13 +251,6 @@ export const batchProgressCount = (batchSize: number, options: BatchUploadOption
     }
     options.progressHook = itemProgressHook;
   }
-}
-
-export type TransactionPayload = {
-  vaultId: string,
-  input: ContractInput,
-  tags: Tags,
-  state?: any
 }
 
 export type BatchUploadItem = {
