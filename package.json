@@ -7,7 +7,7 @@
   "scripts": {
     "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
     "build": "rm -r lib || true && tsc -p .",
-    "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1",
+    "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1"
   },
   "files": [
     "lib/**/*.js",
