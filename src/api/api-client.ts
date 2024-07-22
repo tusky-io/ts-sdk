@@ -601,18 +601,6 @@ export class ApiClient {
     const data = await this.get(`${this._apiurl}/storage-balance`);
     return new Storage(data);
   }
-
-  async postPayments(): Promise<any> {
-    const data = await this.post(`${this._apiurl}/payments`);
-    return data;
-  }
-
-  async confirmPayment(paymentId: string): Promise<any> {
-    const data = await this.post(
-      `${this._apiurl}/payments/${paymentId}/confirm`
-    );
-    return data;
-  }
 }
 
 function delay(ms: number): Promise<void> {

@@ -8,7 +8,7 @@ import { EncryptionMetadata } from "../types/encryption";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder} from "../types";
-import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
+import { Storage } from "../types/storage";
 
 abstract class Api {
   config: ApiConfig
@@ -22,10 +22,6 @@ abstract class Api {
   abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
 
   abstract getStorageBalance(): Promise<Storage>
-  
-  abstract initPayment(amountInGbs: number, options: StorageBuyOptions): Promise<StorageBuyResponse>
-
-  abstract confirmPayment(paymentId: string): Promise<StorageBuyResponse>
 
   abstract getMembershipKeys(vaultId: string): Promise<MembershipKeys>
 

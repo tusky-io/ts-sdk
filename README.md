@@ -773,37 +773,6 @@ const storage = await akord.storage.get();
 ```
 </details>
 
-#### `buy()`
-Pay for storage. Increases Permanent Storage balance 
-- returns `Promise<StorageBuyResponse>` - Promise with price `amount` & `currencyCode`. Contains `paymentId` for non sumulated payments.
-
-<details>
-  <summary>example</summary>
-
-```js
-const gigabytesToBuy = 2;
-const { amount, currencyCode } = await akord.storage.buy(gigabytesToBuy, { simulate: true }); // no actual payment, just check price
-```
-</details>
-
-<details>
-  <summary>example</summary>
-
-```js
-const { paymentId, amount, currencyCode } = await akord.storage.buy(3); // initiate payment for 3 GB's: no storage increase yet, no payment yet
-
-await akord.storage.buy({ paymentId }); // confirm the payment: storage increase after successful payment
-```
-</details>
-
-<details>
-  <summary>example</summary>
-
-```js
-const { paymentId, amount, currencyCode } = await akord.storage.buy(3, { currencyCode: 'EUR', confirm: true }); // auto-confirm payment for 3 GB's: storage increase after successful payment
-```
-</details>
-
 ### Development
 ```
 yarn install

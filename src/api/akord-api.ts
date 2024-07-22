@@ -7,13 +7,13 @@ import { Membership, MembershipKeys } from "../types/membership";
 import { Vault } from "../types/vault";
 import { Transaction, TxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
-import { ListApiOptions, ListOptions, ListPaginatedApiOptions, VaultApiGetOptions } from "../types/query-options";
+import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
-import { FileUploadOptions, FileGetOptions } from "../core/file";
+import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
-import { Storage, StorageBuyOptions, StorageBuyResponse } from "../types/storage";
+import { Storage } from "../types/storage";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -110,19 +110,6 @@ export default class AkordApi extends Api {
     return await new ApiClient()
       .env(this.config)
       .getStorageBalance();
-  }
-
-  public async initPayment(amountInGbs: number, options: StorageBuyOptions = {}): Promise<StorageBuyResponse> {
-    return await new ApiClient()
-      .env(this.config)
-     // .data({ quantity: amountInGbs, ...options })
-      .postPayments();
-  }
-
-  public async confirmPayment(paymentId: string): Promise<StorageBuyResponse> {
-    return await new ApiClient()
-      .env(this.config)
-      .confirmPayment(paymentId);
   }
 
   public async existsUser(email: string): Promise<Boolean> {
