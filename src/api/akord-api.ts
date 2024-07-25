@@ -5,7 +5,7 @@ import { ApiClient } from "./api-client";
 import { Logger } from "../logger";
 import { Membership, MembershipKeys } from "../types/membership";
 import { Vault } from "../types/vault";
-import { Transaction, TxPayload } from "../types/transaction";
+import { FolderTxPayload, Transaction, TxPayload, VaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
@@ -64,6 +64,44 @@ export default class AkordApi extends Api {
     throw lastError;
   };
 
+  public async createFolder(tx: FolderTxPayload): Promise<{ folder: Folder, digest: string, bytes: string }> {
+    return  await new ApiClient()
+    .env(this.config)
+    .vaultId(tx.vaultId)
+    .groupId(tx.groupId)
+    .parentId(tx.parentId)
+    .owner(tx.owner)
+    .groupId(tx.groupId)
+    .objectId(tx.objectId)
+    .timestamp(tx.timestamp)
+    .autoExecute(tx.autoExecute)
+    .name(tx.name)
+    .createFolder();
+  };
+
+  public async createVault(tx: VaultTxPayload): Promise<{ vault: Vault, digest: string, bytes: string }> {
+    return  await new ApiClient()
+    .env(this.config)
+    .groupId(tx.groupId)
+    .owner(tx.owner)
+    .groupId(tx.groupId)
+    .objectId(tx.objectId)
+    .membershipId(tx.membershipId)
+    .public(tx.public)
+    .timestamp(tx.timestamp)
+    .autoExecute(tx.autoExecute)
+    .name(tx.name)
+    .createVault();
+  };
+
+  public async postTransaction(digest: string, signature: string): Promise<any> {
+    return  await new ApiClient()
+    .env(this.config)
+    .digest(digest)
+    .signature(signature)
+    .postTransaction();
+  };
+
   public async getMembers(vaultId: string): Promise<Array<Membership>> {
     return await new ApiClient()
       .env(this.config)
@@ -97,7 +135,6 @@ export default class AkordApi extends Api {
         fileData = StreamConverter.fromAsyncIterable(response.body as unknown as AsyncIterable<Uint8Array>);
       }
     }
-    console.log(response.headers)
     const metadata = {
       encryptedKey: response.headers.get("x-amz-meta-encrypted-key") || response.headers.get("x-amz-meta-encryptedkey"),
       iv: response.headers.get("x-amz-meta-initialization-vector") || response.headers.get("x-amz-meta-iv"),

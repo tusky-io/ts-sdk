@@ -34,6 +34,8 @@
     "@akord/crypto": "0.21.56",
     "@akord/ts-cacheable": "1.0.13",
     "@esm2cjs/p-queue": "^7.3.0",
+    "@mysten/enoki": "^0.3.5",
+    "@mysten/sui": "^1.3.0",
     "agentkeepalive": "^4.5.0",
     "amazon-cognito-identity-js": "6.1.2",
     "axios": "0.27.2",

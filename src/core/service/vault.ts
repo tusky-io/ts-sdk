@@ -25,6 +25,7 @@ class VaultService extends Service {
       tx.description =  await this.processWriteString(this.description);
     }
     tx.membershipId = this.membershipId;
+    tx.public = this.isPublic;
     return tx;
   }
 

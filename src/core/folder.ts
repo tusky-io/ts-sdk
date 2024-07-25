@@ -57,9 +57,14 @@ class FolderModule {
 
     const tx = await this.service.formatTransaction();
 
-    const object = await this.service.api.postContractTransaction<File>(tx);
-    const folder = await this.service.processFolder(object as any, !this.service.isPublic, this.service.keys) as any;
-    return folder;
+    const { folder, digest, bytes } = await this.service.api.createFolder(tx);
+
+    if (!tx.autoExecute) {
+      const signature = await this.service.signer.sign(bytes);
+      await this.service.api.postTransaction(digest, signature);
+    }
+
+    return await this.service.processFolder(folder as any, !this.service.isPublic, this.service.keys) as any;
   }
 
   /**

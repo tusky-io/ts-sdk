@@ -133,9 +133,14 @@ class VaultModule {
 
     const tx = await this.service.formatTransaction();
 
-    const object = await this.service.api.postContractTransaction<Vault>(tx);
-    const vault = await this.service.processVault(object, true, this.service.keys);
-    return vault;
+    const { vault, digest, bytes } = await this.service.api.createVault(tx);
+
+    if (!tx.autoExecute) {
+      const signature = await this.service.signer.sign(bytes);
+      await this.service.api.postTransaction(digest, signature);
+    }
+
+    return await this.service.processVault(vault, true, this.service.keys);
   }
 
   /**

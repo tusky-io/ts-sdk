@@ -16,6 +16,7 @@ export interface Transaction {
 }
 
 export interface TxPayload {
+  name: string
   action: actions,
   timestamp: string,
   owner: string,
@@ -26,7 +27,9 @@ export interface TxPayload {
   type: objects,
   status: string,
   userAgent: string,
-  groupId: string
+  groupId: string,
+  signature: string,
+  autoExecute: boolean
 }
 
 export interface VaultTxPayload extends TxPayload {
