@@ -1,10 +1,11 @@
-import { Blob } from "buffer";
 import { NotFound } from "../errors/not-found";
 import { BadRequest } from "../errors/bad-request";
 import { isServer } from "../util/platform";
 import { importDynamic } from "../util/import";
 import { DEFAULT_FILE_TYPE, FileOptions } from "../core/file";
 import { getMimeTypeFromFileName } from "../util/mime-types";
+
+globalThis.Blob = globalThis.Blob || importDynamic("buffer").Blob;
 
 export namespace NodeJs {
   export class File extends Blob {
