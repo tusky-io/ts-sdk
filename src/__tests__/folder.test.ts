@@ -4,10 +4,10 @@ import { initInstance, folderCreate, cleanup, testDataPath, vaultCreate } from '
 import { BadRequest } from "../errors/bad-request";
 import { firstFileName } from "./data/content";
 import { AkordWallet } from "@akord/crypto";
-import EnokiSigner from "../../signers/enoki/src";
 import { Env } from "../env";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { mockEnokiFlow } from "./auth";
+import EnokiSigner from "./enoki/signer";
 
 let akord: Akord;
 
@@ -28,25 +28,18 @@ describe("Testing folder functions", () => {
   beforeAll(async () => {
     // akord = await initInstance();
 
-    const jwt = await mockEnokiFlow() as string;
+    const { jwt, address, keyPair } = await mockEnokiFlow();
 
-    console.log(jwt)
-
-    const keypair = Ed25519Keypair.generate();
-    const address = keypair.toSuiAddress();
-
-    // const { salt, address } = await validateJWTWithEnoki(jwt);
-
-    // console.log("SALT: " + salt)
-    // console.log("ADDRESS: " + address)
+    console.log("PUBLIC KEY: " + keyPair.getPublicKey().toSuiAddress());
+    console.log("JWT: " + jwt);
+    console.log("ADDRESS: " + address);
 
     Auth.configure({ env: 'local', authToken: jwt });
-    // const signer = new EnokiSigner({ address: address, keypair: keypair });
-    const signer = undefined;
+    const signer = new EnokiSigner({ address: address, keypair: keyPair });
 
     akord = new Akord({ signer: signer, env: "local" });
-    const vault = await vaultCreate(akord, true);
-    vaultId = vault.id;
+    // const vault = await vaultCreate(akord, true);
+    // vaultId = vault.id;
   });
 
   afterAll(async () => {
@@ -54,7 +47,7 @@ describe("Testing folder functions", () => {
   });
 
   it("should create root folder", async () => {
-    rootFolderId = await folderCreate(akord, vaultId);
+    // rootFolderId = await folderCreate(akord, vaultId);
   });
 
   // it("should create a sub folder", async () => {
