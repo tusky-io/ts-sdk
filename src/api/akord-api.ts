@@ -5,7 +5,7 @@ import { ApiClient } from "./api-client";
 import { Logger } from "../logger";
 import { Membership, MembershipKeys } from "../types/membership";
 import { Vault } from "../types/vault";
-import { FolderTxPayload, Transaction, TxPayload, VaultTxPayload } from "../types/transaction";
+import { FileTxPayload, FolderTxPayload, Transaction, TxPayload, VaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
@@ -68,15 +68,21 @@ export default class AkordApi extends Api {
     return  await new ApiClient()
     .env(this.config)
     .vaultId(tx.vaultId)
+    .parentId(tx.parentId)
+    .name(tx.name)
+    .groupId(tx.groupId)
+    .autoExecute(tx.autoExecute)
+    .createFolder();
+  };
+
+  public async uploadFile(tx: FileTxPayload): Promise<{ file: File, digest: string, bytes: string }> {
+    return  await new ApiClient()
+    .env(this.config)
+    .file(tx.file)
     .groupId(tx.groupId)
     .parentId(tx.parentId)
-    .owner(tx.owner)
-    .groupId(tx.groupId)
-    .objectId(tx.objectId)
-    .timestamp(tx.timestamp)
     .autoExecute(tx.autoExecute)
-    .name(tx.name)
-    .createFolder();
+    .uploadFile();
   };
 
   public async createVault(tx: VaultTxPayload): Promise<{ vault: Vault, digest: string, bytes: string }> {

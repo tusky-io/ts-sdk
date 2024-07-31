@@ -1,6 +1,6 @@
 import { Vault } from "../types/vault";
 import { Membership, MembershipKeys } from "../types/membership";
-import { FolderTxPayload, Transaction, TxPayload, TxPayloads, VaultTxPayload } from "../types/transaction";
+import { FileTxPayload, FolderTxPayload, Transaction, TxPayload, TxPayloads, VaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
@@ -16,6 +16,8 @@ abstract class Api {
   constructor() { }
 
   abstract postContractTransaction<T>(tx: TxPayload, file?: any, metadata?: any): Promise<T>
+
+  abstract uploadFile(tx: FileTxPayload):  Promise<{ file: File, digest: string, bytes: string }>
 
   abstract createFolder(tx: FolderTxPayload):  Promise<{ folder: Folder, digest: string, bytes: string }>
 

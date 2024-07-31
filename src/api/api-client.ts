@@ -29,13 +29,10 @@ export class ApiClient {
 
   // API endpoints
   private _fileUri: string = "files";
-  private _contractUri: string = "contracts";
   private _transactionUri: string = "transactions";
   private _vaultUri: string = "vaults";
-  private _nodeUri: string = "nodes";
   private _membershipUri: string = "memberships";
   private _userUri: string = "users";
-  private _zipsUri: string = "zips";
 
   // path params
   private _resourceId: string;
@@ -559,22 +556,24 @@ export class ApiClient {
   };
 
   /**
-   *
-   * @requires:
-   * - owner()
-   * - vaultId()
-   * - objectId()
-   * - timestamp()
-   * - name()
-   * @uses:
-   * - autoExecute()
-   * - parentId()
-   * @returns {Promise<any>}>}
-   */
-  async createFolder(): Promise<{ folder: Folder, digest: string, bytes: string }> {
+  *
+  * @requires:
+  * - vaultId()
+  * - file()
+  * @uses:
+  * - autoExecute()
+  * - parentId()
+  * @returns {Promise<any>}>}
+  */
+  async uploadFile(): Promise<{ file: File, digest: string, bytes: string }> {
     if (!this._vaultId) {
       throw new BadRequest(
-        "Missing vault id to post transaction. Use ApiClient#vaultId() to add it"
+        "Missing vault id parameter. Use ApiClient#vaultId() to add it"
+      );
+    }
+    if (!this._file) {
+      throw new BadRequest(
+        "Missing file input. Use ApiClient#file() to add it"
       );
     }
 
@@ -591,42 +590,102 @@ export class ApiClient {
 
     const form = new FormData();
 
-    if (this._timestamp) {
-      form.append("timestamp", this._timestamp);
+    form.append("vaultId", JSON.stringify(this._vaultId));
+
+    try {
+      const buffer = await this._file.arrayBuffer()
+      // const blob = new Blob([buffer], { type: 'application/octet-stream' });
+      form.append("file", Buffer.from(buffer), { filename: this._file.name });
+    } catch (e) {
+      form.append("file", this._file, {
+        filename: "file",
+        contentType: "application/octet-stream",
+      });
+      headers = { ...headers, ...form.getHeaders() };
     }
 
-    if (this._objectId) {
-      form.append("objectId", this._objectId);
+    const config = {
+      method: "post",
+      url: `${this._apiurl}/files?${new URLSearchParams(
+        this._queryParams
+      ).toString()}`,
+      data: form,
+      headers: headers,
+      signal: this._cancelHook ? this._cancelHook.signal : null,
+      onUploadProgress(progressEvent) {
+        if (me._progressHook) {
+          let percentageProgress;
+          let bytesProgress;
+          if (me._totalBytes) {
+            bytesProgress = progressEvent.loaded;
+            percentageProgress = Math.round(
+              (bytesProgress / me._totalBytes) * 100
+            );
+          } else {
+            bytesProgress = progressEvent.loaded;
+            percentageProgress = Math.round(
+              (bytesProgress / progressEvent.total) * 100
+            );
+          }
+          me._progressHook(percentageProgress, bytesProgress, me._progressId);
+        }
+      },
+    } as AxiosRequestConfig;
+
+    Logger.log(`Request ${config.method}: ` + config.url);
+
+    try {
+      const response = await this._httpClient(config);
+      return response.data;
+    } catch (error) {
+      console.log(error)
+      throwError(error.response?.status, error.response?.data?.msg, error);
+    }
+  }
+
+  /**
+   *
+   * @requires:
+   * - vaultId()
+   * - name()
+   * @uses:
+   * - autoExecute()
+   * - parentId()
+   * @returns {Promise<any>}>}
+   */
+  async createFolder(): Promise<{ folder: Folder, digest: string, bytes: string }> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing vault id input. Use ApiClient#vaultId() to add it"
+      );
+    }
+    if (!this._name) {
+      throw new BadRequest(
+        "Missing name input. Use ApiClient#name() to add it"
+      );
     }
 
-    if (this._vaultId) {
-      form.append("vaultId", this._vaultId);
+    const auth = await Auth.getAuthorization();
+    if (!auth) {
+      throw new Unauthorized("Authentication is required to use Akord API");
     }
 
-    if (this._name) {
-      form.append("name", this._name);
-    }
-
-    if (this._autoExecute) {
-      form.append("autoExecute", JSON.stringify(true));
-    }
-
-    if (this._owner) {
-      form.append("owner", this._objectId);
-    }
-
-    if (this._parentId) {
-      form.append("parentId", this._parentId);
-    }
-
-    console.log(form)
+    let headers = {
+      Authorization: auth,
+      "Content-Type": "application/json",
+    } as Record<string, string>;
 
     const config = {
       method: "post",
       url: `${this._apiurl}/folders?${new URLSearchParams(
         this._queryParams
       ).toString()}`,
-      data: form,
+      data: {
+        vaultId: this._vaultId,
+        parentId: this._parentId,
+        name: this._name,
+        autoExecute: true
+      },
       headers: headers,
       signal: this._cancelHook ? this._cancelHook.signal : null,
     } as AxiosRequestConfig;
@@ -645,10 +704,6 @@ export class ApiClient {
   /**
    *
    * @requires:
-   * - owner()
-   * - membershipId()
-   * - objectId()
-   * - timestamp()
    * - name()
    * @uses:
    * - autoExecute()
@@ -656,7 +711,11 @@ export class ApiClient {
    * @returns {Promise<any>}>}
    */
   async createVault(): Promise<{ vault: Vault, digest: string, bytes: string }> {
-
+    if (!this._name) {
+      throw new BadRequest(
+        "Missing name input. Use ApiClient#name() to add it"
+      );
+    }
     const auth = await Auth.getAuthorization();
     if (!auth) {
       throw new Unauthorized("Authentication is required to use Akord API");
@@ -665,45 +724,19 @@ export class ApiClient {
     const me = this;
     let headers = {
       Authorization: auth,
-      "Content-Type": "multipart/form-data",
+      "Content-Type": "application/json",
     } as Record<string, string>;
-
-    const form = new FormData();
-
-    if (this._timestamp) {
-      form.append("timestamp", this._timestamp);
-    }
-
-    if (this._objectId) {
-      form.append("objectId", this._objectId);
-    }
-
-    if (this._membershipId) {
-      form.append("membershipId", this._membershipId);
-    }
-
-    if (this._name) {
-      form.append("name", this._name);
-    }
-
-    if (this._autoExecute) {
-      form.append("autoExecute", JSON.stringify(true));
-    }
-
-    if (this._owner) {
-      form.append("owner", this._owner);
-    }
-
-    if (this._isPublic) {
-      form.append("public", JSON.stringify(true));
-    }
 
     const config = {
       method: "post",
       url: `${this._apiurl}/vaults?${new URLSearchParams(
         this._queryParams
       ).toString()}`,
-      data: form,
+      data: {
+        name: this._name,
+        public: this._isPublic,
+        autoExecute: true
+      },
       headers: headers,
       signal: this._cancelHook ? this._cancelHook.signal : null,
     } as AxiosRequestConfig;
@@ -744,23 +777,20 @@ export class ApiClient {
       throw new Unauthorized("Authentication is required to use Akord API");
     }
 
-    const me = this;
     let headers = {
       Authorization: auth,
-      "Content-Type": "multipart/form-data",
+      "Content-Type": "application/json",
     } as Record<string, string>;
-
-    const form = new FormData();
-
-    form.append("signature", JSON.stringify(this._signature));
-    form.append("digest", JSON.stringify(this._digest));
 
     const config = {
       method: "post",
       url: `${this._apiurl}/transactions?${new URLSearchParams(
         this._queryParams
       ).toString()}`,
-      data: form,
+      data: {
+        signature: this._signature,
+        digest: this._digest
+      },
       headers: headers,
       signal: this._cancelHook ? this._cancelHook.signal : null,
     } as AxiosRequestConfig;
@@ -789,7 +819,7 @@ export class ApiClient {
   async transaction<T>(): Promise<T> {
     if (!this._vaultId) {
       throw new BadRequest(
-        "Missing vault id to post transaction. Use ApiClient#vaultId() to add it"
+        "Missing vault id input. Use ApiClient#vaultId() to add it"
       );
     }
 

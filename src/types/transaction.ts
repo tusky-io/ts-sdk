@@ -43,6 +43,7 @@ export interface FolderTxPayload extends TxPayload {
 }
 
 export interface FileTxPayload extends TxPayload {
+  file: any
   name: string,
   mimeType: string,
   size: number,
