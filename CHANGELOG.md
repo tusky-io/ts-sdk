@@ -1,3 +1,10 @@
+# [0.4.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.3...v0.4.0-dev.4) (2024-07-31)
+
+
+### Features
+
+* generate enoki nonce for zklogin ([ec0914a](https://github.com/Akord-com/carmella-sdk/commit/ec0914aeaeae015fb2dc60f7b5cb9ca85720f276))
+
 # [0.4.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.2...v0.4.0-dev.3) (2024-07-31)
 
 
