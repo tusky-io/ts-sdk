@@ -7,6 +7,7 @@ import { AkordWallet } from "@akord/crypto";
 import EnokiSigner from "../../signers/enoki/src";
 import { Env } from "../env";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { mockEnokiFlow } from "./auth";
 
 let akord: Akord;
 
@@ -26,11 +27,22 @@ describe("Testing folder functions", () => {
 
   beforeAll(async () => {
     // akord = await initInstance();
+
+    const jwt = await mockEnokiFlow() as string;
+
+    console.log(jwt)
+
     const keypair = Ed25519Keypair.generate();
     const address = keypair.toSuiAddress();
 
-    Auth.configure({ env: 'local', authToken: address });
+    // const { salt, address } = await validateJWTWithEnoki(jwt);
+
+    // console.log("SALT: " + salt)
+    // console.log("ADDRESS: " + address)
+
+    Auth.configure({ env: 'local', authToken: jwt });
     const signer = new EnokiSigner({ address: address, keypair: keypair });
+
     akord = new Akord({ signer: signer, env: "local" });
     const vault = await vaultCreate(akord, true);
     vaultId = vault.id;
