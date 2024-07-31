@@ -5,10 +5,10 @@ import { importDynamic } from "../util/import";
 import { DEFAULT_FILE_TYPE, FileOptions } from "../core/file";
 import { getMimeTypeFromFileName } from "../util/mime-types";
 
-globalThis.Blob = globalThis.Blob || importDynamic("buffer").Blob;
+const BlobClass = globalThis.Blob || importDynamic("buffer").Blob;
 
 export namespace NodeJs {
-  export class File extends Blob {
+  export class File extends BlobClass {
     name: string;
     lastModified: number;
 

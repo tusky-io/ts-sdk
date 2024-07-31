@@ -47,6 +47,7 @@
     "web-streams-polyfill": "^3.2.1"
   },
   "devDependencies": {
+    "@mysten/sui": "^1.3.0",
     "@faker-js/faker": "^6.2.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.0",
