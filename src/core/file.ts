@@ -104,8 +104,8 @@ class FileModule {
 
     const tx = await this.service.formatTransaction();
 
-    const object = await this.service.api.postContractTransaction<File>(tx, fileLike);
-    return object;
+    const res = await this.service.api.uploadFile({ ...tx, file: fileLike });
+    return res.file;
   }
 
   /**

@@ -16,6 +16,7 @@ export interface Transaction {
 }
 
 export interface TxPayload {
+  name: string
   action: actions,
   timestamp: string,
   owner: string,
@@ -26,7 +27,9 @@ export interface TxPayload {
   type: objects,
   status: string,
   userAgent: string,
-  groupId: string
+  groupId: string,
+  signature: string,
+  autoExecute: boolean
 }
 
 export interface VaultTxPayload extends TxPayload {
@@ -40,6 +43,7 @@ export interface FolderTxPayload extends TxPayload {
 }
 
 export interface FileTxPayload extends TxPayload {
+  file: any
   name: string,
   mimeType: string,
   size: number,

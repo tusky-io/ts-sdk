@@ -202,6 +202,7 @@ class Service {
     if (this.userAgent) {
       tx.userAgent = this.userAgent;
     }
+    tx.autoExecute = !this.signer;
     return tx;
   }
 

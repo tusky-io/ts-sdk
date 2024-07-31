@@ -337,6 +337,7 @@ export class Auth {
     } else {
       try {
         const token = await this.getAuthToken()
+        // return token
         if (token) {
           return `Bearer ${token}`
         }
