@@ -41,7 +41,8 @@ describe("Testing folder functions", () => {
     // console.log("ADDRESS: " + address)
 
     Auth.configure({ env: 'local', authToken: jwt });
-    const signer = new EnokiSigner({ address: address, keypair: keypair });
+    // const signer = new EnokiSigner({ address: address, keypair: keypair });
+    const signer = undefined;
 
     akord = new Akord({ signer: signer, env: "local" });
     const vault = await vaultCreate(akord, true);

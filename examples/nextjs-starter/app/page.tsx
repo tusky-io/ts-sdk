@@ -25,7 +25,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { track } from "@vercel/analytics";
 import { Akord, Auth } from "@akord/carmella-sdk";
-import { EnokiSigner } from "@akord/carmella-sdk/lib/signers/enoki";
+import { EnokiSigner } from "./auth/signers/enoki";
 
 export const NETWORK = "devnet"
 export const AKORD_CONFIG = "local"
