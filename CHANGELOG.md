@@ -1,3 +1,10 @@
+# [0.4.0-dev.5](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.4...v0.4.0-dev.5) (2024-08-01)
+
+
+### Features
+
+* add file upload form in nextjs starter ([b79789e](https://github.com/Akord-com/carmella-sdk/commit/b79789e162279ea82b35f8ac06ef4e6231315d68))
+
 # [0.4.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.3...v0.4.0-dev.4) (2024-07-31)
 
 
