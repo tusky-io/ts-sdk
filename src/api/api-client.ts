@@ -590,7 +590,7 @@ export class ApiClient {
 
     const form = new FormData();
 
-    form.append("vaultId", JSON.stringify(this._vaultId));
+    form.append("vaultId", this._vaultId);
 
     try {
       const buffer = await this._file.arrayBuffer()
@@ -601,7 +601,6 @@ export class ApiClient {
         filename: "file",
         contentType: "application/octet-stream",
       });
-      headers = { ...headers, ...form.getHeaders() };
     }
 
     const config = {
@@ -866,7 +865,6 @@ export class ApiClient {
           filename: "file",
           contentType: "application/octet-stream",
         });
-        headers = { ...headers, ...form.getHeaders() };
       }
     }
 

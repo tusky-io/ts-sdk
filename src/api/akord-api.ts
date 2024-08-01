@@ -80,6 +80,7 @@ export default class AkordApi extends Api {
     .env(this.config)
     .file(tx.file)
     .groupId(tx.groupId)
+    .vaultId(tx.vaultId)
     .parentId(tx.parentId)
     .autoExecute(tx.autoExecute)
     .uploadFile();
