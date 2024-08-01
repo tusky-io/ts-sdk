@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
-import { useEnokiFlow, useZkLogin } from "@mysten/enoki/react";
+import { useEnokiFlow, useZkLogin, useZkLoginSession } from "@mysten/enoki/react";
 import { getFaucetHost, requestSuiFromFaucetV0 } from "@mysten/sui/faucet";
 import { ExternalLink, Github, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ export default function Page() {
   const client = useSuiClient(); // The SuiClient instance
   const enokiFlow = useEnokiFlow(); // The EnokiFlow instance
   const { address: suiAddress, salt } = useZkLogin(); // The zkLogin instance
+  const { jwt } = useZkLoginSession() || {};
 
   console.log("SALT: " + salt)
   console.log("ADDRESS: " + suiAddress)
@@ -43,6 +44,8 @@ export default function Page() {
   const [accountLoading, setAccountLoading] = useState<boolean>(true);
 
   const [loading, setLoading] = useState<boolean>(false);
+
+  const [akord, setAkord] = useState<Akord>(null as any);
 
   /* Folder create form state */
   const [folderName, setFolderName] = useState<string>("My first folder");
@@ -69,6 +72,19 @@ export default function Page() {
     toast.promise(promise, {
       loading: "Loggin in...",
     });
+  };
+
+  const initAkord = async (): Promise<void> => {
+    console.log(jwt)
+    if (!akord) {
+      // Get the keypair for the current user.
+      const keypair = await enokiFlow.getKeypair({ network: NETWORK as any });
+
+      Auth.configure({ env: AKORD_CONFIG, authToken: jwt });
+      const signer = new EnokiSigner({ address: suiAddress, keypair: keypair });
+      const akord = new Akord({ signer: signer, env: AKORD_CONFIG });
+      setAkord(akord);
+    }
   };
 
   /**
@@ -140,6 +156,59 @@ export default function Page() {
   };
 
   /**
+  * Upload file with Carmella SDK
+  */
+  async function fileUpload(files: FileList | null) {
+    const promise = async () => {
+      track("File upload");
+
+      if (!files || !files.length) {
+        throw new Error('Failed uploading the file')
+      }
+      const file = files[0]
+
+      setLoading(true);
+
+      await initAkord();
+
+      const vaults = await akord?.vault.listAll();
+      let vaultId;
+      if (!vaults || !vaults.length) {
+        confirm("Creating vault...")
+        vaultId = (await akord.vault.create("Vault", { public: true })).vaultId;
+        confirm("Vault created: ")
+      } else {
+        vaultId = vaults[0].id
+      }
+      confirm("Uploading file in the vault: " + vaultId)
+      const fileRes = await akord.file.upload(file, { vaultId: vaultId })
+      confirm("Uploaded file.")
+
+      return fileRes;
+    };
+
+    toast.promise(promise, {
+      loading: "File uploaded...",
+      success: (data) => {
+        return (
+          <span className="flex flex-row items-center gap-2">
+            {`File ${data} successfully uploaded! `}
+            <a
+              href={`https://suiscan.xyz/${NETWORK}/tx/${data.refId}`}
+              target="_blank"
+            >
+              <ExternalLink width={12} />
+            </a>
+          </span>
+        );
+      },
+      error: (error) => {
+        return error.message;
+      },
+    });
+  }
+
+  /**
   * Create folder with Carmella SDK
   */
   async function folderCreate() {
@@ -148,12 +217,8 @@ export default function Page() {
 
       setLoading(true);
 
-      // Get the keypair for the current user.
-      const keypair = await enokiFlow.getKeypair({ network: NETWORK as any });
-    
-      Auth.configure({ env: AKORD_CONFIG, authToken: suiAddress });
-      const signer = new EnokiSigner({ address: suiAddress, keypair: keypair });
-      const akord = new Akord({ signer: signer, env: AKORD_CONFIG });
+      await initAkord();
+
       const vaults = await akord?.vault.listAll();
       let vaultId;
       if (!vaults || !vaults.length) {
@@ -192,10 +257,12 @@ export default function Page() {
     });
   }
 
+  const appHeader = "Enoki <> Carmella SDK demo";
+
   if (suiAddress) {
     return (
       <div>
-        <h1 className="text-4xl font-bold m-4">Enoki Carmella SDK demo</h1>
+        <h1 className="text-4xl font-bold m-4">{appHeader}</h1>
         <Popover>
           <PopoverTrigger className="absolute top-4 right-4 max-w-sm" asChild>
             <div>
@@ -306,6 +373,23 @@ export default function Page() {
               </Button>
             </CardFooter>
           </Card>
+
+          <Card className="max-w-xs">
+            <CardHeader>
+              <CardTitle>File upload</CardTitle>
+              <CardDescription>
+                File upload
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="w-full flex flex-row items-center justify-center">
+              <form>
+                <input
+                  type="file"
+                  onChange={(e) => fileUpload(e.target.files)}
+                />
+              </form>
+            </CardFooter>
+          </Card>
         </div>
       </div>
     );
@@ -326,18 +410,24 @@ export default function Page() {
         </Button>
       </a>
       <div>
-        <h1 className="text-4xl font-bold m-4">Enoki Demo App</h1>
+        <h1 className="text-4xl font-bold m-4">{appHeader}</h1>
         <p className="text-md m-4 opacity-50 max-w-md">
           This is a demo app that showcases the{" "}
           <a
-            href="https://portal.enoki.mystenlabs.com"
+            href="https://docs.enoki.mystenlabs.com/"
             target="_blank"
             className="underline cursor-pointer text-blue-700 hover:text-blue-500"
           >
             Enoki
           </a>{" "}
-          zkLogin flow and sponsored transaction flow. NOTE: This example runs
-          on the <span className="text-blue-700">Sui test network</span>
+          zkLogin and {" "}
+          <a
+            href="https://github.com/Akord-com/carmella-sdk"
+            target="_blank"
+            className="underline cursor-pointer text-blue-700 hover:text-blue-500"
+          >
+            Carmella SDK
+          </a>.
         </p>
       </div>
       <Button onClick={startLogin}>Sign in with Google</Button>
