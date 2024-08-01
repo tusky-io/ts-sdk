@@ -1,3 +1,10 @@
+# [0.4.0-dev.6](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.5...v0.4.0-dev.6) (2024-08-01)
+
+
+### Bug Fixes
+
+* **file:** add vaultId parameter to upload request ([e0db794](https://github.com/Akord-com/carmella-sdk/commit/e0db79410cf38a17351ac4d06d2b190cac4d243c))
+
 # [0.4.0-dev.5](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.4...v0.4.0-dev.5) (2024-08-01)
 
 
