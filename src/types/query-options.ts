@@ -25,8 +25,7 @@ export type ListFileOptions = ListApiOptions & {
 export type SearchCriteria = "CONTAINS_SOME" | "CONTAINS_EVERY";
 
 export type GetOptions = {
-  shouldDecrypt?: boolean,
-  vaultId?: string
+  shouldDecrypt?: boolean
 }
 
 export type VaultGetOptions = GetOptions & {

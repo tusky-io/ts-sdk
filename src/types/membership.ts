@@ -59,6 +59,6 @@ export type MembershipCreateOptions = {
 
 export type MembershipAirdropOptions = {
   name?: string
-  expirationDate?: Date
+  expiresAt?: number
   allowedStorage?: number
 }

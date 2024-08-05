@@ -4,7 +4,7 @@ export class File extends Encryptable {
   @encrypted() name: string;
   id: string;
   blobId: string; // file reference off chain
-  refId: string; // file reference on chain
+  ref: string; // file reference on chain
   type: string;
   owner: string;
   createdAt: string;

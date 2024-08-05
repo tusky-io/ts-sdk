@@ -1,8 +1,7 @@
-import PQueue, { AbortError } from '@esm2cjs/p-queue';
-import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES, digestRaw, initDigest } from "@akord/crypto";
+import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES}  from "@akord/crypto";
 import { status, actions } from "../constants";
 import { ApiClient } from "../api/api-client";
-import { FileLike, FileSource, createFileLike } from "../types/file";
+import { FileSource, createFileLike } from "../types/file";
 import { BadRequest } from "../errors/bad-request";
 import { StreamConverter } from "../util/stream-converter";
 import { File } from "../types";
@@ -15,7 +14,6 @@ import { importDynamic } from '../util/import';
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
-import { v4 as uuidv4 } from "uuid";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const BYTES_IN_MB = 1000000;
@@ -97,14 +95,9 @@ class FileModule {
       throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
     }
 
-    const fileId = uuidv4();
-    this.service.setObjectId(fileId);
-
     this.service.setFile(fileLike);
 
-    const tx = await this.service.formatTransaction();
-
-    const res = await this.service.api.uploadFile({ ...tx, file: fileLike });
+    const res = await this.service.api.createFile({ vaultId: options.vaultId, file: fileLike });
     return res.file;
   }
 
@@ -137,8 +130,7 @@ class FileModule {
       ...options
     }
     const nodeProto = await this.service.api.getFile(nodeId);
-    const node = await this.service.processFile(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
-    return node;
+    return this.service.processFile(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
   }
 
   /**
@@ -183,21 +175,21 @@ class FileModule {
    */
   public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<File>> {
     const list = async (options: ListOptions & { vaultId: string }) => {
-      return await this.list(options.vaultId, options);
+      return this.list(options.vaultId, options);
     }
-    return await paginate<File>(list, { ...options, vaultId });
+    return paginate<File>(list, { ...options, vaultId });
   }
 
   /**
-   * @param  {string} id folder id
+   * @param  {string} id file id
    * @param  {string} name new name
    * @returns Promise with corresponding transaction id
    */
   public async rename(id: string, name: string): Promise<File> {
-    await this.service.setVaultContextFromNodeId(id, this.type);
-    this.service.setAction(actions.FILE_UPDATE);
-    this.service.setName(actions.FILE_UPDATE);
-    return ((await this.service.nodeUpdate<File>()).object);
+    await this.service.setVaultContextFromNodeId(id);
+    await this.service.setName(name);
+    const { file } = await this.service.api.updateFile({ id: id, name: this.service.name });
+    return file;
   }
 
   /**
@@ -205,10 +197,10 @@ class FileModule {
    * @param  {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
    * @returns Promise with corresponding transaction id
    */
-  public async move(id: string, parentId?: string, vaultId?: string): Promise<File> {
-    await this.service.setVaultContextFromNodeId(id, vaultId);
-    this.service.setAction(actions.FILE_MOVE);
-    return ((await this.service.nodeUpdate<File>(null, { parentId: parentId ? parentId : vaultId })).object);
+  public async move(id: string, parentId?: string): Promise<File> {
+    await this.service.setVaultContextFromNodeId(id);
+    const { file } = await this.service.api.updateFile({ id: id, parentId: parentId ? parentId : this.service.vaultId });
+    return file;
   }
 
   /**
@@ -217,10 +209,10 @@ class FileModule {
    * @param  {string} id file id
    * @returns Promise with the updated file
    */
-  public async delete(id: string, vaultId?: string): Promise<File> {
-    await this.service.setVaultContextFromNodeId(id, vaultId);
-    this.service.setAction(actions.FILE_DELETE);
-    return ((await this.service.nodeUpdate<File>()).object);
+  public async delete(id: string): Promise<File> {
+    // TODO: see if we should use this.service.api.deleteFile() here
+    const { file } = await this.service.api.updateFile({ id: id, status: status.DELETED });
+    return file;
   }
 
   /**
@@ -229,10 +221,9 @@ class FileModule {
    * @param  {string} id file id
    * @returns Promise with the updated file
    */
-  public async restore(id: string, vaultId?: string): Promise<File> {
-    await this.service.setVaultContextFromNodeId(id, vaultId);
-    this.service.setAction(actions.FILE_RESTORE);
-    return ((await this.service.nodeUpdate<File>()).object);
+  public async restore(id: string): Promise<File> {
+    const { file } = await this.service.api.updateFile({ id: id, status: status.ACTIVE });
+    return file;
   }
 
   public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
@@ -256,7 +247,7 @@ class FileModule {
     }
 
     if (options.responseType === 'arraybuffer') {
-      return await StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
+      return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
     }
     return stream;
   }

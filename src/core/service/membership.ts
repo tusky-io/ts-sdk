@@ -10,8 +10,8 @@ class MembershipService extends Service {
     this.type = objects.MEMBERSHIP;
   }
 
-  async setVaultContextFromMembershipId(membershipId: string, vaultId?: string) {
-    const membership = await this.api.getMembership(membershipId, vaultId);
+  async setVaultContextFromMembershipId(membershipId: string) {
+    const membership = await this.api.getMembership(membershipId);
     const vault = await this.api.getVault(membership.vaultId);
     this.setVault(vault);
     this.setVaultId(membership.vaultId);
