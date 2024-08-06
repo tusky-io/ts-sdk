@@ -210,7 +210,6 @@ class FileModule {
    * @returns Promise with the updated file
    */
   public async delete(id: string): Promise<File> {
-    // TODO: see if we should use this.service.api.deleteFile() here
     const { file } = await this.service.api.updateFile({ id: id, status: status.DELETED });
     return file;
   }

@@ -27,7 +27,6 @@ export interface UpdateVaultTxPayload {
   status?: string
 }
 
-
 export interface CreateFolderTxPayload {
   vaultId: string,
   name: string,

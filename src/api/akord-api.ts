@@ -2,7 +2,7 @@ import { ClientConfig } from "../config";
 import { Api } from "./api";
 import { apiConfig, ApiConfig } from "./config";
 import { ApiClient } from "./api-client";
-import { Membership, MembershipKeys } from "../types/membership";
+import { Membership } from "../types/membership";
 import { Vault } from "../types/vault";
 import { CreateFileTxPayload, CreateFolderTxPayload, CreateMembershipTxPayload, CreateVaultTxPayload, Transaction, UpdateFileTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, UpdateVaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
@@ -44,8 +44,9 @@ export default class AkordApi extends Api {
     return new ApiClient()
       .env(this.config)
       .resourceId(tx.id)
-      .parentId(tx.parentId)
       .name(tx.name)
+      .parentId(tx.parentId)
+      .status(tx.status)
       .autoExecute(this.autoExecute)
       .updateFolder();
   };
@@ -54,58 +55,59 @@ export default class AkordApi extends Api {
     return new ApiClient()
       .env(this.config)
       .file(tx.file)
+      .vaultId(tx.vaultId)
       .parentId(tx.parentId)
       .autoExecute(this.autoExecute)
-      .vaultId(tx.vaultId)
       .createFile();
   };
 
   public async updateFile(tx: UpdateFileTxPayload): Promise<File> {
     return new ApiClient()
       .env(this.config)
-      .parentId(tx.parentId)
-      .autoExecute(this.autoExecute)
       .resourceId(tx.id)
       .name(tx.name)
-      .createFile();
+      .parentId(tx.parentId)
+      .status(tx.status)
+      .autoExecute(this.autoExecute)
+      .updateFile();
   };
 
   public async createVault(tx: CreateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
       .public(tx.public)
-      .autoExecute(this.autoExecute)
       .name(tx.name)
       .description(tx.description)
+      .autoExecute(this.autoExecute)
       .createVault();
   };
 
   public async updateVault(tx: UpdateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
-      .name(tx.name)
       .resourceId(tx.id)
+      .name(tx.name)
       .description(tx.description)
+      .status(tx.status)
       .autoExecute(this.autoExecute)
       .updateVault();
   };
-
 
   public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
       .address(tx.address)
-      .autoExecute(this.autoExecute)
       .role(tx.role)
       .expiresAt(tx.expiresAt)
+      .autoExecute(this.autoExecute)
       .createMembership();
   };
 
   public async updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
-      .role(tx.role)
       .resourceId(tx.id)
+      .role(tx.role)
       .status(tx.status)
       .expiresAt(tx.expiresAt)
       .autoExecute(this.autoExecute)
@@ -187,13 +189,6 @@ export default class AkordApi extends Api {
       .getUser();
   };
 
-  public async deleteVault(vaultId: string): Promise<void> {
-    await new ApiClient()
-      .env(this.config)
-      .vaultId(vaultId)
-      .deleteVault();
-  }
-
   public async getFile(id: string): Promise<File> {
     return new ApiClient()
       .env(this.config)
@@ -227,13 +222,6 @@ export default class AkordApi extends Api {
         withFolders: options?.deep,
       })
       .getVault();
-  };
-
-  public async getMembershipKeys(vaultId: string): Promise<MembershipKeys> {
-    return new ApiClient()
-      .env(this.config)
-      .vaultId(vaultId)
-      .getMembershipKeys();
   };
 
   public async getMemberships(options: ListOptions = {}): Promise<Paginated<Membership>> {

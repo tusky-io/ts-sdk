@@ -293,15 +293,6 @@ export class ApiClient {
    *
    * @uses:
    * - vaultId()
-   */
-  async deleteVault(): Promise<void> {
-    await this.delete(`${this._apiurl}/${this._vaultUri}/${this._vaultId}`);
-  }
-
-  /**
-   *
-   * @uses:
-   * - vaultId()
    * @returns {Promise<Array<Membership>>}
    */
   async getMembers(): Promise<Array<Membership>> {
@@ -328,18 +319,6 @@ export class ApiClient {
    */
   async getVaults(): Promise<Paginated<Vault>> {
     return this.get(`${this._apiurl}/${this._vaultUri}`);
-  }
-
-  /**
-   * Get user membership keys for given vault
-   * @uses:
-   * - vaultId()
-   * @returns {Promise<MembershipKeys>}
-   */
-  async getMembershipKeys(): Promise<MembershipKeys> {
-    return this.public(true).get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/keys`
-    );
   }
 
   /**
@@ -620,6 +599,7 @@ export class ApiClient {
    * - resourceId()
    * @uses:
    * - name()
+   * - parentId()
    * - status()
    * - autoExecute()
    * @returns {Promise<File>}
@@ -632,6 +612,7 @@ export class ApiClient {
     }
     this.data({
       name: this._name,
+      parentId: this._parentId,
       status: this._status,
       autoExecute: this._autoExecute
     });
@@ -676,6 +657,7 @@ export class ApiClient {
    * - resourceId()
    * @uses:
    * - name()
+   * - parentId()
    * - status()
    * - autoExecute()
    * @returns {Promise<Folder>}
@@ -688,6 +670,7 @@ export class ApiClient {
     }
     this.data({
       name: this._name,
+      parentId: this._parentId,
       status: this._status,
       autoExecute: this._autoExecute
     });
@@ -786,6 +769,7 @@ export class ApiClient {
   * - resourceId()
   * @uses:
   * - role()
+  * - expiresAt()
   * - status()
   * - autoExecute()
   * @returns {Promise<Membership>}
@@ -798,6 +782,7 @@ export class ApiClient {
     }
     this.data({
       role: this._role,
+      expiresAt: this._expiresAt,
       status: this._status,
       autoExecute: this._autoExecute
     });

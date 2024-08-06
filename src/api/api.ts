@@ -40,8 +40,6 @@ abstract class Api {
 
   abstract getStorageBalance(): Promise<Storage>
 
-  abstract getMembershipKeys(vaultId: string): Promise<MembershipKeys>
-
   abstract existsUser(email: string): Promise<Boolean>
 
   abstract getUser(): Promise<User>
@@ -69,8 +67,6 @@ abstract class Api {
   abstract getMembers(vaultId: string): Promise<Array<Membership>>
 
   abstract getTransactions(vaultId: string): Promise<Array<Transaction>>
-
-  abstract deleteVault(vaultId: string): Promise<void>
 }
 
 export {

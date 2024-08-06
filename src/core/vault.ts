@@ -144,7 +144,7 @@ class VaultModule {
    * @returns Promise with the updated vault
    */
   public async delete(id: string): Promise<Vault> {
-    const vault = await this.service.api.deleteVault(id) as any;
+    const vault = await this.service.api.updateVault({ id: id, status: status.DELETED });
     return this.service.processVault(vault, true, this.service.keys);
   }
 
@@ -155,7 +155,7 @@ class VaultModule {
    * @returns Promise with the updated vault
    */
   public async restore(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.ACTIVE }) as any;
+    const vault = await this.service.api.updateVault({ id: id, status: status.ACTIVE });
     return this.service.processVault(vault, true, this.service.keys);
   }
 };

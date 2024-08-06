@@ -183,7 +183,6 @@ class FolderModule {
    * @returns Promise with the updated folder
    */
   public async delete(id: string): Promise<Folder> {
-    // TODO: see if we should use this.service.api.deleteFolder() here
     return this.service.api.updateFolder({ id: id, status: status.DELETED });
   }
 
