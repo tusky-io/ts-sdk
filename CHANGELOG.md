@@ -1,3 +1,10 @@
+# [0.4.0-dev.9](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.8...v0.4.0-dev.9) (2024-08-06)
+
+
+### Features
+
+* **auth:** make token provider async ([f88295f](https://github.com/Akord-com/carmella-sdk/commit/f88295fd8d92559743fa53f2ff9db8220923cf50))
+
 # [0.4.0-dev.8](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.7...v0.4.0-dev.8) (2024-08-06)
 
 
