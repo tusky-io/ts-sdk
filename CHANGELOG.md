@@ -1,3 +1,10 @@
+# [0.4.0-dev.15](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.14...v0.4.0-dev.15) (2024-08-06)
+
+
+### Features
+
+* remove avatar ([4923e16](https://github.com/Akord-com/carmella-sdk/commit/4923e16d884a8ae38758b090a3d3ebd5f9d725ce))
+
 # [0.4.0-dev.14](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.13...v0.4.0-dev.14) (2024-08-06)
 
 
