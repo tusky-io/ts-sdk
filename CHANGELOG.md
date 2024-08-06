@@ -1,3 +1,10 @@
+# [0.4.0-dev.12](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.11...v0.4.0-dev.12) (2024-08-06)
+
+
+### Bug Fixes
+
+* typo ([349df75](https://github.com/Akord-com/carmella-sdk/commit/349df75a77c000526a7fc3c8bb3997855f687d0c))
+
 # [0.4.0-dev.11](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.10...v0.4.0-dev.11) (2024-08-06)
 
 
