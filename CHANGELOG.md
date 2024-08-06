@@ -1,3 +1,10 @@
+# [0.4.0-dev.8](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.7...v0.4.0-dev.8) (2024-08-06)
+
+
+### Features
+
+* support auth token provider & api key authorization ([d71efeb](https://github.com/Akord-com/carmella-sdk/commit/d71efeb97f6bd4b37c9533061d317c626bebdc57))
+
 # [0.4.0-dev.7](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.6...v0.4.0-dev.7) (2024-08-06)
 
 
