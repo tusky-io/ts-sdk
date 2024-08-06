@@ -17,7 +17,6 @@ export class Folder extends Encryptable {
 
   // vault context
   __public__?: boolean;
-  __cloud__?: boolean;
 
   constructor(folder: any, keys?: Array<EncryptedKeys>) {
     super(
@@ -36,6 +35,5 @@ export class Folder extends Encryptable {
     this.parentId = folder.parentId;
     this.tags = folder.tags;
     this.__public__ = folder.__public__;
-    this.__cloud__ = folder.__cloud__;
   }
 }

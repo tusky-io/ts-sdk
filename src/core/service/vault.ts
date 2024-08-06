@@ -1,43 +1,25 @@
 import { EncryptedKeys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
-import { NotFound } from "../../errors/not-found";
-import { Vault, VaultTxPayload } from "../../types";
+import { Vault } from "../../types";
 import { objects } from "../../constants";
 
 class VaultService extends Service {
 
   name: string;
   description: string;
-  membershipId: string;
 
   constructor(config?: ServiceConfig) {
     super(config);
     this.type = objects.VAULT;
   }
 
-  async formatTransaction() {
-    const tx = await super.formatTransaction() as VaultTxPayload;
-    if (this.name) {
-      tx.name =  await this.processWriteString(this.name);
-    }
-    if (this.description) {
-      tx.description =  await this.processWriteString(this.description);
-    }
-    tx.membershipId = this.membershipId;
-    return tx;
+  async setName(name: string) {
+    this.name = await this.processWriteString(name);
   }
 
-  setName(name: string) {
-    this.name = name;
-  }
-
-  setDescription(description: string) {
-    this.description = description;
-  }
-
-  setMembershipId(membershipId: string) {
-    this.membershipId = membershipId;
+  async setDescription(description: string) {
+    this.description = await this.processWriteString(description);
   }
 
   async setVaultContext(vaultId: string): Promise<void> {
@@ -56,14 +38,6 @@ class VaultService extends Service {
       }
     }
     return vault;
-  }
-
-  getTagIndex(tags: string[], tag: string): number {
-    const index = tags.indexOf(tag);
-    if (index === -1) {
-      throw new NotFound("Could not find tag: " + tag + " for given vault.");
-    }
-    return index;
   }
 }
 

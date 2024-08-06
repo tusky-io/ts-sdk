@@ -4,7 +4,6 @@ import { Service, ServiceConfig } from "../core";
 import { FileLike, FileSource, createFileLike } from "../types/file";
 import { EMPTY_FILE_ERROR_MESSAGE, FileModule, FileUploadOptions, Hooks } from "./file";
 import { actions, objects } from "../constants";
-import { ContractInput, Tags } from "../types/contract";
 import { ObjectType } from "../types/object";
 import { BadRequest } from "../errors/bad-request";
 import { File, Folder } from "../types";
@@ -25,47 +24,47 @@ class BatchModule {
     this.service = new Service(config);
   }
 
-  /**
-   * @param  {{id:string,type:ObjectType}[]} items
-   * @returns Promise with corresponding transaction ids
-   */
-  public async delete<T>(items: { id: string, type: ObjectType }[])
-    : Promise<{ transactionId: string, object: T }[]> {
-    return this.batchUpdate<T>(items.map((item) => ({
-      ...item,
-      input: { function: item.type.toUpperCase() + "_DELETE" as any },
-      actionRef: item.type.toUpperCase() + "_DELETE"
-    })));
-  }
+  // /**
+  //  * @param  {{id:string,type:ObjectType}[]} items
+  //  * @returns Promise with corresponding transaction ids
+  //  */
+  // public async delete<T>(items: { id: string, type: ObjectType }[])
+  //   : Promise<{ transactionId: string, object: T }[]> {
+  //   return this.batchUpdate<T>(items.map((item) => ({
+  //     ...item,
+  //     input: { function: item.type.toUpperCase() + "_DELETE" as any },
+  //     actionRef: item.type.toUpperCase() + "_DELETE"
+  //   })));
+  // }
 
-  /**
-   * @param  {{id:string,type:ObjectType}[]} items
-   * @returns Promise with corresponding transaction ids
-   */
-  public async restore<T>(items: { id: string, type: ObjectType }[])
-    : Promise<{ transactionId: string, object: T }[]> {
-    return this.batchUpdate<T>(items.map((item) => ({
-      ...item,
-      input: { function: item.type.toUpperCase() + "_RESTORE" as any },
-      actionRef: item.type.toUpperCase() + "_RESTORE"
-    })));
-  }
+  // /**
+  //  * @param  {{id:string,type:ObjectType}[]} items
+  //  * @returns Promise with corresponding transaction ids
+  //  */
+  // public async restore<T>(items: { id: string, type: ObjectType }[])
+  //   : Promise<{ transactionId: string, object: T }[]> {
+  //   return this.batchUpdate<T>(items.map((item) => ({
+  //     ...item,
+  //     input: { function: item.type.toUpperCase() + "_RESTORE" as any },
+  //     actionRef: item.type.toUpperCase() + "_RESTORE"
+  //   })));
+  // }
 
-  /**
-   * @param  {{id:string,type:ObjectType}[]} items
-   * @returns Promise with corresponding transaction ids
-   */
-  public async move<T>(items: { id: string, type: ObjectType }[], parentId?: string)
-    : Promise<{ transactionId: string, object: T }[]> {
-    return this.batchUpdate<T>(items.map((item) => ({
-      ...item,
-      input: {
-        function: item.type.toUpperCase() + "_MOVE" as any,
-        parentId: parentId
-      },
-      actionRef: item.type.toUpperCase() + "_MOVE"
-    })));
-  }
+  // /**
+  //  * @param  {{id:string,type:ObjectType}[]} items
+  //  * @returns Promise with corresponding transaction ids
+  //  */
+  // public async move<T>(items: { id: string, type: ObjectType }[], parentId?: string)
+  //   : Promise<{ transactionId: string, object: T }[]> {
+  //   return this.batchUpdate<T>(items.map((item) => ({
+  //     ...item,
+  //     input: {
+  //       function: item.type.toUpperCase() + "_MOVE" as any,
+  //       parentId: parentId
+  //     },
+  //     actionRef: item.type.toUpperCase() + "_MOVE"
+  //   })));
+  // }
 
   /**
    * @param  {string} vaultId
@@ -94,14 +93,8 @@ class BatchModule {
     this.service.setIsPublic(vault.public);
     await this.service.setMembershipKeys(vault);
     this.setGroupRef(items);
-    this.service.setAction(actions.FILE_CREATE);
 
-    const mergedOptions = {
-      ...options,
-      cloud: this.service.isCloud(),
-    }
-
-    const { errors, data, cancelled } = await this.upload(uploadItems, mergedOptions);
+    const { errors, data, cancelled } = await this.upload(uploadItems, options);
     return { data, errors, cancelled };
   }
 
@@ -160,7 +153,7 @@ class BatchModule {
     const uploadFileTx = async (service: FileService, item: UploadItem, options: BatchUploadOptions, name: string) => {
       try {
         const fileModule = new FileModule(service);
-        const object = await fileModule.upload(item.file, item.options);
+        const object = await fileModule.upload(service.vaultId, item.file, item.options);
         const file = await new FileService(service).processFile(object, !service.isPublic, service.keys);
         if (options.onFileCreated) {
           await options.onFileCreated(file);
@@ -186,38 +179,38 @@ class BatchModule {
     return { data, errors, cancelled: 0 };
   }
 
-  private async batchUpdate<T>(items: { id: string, type: ObjectType, input: ContractInput, actionRef: string }[])
-    : Promise<{ transactionId: string, object: T }[]> {
-    this.setGroupRef(items);
-    const result = [] as { transactionId: string, object: T }[];
-    for (const [itemIndex, item] of items.entries()) {
+  // private async batchUpdate<T>(items: { id: string, type: ObjectType, actionRef: string }[])
+  //   : Promise<{ transactionId: string, object: T }[]> {
+  //   this.setGroupRef(items);
+  //   const result = [] as { transactionId: string, object: T }[];
+  //   for (const [itemIndex, item] of items.entries()) {
 
-      const node = item.type === objects.FOLDER
-        ? await this.service.api.getFile(item.id)
-        : await this.service.api.getFolder(item.id);
+  //     const node = item.type === objects.FOLDER
+  //       ? await this.service.api.getFile(item.id)
+  //       : await this.service.api.getFolder(item.id);
 
-      if (itemIndex === 0 || this.service.vaultId !== node.vaultId) {
-        this.service.setVaultId(node.vaultId);
-        this.service.setIsPublic(node.__public__);
-        await this.service.setMembershipKeys(node);
-      }
-      const service = item.type === objects.FOLDER
-        ? new FolderService(this.service)
-        : new FileService(this.service);
+  //     if (itemIndex === 0 || this.service.vaultId !== node.vaultId) {
+  //       this.service.setVaultId(node.vaultId);
+  //       this.service.setIsPublic(node.__public__);
+  //       await this.service.setMembershipKeys(node);
+  //     }
+  //     const service = item.type === objects.FOLDER
+  //       ? new FolderService(this.service)
+  //       : new FileService(this.service);
 
-      service.setAction(item.input.function);
-      service.setObject(node);
-      service.setObjectId(item.id);
-      service.setType(item.type);
-      const tx = await service.formatTransaction();
-      const object = await this.service.api.postContractTransaction<T>(tx);
-      const processedObject = item.type === objects.FOLDER
-        ? await new FolderService().processFolder(object as any, !this.service.isPublic, this.service.keys)
-        : await new FileService().processFile(object as any, !this.service.isPublic, this.service.keys) as any;
-      result.push(processedObject);
-    }
-    return result;
-  }
+  //    // service.setAction(item.input.function);
+  //     service.setObject(node);
+  //     service.setObjectId(item.id);
+  //     service.setType(item.type);
+  //     const tx = await service.formatTransaction();
+  //     const object = await this.service.api.postContractTransaction<T>(tx);
+  //     const processedObject = item.type === objects.FOLDER
+  //       ? await new FolderService().processFolder(object as any, !this.service.isPublic, this.service.keys)
+  //       : await new FileService().processFile(object as any, !this.service.isPublic, this.service.keys) as any;
+  //     result.push(processedObject);
+  //   }
+  //   return result;
+  // }
 
   protected setGroupRef(items: any) {
     this.service.groupRef = items && items.length > 1 ? uuidv4() : null;
@@ -252,13 +245,6 @@ export const batchProgressCount = (batchSize: number, options: BatchUploadOption
     }
     options.progressHook = itemProgressHook;
   }
-}
-
-export type TransactionPayload = {
-  vaultId: string,
-  input: ContractInput,
-  tags: Tags,
-  state?: any
 }
 
 export type BatchUploadItem = {

@@ -12,6 +12,7 @@ import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
 import { Env } from "./env";
+import { Auth } from "./auth";
 
 export class Akord {
   public api: Api;
@@ -53,10 +54,11 @@ export class Akord {
   constructor(config: ClientConfig = {}) {
     this.signer = config.signer;
     this.encrypter = new Encrypter(config.encrypter, null, null);
-    this.env = config.env || 'v2';
+    this.env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
     this.userAgent = config.userAgent;
     Crypto.configure({ wallet: config.encrypter });
+    Auth.configure({ authTokenProvider: config.authTokenProvider, apiKey: config.apiKey });
     Plugins.register(config?.plugins, this.env);
     Logger.debug = config?.debug;
     CacheBusters.cache = config?.cache;

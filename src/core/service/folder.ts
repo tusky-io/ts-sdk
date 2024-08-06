@@ -1,7 +1,7 @@
 import { EncryptedKeys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
-import { Folder, FolderTxPayload } from "../../types";
+import { Folder } from "../../types";
 import { objects } from "../../constants";
 
 class FolderService extends Service {
@@ -13,15 +13,7 @@ class FolderService extends Service {
     this.type = objects.FOLDER;
   }
 
-  async formatTransaction() {
-    const tx = await super.formatTransaction() as FolderTxPayload;
-    if (this.name) {
-      tx.name =  await this.processWriteString(this.name);
-    }
-    return tx;
-  }
-
-  async setVaultContextFromNodeId(folderId: string, vaultId?: string) {
+  async setVaultContextFromNodeId(folderId: string) {
     const object = await this.api.getFolder(folderId);
     const vault = await this.api.getVault(object.vaultId);
     this.setVault(vault);
@@ -30,7 +22,6 @@ class FolderService extends Service {
     await this.setMembershipKeys(object);
     this.setObject(object);
     this.setObjectId(folderId);
-    this.setType(this.type);
   }
 
   async processFolder(object: Folder, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<Folder> {
@@ -45,8 +36,8 @@ class FolderService extends Service {
     return folder;
   }
 
-  setName(name: string) {
-    this.name = name;
+  async setName(name: string) {
+    this.name =  await this.processWriteString(name);
   }
 }
 

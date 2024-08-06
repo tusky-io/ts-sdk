@@ -4,8 +4,8 @@ export class File extends Encryptable {
   @encrypted() name: string;
   id: string;
   blobId: string; // file reference off chain
-  refId: string; // file reference on chain
-  type: string;
+  ref: string; // file reference on chain
+  mimeType: string;
   owner: string;
   createdAt: string;
   updatedAt: string;
@@ -21,7 +21,6 @@ export class File extends Encryptable {
 
   // vault context
   __public__?: boolean;
-  __cloud__?: boolean;
 
   constructor(file: any, keys?: Array<EncryptedKeys>, publicKey?: string) {
     super(
@@ -30,11 +29,11 @@ export class File extends Encryptable {
     );
     this.id = file.id;
     this.blobId = file.blobId;
-    this.refId = file.refId;
+    this.ref = file.ref;
     this.owner = file.owner;
     this.createdAt = file.createdAt;
     this.updatedAt = file.updatedAt;
-    this.type = file.type;
+    this.mimeType = file.mimeType;
     this.size = file.size;
     this.numberOfChunks = file.numberOfChunks;
     this.chunkSize = file.chunkSize;
@@ -45,6 +44,5 @@ export class File extends Encryptable {
     this.parentId = file.parentId;
     this.tags = file.tags;
     this.__public__ = file.__public__;
-    this.__cloud__ = file.__cloud__;
   }
 }

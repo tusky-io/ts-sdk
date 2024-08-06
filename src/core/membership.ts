@@ -1,13 +1,13 @@
 import { actions, membershipStatus } from "../constants";
-import { v4 as uuidv4 } from "uuid";
 import { Membership, MembershipAirdropOptions, RoleType } from "../types/membership";
-import { deriveAddress, base64ToArray } from "@akord/crypto";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { ServiceConfig } from "./service/service";
-import { MembershipInput } from "../types/contract";
 import { Paginated } from "../types/paginated";
 import { paginate } from "./common";
 import { MembershipService } from "./service/membership";
+import { BadRequest } from "../errors/bad-request";
+
+export const DEFAULT_ROLE = "CONTRIBUTOR";
 
 class MembershipModule {
   protected service: MembershipService;
@@ -31,15 +31,15 @@ class MembershipModule {
   } as GetOptions;
 
   /**
-   * @param  {string} membershipId
+   * @param  {string} id member id
    * @returns Promise with the decrypted membership
    */
-  public async get(membershipId: string, options: GetOptions = this.defaultGetOptions): Promise<Membership> {
+  public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<Membership> {
     const getOptions = {
       ...this.defaultGetOptions,
       ...options
     }
-    const membershipProto = await this.service.api.getMembership(membershipId, getOptions.vaultId);
+    const membershipProto = await this.service.api.getMembership(id);
     return new Membership(membershipProto, membershipProto.__keys__);
   }
 
@@ -68,66 +68,38 @@ class MembershipModule {
    */
   public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<Membership>> {
     const list = async (options: ListOptions & { vaultId: string }) => {
-      return await this.list(options.vaultId, options);
+      return this.list(options.vaultId, options);
     }
-    return await paginate<Membership>(list, { ...options, vaultId });
+    return paginate<Membership>(list, { ...options, vaultId });
   }
 
   /**
    * Airdrop access to the vault directly through public keys
    * @param  {string} vaultId
-   * @param  {{publicKey:string,publicSigningKey:string,role:RoleType,options:MembershipAirdropOptions}[]} members
-   * @returns Promise with new memberships & corresponding transaction id
+   * @param  {string} address member address
+   * @param  {MembershipAirdropOptions} options airdrop options
+   * @returns Promise with new membership
    */
-  public async airdrop(
-    vaultId: string,
-    members: Array<{ publicKey: string, publicSigningKey: string, role: RoleType, options?: MembershipAirdropOptions }>,
-  ): Promise<{
-    items: Array<Membership>
-  }> {
+  public async airdrop(vaultId: string, address: string, options: MembershipAirdropOptions = {
+    role: "CONTRIBUOTR"
+  }): Promise<Membership> {
     await this.service.setVaultContext(vaultId);
-    this.service.setAction(actions.MEMBERSHIP_AIRDROP_ACCESS);
-    const memberArray = [] as MembershipInput[];
-    const membersMetadata = [];
-    const dataArray = [] as { id: string, data: any }[];
-    const memberTags = [] as any;
-    for (const member of members) {
-      const membershipId = uuidv4();
-      this.service.setObjectId(membershipId);
 
-      const memberAddress = await deriveAddress(base64ToArray(member.publicSigningKey));
-
-      const state = {
-        id: membershipId,
-        address: memberAddress,
-        keys: await this.service.prepareMemberKeys(member.publicKey),
-        encPublicSigningKey: await this.service.processWriteString(member.publicSigningKey),
-      };
-
-      dataArray.push({
-        id: membershipId,
-        data: state
-      })
-      membersMetadata.push({
-        address: memberAddress,
-        publicKey: member.publicKey,
-        publicSigningKey: member.publicSigningKey,
-        ...member.options
-      })
-      memberArray.push({ address: memberAddress, id: membershipId, role: member.role });
-      // memberTags.push(new Tag(protocolTags.MEMBER_ADDRESS, memberAddress));
-      // memberTags.push(new Tag(protocolTags.MEMBERSHIP_ID, membershipId));
+    if (!this.service.isPublic) {
+      if (!options?.publicKey) {
+        throw new BadRequest("Missing member public key for encryption context.");
+      }
+      // TODO: send encrypted keys
+      const keys = await this.service.prepareMemberKeys(options?.publicKey);
     }
 
-    const input = {
-      function: this.service.action,
-      members: memberArray
-    };
-
-    const tx = await this.service.formatTransaction();
-
-    const object = await this.service.api.postContractTransaction(tx);
-    return { items: input.members as any };
+    const { membership } = await this.service.api.createMembership({
+      vaultId: vaultId,
+      address: address,
+      expiresAt: options.expiresAt,
+      role: options.role || DEFAULT_ROLE
+    });
+    return new Membership(membership);
   }
 
   /**
@@ -136,13 +108,11 @@ class MembershipModule {
    * @returns Promise with corresponding transaction id
    */
   public async leave(id: string): Promise<Membership> {
-    await this.service.setVaultContextFromMembershipId(id);
-    this.service.setAction(actions.MEMBERSHIP_LEAVE);
-
-    const tx = await this.service.formatTransaction();
-
-    const object = await this.service.api.postContractTransaction<Membership>(tx);
-    return new Membership(object);
+    const { membership } = await this.service.api.updateMembership({
+      id: id,
+      status: membershipStatus.REJECTED
+    });
+    return new Membership(membership);
   }
 
   /**
@@ -153,7 +123,6 @@ class MembershipModule {
    */
   public async revoke(id: string): Promise<Membership> {
     await this.service.setVaultContextFromMembershipId(id);
-    this.service.setAction(actions.MEMBERSHIP_REVOKE_ACCESS);
 
     let data: { id: string, value: any }[];
     if (!this.service.isPublic) {
@@ -182,10 +151,11 @@ class MembershipModule {
       }));
     }
 
-    const tx = await this.service.formatTransaction();
-
-    const object = await this.service.api.postContractTransaction<Membership>(tx);
-    return new Membership(object);
+    const { membership } = await this.service.api.updateMembership({
+      id: id,
+      status: membershipStatus.REVOKED
+    });
+    return new Membership(membership);
   }
 
   /**
@@ -194,13 +164,11 @@ class MembershipModule {
    * @returns Promise with corresponding transaction id
    */
   public async changeAccess(id: string, role: RoleType): Promise<Membership> {
-    await this.service.setVaultContextFromMembershipId(id);
-    this.service.setAction(actions.MEMBERSHIP_CHANGE_ACCESS);
-
-    const tx = await this.service.formatTransaction();
-
-    const object = await this.service.api.postContractTransaction<Membership>(tx);
-    return new Membership(object);
+    const { membership } = await this.service.api.updateMembership({
+      id: id,
+      role: role
+    });
+    return new Membership(membership);
   }
 };
 

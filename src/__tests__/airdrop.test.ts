@@ -1,11 +1,12 @@
 import { NotEnoughStorage } from "../errors/not-enough-storage";
-import { Akord, Auth } from "../index";
+import { Akord } from "../index";
 import { cleanup, initInstance, setupVault, testDataPath } from './common';
 import { password } from './data/test-credentials';
 import { AkordWallet } from "@akord/crypto";
 import fs from "fs";
 import { firstFileName } from "./data/content";
 import { BatchUploadItem } from "../core/batch";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 let akord: Akord;
 
@@ -13,7 +14,8 @@ jest.setTimeout(3000000);
 
 describe("Testing airdrop actions", () => {
   let vaultId: string;
-  let airdropee: AkordWallet;
+  let airdropee: Ed25519Keypair;
+  let airdropeeWallet: AkordWallet;
 
   beforeEach(async () => {
     akord = await initInstance();
@@ -24,21 +26,28 @@ describe("Testing airdrop actions", () => {
   });
 
   afterAll(async () => {
-    await cleanup(vaultId);
+    await cleanup(akord, vaultId);
   });
 
   describe("Airdrop access tests", () => {
     it("should airdrop to Akord wallets", async () => {
-      const wallet1 = await AkordWallet.create(password);
-      const wallet2 = await AkordWallet.create(password);
-      const user1 = { publicSigningKey: wallet1.signingPublicKey(), publicKey: wallet1.publicKey() };
-      const user2 = { publicSigningKey: wallet2.signingPublicKey(), publicKey: wallet2.publicKey() };
 
-      const result = await akord.membership.airdrop(vaultId, [{ ...user1, role: "VIEWER" }, { ...user2, role: "CONTRIBUTOR" }]);
-      expect(result.items[0].address).toEqual(await wallet1.getAddress());
-      expect(result.items[0].id).toBeTruthy();
-      expect(result.items[1].address).toEqual(await wallet2.getAddress());
-      expect(result.items[1].id).toBeTruthy();
+      // generate Sui key pair for identity
+      const suiKeyPair = new Ed25519Keypair();
+
+      const address = suiKeyPair.toSuiAddress();
+
+      // generate wallet for encryption
+      const wallet = await AkordWallet.create(password);
+
+      const role = "CONTRIBUTOR";
+      const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
+
+      const membership = await akord.membership.airdrop(vaultId, address, { expiresAt: expiresAt, role, publicKey: wallet.publicKey() });
+      expect(membership.id).toBeTruthy();
+      expect(membership.address).toEqual(address);
+      expect(membership.role).toEqual(role);
+      expect(membership.expiresAt).toEqual(expiresAt);
     });
   });
 
@@ -46,25 +55,22 @@ describe("Testing airdrop actions", () => {
     const storageAllowance = 1;
     it(`should airdrop access with ${storageAllowance} MB storage allowance`, async () => {
 
-      airdropee = await AkordWallet.create();
+      airdropee = new Ed25519Keypair();
 
-      await akord.membership.airdrop(vaultId, [
-        {
-          publicSigningKey: airdropee.signingPublicKey(),
-          publicKey: airdropee.publicKey(),
-          role: "CONTRIBUTOR",
-          options: {
-            expirationDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-            allowedStorage: storageAllowance
-          }
-        }
-      ]);
+      airdropeeWallet = await AkordWallet.create();
+
+      await akord.membership.airdrop(vaultId, airdropee.toSuiAddress(), {
+        expiresAt: new Date().getTime() + 24 * 60 * 60 * 1000,
+        allowedStorage: storageAllowance,
+        role: "CONTRIBUTOR",
+        publicKey: airdropeeWallet.publicKey()
+      });
     });
 
     it("should upload files to the vault by airdropee", async () => {
-      Auth.configure({ env: process.env.ENV as any });
-      await Auth.signInWithWallet(airdropee);
-      const airdropeeAkordInstance = new Akord({ signer: airdropee, encrypter: airdropee, env: process.env.ENV as any, debug: true, logToFile: true });
+      // Auth.configure({ env: process.env.ENV as any });
+      // await Auth.signInWithWallet(airdropeeWallet);
+      const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
 
       const fileName = "logo.png";
       const fileBuffer = fs.readFileSync(testDataPath + fileName);
@@ -75,7 +81,7 @@ describe("Testing airdrop actions", () => {
         items.push({ file: fileBuffer, options: { name: fileName } });
       }
 
-      const { data, errors } = await airdropeeAkordInstance.file.batchUpload(items, { vaultId: vaultId });
+      const { data, errors } = await airdropeeAkordInstance.file.batchUpload(vaultId, items);
 
       expect(errors.length).toEqual(0);
       expect(data.length).toEqual(10);
@@ -86,14 +92,14 @@ describe("Testing airdrop actions", () => {
 
     it.skip(`should fail uploading file bigger than ${storageAllowance} MB`, async () => {
       await expect(async () => {
-        Auth.configure({ env: process.env.ENV as any });
-        await Auth.signInWithWallet(airdropee);
-        const airdropeeAkordInstance = new Akord({ signer: airdropee, encrypter: airdropee, env: process.env.ENV as any, debug: true, logToFile: true });
+        // Auth.configure({ env: process.env.ENV as any });
+        // await Auth.signInWithWallet(airdropeeWallet);
+        const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
 
         const type = "image/png";
         const fileName = "screenshot.png";
         const fileBuffer = fs.readFileSync(testDataPath + fileName);
-        await airdropeeAkordInstance.file.upload(fileBuffer, { vaultId: vaultId, name: fileName, mimeType: type });
+        await airdropeeAkordInstance.file.upload(vaultId, fileBuffer, { name: fileName, mimeType: type });
       }).rejects.toThrow(NotEnoughStorage);
     });
   });
@@ -103,19 +109,16 @@ describe("Testing airdrop actions", () => {
     it.skip(`should upload a batch of ${batchSize} files by airdropee`, async () => {
       const batchSize = 1000;
 
-      const airdropee = await AkordWallet.create();
+      const airdropee = new Ed25519Keypair();
 
-      await akord.membership.airdrop(vaultId, [
-        {
-          publicSigningKey: airdropee.signingPublicKey(),
-          publicKey: airdropee.publicKey(),
-          role: "CONTRIBUTOR",
-          options: {
-            expirationDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-            allowedStorage: 100
-          }
-        }
-      ]);
+      const airdropeeWallet = await AkordWallet.create();
+
+      await akord.membership.airdrop(vaultId, airdropee.toSuiAddress(), {
+        expiresAt: new Date().getTime() + 24 * 60 * 60 * 1000,
+        allowedStorage: 100,
+        role: "CONTRIBUTOR",
+        publicKey: airdropeeWallet.publicKey()
+      });
 
       const items = [] as BatchUploadItem[];
 
@@ -123,11 +126,11 @@ describe("Testing airdrop actions", () => {
         items.push({ file: testDataPath + firstFileName });
       }
 
-      Auth.configure({ env: process.env.ENV as any });
-      await Auth.signInWithWallet(airdropee);
-      const airdropeeAkordInstance = new Akord({ signer: airdropee, encrypter: airdropee, env: process.env.ENV as any, debug: true, logToFile: true });
+      // Auth.configure({ env: process.env.ENV as any });
+      // await Auth.signInWithWallet(airdropeeWallet);
+      const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
 
-      const { data, errors } = await airdropeeAkordInstance.file.batchUpload(items, { vaultId: vaultId });
+      const { data, errors } = await airdropeeAkordInstance.file.batchUpload(vaultId, items);
 
       expect(errors.length).toEqual(0);
       expect(data.length).toEqual(batchSize);

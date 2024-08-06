@@ -1,4 +1,4 @@
-import { actions, status } from "../constants";
+import { status } from "../constants";
 import { Folder } from "../types/folder";
 import { isServer } from "../util/platform";
 import { importDynamic } from "../util/import";
@@ -10,7 +10,6 @@ import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
 import { FolderService } from "./service/folder";
 import { ServiceConfig } from ".";
-import { v4 as uuidv4 } from "uuid";
 
 class FolderModule {
   protected type: "Folder";
@@ -21,7 +20,6 @@ class FolderModule {
 
   protected defaultListOptions = {
     shouldDecrypt: true,
-    parentId: undefined,
     filter: {
       status: { ne: status.DELETED }
     }
@@ -47,33 +45,31 @@ class FolderModule {
    */
   public async create(vaultId: string, name: string, options: any = this.defaultCreateOptions): Promise<Folder> {
     await this.service.setVaultContext(vaultId);
-    this.service.setAction(actions.FOLDER_CREATE);
 
-    this.service.setName(name);
-
-    const folderId = uuidv4();
-    this.service.setObjectId(folderId);
-
+    await this.service.setName(name);
     this.service.setParentId(options.parentId);
 
-    const tx = await this.service.formatTransaction();
+    const folder = await this.service.api.createFolder({ vaultId: vaultId, name: this.service.name, parentId: this.service.parentId });
 
-    const object = await this.service.api.postContractTransaction<File>(tx);
-    const folder = await this.service.processFolder(object as any, !this.service.isPublic, this.service.keys) as any;
-    return folder;
+    // if (!this.service.api.autoExecute) {
+    //   const signature = await this.service.signer.sign(bytes);
+    //   await this.service.api.postTransaction(digest, signature);
+    // }
+
+    return this.service.processFolder(folder, !this.service.isPublic, this.service.keys) as any;
   }
 
   /**
+   * @param  {string} vaultId
    * @param  {FolderSource} folder folder source: folder path, file system entry
    * @param  {FolderUploadOptions} [options] parent id, etc.
    * @returns Promise with new folder id
    */
   public async upload(
+    vaultId: string,
     folder: FolderSource,
     options: FolderUploadOptions = {}
   ): Promise<any> {
-    // validate vault or use/create default one
-    // options.vaultId = await this.service.validateOrCreateDefaultVault(options);
     if (typeof folder === "string") {
       if (!isServer()) {
         throw new BadRequest("Folder path supported only for node.");
@@ -85,10 +81,10 @@ class FolderModule {
         const fullPath = path.join(folder, file);
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
-          const { folderId } = await this.create(options.vaultId, file, { parentId: options.parentId });
+          const { folderId } = await this.create(vaultId, file, { parentId: options.parentId });
           Logger.log("Created folder: " + file);
           // recursively process the subdirectory
-          await this.upload(fullPath, { ...options, parentId: folderId });
+          await this.upload(vaultId, fullPath, { ...options, parentId: folderId });
         } else {
           // upload file
           const fileModule = new FileModule(this.service);
@@ -101,17 +97,16 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} nodeId
+   * @param  {string} id
    * @returns Promise with the decrypted node
    */
-  public async get(nodeId: string, options: GetOptions = this.defaultGetOptions): Promise<Folder> {
+  public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<Folder> {
     const getOptions = {
       ...this.defaultGetOptions,
       ...options
     }
-    const nodeProto = await this.service.api.getFolder(nodeId);
-    const node = await this.service.processFolder(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
-    return node;
+    const nodeProto = await this.service.api.getFolder(id);
+    return this.service.processFolder(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
   }
 
   /**
@@ -155,9 +150,9 @@ class FolderModule {
    */
   public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<Folder>> {
     const list = async (options: ListOptions & { vaultId: string }) => {
-      return await this.list(options.vaultId, options);
+      return this.list(options.vaultId, options);
     }
-    return await paginate<Folder>(list, { ...options, vaultId });
+    return paginate<Folder>(list, { ...options, vaultId });
   }
 
   /**
@@ -166,12 +161,9 @@ class FolderModule {
    * @returns Promise with corresponding transaction id
    */
   public async rename(id: string, name: string): Promise<Folder> {
-    await this.service.setVaultContextFromNodeId(id, this.type);
-    this.service.setAction(actions.FOLDER_UPDATE);
-    const state = {
-      name: await this.service.processWriteString(name)
-    };
-    return ((await this.service.nodeUpdate<Folder>()).object);
+    await this.service.setVaultContextFromNodeId(id);
+    await this.service.setName(name);
+    return this.service.api.updateFolder({ id: id, name: this.service.name });
   }
 
   /**
@@ -179,10 +171,9 @@ class FolderModule {
    * @param  {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
    * @returns Promise with corresponding transaction id
    */
-  public async move(id: string, parentId?: string, vaultId?: string): Promise<Folder> {
-    await this.service.setVaultContextFromNodeId(id, vaultId);
-    this.service.setAction(actions.FOLDER_MOVE);
-    return ((await this.service.nodeUpdate<Folder>(null, { parentId: parentId ? parentId : vaultId })).object);
+  public async move(id: string, parentId?: string): Promise<Folder> {
+    await this.service.setVaultContextFromNodeId(id);
+    return this.service.api.updateFolder({ id: id, parentId: parentId ? parentId : this.service.vaultId });
   }
 
   /**
@@ -191,10 +182,8 @@ class FolderModule {
    * @param  {string} id folder id
    * @returns Promise with the updated folder
    */
-  public async delete(id: string, vaultId?: string): Promise<Folder> {
-    await this.service.setVaultContextFromNodeId(id, vaultId);
-    this.service.setAction(actions.FOLDER_DELETE);
-    return ((await this.service.nodeUpdate<Folder>()).object);
+  public async delete(id: string): Promise<Folder> {
+    return this.service.api.updateFolder({ id: id, status: status.DELETED });
   }
 
   /**
@@ -203,19 +192,15 @@ class FolderModule {
    * @param  {string} id folder id
    * @returns Promise with the updated folder
    */
-  public async restore(id: string, vaultId?: string): Promise<Folder> {
-    await this.service.setVaultContextFromNodeId(id, vaultId);
-    this.service.setAction(actions.FOLDER_RESTORE);
-    return ((await this.service.nodeUpdate<Folder>()).object);
+  public async restore(id: string): Promise<Folder> {
+    return this.service.api.updateFolder({ id: id, status: status.ACTIVE });
   }
 };
 
 export type FolderSource = string | FileSystemEntry
 
 export type FolderUploadOptions = {
-  cloud?: boolean,
   parentId?: string,
-  vaultId?: string,
 }
 
 export {

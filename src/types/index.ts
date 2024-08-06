@@ -3,6 +3,5 @@ export * from "./transaction";
 export * from "./user";
 export * from "./vault";
 export * from "./folder";
-export * from "./contract";
 export * from "./file-version";
 export * from "./notification";

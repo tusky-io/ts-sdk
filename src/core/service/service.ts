@@ -18,7 +18,6 @@ import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 import { getEncryptedPayload } from "../common";
 import { EncryptionMetadata } from "../../types/encryption";
 import { Signer } from "../../signer";
-import { TxPayload, TxPayloads } from "../../types";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
@@ -39,7 +38,6 @@ class Service {
   object: Object
   groupRef: string
 
-  action: actions
   userAgent: string // client name
 
   constructor(config: ServiceConfig) {
@@ -50,7 +48,6 @@ class Service {
     this.vault = config.vault;
     this.vaultId = config.vaultId;
     this.keys = config.keys;
-    this.action = config.action;
     this.objectId = config.objectId;
     this.isPublic = config.isPublic;
     this.type = config.type;
@@ -80,14 +77,6 @@ class Service {
     this.groupRef = groupRef;
   }
 
-  setType(type: ObjectType) {
-    this.type = type;
-  }
-
-  setAction(action: actions) {
-    this.action = action;
-  }
-
   setObject(object: Object) {
     this.object = object;
   }
@@ -103,37 +92,6 @@ class Service {
   setRawDataEncryptionPublicKey(publicKey: Uint8Array) {
     this.encrypter.setRawPublicKey(publicKey);
   }
-
-  // async validateOrCreateDefaultVault(options: VaultOptions = {}): Promise<string> {
-  //   let vaultId: string;
-  //   if (options.vaultId) {
-  //     const vault = await this.api.getVault(options.vaultId);
-  //     if (vault.cloud && !options.cloud) {
-  //       throw new BadRequest("Context mismatch. Cloud option colliding with vault provided in the vault id option.")
-  //     }
-  //     vaultId = options.vaultId;
-  //   } else {
-  //     if (!options.public) {
-  //       // const { items: defaultVaults } = await this.service.api.getVaults({ default: true });
-  //       const defaultVaults = [];
-  //       if (options.cloud) {
-  //         const defaultPrivateCloudVault = defaultVaults.find((vault) => vault.private && vault.cloud);
-  //         vaultId = defaultPrivateCloudVault?.id;
-  //       } else {
-  //         const defaultPrivatePermaVault = defaultVaults.find((vault) => vault.private && !vault.cloud);
-  //         vaultId = defaultPrivatePermaVault?.id;
-  //       }
-  //       if (!vaultId) {
-  //         Logger.log("Creating vault...")
-  //         const vaultModule = new VaultModule(this);
-  //         const vaultResult = await vaultModule.create(options.cloud ? DefaultVaults.DEFAULT_PRIVATE_CLOUD : DefaultVaults.DEFAULT_PRIVATE_PERMA, { public: false, cloud: options.cloud })
-  //         console.log(vaultResult.object)
-  //         vaultId = vaultResult.vaultId;
-  //       }
-  //     }
-  //   }
-  //   return vaultId;
-  // }
 
   async processWriteString(data: string): Promise<string> {
     if (this.isPublic) return data;
@@ -180,31 +138,6 @@ class Service {
     }
   }
 
-  isCloud() {
-    return this.vault.cloud;
-  }
-
-  async formatTransaction(): Promise<TxPayloads> {
-    const tx = {
-      action: this.action,
-      owner: await this.signer.getAddress(),
-      vaultId: this.vaultId,
-      timestamp: JSON.stringify(Date.now()),
-      type: this.type,
-      public: this.isPublic,
-      objectId: this.objectId,
-      parentId: this.parentId ? this.parentId : this.vaultId,
-    } as TxPayload;
-
-    if (this.groupRef) {
-      tx.groupId = this.groupRef;
-    }
-    if (this.userAgent) {
-      tx.userAgent = this.userAgent;
-    }
-    return tx;
-  }
-
   async processWriteRaw(data: ArrayBuffer, options?: EncryptOptions) {
     let processedData: ArrayBuffer;
     const encryptionMetadata = {} as EncryptionMetadata;
@@ -241,14 +174,6 @@ class Service {
     }
   }
 
-  async nodeUpdate<T>(stateUpdates?: any, clientInput?: { parentId?: string }, metadata?: any): Promise<T> {
-    this.setParentId(clientInput?.parentId);
-
-    const tx = await this.formatTransaction();
-    const object = await this.api.postContractTransaction<T>(tx);
-    return object;
-  }
-
   async processReadString(data: string, shouldDecrypt = true): Promise<string> {
     if (this.isPublic || !shouldDecrypt) return data;
     const decryptedDataRaw = await this.processReadRaw(data, {});
@@ -260,11 +185,6 @@ class Service {
       address: await deriveAddress(this.encrypter.publicKey),
       publicKey: arrayToBase64(this.encrypter.publicKey)
     };
-  }
-
-  private async signData(data: any): Promise<string> {
-    const signature = await this.signer.sign(jsonToBase64(data));
-    return signature;
   }
 }
 
@@ -288,7 +208,6 @@ export type ServiceConfig = {
 
 export type VaultOptions = {
   vaultId?: string,
-  cloud?: boolean,
   public?: boolean
 }
 

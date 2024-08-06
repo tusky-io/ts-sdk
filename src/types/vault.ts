@@ -10,11 +10,8 @@ export class Vault extends Encryptable {
   createdAt: string;
   updatedAt: string;
   owner: string;
-  data: Array<string>;
   size?: number;
-  cloud?: boolean;
   tags?: string[];
-  termsOfAccess?: string;
   @encrypted() name: string;
   @encrypted() description?: string;
 
@@ -32,11 +29,8 @@ export class Vault extends Encryptable {
     this.size = vaultProto.size;
     this.name = vaultProto.name;
     this.description = vaultProto.description;
-    this.termsOfAccess = vaultProto.termsOfAccess;
     this.tags = vaultProto.tags;
     this.status = vaultProto.status;
-    this.data = vaultProto.data;
-    this.cloud = vaultProto.cloud;
     this.tags = vaultProto.tags;
     this.memberships = vaultProto?.memberships?.map((membership: Membership) => new Membership(membership, keys));
     this.files = vaultProto?.files?.map((file: File) => new File(file, keys));
@@ -46,13 +40,5 @@ export class Vault extends Encryptable {
 
 export type VaultCreateOptions = {
   public?: boolean,
-  termsOfAccess?: string // if the vault is intended for professional or legal use, you can add terms of access and they must be digitally signed before accessing the vault
   description?: string,
-}
-
-export enum DefaultVaults {
-  DEFAULT_PRIVATE_CLOUD = "Private cloud",
-  DEFAULT_PRIVATE_PERMA = "Private perma",
-  DEFAULT_PUBLIC_CLOUD = "Public cloud",
-  DEFAULT_PUBLIC_PERMA = "Public perma"
 }
