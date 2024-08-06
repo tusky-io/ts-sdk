@@ -20,7 +20,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { track } from "@vercel/analytics";
 import { Akord, File, Folder } from "@akord/carmella-sdk";
 
@@ -177,10 +176,6 @@ export default function Page() {
               <Button className="hidden sm:block" variant={"secondary"}>
                 {`${suiAddress?.slice(0, 5)}...${suiAddress?.slice(63)}`}
               </Button>
-              <Avatar className="block sm:hidden">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
             </div>
           </PopoverTrigger>
           <PopoverContent>
