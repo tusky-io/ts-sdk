@@ -25,13 +25,14 @@
     module-error "^1.0.2"
     run-parallel-limit "^1.1.0"
 
-"@akord/carmella-sdk@file:../..":
-  version "0.4.0-dev.2"
+"@akord/carmella-sdk@0.4.0-dev.10":
+  version "0.4.0-dev.10"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.4.0-dev.10.tgz#74090332b274f42003a73e578a075a66a4b08014"
+  integrity sha512-nRAQ49HDsCscrWAQ3V5Ffmfhfbf4ph8BwvyfF92QdyQYRs5kat7t1GYmNj59/tdybf/nMKCZOBreDDsRlhBRBA==
   dependencies:
     "@akord/crypto" "0.21.56"
     "@akord/ts-cacheable" "1.0.13"
     "@esm2cjs/p-queue" "^7.3.0"
-    "@mysten/sui" "^1.3.0"
     agentkeepalive "^4.5.0"
     amazon-cognito-identity-js "6.1.2"
     axios "0.27.2"

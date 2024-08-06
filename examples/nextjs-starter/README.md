@@ -8,6 +8,8 @@ This is a simple, one-page app that showcases Enoki login & Carmella SDK usage.
 Ensure the `.env.local` file is set up with your Enoki API key and Google Auth Provider client id, then run:
 
 ```
+// login to AWS to fetch private repository: @akord/carmella-sdk
+yarn login
 yarn install
 yarn dev
 ```
