@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
-import { useEnokiFlow, useZkLogin, useZkLoginSession } from "@mysten/enoki/react";
+import { useEnokiFlow, useZkLogin } from "@mysten/enoki/react";
 import { getFaucetHost, requestSuiFromFaucetV0 } from "@mysten/sui/faucet";
 import { ExternalLink, Github, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,20 +24,18 @@ import {
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { track } from "@vercel/analytics";
-import { Akord, Auth } from "@akord/carmella-sdk";
+import { Akord, File, Folder } from "@akord/carmella-sdk";
 import { EnokiSigner } from "./auth/signers/enoki";
 
-export const NETWORK = "devnet"
-export const AKORD_CONFIG = "local"
+// SDK config
+export const NETWORK = "devnet" // Sui network config
+export const AKORD_CONFIG = "testnet"
+export const AUTH_PROVIDER = "google"
 
 export default function Page() {
   const client = useSuiClient(); // The SuiClient instance
   const enokiFlow = useEnokiFlow(); // The EnokiFlow instance
   const { address: suiAddress, salt } = useZkLogin(); // The zkLogin instance
-  const { jwt } = useZkLoginSession() || {};
-
-  console.log("SALT: " + salt)
-  console.log("ADDRESS: " + suiAddress)
 
   /* The account information of the current user. */
   const [balance, setBalance] = useState<number>(0);
@@ -45,7 +43,7 @@ export default function Page() {
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [akord, setAkord] = useState<Akord>(null as any);
+  const akord = useRef<Akord>(null as any);
 
   /* Folder create form state */
   const [folderName, setFolderName] = useState<string>("My first folder");
@@ -59,10 +57,16 @@ export default function Page() {
     }
   }, [suiAddress]);
 
+  const getAuthToken = async () => {
+    const session = await enokiFlow.getSession();
+    console.log("JWT: " + session?.jwt);
+    return session?.jwt as string;
+  };
+
   const startLogin = async () => {
     const promise = async () => {
       window.location.href = await enokiFlow.createAuthorizationURL({
-        provider: "google",
+        provider: AUTH_PROVIDER,
         clientId: process.env.GOOGLE_CLIENT_ID!,
         redirectUrl: `${window.location.origin}/auth`,
         network: NETWORK,
@@ -75,15 +79,11 @@ export default function Page() {
   };
 
   const initAkord = async (): Promise<void> => {
-    console.log(jwt)
-    if (!akord) {
+    if (!akord?.current) {
       // Get the keypair for the current user.
       const keypair = await enokiFlow.getKeypair({ network: NETWORK as any });
-
-      Auth.configure({ env: AKORD_CONFIG, authToken: jwt });
       const signer = new EnokiSigner({ address: suiAddress, keypair: keypair });
-      const akord = new Akord({ signer: signer, env: AKORD_CONFIG });
-      setAkord(akord);
+      akord.current = new Akord({ signer: signer, env: AKORD_CONFIG, authTokenProvider: getAuthToken });
     }
   };
 
@@ -171,34 +171,36 @@ export default function Page() {
 
       await initAkord();
 
-      const vaults = await akord?.vault.listAll();
+      const vaults = await akord?.current?.vault.listAll();
       let vaultId;
       if (!vaults || !vaults.length) {
         confirm("Creating vault...")
-        vaultId = (await akord.vault.create("Vault", { public: true })).vaultId;
-        confirm("Vault created: ")
+        vaultId = (await akord?.current?.vault.create("Vault", { public: true })).id;
+        confirm("Vault created: " + vaultId)
       } else {
         vaultId = vaults[0].id
       }
       confirm("Uploading file in the vault: " + vaultId)
-      const fileRes = await akord.file.upload(file, { vaultId: vaultId })
-      confirm("Uploaded file.")
+      const file = await akord?.current?.file.upload(vaultId, file);
+      console.log(file)
+      confirm("Uploaded file: " + file.name);
 
       return fileRes;
     };
 
     toast.promise(promise, {
-      loading: "File uploaded...",
-      success: (data) => {
+      loading: "Uploading file...",
+      success: (file: File) => {
         return (
           <span className="flex flex-row items-center gap-2">
-            {`File ${data} successfully uploaded! `}
-            <a
-              href={`https://suiscan.xyz/${NETWORK}/tx/${data.refId}`}
+            {`File ${file.name} successfully uploaded! `}
+            {/* NOTE: file blobId & refId will come after with subscriptions */}
+            {/* <a
+              href={`https://suiscan.xyz/${NETWORK}/tx/${file.refId}`}
               target="_blank"
             >
               <ExternalLink width={12} />
-            </a>
+            </a> */}
           </span>
         );
       },
@@ -219,35 +221,29 @@ export default function Page() {
 
       await initAkord();
 
-      const vaults = await akord?.vault.listAll();
+      const vaults = await akord?.current?.vault.listAll();
       let vaultId;
       if (!vaults || !vaults.length) {
         confirm("Creating vault...")
-        vaultId = (await akord.vault.create("Vault", { public: true })).vaultId;
-        confirm("Vault created: ")
+        vaultId = (await akord?.current?.vault.create("Vault", { public: true })).id;
+        confirm("Vault created: " + vaultId)
       } else {
         vaultId = vaults[0].id
       }
       confirm("Creating folder in the vault: " + vaultId)
-      const { folderId } = await akord.folder.create(vaultId, folderName)
-      confirm("Created folder: " + folderId)
+      const folder = await akord?.current?.folder.create(vaultId, folderName)
+      confirm("Created folder: " + folder.id)
 
-      alert("Folder created: " + folderId)
-      return folderId;
+      alert("Folder created: " + folder.id)
+      return folder;
     };
 
     toast.promise(promise, {
-      loading: "Folder created...",
-      success: (data) => {
+      loading: "Creating folder...",
+      success: (folder: Folder) => {
         return (
           <span className="flex flex-row items-center gap-2">
-            {`Folder ${data} created successfully! `}
-            {/* <a
-              href={`https://suiscan.xyz/${NETWORK}/tx/${data}`}
-              target="_blank"
-            >
-              <ExternalLink width={12} />
-            </a> */}
+            {`Folder ${folder.name} created successfully! `}
           </span>
         );
       },
