@@ -9,8 +9,6 @@ jest.setTimeout(3000000);
 
 describe("Testing vault functions", () => {
   let vaultId: string;
-  let vaultTag1: string;
-  let vaultTag2: string;
 
   beforeEach(async () => {
     akord = await initInstance();
@@ -21,7 +19,7 @@ describe("Testing vault functions", () => {
   });
 
   afterAll(async () => {
-    await cleanup(vaultId);
+    await cleanup(akord, vaultId);
   });
 
   it("should rename the vault", async () => {
@@ -34,32 +32,14 @@ describe("Testing vault functions", () => {
     expect(vault.name).toEqual(name);
   });
 
-  it("should update the vault metadata", async () => {
-    const name = faker.random.words();
-    const description = faker.lorem.paragraph();
-    const tag1 = faker.random.word();
-    const tag2 = faker.random.word();
-
-    await akord.vault.update(vaultId, {
-      name: name,
-      description: description,
-      tags: [tag1, tag2]
-    });
+  it("should delete the vault", async () => {
+    await akord.vault.delete(vaultId);
 
     const vault = await akord.vault.get(vaultId);
-    expect(vault.name).toEqual(name);
-    expect(vault.description).toEqual(description);
-    expect(vault.tags?.length).toEqual(2);
+    expect(vault.status).toEqual("DELETED");
   });
 
-  it("should archive the vault", async () => {
-    await akord.vault.archive(vaultId);
-
-    const vault = await akord.vault.get(vaultId);
-    expect(vault.status).toEqual("ARCHIVED");
-  });
-
-  it("should fail renaming the archived vault", async () => {
+  it("should fail renaming the deleted vault", async () => {
     const name = faker.random.words();
     await expect(async () =>
       await akord.vault.rename(vaultId, name)
