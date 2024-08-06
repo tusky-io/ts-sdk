@@ -5,6 +5,9 @@ import { ServiceConfig } from "./service/service";
 import { Paginated } from "../types/paginated";
 import { paginate } from "./common";
 import { MembershipService } from "./service/membership";
+import { BadRequest } from "../errors/bad-request";
+
+export const DEFAULT_ROLE = "CONTRIBUTOR";
 
 class MembershipModule {
   protected service: MembershipService;
@@ -28,15 +31,15 @@ class MembershipModule {
   } as GetOptions;
 
   /**
-   * @param  {string} membershipId
+   * @param  {string} id member id
    * @returns Promise with the decrypted membership
    */
-  public async get(membershipId: string, options: GetOptions = this.defaultGetOptions): Promise<Membership> {
+  public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<Membership> {
     const getOptions = {
       ...this.defaultGetOptions,
       ...options
     }
-    const membershipProto = await this.service.api.getMembership(membershipId);
+    const membershipProto = await this.service.api.getMembership(id);
     return new Membership(membershipProto, membershipProto.__keys__);
   }
 
@@ -65,7 +68,7 @@ class MembershipModule {
    */
   public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<Membership>> {
     const list = async (options: ListOptions & { vaultId: string }) => {
-      return  this.list(options.vaultId, options);
+      return this.list(options.vaultId, options);
     }
     return paginate<Membership>(list, { ...options, vaultId });
   }
@@ -74,22 +77,27 @@ class MembershipModule {
    * Airdrop access to the vault directly through public keys
    * @param  {string} vaultId
    * @param  {string} address member address
-   * @param  {string} publicKey member public key for encryption
-   * @param  {RoleType} role member role
    * @param  {MembershipAirdropOptions} options airdrop options
    * @returns Promise with new membership
    */
-  public async airdrop(vaultId: string, address: string, publicKey: string, role: RoleType, options?: MembershipAirdropOptions): Promise<Membership> {
+  public async airdrop(vaultId: string, address: string, options: MembershipAirdropOptions = {
+    role: "CONTRIBUOTR"
+  }): Promise<Membership> {
     await this.service.setVaultContext(vaultId);
 
-    // TODO: send encrypted keys
-    const keys = await this.service.prepareMemberKeys(publicKey)
+    if (!this.service.isPublic) {
+      if (!options?.publicKey) {
+        throw new BadRequest("Missing member public key for encryption context.");
+      }
+      // TODO: send encrypted keys
+      const keys = await this.service.prepareMemberKeys(options?.publicKey);
+    }
 
     const { membership } = await this.service.api.createMembership({
       vaultId: vaultId,
       address: address,
       expiresAt: options.expiresAt,
-      role: role
+      role: options.role || DEFAULT_ROLE
     });
     return new Membership(membership);
   }

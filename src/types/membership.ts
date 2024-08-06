@@ -2,9 +2,9 @@ import { Encryptable, EncryptedKeys } from "@akord/crypto";
 import { User } from "./user";
 
 export type RoleType = "VIEWER" | "CONTRIBUTOR" | "OWNER";
-export type StatusType = "ACCEPTED" | "PENDING" | "REVOKED" | "INVITED";
+export type StatusType = "ACCEPTED" | "PENDING" | "REVOKED";
 
-export const activeStatus = ["ACCEPTED", "PENDING", "INVITED"] as StatusType[];
+export const activeStatus = ["ACCEPTED", "PENDING"] as StatusType[];
 
 export class Membership extends Encryptable {
   id: string;
@@ -34,7 +34,6 @@ export class Membership extends Encryptable {
     this.createdAt = membershipProto.createdAt;
     this.updatedAt = membershipProto.updatedAt;
     this.expiresAt = membershipProto.expiresAt;
-    this.data = membershipProto.data;
     this.status = membershipProto.status;
     this.role = membershipProto.role;
     this.encPublicSigningKey = membershipProto.encPublicSigningKey;
@@ -59,6 +58,8 @@ export type MembershipCreateOptions = {
 
 export type MembershipAirdropOptions = {
   name?: string
-  expiresAt?: number
-  allowedStorage?: number
+  expiresAt?: number // expiration date
+  allowedStorage?: number // allowed storage
+  publicKey?: string //  member public key for encryption
+  role?: string //  member role
 }
