@@ -1,3 +1,11 @@
+# [0.4.0-dev.7](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.6...v0.4.0-dev.7) (2024-08-06)
+
+
+### Features
+
+* cleanup file types ([9afc769](https://github.com/Akord-com/carmella-sdk/commit/9afc769cc124b45cd844f0051b119eaac9c644c7))
+* cleanup membership types ([fe77230](https://github.com/Akord-com/carmella-sdk/commit/fe77230c17c2b94dfd189416f46cf8c959634ddb))
+
 # [0.4.0-dev.6](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.5...v0.4.0-dev.6) (2024-08-01)
 
 
