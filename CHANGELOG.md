@@ -1,3 +1,10 @@
+# [0.4.0-dev.14](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.13...v0.4.0-dev.14) (2024-08-06)
+
+
+### Features
+
+* remove sui specific code ([bc1ff3a](https://github.com/Akord-com/carmella-sdk/commit/bc1ff3acef1444342e644aa9658b0269792dae82))
+
 # [0.4.0-dev.13](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.12...v0.4.0-dev.13) (2024-08-06)
 
 
