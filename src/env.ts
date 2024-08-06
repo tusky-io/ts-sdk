@@ -1,1 +1,1 @@
-export type Env = 'dev' | 'v2' | 'carmella' | 'local';
+export type Env = 'testnet' | 'mainnet' | 'local';

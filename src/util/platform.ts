@@ -3,7 +3,15 @@ export enum Platform {
 }
 
 export const isServer = (): boolean => {
-  return typeof window === 'undefined' ? true : false;
+  return isNode() || isDeno()
+};
+
+export const isNode = (): boolean => {
+  return (typeof process !== 'undefined') && (process.release?.name === 'node')
+};
+
+export const isDeno = (): boolean => {
+  return window && ("Deno" in window)
 };
 
 export const getPlatform = (): Platform => {

@@ -22,9 +22,8 @@ import { FileLike } from "../types/file";
 const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
 
 export class ApiClient {
-  private _gatewayurl: string;
-  private _apiurl: string;
-  private _uploadsurl: string;
+  private _apiUrl: string;
+  private _cdnUrl: string;
 
   // API endpoints
   private _vaultUri: string = "vaults";
@@ -81,9 +80,8 @@ export class ApiClient {
 
   clone(): ApiClient {
     const clone = new ApiClient();
-    clone._gatewayurl = this._gatewayurl;
-    clone._apiurl = this._apiurl;
-    clone._uploadsurl = this._uploadsurl;
+    clone._apiUrl = this._apiUrl;
+    clone._cdnUrl = this._cdnUrl;
     clone._resourceId = this._resourceId;
     clone._vaultId = this._vaultId;
     clone._numberOfChunks = this._numberOfChunks;
@@ -113,13 +111,11 @@ export class ApiClient {
   }
 
   env(config: {
-    apiurl: string;
-    gatewayurl: string;
-    uploadsurl: string;
+    apiUrl: string;
+    cdnUrl: string;
   }): ApiClient {
-    this._apiurl = config.apiurl;
-    this._gatewayurl = config.gatewayurl;
-    this._uploadsurl = config.uploadsurl;
+    this._apiUrl = config.apiUrl;
+    this._cdnUrl = config.cdnUrl
     return this;
   }
 
@@ -261,7 +257,7 @@ export class ApiClient {
    */
   async existsUser(): Promise<Boolean> {
     try {
-      await this.get(`${this._apiurl}/${this._userUri}`);
+      await this.get(`${this._apiUrl}/${this._userUri}`);
     } catch (e) {
       if (!(e instanceof NotFound)) {
         throw e;
@@ -276,7 +272,7 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async getUser(): Promise<User> {
-    return this.get(`${this._apiurl}/${this._userUri}`);
+    return this.get(`${this._apiUrl}/${this._userUri}`);
   }
 
   /**
@@ -286,7 +282,7 @@ export class ApiClient {
    * @returns {Promise<UserPublicInfo>}
    */
   async getUserPublicData(): Promise<UserPublicInfo> {
-    return this.get(`${this._apiurl}/${this._userUri}`);
+    return this.get(`${this._apiUrl}/${this._userUri}`);
   }
 
   /**
@@ -297,7 +293,7 @@ export class ApiClient {
    */
   async getMembers(): Promise<Array<Membership>> {
     return this.get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/members`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`
     );
   }
 
@@ -308,7 +304,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Membership>>}
    */
   async getMemberships(): Promise<Paginated<Membership>> {
-    return this.get(`${this._apiurl}/${this._membershipUri}`);
+    return this.get(`${this._apiUrl}/${this._membershipUri}`);
   }
 
   /**
@@ -318,7 +314,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Vault>>}
    */
   async getVaults(): Promise<Paginated<Vault>> {
-    return this.get(`${this._apiurl}/${this._vaultUri}`);
+    return this.get(`${this._apiUrl}/${this._vaultUri}`);
   }
 
   /**
@@ -330,7 +326,7 @@ export class ApiClient {
    */
   async getFilesByVaultId<T>(): Promise<Paginated<T>> {
     return this.public(true).get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/files`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/files`
     );
   }
 
@@ -344,7 +340,7 @@ export class ApiClient {
    */
   async getFoldersByVaultId<T>(): Promise<Paginated<T>> {
     return this.public(true).get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/folders`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/folders`
     );
   }
 
@@ -357,7 +353,7 @@ export class ApiClient {
    */
   async getMembershipsByVaultId(): Promise<Paginated<Membership>> {
     return this.get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`
     );
   }
 
@@ -369,7 +365,7 @@ export class ApiClient {
    */
   async getFile(): Promise<File> {
     return this.get(
-      `${this._apiurl}/files/${this._resourceId}`
+      `${this._apiUrl}/files/${this._resourceId}`
     );
   }
 
@@ -381,7 +377,7 @@ export class ApiClient {
    */
   async getFolder(): Promise<Folder> {
     return this.get(
-      `${this._apiurl}/folders/${this._resourceId}`
+      `${this._apiUrl}/folders/${this._resourceId}`
     );
   }
 
@@ -393,7 +389,7 @@ export class ApiClient {
    */
   async getMembership(): Promise<Membership> {
     return this.get(
-      `${this._apiurl}/${this._membershipUri}/${this._resourceId}`
+      `${this._apiUrl}/${this._membershipUri}/${this._resourceId}`
     );
   }
 
@@ -406,7 +402,7 @@ export class ApiClient {
    */
   async getVault(): Promise<Vault> {
     return this.public(true).get(
-      `${this._apiurl}/${this._vaultUri}/${this._resourceId}`
+      `${this._apiUrl}/${this._vaultUri}/${this._resourceId}`
     );
   }
 
@@ -418,7 +414,7 @@ export class ApiClient {
    */
   async getTransactions(): Promise<Array<Transaction>> {
     return this.get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}`
     );
   }
 
@@ -429,26 +425,26 @@ export class ApiClient {
    * @returns {Promise<Paginated<File>>}
    */
   async getFiles(): Promise<Paginated<File>> {
-    return this.get(`${this._uploadsurl}/${this._fileUri}`);
+    return this.get(`${this._apiUrl}/${this._fileUri}`);
   }
 
   async invite(): Promise<{ id: string }> {
     const response = await this.post(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/members`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`
     );
     return response.id;
   }
 
   async inviteResend(): Promise<{ id: string }> {
     const response = await this.post(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
     );
     return response.id;
   }
 
   async revokeInvite(): Promise<{ id: string }> {
     const response = await this.delete(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
     );
     return response.id;
   }
@@ -470,19 +466,14 @@ export class ApiClient {
   }
 
   async fetch(method: string, url: string): Promise<any> {
-    const auth = await Auth.getAuthorization();
-    if (!auth && !this._public) {
-      throw new Unauthorized("Authentication is required to use Akord API");
-    }
-
     const config = {
       method,
       url: this._queryParams
         ? this.addQueryParams(url, this._queryParams)
         : url,
       headers: {
-        Authorization: auth,
         "Content-Type": "application/json",
+        ...Auth.getAuthorizationHeader()
       },
     } as AxiosRequestConfig;
     if (this._data) {
@@ -528,15 +519,10 @@ export class ApiClient {
       );
     }
 
-    const auth = await Auth.getAuthorization();
-    if (!auth) {
-      throw new Unauthorized("Authentication is required to use Akord API");
-    }
-
     const me = this;
     let headers = {
-      Authorization: auth,
       "Content-Type": "multipart/form-data",
+      ...Auth.getAuthorizationHeader()
     } as Record<string, string>;
 
     const form = new FormData();
@@ -556,7 +542,7 @@ export class ApiClient {
 
     const config = {
       method: "post",
-      url: `${this._apiurl}/files?${new URLSearchParams(
+      url: `${this._apiUrl}/files?${new URLSearchParams(
         this._queryParams
       ).toString()}`,
       data: form,
@@ -616,7 +602,7 @@ export class ApiClient {
       status: this._status,
       autoExecute: this._autoExecute
     });
-    return this.patch(`${this._apiurl}/${this._fileUri}/${this._resourceId}`);
+    return this.patch(`${this._apiUrl}/${this._fileUri}/${this._resourceId}`);
   }
 
   /**
@@ -648,7 +634,7 @@ export class ApiClient {
       autoExecute: true
     });
 
-    return this.post(`${this._apiurl}/${this._folderUri}`);
+    return this.post(`${this._apiUrl}/${this._folderUri}`);
   }
 
   /**
@@ -675,7 +661,7 @@ export class ApiClient {
       autoExecute: this._autoExecute
     });
 
-    return this.patch(`${this._apiurl}/${this._folderUri}/${this._resourceId}`);
+    return this.patch(`${this._apiUrl}/${this._folderUri}/${this._resourceId}`);
   }
 
   /**
@@ -702,7 +688,7 @@ export class ApiClient {
       autoExecute: true
     });
 
-    return this.post(`${this._apiurl}/${this._vaultUri}`);
+    return this.post(`${this._apiUrl}/${this._vaultUri}`);
   }
 
   /**
@@ -728,7 +714,7 @@ export class ApiClient {
       status: this._status,
       autoExecute: this._autoExecute
     });
-    return this.patch(`${this._apiurl}/${this._vaultUri}/${this._resourceId}`);
+    return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
 
   /**
@@ -760,7 +746,7 @@ export class ApiClient {
       autoExecute: true
     });
 
-    return this.post(`${this._apiurl}/${this._membershipUri}`);
+    return this.post(`${this._apiUrl}/${this._membershipUri}`);
   }
 
   /**
@@ -786,7 +772,7 @@ export class ApiClient {
       status: this._status,
       autoExecute: this._autoExecute
     });
-    return this.patch(`${this._apiurl}/${this._membershipUri}/${this._resourceId}`);
+    return this.patch(`${this._apiUrl}/${this._membershipUri}/${this._resourceId}`);
   }
 
   /**
@@ -815,7 +801,7 @@ export class ApiClient {
         "Missing signature input. Use ApiClient#signature() to add it"
       );
     }
-    return this.post(`${this._apiurl}/${this._transactionUri}`);
+    return this.post(`${this._apiUrl}/${this._transactionUri}`);
   }
 
   /**
@@ -830,10 +816,6 @@ export class ApiClient {
    * - numberOfChunks()
    */
   async downloadFile() {
-    const auth = await Auth.getAuthorization();
-    if (!auth && !this._public) {
-      throw new Unauthorized("Authentication is required to use Akord API");
-    }
     if (!this._resourceId) {
       throw new BadRequest(
         "Missing resource id to download. Use ApiClient#resourceId() to add it"
@@ -846,12 +828,10 @@ export class ApiClient {
     } as RequestInit;
 
     if (!this._public) {
-      config.headers = {
-        Authorization: auth,
-      };
+      config.headers = Auth.getAuthorizationHeader() as any
     }
 
-    const url = `${this._apiurl}/files/${this._resourceId}/data`;
+    const url = `${this._apiUrl}/files/${this._resourceId}/data`;
 
     Logger.log(`Request ${config.method}: ` + url);
 
@@ -864,7 +844,7 @@ export class ApiClient {
   }
 
   async getStorageBalance(): Promise<Storage> {
-    const data = await this.get(`${this._apiurl}/storage-balance`);
+    const data = await this.get(`${this._apiUrl}/storage-balance`);
     return new Storage(data);
   }
 }
