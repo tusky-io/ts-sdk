@@ -14,7 +14,7 @@ export interface ClientConfig {
   api?: Api
   storage?: Storage
   plugins?: [Plugin]
-  authTokenProvider?: () => string
+  authTokenProvider?: () => Promise<string>
   apiKey?: string,
   userAgent?: string,
   autoExecute?: boolean // if set to true, transactions will be admin signed & executed

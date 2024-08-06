@@ -473,7 +473,7 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
-        ...Auth.getAuthorizationHeader()
+        ...(await Auth.getAuthorizationHeader())
       },
     } as AxiosRequestConfig;
     if (this._data) {
@@ -522,7 +522,7 @@ export class ApiClient {
     const me = this;
     let headers = {
       "Content-Type": "multipart/form-data",
-      ...Auth.getAuthorizationHeader()
+      ...(await Auth.getAuthorizationHeader())
     } as Record<string, string>;
 
     const form = new FormData();
@@ -828,7 +828,7 @@ export class ApiClient {
     } as RequestInit;
 
     if (!this._public) {
-      config.headers = Auth.getAuthorizationHeader() as any
+      config.headers = (await Auth.getAuthorizationHeader()) as any
     }
 
     const url = `${this._apiUrl}/files/${this._resourceId}/data`;

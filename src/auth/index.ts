@@ -2,7 +2,7 @@ import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
 
 export class Auth {
-  public static authTokenProvider: () => string
+  public static authTokenProvider: () => Promise<string>
   public static apiKey: string
 
   private constructor() { }
@@ -13,14 +13,14 @@ export class Auth {
     this.authTokenProvider = options.authTokenProvider;
   }
 
-  public static getAuthorizationHeader = function (): AxiosRequestHeaders {
+  public static async getAuthorizationHeader(): Promise<AxiosRequestHeaders> {
     if (this.apiKey) {
       return {
         "Api-Key": this.apiKey
       }
     } else if (this.authTokenProvider) {
       try {
-        const token = this.getAuthTokenProvider();
+        const token = await this.authTokenProvider();
         // return token
         if (token) {
           return {
@@ -38,7 +38,7 @@ export class Auth {
 }
 
 type AuthOptions = {
-  authTokenProvider?: () => string
+  authTokenProvider?: () => Promise<string>
   apiKey?: string
 }
 
