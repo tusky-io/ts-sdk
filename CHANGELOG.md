@@ -1,3 +1,10 @@
+# [0.4.0-dev.10](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.9...v0.4.0-dev.10) (2024-08-06)
+
+
+### Bug Fixes
+
+* file & folder api types ([87cd0c3](https://github.com/Akord-com/carmella-sdk/commit/87cd0c385c2ea31d0eb99ceea274dd4bdc640156))
+
 # [0.4.0-dev.9](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.8...v0.4.0-dev.9) (2024-08-06)
 
 
