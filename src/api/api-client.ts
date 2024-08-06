@@ -530,11 +530,10 @@ export class ApiClient {
     form.append("vaultId", this._vaultId);
 
     try {
-      console.log("file name before array buffer: " + this._file.name);
       const buffer = await this._file.arrayBuffer()
-      console.log("file name: " + this._file.name);
       // const blob = new Blob([buffer], { type: 'application/octet-stream' });
       form.append("file", Buffer.from(buffer), { filename: this._file.name });
+      form.append("name", this._file.name);
     } catch (e) {
       form.append("file", this._file, {
         filename: "file",
