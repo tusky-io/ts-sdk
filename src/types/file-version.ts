@@ -5,7 +5,7 @@ export class File extends Encryptable {
   id: string;
   blobId: string; // file reference off chain
   ref: string; // file reference on chain
-  type: string;
+  mimeType: string;
   owner: string;
   createdAt: string;
   updatedAt: string;
@@ -30,11 +30,11 @@ export class File extends Encryptable {
     );
     this.id = file.id;
     this.blobId = file.blobId;
-    this.refId = file.refId;
+    this.ref = file.ref;
     this.owner = file.owner;
     this.createdAt = file.createdAt;
     this.updatedAt = file.updatedAt;
-    this.type = file.type;
+    this.mimeType = file.mimeType;
     this.size = file.size;
     this.numberOfChunks = file.numberOfChunks;
     this.chunkSize = file.chunkSize;
