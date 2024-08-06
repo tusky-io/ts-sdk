@@ -16,5 +16,6 @@ export interface ClientConfig {
   plugins?: [Plugin]
   authToken?: string
   apiKey?: string,
-  userAgent?: string
+  userAgent?: string,
+  autoExecute?: boolean // if set to true, transactions will be admin signed & executed
 }

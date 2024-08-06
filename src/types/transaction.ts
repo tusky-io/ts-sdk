@@ -1,4 +1,3 @@
-import { EncryptionKeys } from "@akord/crypto"
 import { actions, objects } from "../constants"
 
 export interface Transaction {
@@ -15,46 +14,56 @@ export interface Transaction {
   status: string
 }
 
-export interface TxPayload {
-  name: string
-  action: actions,
-  timestamp: string,
-  owner: string,
-  public: boolean,
+export interface CreateVaultTxPayload {
+  name?: string,
+  description?: string
+  public?: boolean
+}
+
+export interface UpdateVaultTxPayload {
+  id: string,
+  name?: string,
+  description?: string
+  status?: string
+}
+
+export interface CreateFolderTxPayload {
   vaultId: string,
-  parentId: string,
-  objectId: string,
-  type: objects,
-  status: string,
-  userAgent: string,
-  groupId: string,
-  signature: string,
-  autoExecute: boolean
-}
-
-export interface VaultTxPayload extends TxPayload {
-  membershipId: string
   name: string,
-  description: string
+  parentId?: string,
 }
 
-export interface FolderTxPayload extends TxPayload {
-  name: string
+export interface UpdateFolderTxPayload {
+  id: string,
+  name?: string,
+  parentId?: string,
+  status?: string
 }
 
-export interface FileTxPayload extends TxPayload {
-  file: any
-  name: string,
-  mimeType: string,
-  size: number,
-  blobId: string,
-  numberOfChunks: number,
-  chunkSize: number,
-  lastModified: number
+export interface CreateFileTxPayload {
+  vaultId: string,
+  file: any,
+  parentId?: string,
 }
 
-export interface MembershipTxPayload extends TxPayload {
-  keys: EncryptionKeys[]
+export interface UpdateFileTxPayload {
+  id: string,
+  name?: string,
+  parentId?: string,
+  status?: string
 }
 
-export type TxPayloads = TxPayload | VaultTxPayload | FolderTxPayload | FileTxPayload | MembershipTxPayload;
+export interface CreateMembershipTxPayload {
+  vaultId: string,
+  address: string,
+  role: string,
+  status?: string,
+  expiresAt?: number,
+}
+
+export interface UpdateMembershipTxPayload {
+  id: string,
+  role?: string,
+  status?: string,
+  expiresAt?: number
+}

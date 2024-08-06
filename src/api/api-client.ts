@@ -1,7 +1,7 @@
 import { AxiosInstance, AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Membership, MembershipKeys } from "../types/membership";
-import { Transaction, TxPayload } from "../types/transaction";
+import { Transaction } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { Vault } from "../types/vault";
 import { Auth } from "../auth";
@@ -18,7 +18,6 @@ import FormData from "form-data";
 import { Buffer } from "buffer";
 import { httpClient } from "./http";
 import { FileLike } from "../types/file";
-import { actions, objects } from "../constants";
 
 const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
 
@@ -28,39 +27,41 @@ export class ApiClient {
   private _uploadsurl: string;
 
   // API endpoints
-  private _fileUri: string = "files";
-  private _transactionUri: string = "transactions";
   private _vaultUri: string = "vaults";
+  private _fileUri: string = "files";
+  private _folderUri: string = "folders";
   private _membershipUri: string = "memberships";
+  private _transactionUri: string = "transactions";
   private _userUri: string = "users";
 
   // path params
   private _resourceId: string;
-  private _vaultId: string;
 
   // request body
-  private _action: actions
-  private _timestamp: string
-  private _owner: string
-  // private _public: boolean
+  private _public: boolean
+  private _name: string
+  private _description: string
+  private _status: string
+  private _vaultId: string;
+  private _parentId: string;
+  private _address: string;
+  private _role: string;
+  private _expiresAt: number;
+  private _file: FileLike;
+  private _numberOfChunks: number;
+
+  private _autoExecute: boolean
+
   private _signature: string
   private _digest: string
-  private _autoExecute: boolean
-  private _name: string
-  // private _vaultId: string
-  private _parentId: string
-  private _membershipId: string
-  private _objectId: string
-  private _type: objects
+
   private _userAgent: string
   private _groupId: string
-  private _file: FileLike;
-  private _payload: TxPayload;
-  private _numberOfChunks: number;
 
   // axios
   private _httpClient: AxiosInstance;
 
+  private _data: any = {};
   private _queryParams: any = {};
   private _progressId: string;
   private _progressHook: (
@@ -71,7 +72,6 @@ export class ApiClient {
   private _cancelHook: AbortController;
 
   // auxiliar
-  private _isPublic: boolean;
   private _totalBytes: number;
   private _uploadedBytes: number;
 
@@ -88,27 +88,25 @@ export class ApiClient {
     clone._vaultId = this._vaultId;
     clone._numberOfChunks = this._numberOfChunks;
     clone._file = this._file;
-    clone._action = this._action;
-    clone._timestamp = this._timestamp;
-    clone._owner = this._owner;
-    // clone._public = this._public;
+    clone._public = this._public;
     clone._signature = this._signature;
     clone._digest = this._digest;
     clone._name = this._name;
-    clone._membershipId = this._membershipId;
+    clone._description = this._description;
+    clone._address = this._address;
+    clone._role = this._role;
+    clone._expiresAt = this._expiresAt;
+
+    clone._status = this._status;
     clone._autoExecute = this._autoExecute;
-    clone._payload = this._payload;
-    // private _vaultId: string
+    clone._vaultId = this._vaultId;
     clone._parentId = this._parentId;
-    clone._objectId = this._objectId;
-    clone._type = this._type;
     clone._userAgent = this._userAgent;
     clone._groupId = this._groupId;
     clone._queryParams = this._queryParams;
     clone._progressId = this._progressId;
     clone._progressHook = this._progressHook;
     clone._cancelHook = this._cancelHook;
-    clone._isPublic = this._isPublic;
     clone._totalBytes = this._totalBytes;
     clone._uploadedBytes = this._uploadedBytes;
     return clone;
@@ -130,43 +128,23 @@ export class ApiClient {
     return this;
   }
 
-  membershipId(membershipId: string): ApiClient {
-    this._membershipId = membershipId;
+  status(status: string): ApiClient {
+    this._status = status;
     return this;
   }
 
   public(isPublic: boolean): ApiClient {
-    this._isPublic = isPublic;
+    this._public = isPublic;
+    return this;
+  }
+
+  description(description: string): ApiClient {
+    this._description = description;
     return this;
   }
 
   vaultId(vaultId: string): ApiClient {
     this._vaultId = vaultId;
-    return this;
-  }
-
-  action(action: actions): ApiClient {
-    this._action = action;
-    return this;
-  }
-
-  timestamp(timestamp: string): ApiClient {
-    this._timestamp = timestamp;
-    return this;
-  }
-
-  owner(owner: string): ApiClient {
-    this._owner = owner;
-    return this;
-  }
-
-  objectId(objectId: string): ApiClient {
-    this._objectId = objectId;
-    return this;
-  }
-
-  type(type: objects): ApiClient {
-    this._type = type;
     return this;
   }
 
@@ -190,13 +168,23 @@ export class ApiClient {
     return this;
   }
 
-  payload(payload: TxPayload): ApiClient {
-    this._payload = payload;
+  name(name: string): ApiClient {
+    this._name = name;
     return this;
   }
 
-  name(name: string): ApiClient {
-    this._name = name;
+  role(role: string): ApiClient {
+    this._role = role;
+    return this;
+  }
+
+  expiresAt(expiresAt: number): ApiClient {
+    this._expiresAt = expiresAt;
+    return this;
+  }
+
+  address(address: string): ApiClient {
+    this._address = address;
     return this;
   }
 
@@ -215,6 +203,10 @@ export class ApiClient {
     return this;
   }
 
+  data(data: any): ApiClient {
+    this._data = data;
+    return this;
+  }
 
   queryParams(queryParams: any): ApiClient {
     if (queryParams) {
@@ -261,23 +253,6 @@ export class ApiClient {
     return this;
   }
 
-  // /**
-  //  * Get current vault contract state
-  //  * @requires:
-  //  * - vaultId()
-  //  * @returns {Promise<Contract>}
-  //  */
-  // async getContract(): Promise<Contract> {
-  //   if (!this._vaultId) {
-  //     throw new BadRequest(
-  //       "Missing vault id to get contract state. Use ApiClient#vaultId() to add it"
-  //     );
-  //   }
-  //   return await this.public(true).get(
-  //     `${this._gatewayurl}/${this._contractUri}/${this._vaultId}`
-  //   );
-  // }
-
   /**
    *
    * @uses:
@@ -301,7 +276,7 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async getUser(): Promise<User> {
-    return await this.get(`${this._apiurl}/${this._userUri}`);
+    return this.get(`${this._apiurl}/${this._userUri}`);
   }
 
   /**
@@ -311,16 +286,7 @@ export class ApiClient {
    * @returns {Promise<UserPublicInfo>}
    */
   async getUserPublicData(): Promise<UserPublicInfo> {
-    return await this.get(`${this._apiurl}/${this._userUri}`);
-  }
-
-  /**
-   *
-   * @uses:
-   * - vaultId()
-   */
-  async deleteVault(): Promise<void> {
-    await this.delete(`${this._apiurl}/${this._vaultUri}/${this._vaultId}`);
+    return this.get(`${this._apiurl}/${this._userUri}`);
   }
 
   /**
@@ -330,7 +296,7 @@ export class ApiClient {
    * @returns {Promise<Array<Membership>>}
    */
   async getMembers(): Promise<Array<Membership>> {
-    return await this.get(
+    return this.get(
       `${this._apiurl}/${this._vaultUri}/${this._vaultId}/members`
     );
   }
@@ -342,7 +308,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Membership>>}
    */
   async getMemberships(): Promise<Paginated<Membership>> {
-    return await this.get(`${this._apiurl}/${this._membershipUri}`);
+    return this.get(`${this._apiurl}/${this._membershipUri}`);
   }
 
   /**
@@ -352,19 +318,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Vault>>}
    */
   async getVaults(): Promise<Paginated<Vault>> {
-    return await this.get(`${this._apiurl}/${this._vaultUri}`);
-  }
-
-  /**
-   * Get user membership keys for given vault
-   * @uses:
-   * - vaultId()
-   * @returns {Promise<MembershipKeys>}
-   */
-  async getMembershipKeys(): Promise<MembershipKeys> {
-    return await this.public(true).get(
-      `${this._apiurl}/${this._vaultUri}/${this._vaultId}/keys`
-    );
+    return this.get(`${this._apiurl}/${this._vaultUri}`);
   }
 
   /**
@@ -375,7 +329,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<T>>}
    */
   async getFilesByVaultId<T>(): Promise<Paginated<T>> {
-    return await this.public(true).get(
+    return this.public(true).get(
       `${this._apiurl}/${this._vaultUri}/${this._vaultId}/files`
     );
   }
@@ -389,7 +343,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<T>>}
    */
   async getFoldersByVaultId<T>(): Promise<Paginated<T>> {
-    return await this.public(true).get(
+    return this.public(true).get(
       `${this._apiurl}/${this._vaultUri}/${this._vaultId}/folders`
     );
   }
@@ -402,7 +356,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Membership>>}
    */
   async getMembershipsByVaultId(): Promise<Paginated<Membership>> {
-    return await this.get(
+    return this.get(
       `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`
     );
   }
@@ -414,7 +368,7 @@ export class ApiClient {
    * @returns {Promise<File>}
    */
   async getFile(): Promise<File> {
-    return await this.get(
+    return this.get(
       `${this._apiurl}/files/${this._resourceId}`
     );
   }
@@ -426,7 +380,7 @@ export class ApiClient {
    * @returns {Promise<Folder>}
    */
   async getFolder(): Promise<Folder> {
-    return await this.get(
+    return this.get(
       `${this._apiurl}/folders/${this._resourceId}`
     );
   }
@@ -438,7 +392,7 @@ export class ApiClient {
    * @returns {Promise<Membership>}
    */
   async getMembership(): Promise<Membership> {
-    return await this.get(
+    return this.get(
       `${this._apiurl}/${this._membershipUri}/${this._resourceId}`
     );
   }
@@ -451,7 +405,7 @@ export class ApiClient {
    * @returns {Promise<Vault>}
    */
   async getVault(): Promise<Vault> {
-    return await this.public(true).get(
+    return this.public(true).get(
       `${this._apiurl}/${this._vaultUri}/${this._resourceId}`
     );
   }
@@ -463,7 +417,7 @@ export class ApiClient {
    * @returns {Promise<Array<Transaction>>}
    */
   async getTransactions(): Promise<Array<Transaction>> {
-    return await this.get(
+    return this.get(
       `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}`
     );
   }
@@ -475,7 +429,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<File>>}
    */
   async getFiles(): Promise<Paginated<File>> {
-    return await this.get(`${this._uploadsurl}/${this._fileUri}`);
+    return this.get(`${this._uploadsurl}/${this._fileUri}`);
   }
 
   async invite(): Promise<{ id: string }> {
@@ -517,7 +471,7 @@ export class ApiClient {
 
   async fetch(method: string, url: string): Promise<any> {
     const auth = await Auth.getAuthorization();
-    if (!auth && !this._isPublic) {
+    if (!auth && !this._public) {
       throw new Unauthorized("Authentication is required to use Akord API");
     }
 
@@ -531,17 +485,14 @@ export class ApiClient {
         "Content-Type": "application/json",
       },
     } as AxiosRequestConfig;
-    // if (this._payload) {
-    //   config.data = this._payload;
-    // }
+    if (this._data) {
+      config.data = this._data;
+    }
     Logger.log(`Request ${config.method}: ` + config.url);
 
     return await retry(async () => {
       try {
         const response = await this._httpClient(config);
-        // if (isPaginated(response)) {
-        //   return { items: response.data, nextToken: nextToken(response) };
-        // }
         return response.data;
       } catch (error) {
         throwError(error.response?.status, error.response?.data?.msg, error);
@@ -561,11 +512,11 @@ export class ApiClient {
   * - vaultId()
   * - file()
   * @uses:
-  * - autoExecute()
   * - parentId()
-  * @returns {Promise<any>}>}
+  * - autoExecute()
+  * @returns {Promise<File>}
   */
-  async uploadFile(): Promise<{ file: File, digest: string, bytes: string }> {
+  async createFile(): Promise<File> {
     if (!this._vaultId) {
       throw new BadRequest(
         "Missing vault id parameter. Use ApiClient#vaultId() to add it"
@@ -645,14 +596,40 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - resourceId()
+   * @uses:
+   * - name()
+   * - parentId()
+   * - status()
+   * - autoExecute()
+   * @returns {Promise<File>}
+   */
+  async updateFile(): Promise<File> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
+    }
+    this.data({
+      name: this._name,
+      parentId: this._parentId,
+      status: this._status,
+      autoExecute: this._autoExecute
+    });
+    return this.patch(`${this._apiurl}/${this._fileUri}/${this._resourceId}`);
+  }
+
+  /**
+   *
+   * @requires:
    * - vaultId()
    * - name()
    * @uses:
    * - autoExecute()
    * - parentId()
-   * @returns {Promise<any>}>}
+   * @returns {Promise<Folder>}
    */
-  async createFolder(): Promise<{ folder: Folder, digest: string, bytes: string }> {
+  async createFolder(): Promise<Folder> {
     if (!this._vaultId) {
       throw new BadRequest(
         "Missing vault id input. Use ApiClient#vaultId() to add it"
@@ -664,40 +641,41 @@ export class ApiClient {
       );
     }
 
-    const auth = await Auth.getAuthorization();
-    if (!auth) {
-      throw new Unauthorized("Authentication is required to use Akord API");
+    this.data({
+      vaultId: this._vaultId,
+      parentId: this._parentId,
+      name: this._name,
+      autoExecute: true
+    });
+
+    return this.post(`${this._apiurl}/${this._folderUri}`);
+  }
+
+  /**
+   *
+   * @requires:
+   * - resourceId()
+   * @uses:
+   * - name()
+   * - parentId()
+   * - status()
+   * - autoExecute()
+   * @returns {Promise<Folder>}
+   */
+  async updateFolder(): Promise<Folder> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
     }
+    this.data({
+      name: this._name,
+      parentId: this._parentId,
+      status: this._status,
+      autoExecute: this._autoExecute
+    });
 
-    let headers = {
-      Authorization: auth,
-      "Content-Type": "application/json",
-    } as Record<string, string>;
-
-    const config = {
-      method: "post",
-      url: `${this._apiurl}/folders?${new URLSearchParams(
-        this._queryParams
-      ).toString()}`,
-      data: {
-        vaultId: this._vaultId,
-        parentId: this._parentId,
-        name: this._name,
-        autoExecute: true
-      },
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    try {
-      const response = await this._httpClient(config);
-      return response.data;
-    } catch (error) {
-      console.log(error)
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
+    return this.patch(`${this._apiurl}/${this._folderUri}/${this._resourceId}`);
   }
 
   /**
@@ -705,206 +683,139 @@ export class ApiClient {
    * @requires:
    * - name()
    * @uses:
-   * - autoExecute()
+   * - description()
    * - public()
-   * @returns {Promise<any>}>}
+   * - autoExecute()
+   * @returns {Promise<Vault>}
    */
-  async createVault(): Promise<{ vault: Vault, digest: string, bytes: string }> {
+  async createVault(): Promise<Vault> {
     if (!this._name) {
       throw new BadRequest(
         "Missing name input. Use ApiClient#name() to add it"
       );
     }
-    const auth = await Auth.getAuthorization();
-    if (!auth) {
-      throw new Unauthorized("Authentication is required to use Akord API");
+
+    this.data({
+      name: this._name,
+      description: this._description,
+      public: this._public,
+      autoExecute: true
+    });
+
+    return this.post(`${this._apiurl}/${this._vaultUri}`);
+  }
+
+  /**
+  *
+  * @requires:
+  * - resourceId()
+  * @uses:
+  * - name()
+  * - description()
+  * - status()
+  * - autoExecute()
+  * @returns {Promise<Vault>}
+  */
+  async updateVault(): Promise<Vault> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
     }
-
-    const me = this;
-    let headers = {
-      Authorization: auth,
-      "Content-Type": "application/json",
-    } as Record<string, string>;
-
-    const config = {
-      method: "post",
-      url: `${this._apiurl}/vaults?${new URLSearchParams(
-        this._queryParams
-      ).toString()}`,
-      data: {
-        name: this._name,
-        public: this._isPublic,
-        autoExecute: true
-      },
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    try {
-      const response = await this._httpClient(config);
-      return response.data;
-    } catch (error) {
-      console.log(error)
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
+    this.data({
+      name: this._name,
+      description: this._description,
+      status: this._status,
+      autoExecute: this._autoExecute
+    });
+    return this.patch(`${this._apiurl}/${this._vaultUri}/${this._resourceId}`);
   }
 
   /**
    *
    * @requires:
+   * - address()
+   * - role()
+   * @uses:
+   * - expiresAt()
+   * - autoExecute()
+   * @returns {Promise<Membership>}
+   */
+  async createMembership(): Promise<Membership> {
+    if (!this._address) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#address() to add it"
+      );
+    }
+    if (!this._role) {
+      throw new BadRequest(
+        "Missing role input. Use ApiClient#role() to add it"
+      );
+    }
+
+    this.data({
+      address: this._address,
+      role: this._role,
+      expiresAt: this._expiresAt,
+      autoExecute: true
+    });
+
+    return this.post(`${this._apiurl}/${this._membershipUri}`);
+  }
+
+  /**
+  *
+  * @requires:
+  * - resourceId()
+  * @uses:
+  * - role()
+  * - expiresAt()
+  * - status()
+  * - autoExecute()
+  * @returns {Promise<Membership>}
+  */
+  async updateMembership(): Promise<Membership> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
+    }
+    this.data({
+      role: this._role,
+      expiresAt: this._expiresAt,
+      status: this._status,
+      autoExecute: this._autoExecute
+    });
+    return this.patch(`${this._apiurl}/${this._membershipUri}/${this._resourceId}`);
+  }
+
+  /**
+   *
+   * @requires:
+   * - id()
    * - digest()
    * - signature()
-   * @returns {Promise<any>}>}
+   * @returns {Promise<any>}
    */
   async postTransaction(): Promise<any> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
+    }
+
     if (!this._digest) {
       throw new BadRequest(
-        "Missing digest to post transaction. Use ApiClient#digest() to add it"
+        "Missing digest input. Use ApiClient#digest() to add it"
       );
     }
 
     if (!this._signature) {
       throw new BadRequest(
-        "Missing signature to post transaction. Use ApiClient#signature() to add it"
+        "Missing signature input. Use ApiClient#signature() to add it"
       );
     }
-
-    const auth = await Auth.getAuthorization();
-    if (!auth) {
-      throw new Unauthorized("Authentication is required to use Akord API");
-    }
-
-    let headers = {
-      Authorization: auth,
-      "Content-Type": "application/json",
-    } as Record<string, string>;
-
-    const config = {
-      method: "post",
-      url: `${this._apiurl}/transactions?${new URLSearchParams(
-        this._queryParams
-      ).toString()}`,
-      data: {
-        signature: this._signature,
-        digest: this._digest
-      },
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    try {
-      const response = await this._httpClient(config);
-      return response.data;
-    } catch (error) {
-      console.log(error)
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
-  }
-
-  /**
-   *
-   * @requires:
-   * - vaultId()
-   * - input()
-   * - tags()
-   * @uses:
-   * - metadata()
-   * @returns {Promise<{ id: string, object: T }>}
-   */
-  async transaction<T>(): Promise<T> {
-    if (!this._vaultId) {
-      throw new BadRequest(
-        "Missing vault id input. Use ApiClient#vaultId() to add it"
-      );
-    }
-
-    const auth = await Auth.getAuthorization();
-    if (!auth) {
-      throw new Unauthorized("Authentication is required to use Akord API");
-    }
-
-    const me = this;
-    let headers = {
-      Authorization: auth,
-      "Content-Type": "multipart/form-data",
-    } as Record<string, string>;
-
-    const form = new FormData();
-
-    console.log(this)
-
-    if (this._signature) {
-      form.append("signature", JSON.stringify(this._signature));
-    }
-
-    if (this._timestamp) {
-      form.append("timestamp", JSON.stringify(this._timestamp));
-    }
-
-    if (this._objectId) {
-      form.append("timestamp", JSON.stringify(this._objectId));
-    }
-
-    if (this._vaultId) {
-      form.append("timestamp", JSON.stringify(this._vaultId));
-    }
-
-    console.log(form)
-
-    if (this._file) {
-      try {
-        const buffer = await this._file.arrayBuffer()
-        // const blob = new Blob([buffer], { type: 'application/octet-stream' });
-        form.append("file", Buffer.from(buffer), { filename: this._file.name });
-      } catch (e) {
-        form.append("file", this._file, {
-          filename: "file",
-          contentType: "application/octet-stream",
-        });
-      }
-    }
-
-    const config = {
-      method: "post",
-      url: `${this._apiurl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}?${new URLSearchParams(
-        this._queryParams
-      ).toString()}`,
-      data: form,
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-      onUploadProgress(progressEvent) {
-        if (me._progressHook) {
-          let percentageProgress;
-          let bytesProgress;
-          if (me._totalBytes) {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / me._totalBytes) * 100
-            );
-          } else {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / progressEvent.total) * 100
-            );
-          }
-          me._progressHook(percentageProgress, bytesProgress, me._progressId);
-        }
-      },
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    try {
-      const response = await this._httpClient(config);
-      return response.data;
-    } catch (error) {
-      console.log(error)
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
+    return this.post(`${this._apiurl}/${this._transactionUri}`);
   }
 
   /**
@@ -920,7 +831,7 @@ export class ApiClient {
    */
   async downloadFile() {
     const auth = await Auth.getAuthorization();
-    if (!auth && !this._isPublic) {
+    if (!auth && !this._public) {
       throw new Unauthorized("Authentication is required to use Akord API");
     }
     if (!this._resourceId) {
@@ -934,7 +845,7 @@ export class ApiClient {
       signal: this._cancelHook ? this._cancelHook.signal : null,
     } as RequestInit;
 
-    if (!this._isPublic) {
+    if (!this._public) {
       config.headers = {
         Authorization: auth,
       };

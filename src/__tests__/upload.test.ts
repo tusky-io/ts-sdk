@@ -24,84 +24,88 @@ describe("Testing file & folder upload functions", () => {
     await Auth.signInWithWallet(wallet);
     akord = new Akord({ signer: wallet, encrypter: wallet, env: "local" });
     vaultId = (await vaultCreate(akord, true)).id;
-    console.log(vaultId)
   });
 
   afterAll(async () => {
-    await cleanup(vaultId);
+    await cleanup(akord, vaultId);
   });
-  
+
   it("should upload file from path", async () => {
-    const { uri, fileId: responseFileId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId});
+    const { uri, fileId: responseFileId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
     fileId = responseFileId;
     fileUri = uri;
   });
 
-  // it("should download file from uri", async () => {
-  //   const response = await akord.file.download(fileId);
-  //   console.log(response);
-  // });
-
-  it("should upload file from path", async () => {
-    // const file = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
-    // expect(file.id).toBeTruthy();
-    // expect(file.blobId).toBeTruthy();
+  it("should download file from uri", async () => {
+    const response = await akord.file.download(fileId);
+    console.log(response);
   });
 
-  // it("should fail uploading an empty file", async () => {
-  //   await expect(async () => {
-  //     await akord.file.upload(testDataPath + "empty-file.md", { vaultId: vaultId });
-  //   }).rejects.toThrow(BadRequest);
-  // });
+  it("should upload file from path", async () => {
+    const file = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
+    const type = "image/png";
+    expect(file.id).toBeTruthy();
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
-  // it("should create stack from file buffer", async () => {
-  //   const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
-  //   const type = "image/png";
+  it("should fail uploading an empty file", async () => {
+    await expect(async () => {
+      await akord.file.upload(testDataPath + "empty-file.md", { vaultId: vaultId });
+    }).rejects.toThrow(BadRequest);
+  });
 
-  //   const file = await akord.file.upload(fileBuffer, { name: firstFileName, mimeType: type, vaultId: vaultId });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.blobId).toBeTruthy();
-  // });
+  it("should upload a file buffer", async () => {
+    const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
+    const type = "image/png";
 
-  // it("should create stack from file buffer without explicitly provided mime type", async () => {
-  //   const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
-  //   const type = "image/png";
+    const file = await akord.file.upload(fileBuffer, { name: firstFileName, mimeType: type, vaultId: vaultId });
+    expect(file.id).toBeTruthy();
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
-  //   const file = await akord.file.upload(fileBuffer, { name: firstFileName, vaultId: vaultId });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.blobId).toBeTruthy();
+  it("should upload a file buffer without explicitly provided mime type", async () => {
+    const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
+    const type = "image/png";
 
-  // });
+    const file = await akord.file.upload(fileBuffer, { name: firstFileName, vaultId: vaultId });
+    expect(file.id).toBeTruthy();
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
-  // it("should create stack from file stream", async () => {
-  //   const fileStream = fs.createReadStream(testDataPath + firstFileName);
-  //   const type = "image/png";
+  it("should upload a file stream", async () => {
+    const fileStream = fs.createReadStream(testDataPath + firstFileName);
+    const type = "image/png";
 
-  //   const file = await akord.file.upload(fileStream, { vaultId: vaultId, name: firstFileName, mimeType: type });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.blobId).toBeTruthy();
+    const file = await akord.file.upload(fileStream, { vaultId: vaultId, name: firstFileName, mimeType: type });
+    expect(file.id).toBeTruthy();
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
-  // });
+  it("should upload a file object", async () => {
+    const fileObject = await createFileLike(testDataPath + firstFileName);
+    const type = "image/png";
+    const file = await akord.file.upload(fileObject, { vaultId: vaultId, name: firstFileName });
+    expect(file.id).toBeTruthy();
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
-  // it("should create stack from file object", async () => {
-  //   const fileObject = await createFileLike(testDataPath + firstFileName);
-  //   const file = await akord.file.upload(fileObject, { vaultId: vaultId, name: firstFileName });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.blobId).toBeTruthy();
-  // });
+  const batchSize = 10;
+  it(`should upload a batch of ${batchSize} files`, async () => {
+    const fileName = "logo.png"
 
-  // const batchSize = 10;
-  // it(`should upload a batch of ${batchSize} files`, async () => {
-  //   const fileName = "logo.png"
+    const items = [] as any;
+    for (let i = 0; i < batchSize; i++) {
+      items.push({ file: testDataPath + fileName });
+    }
 
-  //   const items = [] as any;
-  //   for (let i = 0; i < batchSize; i++) {
-  //     items.push({ file: testDataPath + fileName, options: { cloud: true } });
-  //   }
+    const { data, errors } = await akord.file.batchUpload(items);
 
-  //   const { data, errors } = await akord.file.batchUpload(items);
-
-  //   expect(errors.length).toEqual(0);
-  //   expect(data.length).toEqual(batchSize);
-  // });
+    expect(errors.length).toEqual(0);
+    expect(data.length).toEqual(batchSize);
+  });
 });

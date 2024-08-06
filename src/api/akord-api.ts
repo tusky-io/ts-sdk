@@ -2,10 +2,9 @@ import { ClientConfig } from "../config";
 import { Api } from "./api";
 import { apiConfig, ApiConfig } from "./config";
 import { ApiClient } from "./api-client";
-import { Logger } from "../logger";
-import { Membership, MembershipKeys } from "../types/membership";
+import { Membership } from "../types/membership";
 import { Vault } from "../types/vault";
-import { FileTxPayload, FolderTxPayload, Transaction, TxPayload, VaultTxPayload } from "../types/transaction";
+import { CreateFileTxPayload, CreateFolderTxPayload, CreateMembershipTxPayload, CreateVaultTxPayload, Transaction, UpdateFileTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, UpdateVaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserPublicInfo } from "../types/user";
@@ -19,9 +18,6 @@ export const defaultFileUploadOptions = {
   public: false
 };
 
-const RETRY_MAX = 3;
-const RETRY_AFTER = 1000;
-
 const DEFAULT_LIMIT = 1000;
 
 export default class AkordApi extends Api {
@@ -31,93 +27,110 @@ export default class AkordApi extends Api {
   constructor(config: ClientConfig) {
     super();
     this.config = apiConfig(config.env);
+    this.autoExecute = config.autoExecute;
   }
 
-  public async postContractTransaction<T>(tx: TxPayload, file?: any): Promise<T> {
-    let retryCount = 0;
-    let lastError: Error;
-    while (retryCount < RETRY_MAX) {
-      try {
-        const object = await new ApiClient()
-          .env(this.config)
-          .vaultId(tx.vaultId)
-          .file(file)
-          .payload(tx)
-          .transaction<T>()
-        return object;
-      } catch (error: any) {
-        lastError = error;
-        Logger.error(error);
-        Logger.error(error.message);
-        if (error?.statusCode >= 400 && error?.statusCode < 500) {
-          retryCount = RETRY_MAX;
-          throw error;
-        } else {
-          await new Promise(r => setTimeout(r, RETRY_AFTER));
-          Logger.warn("Retrying...");
-          retryCount++;
-          Logger.warn("Retry count: " + retryCount);
-        }
-      }
-    }
-    Logger.log(`Request failed after ${RETRY_MAX} attempts.`);
-    throw lastError;
+  public async createFolder(tx: CreateFolderTxPayload): Promise<Folder> {
+    return new ApiClient()
+      .env(this.config)
+      .vaultId(tx.vaultId)
+      .parentId(tx.parentId)
+      .name(tx.name)
+      .autoExecute(this.autoExecute)
+      .createFolder();
   };
 
-  public async createFolder(tx: FolderTxPayload): Promise<{ folder: Folder, digest: string, bytes: string }> {
-    return  await new ApiClient()
-    .env(this.config)
-    .vaultId(tx.vaultId)
-    .parentId(tx.parentId)
-    .name(tx.name)
-    .groupId(tx.groupId)
-    .autoExecute(tx.autoExecute)
-    .createFolder();
+  public async updateFolder(tx: UpdateFolderTxPayload): Promise<Folder> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(tx.id)
+      .name(tx.name)
+      .parentId(tx.parentId)
+      .status(tx.status)
+      .autoExecute(this.autoExecute)
+      .updateFolder();
   };
 
-  public async uploadFile(tx: FileTxPayload): Promise<{ file: File, digest: string, bytes: string }> {
-    return  await new ApiClient()
-    .env(this.config)
-    .file(tx.file)
-    .groupId(tx.groupId)
-    .vaultId(tx.vaultId)
-    .parentId(tx.parentId)
-    .autoExecute(tx.autoExecute)
-    .uploadFile();
+  public async createFile(tx: CreateFileTxPayload): Promise<File> {
+    return new ApiClient()
+      .env(this.config)
+      .file(tx.file)
+      .vaultId(tx.vaultId)
+      .parentId(tx.parentId)
+      .autoExecute(this.autoExecute)
+      .createFile();
   };
 
-  public async createVault(tx: VaultTxPayload): Promise<{ vault: Vault, digest: string, bytes: string }> {
-    return  await new ApiClient()
-    .env(this.config)
-    .groupId(tx.groupId)
-    .owner(tx.owner)
-    .groupId(tx.groupId)
-    .objectId(tx.objectId)
-    .membershipId(tx.membershipId)
-    .public(tx.public)
-    .timestamp(tx.timestamp)
-    .autoExecute(tx.autoExecute)
-    .name(tx.name)
-    .createVault();
+  public async updateFile(tx: UpdateFileTxPayload): Promise<File> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(tx.id)
+      .name(tx.name)
+      .parentId(tx.parentId)
+      .status(tx.status)
+      .autoExecute(this.autoExecute)
+      .updateFile();
+  };
+
+  public async createVault(tx: CreateVaultTxPayload): Promise<Vault> {
+    return new ApiClient()
+      .env(this.config)
+      .public(tx.public)
+      .name(tx.name)
+      .description(tx.description)
+      .autoExecute(this.autoExecute)
+      .createVault();
+  };
+
+  public async updateVault(tx: UpdateVaultTxPayload): Promise<Vault> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(tx.id)
+      .name(tx.name)
+      .description(tx.description)
+      .status(tx.status)
+      .autoExecute(this.autoExecute)
+      .updateVault();
+  };
+
+  public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {
+    return new ApiClient()
+      .env(this.config)
+      .address(tx.address)
+      .role(tx.role)
+      .expiresAt(tx.expiresAt)
+      .autoExecute(this.autoExecute)
+      .createMembership();
+  };
+
+  public async updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(tx.id)
+      .role(tx.role)
+      .status(tx.status)
+      .expiresAt(tx.expiresAt)
+      .autoExecute(this.autoExecute)
+      .updateMembership();
   };
 
   public async postTransaction(digest: string, signature: string): Promise<any> {
-    return  await new ApiClient()
-    .env(this.config)
-    .digest(digest)
-    .signature(signature)
-    .postTransaction();
+    return new ApiClient()
+      .env(this.config)
+      .digest(digest)
+      .signature(signature)
+      .postTransaction();
   };
 
   public async getMembers(vaultId: string): Promise<Array<Membership>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .vaultId(vaultId)
       .getMembers();
   };
 
   public async getFiles(options?: ListApiOptions): Promise<Paginated<File>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .queryParams({ ...options, raw: true })
       .getFiles();
@@ -151,61 +164,54 @@ export default class AkordApi extends Api {
   };
 
   public async getStorageBalance(): Promise<Storage> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .getStorageBalance();
   }
 
   public async existsUser(email: string): Promise<Boolean> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .queryParams({ email })
       .existsUser();
   }
 
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .queryParams({ email })
       .getUserPublicData();
   };
 
   public async getUser(): Promise<User> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .getUser();
   };
 
-  public async deleteVault(vaultId: string): Promise<void> {
-    await new ApiClient()
-      .env(this.config)
-      .vaultId(vaultId)
-      .deleteVault();
-  }
-
   public async getFile(id: string): Promise<File> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .resourceId(id)
       .getFile();
   };
 
   public async getFolder(id: string): Promise<Folder> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .resourceId(id)
       .getFolder();
   };
 
   public async getMembership(id: string): Promise<Membership> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .resourceId(id)
       .getMembership();
   };
 
   public async getVault(id: string, options?: VaultApiGetOptions): Promise<Vault> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .resourceId(id)
       .queryParams({
@@ -218,15 +224,8 @@ export default class AkordApi extends Api {
       .getVault();
   };
 
-  public async getMembershipKeys(vaultId: string): Promise<MembershipKeys> {
-    return await new ApiClient()
-      .env(this.config)
-      .vaultId(vaultId)
-      .getMembershipKeys();
-  };
-
   public async getMemberships(options: ListOptions = {}): Promise<Paginated<Membership>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .queryParams({
         limit: options.limit || DEFAULT_LIMIT,
@@ -236,7 +235,7 @@ export default class AkordApi extends Api {
   };
 
   public async getVaults(options: ListOptions = {}): Promise<Paginated<Vault>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .queryParams({
         tags: JSON.stringify(options.tags ? options.tags : {}),
@@ -248,7 +247,7 @@ export default class AkordApi extends Api {
   };
 
   public async getFilesByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<File>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
@@ -261,7 +260,7 @@ export default class AkordApi extends Api {
   };
 
   public async getFoldersByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Folder>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
@@ -274,7 +273,7 @@ export default class AkordApi extends Api {
   };
 
   public async getMembershipsByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Membership>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
@@ -286,7 +285,7 @@ export default class AkordApi extends Api {
   };
 
   public async getTransactions(vaultId: string): Promise<Array<Transaction>> {
-    return await new ApiClient()
+    return new ApiClient()
       .env(this.config)
       .vaultId(vaultId)
       .getTransactions();

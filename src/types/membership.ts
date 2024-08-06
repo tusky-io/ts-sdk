@@ -2,9 +2,9 @@ import { Encryptable, EncryptedKeys } from "@akord/crypto";
 import { User } from "./user";
 
 export type RoleType = "VIEWER" | "CONTRIBUTOR" | "OWNER";
-export type StatusType = "ACCEPTED" | "PENDING" | "REVOKED" | "INVITED";
+export type StatusType = "ACCEPTED" | "PENDING" | "REVOKED";
 
-export const activeStatus = ["ACCEPTED", "PENDING", "INVITED"] as StatusType[];
+export const activeStatus = ["ACCEPTED", "PENDING"] as StatusType[];
 
 export class Membership extends Encryptable {
   id: string;
@@ -24,7 +24,6 @@ export class Membership extends Encryptable {
 
   // vault context
   __public__?: boolean;
-  __cloud__?: boolean;
 
   constructor(membershipProto: any, keys?: Array<EncryptedKeys>) {
     super(keys, null)
@@ -34,7 +33,6 @@ export class Membership extends Encryptable {
     this.createdAt = membershipProto.createdAt;
     this.updatedAt = membershipProto.updatedAt;
     this.expiresAt = membershipProto.expiresAt;
-    this.data = membershipProto.data;
     this.status = membershipProto.status;
     this.role = membershipProto.role;
     this.encPublicSigningKey = membershipProto.encPublicSigningKey;
@@ -43,7 +41,6 @@ export class Membership extends Encryptable {
     this.keys = membershipProto.keys;
     this.memberDetails = membershipProto.memberDetails;
     this.__public__ = membershipProto.__public__;
-    this.__cloud__ = membershipProto.__cloud__;
   }
 }
 
@@ -59,6 +56,8 @@ export type MembershipCreateOptions = {
 
 export type MembershipAirdropOptions = {
   name?: string
-  expirationDate?: Date
-  allowedStorage?: number
+  expiresAt?: number // expiration date
+  allowedStorage?: number // allowed storage
+  publicKey?: string //  member public key for encryption
+  role?: string //  member role
 }
