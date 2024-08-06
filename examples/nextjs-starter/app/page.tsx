@@ -181,9 +181,9 @@ export default function Page() {
         vaultId = vaults[0].id
       }
       confirm("Uploading file in the vault: " + vaultId)
-      const file = await akord?.current?.file.upload(vaultId, file);
-      console.log(file)
-      confirm("Uploaded file: " + file.name);
+      const fileRes = await akord?.current?.file.upload(vaultId, file);
+      console.log(fileRes)
+      confirm("Uploaded file: " + fileRes.name);
 
       return fileRes;
     };
