@@ -19,7 +19,6 @@ class MembershipService extends Service {
     await this.setMembershipKeys(membership);
     this.setObject(membership);
     this.setObjectId(membershipId);
-    this.setType(this.type);
   }
 
   async prepareMemberKeys(publicKey: string): Promise<EncryptedKeys[]> {

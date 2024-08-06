@@ -38,7 +38,6 @@ class Service {
   object: Object
   groupRef: string
 
-  action: actions
   userAgent: string // client name
 
   constructor(config: ServiceConfig) {
@@ -49,7 +48,6 @@ class Service {
     this.vault = config.vault;
     this.vaultId = config.vaultId;
     this.keys = config.keys;
-    this.action = config.action;
     this.objectId = config.objectId;
     this.isPublic = config.isPublic;
     this.type = config.type;
@@ -77,14 +75,6 @@ class Service {
 
   setGroupRef(groupRef: string) {
     this.groupRef = groupRef;
-  }
-
-  setType(type: ObjectType) {
-    this.type = type;
-  }
-
-  setAction(action: actions) {
-    this.action = action;
   }
 
   setObject(object: Object) {
@@ -146,10 +136,6 @@ class Service {
         throw new IncorrectEncryptionKey(error);
       }
     }
-  }
-
-  isCloud() {
-    return this.vault.cloud;
   }
 
   async processWriteRaw(data: ArrayBuffer, options?: EncryptOptions) {
@@ -222,7 +208,6 @@ export type ServiceConfig = {
 
 export type VaultOptions = {
   vaultId?: string,
-  cloud?: boolean,
   public?: boolean
 }
 

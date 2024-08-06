@@ -75,7 +75,7 @@ class FileModule {
   /**
    * Upload file - will create a stack for file & vault if vaultId not provided in options
    * @param  {FileSource} file file source: web File object, file path, buffer or stream
-   * @param  {FileUploadOptions} options cloud/permanent, public/private, parent id, vault id, etc.
+   * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
    * @returns Promise with file id & uri
    */
   public async upload(
@@ -87,7 +87,6 @@ class FileModule {
 
     await this.service.setVaultContext(options.vaultId);
     this.service.setParentId(options.parentId ? options.parentId : options.vaultId);
-    this.service.setAction(actions.FILE_CREATE);
 
     const fileLike = await createFileLike(file, { name: file.name, ...options });
 
@@ -104,7 +103,7 @@ class FileModule {
   /**
    * Upload batch of files - will use default vault or create one if vaultId not provided in options
    * @param  {{ file: FileSource, options:FileUploadOptions }[] } items files array
-   * @param  {FileUploadOptions} options cloud/permanent, public/private, parent id, vault id, etc.
+   * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
    * @returns Promise with array of data response & errors if any
    */
   public async batchUpload(items: {
@@ -298,7 +297,6 @@ export type FileOptions = {
 export type FileUploadOptions = Hooks & FileOptions & {
   public?: boolean,
   chunkSize?: number,
-  cloud?: boolean,
   parentId?: string,
   vaultId?: string
 }

@@ -22,7 +22,6 @@ class FolderService extends Service {
     await this.setMembershipKeys(object);
     this.setObject(object);
     this.setObjectId(folderId);
-    this.setType(this.type);
   }
 
   async processFolder(object: Folder, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<Folder> {

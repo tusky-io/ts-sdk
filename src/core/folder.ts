@@ -200,7 +200,6 @@ class FolderModule {
 export type FolderSource = string | FileSystemEntry
 
 export type FolderUploadOptions = {
-  cloud?: boolean,
   parentId?: string,
   vaultId?: string,
 }

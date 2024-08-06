@@ -93,14 +93,8 @@ class BatchModule {
     this.service.setIsPublic(vault.public);
     await this.service.setMembershipKeys(vault);
     this.setGroupRef(items);
-    this.service.setAction(actions.FILE_CREATE);
 
-    const mergedOptions = {
-      ...options,
-      cloud: this.service.isCloud(),
-    }
-
-    const { errors, data, cancelled } = await this.upload(uploadItems, mergedOptions);
+    const { errors, data, cancelled } = await this.upload(uploadItems, options);
     return { data, errors, cancelled };
   }
 

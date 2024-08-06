@@ -24,7 +24,6 @@ class FileService extends Service {
     await this.setMembershipKeys(object);
     this.setObject(object);
     this.setObjectId(fileId);
-    this.setType(this.type);
   }
 
   async processFile(object: File, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<File> {

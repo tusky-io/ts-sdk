@@ -123,7 +123,6 @@ class MembershipModule {
    */
   public async revoke(id: string): Promise<Membership> {
     await this.service.setVaultContextFromMembershipId(id);
-    this.service.setAction(actions.MEMBERSHIP_REVOKE_ACCESS);
 
     let data: { id: string, value: any }[];
     if (!this.service.isPublic) {

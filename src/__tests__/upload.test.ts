@@ -100,7 +100,7 @@ describe("Testing file & folder upload functions", () => {
 
     const items = [] as any;
     for (let i = 0; i < batchSize; i++) {
-      items.push({ file: testDataPath + fileName, options: { cloud: true } });
+      items.push({ file: testDataPath + fileName });
     }
 
     const { data, errors } = await akord.file.batchUpload(items);

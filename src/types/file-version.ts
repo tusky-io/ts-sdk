@@ -21,7 +21,6 @@ export class File extends Encryptable {
 
   // vault context
   __public__?: boolean;
-  __cloud__?: boolean;
 
   constructor(file: any, keys?: Array<EncryptedKeys>, publicKey?: string) {
     super(
@@ -45,6 +44,5 @@ export class File extends Encryptable {
     this.parentId = file.parentId;
     this.tags = file.tags;
     this.__public__ = file.__public__;
-    this.__cloud__ = file.__cloud__;
   }
 }
