@@ -1,3 +1,10 @@
+# [0.4.0-dev.11](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.10...v0.4.0-dev.11) (2024-08-06)
+
+
+### Features
+
+* use authTokenProvider & cleanup app logs ([e3c90cf](https://github.com/Akord-com/carmella-sdk/commit/e3c90cf5610a177e1dffb73910db0f309a8857c3))
+
 # [0.4.0-dev.10](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.9...v0.4.0-dev.10) (2024-08-06)
 
 
