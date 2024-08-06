@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSuiClient } from "@mysten/dapp-kit";
+import { useRef, useState } from "react";
 import { useEnokiFlow, useZkLogin } from "@mysten/enoki/react";
-import { getFaucetHost, requestSuiFromFaucetV0 } from "@mysten/sui/faucet";
-import { ExternalLink, Github, LoaderCircle } from "lucide-react";
+import { ExternalLink, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,7 +23,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { track } from "@vercel/analytics";
 import { Akord, File, Folder } from "@akord/carmella-sdk";
-import { EnokiSigner } from "./auth/signers/enoki";
 
 // SDK config
 export const NETWORK = "devnet" // Sui network config
@@ -33,13 +30,8 @@ export const AKORD_CONFIG = "testnet"
 export const AUTH_PROVIDER = "google"
 
 export default function Page() {
-  const client = useSuiClient(); // The SuiClient instance
   const enokiFlow = useEnokiFlow(); // The EnokiFlow instance
-  const { address: suiAddress, salt } = useZkLogin(); // The zkLogin instance
-
-  /* The account information of the current user. */
-  const [balance, setBalance] = useState<number>(0);
-  const [accountLoading, setAccountLoading] = useState<boolean>(true);
+  const { address: suiAddress } = useZkLogin(); // The zkLogin instance
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -47,15 +39,6 @@ export default function Page() {
 
   /* Folder create form state */
   const [folderName, setFolderName] = useState<string>("My first folder");
-
-  /**
-   * When the user logs in, fetch the account information.
-   */
-  useEffect(() => {
-    if (suiAddress) {
-      getAccountInfo();
-    }
-  }, [suiAddress]);
 
   const getAuthToken = async () => {
     const session = await enokiFlow.getSession();
@@ -80,79 +63,8 @@ export default function Page() {
 
   const initAkord = async (): Promise<void> => {
     if (!akord?.current) {
-      // Get the keypair for the current user.
-      const keypair = await enokiFlow.getKeypair({ network: NETWORK as any });
-      const signer = new EnokiSigner({ address: suiAddress, keypair: keypair });
-      akord.current = new Akord({ signer: signer, env: AKORD_CONFIG, authTokenProvider: getAuthToken });
+      akord.current = new Akord({ env: AKORD_CONFIG, authTokenProvider: getAuthToken });
     }
-  };
-
-  /**
-   * Fetch the account information of the current user.
-   */
-  const getAccountInfo = async () => {
-    if (!suiAddress) {
-      return;
-    }
-
-    setAccountLoading(true);
-
-    const balance = await client.getBalance({ owner: suiAddress });
-    setBalance(parseInt(balance.totalBalance) / 10 ** 9);
-
-    setAccountLoading(false);
-  };
-
-  /**
-   * Request SUI from the faucet.
-   */
-  const onRequestSui = async () => {
-    const promise = async () => {
-      track("Request SUI");
-
-      // Ensures the user is logged in and has a SUI address.
-      if (!suiAddress) {
-        throw new Error("No SUI address found");
-      }
-
-      if (balance > 3) {
-        throw new Error("You already have enough SUI!");
-      }
-
-      // Request SUI from the faucet.
-      const res = await requestSuiFromFaucetV0({
-        host: getFaucetHost(NETWORK),
-        recipient: suiAddress,
-      });
-
-      if (res.error) {
-        throw new Error(res.error);
-      }
-
-      return res;
-    };
-
-    toast.promise(promise, {
-      loading: "Requesting SUI...",
-      success: (data) => {
-        console.log("SUI requested successfully!", data);
-
-        const suiBalanceChange = data.transferredGasObjects
-          .map((faucetUpdate) => {
-            return faucetUpdate.amount / 10 ** 9;
-          })
-          .reduce((acc: number, change: any) => {
-            return acc + change;
-          }, 0);
-
-        setBalance(balance + suiBalanceChange);
-
-        return "SUI requested successfully! ";
-      },
-      error: (error) => {
-        return error.message;
-      },
-    });
   };
 
   /**
@@ -263,13 +175,7 @@ export default function Page() {
           <PopoverTrigger className="absolute top-4 right-4 max-w-sm" asChild>
             <div>
               <Button className="hidden sm:block" variant={"secondary"}>
-                {accountLoading ? (
-                  <LoaderCircle className="animate-spin" />
-                ) : (
-                  `${suiAddress?.slice(0, 5)}...${suiAddress?.slice(
-                    63
-                  )} - ${balance.toPrecision(3)} SUI`
-                )}
+                {`${suiAddress?.slice(0, 5)}...${suiAddress?.slice(63)}`}
               </Button>
               <Avatar className="block sm:hidden">
                 <AvatarImage src="https://github.com/shadcn.png" />
@@ -287,42 +193,25 @@ export default function Page() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {accountLoading ? (
-                  <div className="w-full flex flex-col items-center">
-                    <LoaderCircle className="animate-spin" />
+                <>
+                  <div className="flex flex-row gap-1 items-center">
+                    <span>Address: </span>
+                    <div className="flex flex-row gap-1">
+                      <span>{`${suiAddress?.slice(
+                        0,
+                        5
+                      )}...${suiAddress?.slice(63)}`}</span>
+                      <a
+                        href={`https://suiscan.xyz/${NETWORK}/account/${suiAddress}`}
+                        target="_blank"
+                      >
+                        <ExternalLink width={12} />
+                      </a>
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex flex-row gap-1 items-center">
-                      <span>Address: </span>
-                      {accountLoading ? (
-                        <LoaderCircle className="animate-spin" />
-                      ) : (
-                        <div className="flex flex-row gap-1">
-                          <span>{`${suiAddress?.slice(
-                            0,
-                            5
-                          )}...${suiAddress?.slice(63)}`}</span>
-                          <a
-                            href={`https://suiscan.xyz/${NETWORK}/account/${suiAddress}`}
-                            target="_blank"
-                          >
-                            <ExternalLink width={12} />
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <span>Balance: </span>
-                      <span>{balance.toPrecision(3)} SUI</span>
-                    </div>
-                  </>
-                )}
+                </>
               </CardContent>
               <CardFooter className="flex flex-row gap-2 items-center justify-between">
-                <Button variant={"outline"} size={"sm"} onClick={onRequestSui}>
-                  Request SUI
-                </Button>
                 <Button
                   variant={"destructive"}
                   size={"sm"}
