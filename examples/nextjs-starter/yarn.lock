@@ -25,10 +25,10 @@
     module-error "^1.0.2"
     run-parallel-limit "^1.1.0"
 
-"@akord/carmella-sdk@0.4.0-dev.10":
-  version "0.4.0-dev.10"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.4.0-dev.10.tgz#74090332b274f42003a73e578a075a66a4b08014"
-  integrity sha512-nRAQ49HDsCscrWAQ3V5Ffmfhfbf4ph8BwvyfF92QdyQYRs5kat7t1GYmNj59/tdybf/nMKCZOBreDDsRlhBRBA==
+"@akord/carmella-sdk@0.4.0-dev.13":
+  version "0.4.0-dev.13"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.4.0-dev.13.tgz#bdc53e87495b6fb47613431e0b7de72c44870026"
+  integrity sha512-d0UCbhHxRuF2dWtfvSLh/1Jx/neEtzYwhodFXQfkGrmTZfixgUgcmFlEbrWIdb7EZ/sJwtWxOuRRwHVEk54pFg==
   dependencies:
     "@akord/crypto" "0.21.56"
     "@akord/ts-cacheable" "1.0.13"
