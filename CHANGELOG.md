@@ -1,3 +1,31 @@
+# [0.5.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0...v0.5.0-dev.1) (2024-08-06)
+
+
+### Bug Fixes
+
+* file & folder api types ([87cd0c3](https://github.com/Akord-com/carmella-sdk/commit/87cd0c385c2ea31d0eb99ceea274dd4bdc640156))
+* **file:** add vaultId parameter to upload request ([e0db794](https://github.com/Akord-com/carmella-sdk/commit/e0db79410cf38a17351ac4d06d2b190cac4d243c))
+* send file name ([eeb70f1](https://github.com/Akord-com/carmella-sdk/commit/eeb70f10bee5c6c78cfef9b622a4e17c67c7aa17))
+* typo ([349df75](https://github.com/Akord-com/carmella-sdk/commit/349df75a77c000526a7fc3c8bb3997855f687d0c))
+
+
+### Features
+
+* add file upload form in nextjs starter ([b79789e](https://github.com/Akord-com/carmella-sdk/commit/b79789e162279ea82b35f8ac06ef4e6231315d68))
+* add nextjs starter enoki <> carmella SDK ([e8709b6](https://github.com/Akord-com/carmella-sdk/commit/e8709b61d77a9fa43bab5bfe7edb75d8c176f83c))
+* **auth:** make token provider async ([f88295f](https://github.com/Akord-com/carmella-sdk/commit/f88295fd8d92559743fa53f2ff9db8220923cf50))
+* cleanup file types ([9afc769](https://github.com/Akord-com/carmella-sdk/commit/9afc769cc124b45cd844f0051b119eaac9c644c7))
+* cleanup membership types ([fe77230](https://github.com/Akord-com/carmella-sdk/commit/fe77230c17c2b94dfd189416f46cf8c959634ddb))
+* generate enoki nonce for zklogin ([ec0914a](https://github.com/Akord-com/carmella-sdk/commit/ec0914aeaeae015fb2dc60f7b5cb9ca85720f276))
+* mock enoki flow ([76f1121](https://github.com/Akord-com/carmella-sdk/commit/76f1121b1b2148a3b9821a2b254d4b6fc49d11bb))
+* move enoki signer & its deps to nextjs starter ([abbbe42](https://github.com/Akord-com/carmella-sdk/commit/abbbe4249706a6d48570b63910a3fc83a2e535d4))
+* remove avatar ([4923e16](https://github.com/Akord-com/carmella-sdk/commit/4923e16d884a8ae38758b090a3d3ebd5f9d725ce))
+* remove storage payment ([ac99964](https://github.com/Akord-com/carmella-sdk/commit/ac99964a389eb9abfd390b937e1a2e4f9199b374))
+* remove sui specific code ([bc1ff3a](https://github.com/Akord-com/carmella-sdk/commit/bc1ff3acef1444342e644aa9658b0269792dae82))
+* support auth token provider & api key authorization ([d71efeb](https://github.com/Akord-com/carmella-sdk/commit/d71efeb97f6bd4b37c9533061d317c626bebdc57))
+* use authTokenProvider & cleanup app logs ([e3c90cf](https://github.com/Akord-com/carmella-sdk/commit/e3c90cf5610a177e1dffb73910db0f309a8857c3))
+* use json for simple api calls & multipart for file uploads ([db6c7f6](https://github.com/Akord-com/carmella-sdk/commit/db6c7f695f02de901de81969967dec8bb0a443e5))
+
 # [0.4.0-dev.15](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0-dev.14...v0.4.0-dev.15) (2024-08-06)
 
 
