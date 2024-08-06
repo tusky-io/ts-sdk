@@ -60,16 +60,16 @@ class FolderModule {
   }
 
   /**
+   * @param  {string} vaultId
    * @param  {FolderSource} folder folder source: folder path, file system entry
    * @param  {FolderUploadOptions} [options] parent id, etc.
    * @returns Promise with new folder id
    */
   public async upload(
+    vaultId: string,
     folder: FolderSource,
     options: FolderUploadOptions = {}
   ): Promise<any> {
-    // validate vault or use/create default one
-    // options.vaultId = await this.service.validateOrCreateDefaultVault(options);
     if (typeof folder === "string") {
       if (!isServer()) {
         throw new BadRequest("Folder path supported only for node.");
@@ -81,10 +81,10 @@ class FolderModule {
         const fullPath = path.join(folder, file);
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
-          const { folderId } = await this.create(options.vaultId, file, { parentId: options.parentId });
+          const { folderId } = await this.create(vaultId, file, { parentId: options.parentId });
           Logger.log("Created folder: " + file);
           // recursively process the subdirectory
-          await this.upload(fullPath, { ...options, parentId: folderId });
+          await this.upload(vaultId, fullPath, { ...options, parentId: folderId });
         } else {
           // upload file
           const fileModule = new FileModule(this.service);
@@ -97,15 +97,15 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} nodeId
+   * @param  {string} id
    * @returns Promise with the decrypted node
    */
-  public async get(nodeId: string, options: GetOptions = this.defaultGetOptions): Promise<Folder> {
+  public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<Folder> {
     const getOptions = {
       ...this.defaultGetOptions,
       ...options
     }
-    const nodeProto = await this.service.api.getFolder(nodeId);
+    const nodeProto = await this.service.api.getFolder(id);
     return this.service.processFolder(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
   }
 
@@ -201,7 +201,6 @@ export type FolderSource = string | FileSystemEntry
 
 export type FolderUploadOptions = {
   parentId?: string,
-  vaultId?: string,
 }
 
 export {

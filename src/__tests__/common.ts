@@ -1,30 +1,12 @@
 require("dotenv").config();
-import { AkordWallet } from "@akord/crypto";
-import { Akord, Auth } from "../index";
+import { Akord } from "../index";
 import faker from '@faker-js/faker';
-import { email, password } from './data/test-credentials';
-import { Env } from "../env";
+
+export const TESTING_ENV = "testnet";
 
 export async function initInstance(): Promise<Akord> {
-  if (process.env.API_KEY && process.env.BACKUP_PHRASE) {
-    console.log("API KEY FLOW")
-    Auth.configure({ env: process.env.ENV as any, apiKey: process.env.API_KEY });
-    const wallet = await AkordWallet.importFromBackupPhrase(process.env.BACKUP_PHRASE);
-    return new Akord({ encrypter: wallet, signer: wallet, debug: true, logToFile: true, env: process.env.ENV as any });
-  } else if (process.env.PASSWORDLESS) {
-    const wallet = await AkordWallet.create("password");
-    Auth.configure({ env: 'carmella' });
-    await Auth.signUpWithWallet(wallet);
-    await Auth.signInWithWallet(wallet);
-    return new Akord({ signer: wallet, encrypter: wallet, env: process.env.ENV as Env });
-  } else {
-    if (!password || !email) {
-      throw new Error("Please configure Akord credentials: email, password.");
-    }
-    Auth.configure({ env: process.env.ENV as any });
-    const { wallet } = await Auth.signIn(email, password);
-    return new Akord({ encrypter: wallet, signer: wallet, debug: true, logToFile: true, env: process.env.ENV as any });
-  }
+  console.log("API KEY FLOW")
+  return new Akord({ debug: true, logToFile: true, env: process.env.ENV as any, apiKey: process.env.API_KEY });
 }
 
 export async function setupVault(isPublic = false): Promise<string> {
@@ -37,7 +19,6 @@ export async function cleanup(akord: Akord, vaultId: string): Promise<void> {
   if (vaultId) {
     await akord.vault.delete(vaultId);
   }
-  await Auth.signOut();
 }
 
 export const vaultCreate = async (akord: Akord, isPublic: boolean = false) => {

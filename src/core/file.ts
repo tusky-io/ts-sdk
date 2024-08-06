@@ -1,5 +1,5 @@
 import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES}  from "@akord/crypto";
-import { status, actions } from "../constants";
+import { status } from "../constants";
 import { ApiClient } from "../api/api-client";
 import { FileSource, createFileLike } from "../types/file";
 import { BadRequest } from "../errors/bad-request";
@@ -73,20 +73,19 @@ class FileModule {
 
 
   /**
-   * Upload file - will create a stack for file & vault if vaultId not provided in options
+   * Upload file
+   * @param  {string} vaultId
    * @param  {FileSource} file file source: web File object, file path, buffer or stream
    * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
    * @returns Promise with file id & uri
    */
   public async upload(
+    vaultId: string,
     file: FileSource,
     options: FileUploadOptions = {}
   ): Promise<File> {
-    // validate vault or use/create default one
-    // options.vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
-
-    await this.service.setVaultContext(options.vaultId);
-    this.service.setParentId(options.parentId ? options.parentId : options.vaultId);
+    await this.service.setVaultContext(vaultId);
+    this.service.setParentId(options.parentId ? options.parentId : vaultId);
 
     const fileLike = await createFileLike(file, { name: file.name, ...options });
 
@@ -96,39 +95,35 @@ class FileModule {
 
     this.service.setFile(fileLike);
 
-    const res = await this.service.api.createFile({ vaultId: options.vaultId, file: fileLike });
-    return res.file;
+    return this.service.api.createFile({ vaultId: vaultId, file: fileLike });
   }
 
   /**
-   * Upload batch of files - will use default vault or create one if vaultId not provided in options
+   * Upload batch of files
+   * @param  {string} vaultId
    * @param  {{ file: FileSource, options:FileUploadOptions }[] } items files array
    * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
    * @returns Promise with array of data response & errors if any
    */
-  public async batchUpload(items: {
+  public async batchUpload(vaultId: string, items: {
     file: FileSource,
     options?: FileUploadOptions
-  }[], options: FileUploadOptions = {}): Promise<{ data: File[], errors: any[] }> {
-    // validate vault or use/create default one
-    // const vaultId = await new Service(this.service).validateOrCreateDefaultVault(options);
-    const vaultId = options.vaultId;
+  }[]): Promise<{ data: File[], errors: any[] }> {
     const batchModule = new BatchModule(this.service);
     const { data, errors } = await batchModule.batchUpload(vaultId, items);
     return { data, errors };
   }
 
-
   /**
-   * @param  {string} nodeId
+   * @param  {string} id
    * @returns Promise with the decrypted node
    */
-  public async get(nodeId: string, options: GetOptions = this.defaultGetOptions): Promise<File> {
+  public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<File> {
     const getOptions = {
       ...this.defaultGetOptions,
       ...options
     }
-    const nodeProto = await this.service.api.getFile(nodeId);
+    const nodeProto = await this.service.api.getFile(id);
     return this.service.processFile(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
   }
 
@@ -187,8 +182,7 @@ class FileModule {
   public async rename(id: string, name: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
-    const { file } = await this.service.api.updateFile({ id: id, name: this.service.name });
-    return file;
+    return this.service.api.updateFile({ id: id, name: this.service.name });
   }
 
   /**
@@ -198,8 +192,7 @@ class FileModule {
    */
   public async move(id: string, parentId?: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id);
-    const { file } = await this.service.api.updateFile({ id: id, parentId: parentId ? parentId : this.service.vaultId });
-    return file;
+    return this.service.api.updateFile({ id: id, parentId: parentId ? parentId : this.service.vaultId });
   }
 
   /**
@@ -209,8 +202,7 @@ class FileModule {
    * @returns Promise with the updated file
    */
   public async delete(id: string): Promise<File> {
-    const { file } = await this.service.api.updateFile({ id: id, status: status.DELETED });
-    return file;
+    return this.service.api.updateFile({ id: id, status: status.DELETED });
   }
 
   /**
@@ -220,13 +212,11 @@ class FileModule {
    * @returns Promise with the updated file
    */
   public async restore(id: string): Promise<File> {
-    const { file } = await this.service.api.updateFile({ id: id, status: status.ACTIVE });
-    return file;
+    return this.service.api.updateFile({ id: id, status: status.ACTIVE });
   }
 
   public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
     const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
-
 
     let stream: ReadableStream<Uint8Array>;
     if (this.service.isPublic) {
@@ -298,7 +288,6 @@ export type FileUploadOptions = Hooks & FileOptions & {
   public?: boolean,
   chunkSize?: number,
   parentId?: string,
-  vaultId?: string
 }
 
 export type FileDownloadOptions = Hooks & {

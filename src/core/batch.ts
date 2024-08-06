@@ -153,7 +153,7 @@ class BatchModule {
     const uploadFileTx = async (service: FileService, item: UploadItem, options: BatchUploadOptions, name: string) => {
       try {
         const fileModule = new FileModule(service);
-        const object = await fileModule.upload(item.file, item.options);
+        const object = await fileModule.upload(service.vaultId, item.file, item.options);
         const file = await new FileService(service).processFile(object, !service.isPublic, service.keys);
         if (options.onFileCreated) {
           await options.onFileCreated(file);
