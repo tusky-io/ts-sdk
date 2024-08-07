@@ -1,4 +1,4 @@
-# [0.5.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0...v0.5.0-dev.1) (2024-08-06)
+# [0.5.0](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0...v0.5.0) (2024-08-06)
 
 
 ### Bug Fixes
