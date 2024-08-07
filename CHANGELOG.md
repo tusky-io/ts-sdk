@@ -1,3 +1,10 @@
+## [0.5.1](https://github.com/Akord-com/carmella-sdk/compare/v0.5.0...v0.5.1) (2024-08-07)
+
+
+### Bug Fixes
+
+* append name to form before file ([7db2390](https://github.com/Akord-com/carmella-sdk/commit/7db23903fe2b1a4afc3cab59ef2112284c7aea02))
+
 # [0.5.0](https://github.com/Akord-com/carmella-sdk/compare/v0.4.0...v0.5.0) (2024-08-06)
 
 
