@@ -9,7 +9,7 @@ Ensure the `.env.local` file is set up with your Enoki API key and Google Auth P
 
 ```
 // login to AWS to fetch private repository: @akord/carmella-sdk
-yarn login
+yarn aws-login
 yarn install
 yarn dev
 ```

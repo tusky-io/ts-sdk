@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useEnokiFlow, useZkLogin } from "@mysten/enoki/react";
-import { ExternalLink, Github } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -277,18 +277,6 @@ export default function Page() {
 
   return (
     <div className="flex flex-col items-center justify-start">
-      <a
-        href="https://github.com/dantheman8300/enoki-example-app"
-        target="_blank"
-        className="absolute top-4 right-0 sm:right-4"
-        onClick={() => {
-          track("github");
-        }}
-      >
-        <Button variant={"link"} size={"icon"}>
-          <Github />
-        </Button>
-      </a>
       <div>
         <h1 className="text-4xl font-bold m-4">{appHeader}</h1>
         <p className="text-md m-4 opacity-50 max-w-md">
