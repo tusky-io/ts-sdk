@@ -1,3 +1,10 @@
+## [0.5.2-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.5.1...v0.5.2-dev.1) (2024-08-07)
+
+
+### Bug Fixes
+
+* starter setup ([63a0497](https://github.com/Akord-com/carmella-sdk/commit/63a0497a09c0f34103941b6d3c97e6da53d86379))
+
 ## [0.5.1](https://github.com/Akord-com/carmella-sdk/compare/v0.5.0...v0.5.1) (2024-08-07)
 
 
