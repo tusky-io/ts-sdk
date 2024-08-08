@@ -34,8 +34,6 @@ abstract class Api {
 
   abstract postTransaction(digest: string, signature: string): Promise<any>
 
-  abstract getFiles(options?: ListApiOptions): Promise<Paginated<File>>
-
   abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
 
   abstract getStorageBalance(): Promise<Storage>
@@ -58,9 +56,9 @@ abstract class Api {
 
   abstract getMemberships(options?: ListOptions): Promise<Paginated<Membership>>
 
-  abstract getFilesByVaultId(vaultId: string, options?: ListOptions): Promise<Paginated<File>>
+  abstract getFiles(options?: ListApiOptions): Promise<Paginated<File>>
 
-  abstract getFoldersByVaultId(vaultId: string, options?: ListOptions): Promise<Paginated<Folder>>
+  abstract getFolders(options?: ListApiOptions): Promise<Paginated<Folder>>
 
   abstract getMembershipsByVaultId(vaultId: string, options?: ListOptions): Promise<Paginated<Membership>>
 

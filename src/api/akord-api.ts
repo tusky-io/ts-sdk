@@ -129,13 +129,6 @@ export default class AkordApi extends Api {
       .getMembers();
   };
 
-  public async getFiles(options?: ListApiOptions): Promise<Paginated<File>> {
-    return new ApiClient()
-      .env(this.config)
-      .queryParams({ ...options, raw: true })
-      .getFiles();
-  }
-
   public async downloadFile(id: string, options: FileGetOptions = {}): Promise<{ fileData: ArrayBuffer | ReadableStream<Uint8Array>, metadata: EncryptionMetadata & { vaultId?: string } }> {
     const { response } = await new ApiClient()
       .env(this.config)
@@ -246,30 +239,30 @@ export default class AkordApi extends Api {
       .getVaults();
   };
 
-  public async getFilesByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<File>> {
+  public async getFiles(options: ListApiOptions = {}): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
-      .vaultId(vaultId)
       .queryParams({
+        vaultId: options.vaultId,
         parentId: options.parentId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
-      .getFilesByVaultId();
+      .getFiles();
   };
 
-  public async getFoldersByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Folder>> {
+  public async getFolders(options: ListApiOptions = {}): Promise<Paginated<Folder>> {
     return new ApiClient()
       .env(this.config)
-      .vaultId(vaultId)
       .queryParams({
+        vaultId: options.vaultId,
         parentId: options.parentId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
-      .getFoldersByVaultId();
+      .getFolders();
   };
 
   public async getMembershipsByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Membership>> {
@@ -277,6 +270,7 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
+        vaultId: vaultId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken

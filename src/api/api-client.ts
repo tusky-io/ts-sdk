@@ -318,29 +318,27 @@ export class ApiClient {
   }
 
   /**
-   * Get files by vault id
+   * Get files for currently authenticated user
    * @uses:
-   * - vaultId()
-   * - queryParams() - type, parentId, limit, nextToken, tags, filter
-   * @returns {Promise<Paginated<T>>}
+   * - queryParams() - vaultId, parentId, limit, nextToken, tags, filter
+   * @returns {Promise<Paginated<File>>}
    */
-  async getFilesByVaultId<T>(): Promise<Paginated<T>> {
+  async getFiles(): Promise<Paginated<File>> {
     return this.public(true).get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/files`
+      `${this._apiUrl}/files`
     );
   }
 
 
   /**
-   * Get folders by vault id
+   * Get folders for currently authenticated user
    * @uses:
-   * - vaultId()
-   * - queryParams() - type, parentId, limit, nextToken, tags, filter
-   * @returns {Promise<Paginated<T>>}
+   * - queryParams() - vaultId, parentId, limit, nextToken, tags, filter
+   * @returns {Promise<Paginated<Folder>>}
    */
-  async getFoldersByVaultId<T>(): Promise<Paginated<T>> {
+  async getFolders(): Promise<Paginated<Folder>> {
     return this.public(true).get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/folders`
+      `${this._apiUrl}/folders`
     );
   }
 
@@ -414,39 +412,8 @@ export class ApiClient {
    */
   async getTransactions(): Promise<Array<Transaction>> {
     return this.get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}`
+      `${this._apiUrl}/${this._transactionUri}`
     );
-  }
-
-  /**
-   * Get files for currently authenticated user
-   * @uses:
-   * - queryParams() - limit, nextToken
-   * @returns {Promise<Paginated<File>>}
-   */
-  async getFiles(): Promise<Paginated<File>> {
-    return this.get(`${this._apiUrl}/${this._fileUri}`);
-  }
-
-  async invite(): Promise<{ id: string }> {
-    const response = await this.post(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`
-    );
-    return response.id;
-  }
-
-  async inviteResend(): Promise<{ id: string }> {
-    const response = await this.post(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
-    );
-    return response.id;
-  }
-
-  async revokeInvite(): Promise<{ id: string }> {
-    const response = await this.delete(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
-    );
-    return response.id;
   }
 
   async post(url: string): Promise<any> {

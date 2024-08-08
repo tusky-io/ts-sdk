@@ -128,22 +128,21 @@ class FileModule {
   }
 
   /**
-   * @param  {string} vaultId
    * @param  {ListOptions} options
-   * @returns Promise with paginated files within given vault
+   * @returns Promise with paginated user files
    */
-  public async list(vaultId: string, options: ListOptions = this.defaultListOptions = this.defaultListOptions): Promise<Paginated<File>> {
+  public async list(options: ListOptions = this.defaultListOptions = this.defaultListOptions): Promise<Paginated<File>> {
     validateListPaginatedApiOptions(options);
 
     if (!options.hasOwnProperty('parentId')) {
       // if parent id not present default to root - vault id
-      options.parentId = vaultId;
+      options.parentId = options.vaultId;
     }
     const listOptions = {
       ...this.defaultListOptions,
       ...options
     }
-    const response = await this.service.api.getFilesByVaultId(vaultId, listOptions);
+    const response = await this.service.api.getFiles(listOptions);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
@@ -163,15 +162,14 @@ class FileModule {
   }
 
   /**
-   * @param  {string} vaultId
    * @param  {ListOptions} options
-   * @returns Promise with all nodes within given vault
+   * @returns Promise with all user files
    */
-  public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<File>> {
-    const list = async (options: ListOptions & { vaultId: string }) => {
-      return this.list(options.vaultId, options);
+  public async listAll(options: ListOptions = this.defaultListOptions): Promise<Array<File>> {
+    const list = async (options: ListOptions) => {
+      return this.list(options);
     }
-    return paginate<File>(list, { ...options, vaultId });
+    return paginate<File>(list, options);
   }
 
   /**
