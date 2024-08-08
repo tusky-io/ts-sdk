@@ -1,12 +1,22 @@
 require("dotenv").config();
 import { Akord } from "../index";
 import faker from '@faker-js/faker';
+import { mockEnokiFlow } from "./auth";
+import EnokiSigner from "./enoki/signer";
+import { status } from "../constants";
 
 export const TESTING_ENV = "testnet";
 
 export async function initInstance(): Promise<Akord> {
-  console.log("API KEY FLOW")
-  return new Akord({ debug: true, logToFile: true, env: process.env.ENV as any, apiKey: process.env.API_KEY });
+  if (process.env.API_KEY) {
+    console.log("--- API key flow");
+    return new Akord({ debug: true, logToFile: true, env: process.env.ENV as any, apiKey: process.env.API_KEY });
+  } else {
+    console.log("--- mock Enoki flow");
+    const { jwt, address, keyPair } = await mockEnokiFlow();
+    const signer = new EnokiSigner({ address: address, keypair: keyPair });
+    return new Akord({ debug: true, logToFile: true, env: process.env.ENV as any, authTokenProvider: async () => jwt, signer: signer });
+  }
 }
 
 export async function setupVault(isPublic = false): Promise<string> {
@@ -23,7 +33,6 @@ export async function cleanup(akord: Akord, vaultId: string): Promise<void> {
 
 export const vaultCreate = async (akord: Akord, isPublic: boolean = false) => {
   const name = faker.random.words();
-  //const termsOfAccess = faker.lorem.sentences();
   const { id } = await akord.vault.create(name, { public: isPublic });
 
   // const membership = await akord.membership.get(membershipId);
@@ -31,7 +40,7 @@ export const vaultCreate = async (akord: Akord, isPublic: boolean = false) => {
   // expect(membership.role).toEqual("OWNER");
 
   const vault = await akord.vault.get(id);
-  expect(vault.status).toEqual("ACTIVE");
+  expect(vault.status).toEqual(status.ACTIVE);
   expect(vault.name).toEqual(name);
   return vault;
 }
@@ -41,7 +50,7 @@ export const folderCreate = async (akord: Akord, vaultId: string, parentId?: str
   const { id } = await akord.folder.create(vaultId, name, { parentId: parentId });
 
   const folder = await akord.folder.get(id);
-  expect(folder.status).toEqual("ACTIVE");
+  expect(folder.status).toEqual(status.ACTIVE);
   if (parentId) {
     expect(folder.parentId).toEqual(parentId);
   } else {

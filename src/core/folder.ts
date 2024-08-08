@@ -98,7 +98,7 @@ class FolderModule {
 
   /**
    * @param  {string} id
-   * @returns Promise with the decrypted node
+   * @returns Promise with the folder object
    */
   public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<Folder> {
     const getOptions = {
@@ -110,21 +110,20 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} vaultId
    * @param  {ListOptions} options
-   * @returns Promise with paginated nodes within given vault
+   * @returns Promise with paginated user folders
    */
-  public async list(vaultId: string, options: ListOptions = this.defaultListOptions = this.defaultListOptions): Promise<Paginated<Folder>> {
+  public async list(options: ListOptions = this.defaultListOptions): Promise<Paginated<Folder>> {
     validateListPaginatedApiOptions(options);
     if (!options.hasOwnProperty('parentId')) {
       // if parent id not present default to root - vault id
-      options.parentId = vaultId;
+      options.parentId = options.vaultId;
     }
     const listOptions = {
       ...this.defaultListOptions,
       ...options
     }
-    const response = await this.service.api.getFoldersByVaultId(vaultId, listOptions);
+    const response = await this.service.api.getFolders(listOptions);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
@@ -144,15 +143,14 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} vaultId
    * @param  {ListOptions} options
-   * @returns Promise with all nodes within given vault
+   * @returns Promise with all user folders
    */
-  public async listAll(vaultId: string, options: ListOptions = this.defaultListOptions): Promise<Array<Folder>> {
-    const list = async (options: ListOptions & { vaultId: string }) => {
-      return this.list(options.vaultId, options);
+  public async listAll(options: ListOptions = this.defaultListOptions): Promise<Array<Folder>> {
+    const list = async (options: ListOptions) => {
+      return this.list(options);
     }
-    return paginate<Folder>(list, { ...options, vaultId });
+    return paginate<Folder>(list, options);
   }
 
   /**

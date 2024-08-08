@@ -13,6 +13,8 @@ import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
 import { Env } from "./env";
 import { Auth } from "./auth";
+import { MeModule } from "./core/me";
+import { ApiKeyModule } from "./core/api-key";
 
 export class Akord {
   public api: Api;
@@ -23,6 +25,9 @@ export class Akord {
 
   public static init: (config?: ClientConfig) => Promise<Akord>;
 
+  get me(): MeModule {
+    return new MeModule(this.getConfig());
+  }
   get folder(): FolderModule {
     return new FolderModule(this.getConfig());
   }
@@ -34,6 +39,10 @@ export class Akord {
   }
   get file(): FileModule {
     return new FileModule(this.getConfig());
+  }
+
+  get apiKey(): ApiKeyModule {
+    return new ApiKeyModule(this.getConfig());
   }
 
   private getConfig() {

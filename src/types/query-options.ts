@@ -6,16 +6,17 @@ export type ListPaginatedApiOptions = {
 }
 
 export type ListApiOptions = ListPaginatedApiOptions & {
-  filter?: Object
-}
-
-export type ListOptions = ListApiOptions & {
-  shouldDecrypt?: boolean,
+  filter?: Object,
   parentId?: string,
+  vaultId?: string,
   tags?: {
     values: string[],
     searchCriteria?: SearchCriteria // default to CONTAINS_EVERY
   }
+}
+
+export type ListOptions = ListApiOptions & {
+  shouldDecrypt?: boolean,
 }
 
 export type ListFileOptions = ListApiOptions & {
