@@ -7,7 +7,7 @@ import { Vault } from "../types/vault";
 import { CreateFileTxPayload, CreateFolderTxPayload, CreateMembershipTxPayload, CreateVaultTxPayload, Transaction, UpdateFileTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, UpdateVaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
-import { User, UserPublicInfo } from "../types/user";
+import { User, UserMutable, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
@@ -162,13 +162,6 @@ export default class AkordApi extends Api {
       .getStorageBalance();
   }
 
-  public async existsUser(email: string): Promise<Boolean> {
-    return new ApiClient()
-      .env(this.config)
-      .queryParams({ email })
-      .existsUser();
-  }
-
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {
     return new ApiClient()
       .env(this.config)
@@ -176,10 +169,20 @@ export default class AkordApi extends Api {
       .getUserPublicData();
   };
 
-  public async getUser(): Promise<User> {
+  public async getMe(): Promise<User> {
     return new ApiClient()
       .env(this.config)
-      .getUser();
+      .getMe();
+  };
+
+  public async updateMe(input: UserMutable): Promise<User> {
+    return new ApiClient()
+      .env(this.config)
+      .name(input.name)
+      .picture(input.picture)
+      .termsAccepted(input.termsAccepted)
+      .trashExpiration(input.trashExpiration)
+      .updateMe();
   };
 
   public async getFile(id: string): Promise<File> {

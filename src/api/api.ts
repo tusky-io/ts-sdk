@@ -3,7 +3,7 @@ import { Membership, MembershipKeys } from "../types/membership";
 import { CreateVaultTxPayload, CreateFileTxPayload, CreateFolderTxPayload, Transaction, UpdateVaultTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, CreateMembershipTxPayload, UpdateFileTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
-import { User, UserPublicInfo } from "../types/user";
+import { User, UserMutable, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
@@ -15,6 +15,10 @@ abstract class Api {
   autoExecute: boolean // if set to true, transactions will be admin signed & executed
 
   constructor() { }
+
+  abstract getMe(): Promise<User>
+
+  abstract updateMe(input: UserMutable): Promise<User>
 
   abstract createFile(tx: CreateFileTxPayload): Promise<File>
 
@@ -37,10 +41,6 @@ abstract class Api {
   abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
 
   abstract getStorageBalance(): Promise<Storage>
-
-  abstract existsUser(email: string): Promise<Boolean>
-
-  abstract getUser(): Promise<User>
 
   abstract getUserPublicData(email: string): Promise<UserPublicInfo>
 

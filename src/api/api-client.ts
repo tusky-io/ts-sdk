@@ -26,6 +26,7 @@ export class ApiClient {
   private _cdnUrl: string;
 
   // API endpoints
+  private _meUri: string = "me";
   private _vaultUri: string = "vaults";
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
@@ -37,17 +38,28 @@ export class ApiClient {
   private _resourceId: string;
 
   // request body
-  private _public: boolean
   private _name: string
-  private _description: string
   private _status: string
   private _vaultId: string;
   private _parentId: string;
+
+  // vault specific
+  private _public: boolean
+  private _description: string
+
+  // member specific
   private _address: string;
   private _role: string;
   private _expiresAt: number;
+
+  // file specific
   private _file: FileLike;
   private _numberOfChunks: number;
+
+  // user specific
+  private _picture: string;
+  private _termsAccepted: boolean;
+  private _trashExpiration: number;
 
   private _autoExecute: boolean
 
@@ -94,6 +106,9 @@ export class ApiClient {
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
+    clone._picture = this._picture;
+    clone._trashExpiration = this._trashExpiration;
+    clone._termsAccepted = this._termsAccepted;
 
     clone._status = this._status;
     clone._autoExecute = this._autoExecute;
@@ -179,6 +194,21 @@ export class ApiClient {
     return this;
   }
 
+  picture(picture: string): ApiClient {
+    this._picture = picture;
+    return this;
+  }
+
+  termsAccepted(termsAccepted: boolean): ApiClient {
+    this._termsAccepted = termsAccepted;
+    return this;
+  }
+
+  trashExpiration(trashExpiration: number): ApiClient {
+    this._trashExpiration = trashExpiration;
+    return this;
+  }
+
   address(address: string): ApiClient {
     this._address = address;
     return this;
@@ -250,29 +280,34 @@ export class ApiClient {
   }
 
   /**
-   *
-   * @uses:
-   * - queryParams() - email
-   * @returns {Promise<Boolean>}
-   */
-  async existsUser(): Promise<Boolean> {
-    try {
-      await this.get(`${this._apiUrl}/${this._userUri}`);
-    } catch (e) {
-      if (!(e instanceof NotFound)) {
-        throw e;
-      }
-      return false;
-    }
-    return true;
-  }
-
-  /**
    * Fetch currently authenticated user
    * @returns {Promise<User>}
    */
-  async getUser(): Promise<User> {
-    return this.get(`${this._apiUrl}/${this._userUri}`);
+  async getMe(): Promise<User> {
+    return this.get(`${this._apiUrl}/${this._meUri}`);
+  }
+
+  /**
+   * Update currently authenticated user
+   * @uses:
+   * - name()
+   * - picture()
+   * - termsAccepted()
+   * - trashExpiration()
+   * @returns {Promise<User>}
+   */
+  async updateMe(): Promise<User> {
+    if (!this._name && !this._picture && !this._termsAccepted && !this._trashExpiration) {
+      throw new BadRequest("Nothing to update.");
+    }
+    this.data({
+      name: this._name,
+      picture: this._picture,
+      termsAccepted: this._termsAccepted,
+      trashExpiration: this._trashExpiration
+    });
+
+    return this.patch(`${this._apiUrl}/${this._meUri}`);
   }
 
   /**
