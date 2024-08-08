@@ -7,12 +7,13 @@ import { Vault } from "../types/vault";
 import { CreateFileTxPayload, CreateFolderTxPayload, CreateMembershipTxPayload, CreateVaultTxPayload, Transaction, UpdateFileTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, UpdateVaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
-import { User, UserPublicInfo } from "../types/user";
+import { User, UserMutable, UserPublicInfo } from "../types/user";
 import { EncryptionMetadata } from "../types/encryption";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
+import { ApiKey } from "../types/api-key";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -129,13 +130,6 @@ export default class AkordApi extends Api {
       .getMembers();
   };
 
-  public async getFiles(options?: ListApiOptions): Promise<Paginated<File>> {
-    return new ApiClient()
-      .env(this.config)
-      .queryParams({ ...options, raw: true })
-      .getFiles();
-  }
-
   public async downloadFile(id: string, options: FileGetOptions = {}): Promise<{ fileData: ArrayBuffer | ReadableStream<Uint8Array>, metadata: EncryptionMetadata & { vaultId?: string } }> {
     const { response } = await new ApiClient()
       .env(this.config)
@@ -169,13 +163,6 @@ export default class AkordApi extends Api {
       .getStorageBalance();
   }
 
-  public async existsUser(email: string): Promise<Boolean> {
-    return new ApiClient()
-      .env(this.config)
-      .queryParams({ email })
-      .existsUser();
-  }
-
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {
     return new ApiClient()
       .env(this.config)
@@ -183,10 +170,20 @@ export default class AkordApi extends Api {
       .getUserPublicData();
   };
 
-  public async getUser(): Promise<User> {
+  public async getMe(): Promise<User> {
     return new ApiClient()
       .env(this.config)
-      .getUser();
+      .getMe();
+  };
+
+  public async updateMe(input: UserMutable): Promise<User> {
+    return new ApiClient()
+      .env(this.config)
+      .name(input.name)
+      .picture(input.picture)
+      .termsAccepted(input.termsAccepted)
+      .trashExpiration(input.trashExpiration)
+      .updateMe();
   };
 
   public async getFile(id: string): Promise<File> {
@@ -246,30 +243,30 @@ export default class AkordApi extends Api {
       .getVaults();
   };
 
-  public async getFilesByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<File>> {
+  public async getFiles(options: ListApiOptions = {}): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
-      .vaultId(vaultId)
       .queryParams({
+        vaultId: options.vaultId,
         parentId: options.parentId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
-      .getFilesByVaultId();
+      .getFiles();
   };
 
-  public async getFoldersByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Folder>> {
+  public async getFolders(options: ListApiOptions = {}): Promise<Paginated<Folder>> {
     return new ApiClient()
       .env(this.config)
-      .vaultId(vaultId)
       .queryParams({
+        vaultId: options.vaultId,
         parentId: options.parentId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
-      .getFoldersByVaultId();
+      .getFolders();
   };
 
   public async getMembershipsByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Membership>> {
@@ -277,6 +274,7 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .queryParams({
+        vaultId: vaultId,
         filter: JSON.stringify(options.filter ? options.filter : {}),
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
@@ -289,6 +287,25 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .getTransactions();
+  }
+
+  public async getApiKeys(): Promise<Array<ApiKey>> {
+    return new ApiClient()
+      .env(this.config)
+      .getApiKeys();
+  }
+
+  public async generateApiKey(): Promise<ApiKey> {
+    return new ApiClient()
+      .env(this.config)
+      .generateApiKey();
+  }
+
+  public async revokeApiKey(key: string): Promise<ApiKey> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(key)
+      .revokeApiKey();
   }
 }
 

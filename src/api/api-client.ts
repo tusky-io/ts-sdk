@@ -18,6 +18,7 @@ import FormData from "form-data";
 import { Buffer } from "buffer";
 import { httpClient } from "./http";
 import { FileLike } from "../types/file";
+import { ApiKey } from "../types/api-key";
 
 const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
 
@@ -26,28 +27,41 @@ export class ApiClient {
   private _cdnUrl: string;
 
   // API endpoints
+  private _meUri: string = "me";
   private _vaultUri: string = "vaults";
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
   private _membershipUri: string = "memberships";
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
+  private _apiKeyUri: string = "api-keys";
 
   // path params
   private _resourceId: string;
 
   // request body
-  private _public: boolean
   private _name: string
-  private _description: string
   private _status: string
   private _vaultId: string;
   private _parentId: string;
+
+  // vault specific
+  private _public: boolean
+  private _description: string
+
+  // member specific
   private _address: string;
   private _role: string;
   private _expiresAt: number;
+
+  // file specific
   private _file: FileLike;
   private _numberOfChunks: number;
+
+  // user specific
+  private _picture: string;
+  private _termsAccepted: boolean;
+  private _trashExpiration: number;
 
   private _autoExecute: boolean
 
@@ -94,6 +108,9 @@ export class ApiClient {
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
+    clone._picture = this._picture;
+    clone._trashExpiration = this._trashExpiration;
+    clone._termsAccepted = this._termsAccepted;
 
     clone._status = this._status;
     clone._autoExecute = this._autoExecute;
@@ -179,6 +196,21 @@ export class ApiClient {
     return this;
   }
 
+  picture(picture: string): ApiClient {
+    this._picture = picture;
+    return this;
+  }
+
+  termsAccepted(termsAccepted: boolean): ApiClient {
+    this._termsAccepted = termsAccepted;
+    return this;
+  }
+
+  trashExpiration(trashExpiration: number): ApiClient {
+    this._trashExpiration = trashExpiration;
+    return this;
+  }
+
   address(address: string): ApiClient {
     this._address = address;
     return this;
@@ -250,29 +282,34 @@ export class ApiClient {
   }
 
   /**
-   *
-   * @uses:
-   * - queryParams() - email
-   * @returns {Promise<Boolean>}
-   */
-  async existsUser(): Promise<Boolean> {
-    try {
-      await this.get(`${this._apiUrl}/${this._userUri}`);
-    } catch (e) {
-      if (!(e instanceof NotFound)) {
-        throw e;
-      }
-      return false;
-    }
-    return true;
-  }
-
-  /**
    * Fetch currently authenticated user
    * @returns {Promise<User>}
    */
-  async getUser(): Promise<User> {
-    return this.get(`${this._apiUrl}/${this._userUri}`);
+  async getMe(): Promise<User> {
+    return this.get(`${this._apiUrl}/${this._meUri}`);
+  }
+
+  /**
+   * Update currently authenticated user
+   * @uses:
+   * - name()
+   * - picture()
+   * - termsAccepted()
+   * - trashExpiration()
+   * @returns {Promise<User>}
+   */
+  async updateMe(): Promise<User> {
+    if (!this._name && !this._picture && !this._termsAccepted && !this._trashExpiration) {
+      throw new BadRequest("Nothing to update.");
+    }
+    this.data({
+      name: this._name,
+      picture: this._picture,
+      termsAccepted: this._termsAccepted,
+      trashExpiration: this._trashExpiration
+    });
+
+    return this.patch(`${this._apiUrl}/${this._meUri}`);
   }
 
   /**
@@ -318,29 +355,27 @@ export class ApiClient {
   }
 
   /**
-   * Get files by vault id
+   * Get files for currently authenticated user
    * @uses:
-   * - vaultId()
-   * - queryParams() - type, parentId, limit, nextToken, tags, filter
-   * @returns {Promise<Paginated<T>>}
+   * - queryParams() - vaultId, parentId, limit, nextToken, tags, filter
+   * @returns {Promise<Paginated<File>>}
    */
-  async getFilesByVaultId<T>(): Promise<Paginated<T>> {
+  async getFiles(): Promise<Paginated<File>> {
     return this.public(true).get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/files`
+      `${this._apiUrl}/files`
     );
   }
 
 
   /**
-   * Get folders by vault id
+   * Get folders for currently authenticated user
    * @uses:
-   * - vaultId()
-   * - queryParams() - type, parentId, limit, nextToken, tags, filter
-   * @returns {Promise<Paginated<T>>}
+   * - queryParams() - vaultId, parentId, limit, nextToken, tags, filter
+   * @returns {Promise<Paginated<Folder>>}
    */
-  async getFoldersByVaultId<T>(): Promise<Paginated<T>> {
+  async getFolders(): Promise<Paginated<Folder>> {
     return this.public(true).get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/folders`
+      `${this._apiUrl}/folders`
     );
   }
 
@@ -414,39 +449,44 @@ export class ApiClient {
    */
   async getTransactions(): Promise<Array<Transaction>> {
     return this.get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._transactionUri}`
+      `${this._apiUrl}/${this._transactionUri}`
     );
   }
 
   /**
-   * Get files for currently authenticated user
-   * @uses:
-   * - queryParams() - limit, nextToken
-   * @returns {Promise<Paginated<File>>}
+   * Get user api keys
+   * @returns {Promise<ApiKey[]>}
    */
-  async getFiles(): Promise<Paginated<File>> {
-    return this.get(`${this._apiUrl}/${this._fileUri}`);
+  async getApiKeys(): Promise<ApiKey[]> {
+    return this.get(
+      `${this._apiUrl}/${this._apiKeyUri}`
+    );
   }
 
-  async invite(): Promise<{ id: string }> {
-    const response = await this.post(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`
+
+  /**
+   * Generate new api key
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<ApiKey>}
+   */
+  async generateApiKey(): Promise<ApiKey> {
+    return this.post(
+      `${this._apiUrl}/${this._apiKeyUri}`
     );
-    return response.id;
   }
 
-  async inviteResend(): Promise<{ id: string }> {
-    const response = await this.post(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
-    );
-    return response.id;
-  }
 
-  async revokeInvite(): Promise<{ id: string }> {
-    const response = await this.delete(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members/${this._resourceId}`
+  /**
+   * Revoke an existing api key
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<ApiKey>}
+   */
+  async revokeApiKey(): Promise<ApiKey> {
+    return this.patch(
+      `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`
     );
-    return response.id;
   }
 
   async post(url: string): Promise<any> {

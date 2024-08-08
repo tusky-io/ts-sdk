@@ -1,10 +1,10 @@
 import { Encryptable, EncryptedKeys } from "@akord/crypto";
 import { User } from "./user";
 
-export type RoleType = "VIEWER" | "CONTRIBUTOR" | "OWNER";
-export type StatusType = "ACCEPTED" | "PENDING" | "REVOKED";
+export type RoleType = "viewer" | "contributor" | "owner";
+export type StatusType = "accepted" | "pending" | "revoked";
 
-export const activeStatus = ["ACCEPTED", "PENDING"] as StatusType[];
+export const activeStatus = ["accepted", "pending"] as StatusType[];
 
 export class Membership extends Encryptable {
   id: string;

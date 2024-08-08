@@ -1,6 +1,5 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { fromB64, toB64 } from '@mysten/sui/utils';
-import { Transaction } from "@mysten/sui/transactions";
+import { fromB64 } from '@mysten/sui/utils';
 
 export default class EnokiSigner {
 

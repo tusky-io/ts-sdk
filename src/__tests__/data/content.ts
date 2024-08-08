@@ -16,6 +16,7 @@ export const publicVaultId = "ktYfCFcTiQOM47jbZI8K1gUIKWQaBDGGoNyvVfSOkjU";
 export const parentId = "9f8db7ff-7d88-4726-8b9b-dbc0d0be51e2";
 export const fileId = 'efb8ed89-3221-48e7-b1e5-9b94eef41319';
 
-export const firstFileName = "logo.png";
-export const secondFileName =  "avatar.jpeg";
+export const firstFileName = "pixels-small.png";
+export const secondFileName =  "pixels-small-2.png";
+export const largeFileName =  "pixels-large.png";
 export const zipFileName =  "archive.zip";
