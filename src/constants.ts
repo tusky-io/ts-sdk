@@ -6,21 +6,21 @@ export enum objects {
 };
 
 export enum status {
-  ACTIVE = "ACTIVE",
-  DELETED = "DELETED"
+  ACTIVE = "active",
+  DELETED = "deleted"
 };
 
 export enum membershipStatus {
-  PENDING = "PENDING",
-  ACCEPTED = "ACCEPTED",
-  REJECTED = "REJECTED",
-  REVOKED = "REVOKED"
+  PENDING = "pending",
+  ACCEPTED = "accepted",
+  REJECTED = "rejected",
+  REVOKED = "revoked"
 };
 
 export enum role {
-  OWNER = "OWNER",
-  CONTRIBUTOR = "CONTRIBUTOR",
-  VIEWER = "VIEWER"
+  OWNER = "owner",
+  CONTRIBUTOR = "contributor",
+  VIEWER = "viewer"
 };
 
 export enum actions {
