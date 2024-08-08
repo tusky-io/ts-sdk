@@ -13,6 +13,7 @@ import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
+import { ApiKey } from "../types/api-key";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -286,6 +287,25 @@ export default class AkordApi extends Api {
       .env(this.config)
       .vaultId(vaultId)
       .getTransactions();
+  }
+
+  public async getApiKeys(): Promise<Array<ApiKey>> {
+    return new ApiClient()
+      .env(this.config)
+      .getApiKeys();
+  }
+
+  public async generateApiKey(): Promise<ApiKey> {
+    return new ApiClient()
+      .env(this.config)
+      .generateApiKey();
+  }
+
+  public async revokeApiKey(key: string): Promise<ApiKey> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(key)
+      .revokeApiKey();
   }
 }
 

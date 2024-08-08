@@ -18,6 +18,7 @@ import FormData from "form-data";
 import { Buffer } from "buffer";
 import { httpClient } from "./http";
 import { FileLike } from "../types/file";
+import { ApiKey } from "../types/api-key";
 
 const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
 
@@ -33,6 +34,7 @@ export class ApiClient {
   private _membershipUri: string = "memberships";
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
+  private _apiKeyUri: string = "api-keys";
 
   // path params
   private _resourceId: string;
@@ -448,6 +450,42 @@ export class ApiClient {
   async getTransactions(): Promise<Array<Transaction>> {
     return this.get(
       `${this._apiUrl}/${this._transactionUri}`
+    );
+  }
+
+  /**
+   * Get user api keys
+   * @returns {Promise<ApiKey[]>}
+   */
+  async getApiKeys(): Promise<ApiKey[]> {
+    return this.get(
+      `${this._apiUrl}/${this._apiKeyUri}`
+    );
+  }
+
+
+  /**
+   * Generate new api key
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<ApiKey>}
+   */
+  async generateApiKey(): Promise<ApiKey> {
+    return this.post(
+      `${this._apiUrl}/${this._apiKeyUri}`
+    );
+  }
+
+
+  /**
+   * Revoke an existing api key
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<ApiKey>}
+   */
+  async revokeApiKey(): Promise<ApiKey> {
+    return this.patch(
+      `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`
     );
   }
 

@@ -17,6 +17,11 @@ export enum membershipStatus {
   REVOKED = "revoked"
 };
 
+export enum apiKeyStatus {
+  ACTIVE = "active",
+  REVOKED = "revoked"
+};
+
 export enum role {
   OWNER = "owner",
   CONTRIBUTOR = "contributor",

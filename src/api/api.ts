@@ -9,6 +9,7 @@ import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
+import { ApiKey } from "../types/api-key";
 
 abstract class Api {
   config: ApiConfig
@@ -64,7 +65,11 @@ abstract class Api {
 
   abstract getMembers(vaultId: string): Promise<Array<Membership>>
 
-  abstract getTransactions(vaultId: string): Promise<Array<Transaction>>
+  abstract getApiKeys(): Promise<Array<ApiKey>>
+
+  abstract generateApiKey(): Promise<ApiKey>
+
+  abstract revokeApiKey(key: string): Promise<ApiKey>
 }
 
 export {

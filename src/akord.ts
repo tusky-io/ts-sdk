@@ -14,6 +14,7 @@ import { Signer } from "./signer";
 import { Env } from "./env";
 import { Auth } from "./auth";
 import { MeModule } from "./core/me";
+import { ApiKeyModule } from "./core/api-key";
 
 export class Akord {
   public api: Api;
@@ -38,6 +39,10 @@ export class Akord {
   }
   get file(): FileModule {
     return new FileModule(this.getConfig());
+  }
+
+  get apiKey(): ApiKeyModule {
+    return new ApiKeyModule(this.getConfig());
   }
 
   private getConfig() {
