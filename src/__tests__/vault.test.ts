@@ -1,7 +1,8 @@
 import { Akord } from "../index";
 import faker from '@faker-js/faker';
-import { cleanup, initInstance, setupVault } from './common';
+import { cleanup, initInstance, setupVault, vaultCreate } from './common';
 import { BadRequest } from "../errors/bad-request";
+import { status } from "../constants";
 
 let akord: Akord;
 
@@ -10,16 +11,25 @@ jest.setTimeout(3000000);
 describe("Testing vault functions", () => {
   let vaultId: string;
 
-  beforeEach(async () => {
-    akord = await initInstance();
-  });
-
   beforeAll(async () => {
-    vaultId = await setupVault();
+    akord = await initInstance();
+
+    const vault = await vaultCreate(akord, true);
+    vaultId = vault.id;
   });
 
   afterAll(async () => {
     await cleanup(akord, vaultId);
+  });
+
+  it("should list user vaults", async () => {
+
+    const vaults = await akord.vault.listAll();
+
+    console.log(vaults)
+
+    expect(vaults).toBeTruthy();
+    expect(vaults[0]).toBeTruthy();
   });
 
   it("should rename the vault", async () => {
@@ -28,7 +38,7 @@ describe("Testing vault functions", () => {
     await akord.vault.rename(vaultId, name);
 
     const vault = await akord.vault.get(vaultId);
-    expect(vault.status).toEqual("ACTIVE");
+    expect(vault.status).toEqual(status.ACTIVE);
     expect(vault.name).toEqual(name);
   });
 
@@ -36,7 +46,7 @@ describe("Testing vault functions", () => {
     await akord.vault.delete(vaultId);
 
     const vault = await akord.vault.get(vaultId);
-    expect(vault.status).toEqual("DELETED");
+    expect(vault.status).toEqual(status.DELETED);
   });
 
   it("should fail renaming the deleted vault", async () => {
@@ -50,6 +60,6 @@ describe("Testing vault functions", () => {
     await akord.vault.restore(vaultId);
 
     const vault = await akord.vault.get(vaultId);
-    expect(vault.status).toEqual("ACTIVE");
+    expect(vault.status).toEqual(status.ACTIVE);
   });
 });

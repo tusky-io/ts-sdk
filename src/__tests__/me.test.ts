@@ -20,9 +20,10 @@ describe("Testing me functions", () => {
 
   it("should update me", async () => {
     const name = faker.random.words();
-    const user = await akord.me.update({ name: name });
+    const user = await akord.me.update({ name: name, termsAccepted: true });
     expect(user).toBeTruthy();
     expect(user.address).toBeTruthy();
     expect(user.name).toEqual(name);
+    expect(user.termsAccepted).toEqual(true);
   });
 });
