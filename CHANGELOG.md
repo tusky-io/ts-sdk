@@ -1,3 +1,18 @@
+# [0.6.0](https://github.com/Akord-com/carmella-sdk/compare/v0.5.2...v0.6.0) (2024-08-08)
+
+
+### Bug Fixes
+
+* build ([4cf4400](https://github.com/Akord-com/carmella-sdk/commit/4cf4400b4c0bccd83bb62125a4f3f9aa928943ae))
+
+
+### Features
+
+* adjust folder & file queries with new api ([ad4ec6c](https://github.com/Akord-com/carmella-sdk/commit/ad4ec6c0176fe99c6ff716037ab34d7c2f018b95))
+* implement api key module ([64ce2f4](https://github.com/Akord-com/carmella-sdk/commit/64ce2f4c4f7b715c1dd0cc3d711a9e3fcd6c2f24))
+* implement me module ([62d4604](https://github.com/Akord-com/carmella-sdk/commit/62d46048b7a5bf38190b253ccc963c4c3c2f1777))
+* switch to lowercase constants ([02997e7](https://github.com/Akord-com/carmella-sdk/commit/02997e7f590746c0628f77cfea4ced5369dedc9f))
+
 # [0.6.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.5.2-dev.1...v0.6.0-dev.1) (2024-08-08)
 
 
