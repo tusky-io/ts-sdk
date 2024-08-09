@@ -1,11 +1,12 @@
 import { AkordWallet } from "@akord/crypto";
 import { BadRequest } from "../errors/bad-request";
-import { Akord, Auth } from "../index";
+import { Akord } from "../index";
 import { createFileLike } from "../types/file";
-import { TESTING_ENV, cleanup, initInstance, setupVault, testDataPath, vaultCreate } from './common';
+import { cleanup, initInstance, testDataPath, vaultCreate } from './common';
 import { firstFileName } from './data/content';
 import fs from "fs";
 import { PNG } from "pngjs";
+import { status } from "../constants";
 
 let akord: Akord;
 let wallet: AkordWallet;
@@ -16,60 +17,53 @@ describe("Testing file & folder upload functions", () => {
 
   let vaultId: string;
   let fileId: string;
-  let fileUri: string;
 
-  // beforeEach(async () => {
-  //   akord = await initInstance();
-  // });
+  beforeAll(async () => {
+    akord = await initInstance();
 
-  // beforeAll(async () => {
-  //   vaultId = await setupVault();
-  // });
-
-  // afterAll(async () => {
-  //   await cleanup(akord, vaultId);
-  // });
-
-  it("should upload file from path", async () => {
-    const { uri, fileId: responseFileId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
-    fileId = responseFileId;
-    fileUri = uri;
+    const vault = await vaultCreate(akord, true);
+    vaultId = vault.id;
   });
 
-  // it("should upload file from path", async () => {
-  //   const { uri, fileId: responseFileId } = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
-  //   fileId = responseFileId;
-  //   fileUri = uri;
-  // });
+  afterAll(async () => {
+    await cleanup(akord, vaultId);
+  });
 
-  // it("should download file from uri", async () => {
+  it("should upload file from path", async () => {
+    const file = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    const type = "image/png";
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.ACTIVE);
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+    fileId = file.id;
+  });
+
+  //   it("should download file", async () => {
   //   const response = await akord.file.download(fileId);
   //   console.log(response);
   // });
 
-  // it("should upload file from path", async () => {
-  //   const file = await akord.file.upload(testDataPath + firstFileName, { vaultId: vaultId });
-  //   const type = "image/png";
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.name).toEqual(firstFileName);
-  //   expect(file.mimeType).toEqual(type);
-  // });
+  it("should fail uploading an empty file", async () => {
+    await expect(async () => {
+      await akord.file.upload(vaultId, testDataPath + "empty-file.md");
+    }).rejects.toThrow(BadRequest);
+  });
 
-  // it("should fail uploading an empty file", async () => {
-  //   await expect(async () => {
-  //     await akord.file.upload(testDataPath + "empty-file.md", { vaultId: vaultId });
-  //   }).rejects.toThrow(BadRequest);
-  // });
+  it("should upload a file buffer", async () => {
+    const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
+    const type = "image/png";
 
-  // it("should upload a file buffer", async () => {
-  //   const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
-  //   const type = "image/png";
-
-  //   const file = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName, mimeType: type });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.name).toEqual(firstFileName);
-  //   expect(file.mimeType).toEqual(type);
-  // });
+    const file = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName, mimeType: type });
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.ACTIVE);
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
   // it("should upload a file buffer without explicitly provided mime type", async () => {
   //   const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
@@ -81,24 +75,30 @@ describe("Testing file & folder upload functions", () => {
   //   expect(file.mimeType).toEqual(type);
   // });
 
-  // it("should upload a file stream", async () => {
-  //   const fileStream = fs.createReadStream(testDataPath + firstFileName);
-  //   const type = "image/png";
+  it("should upload a file stream", async () => {
+    const fileStream = fs.createReadStream(testDataPath + firstFileName);
+    const type = "image/png";
 
-  //   const file = await akord.file.upload(vaultId, fileStream, { name: firstFileName, mimeType: type });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.name).toEqual(firstFileName);
-  //   expect(file.mimeType).toEqual(type);
-  // });
+    const file = await akord.file.upload(vaultId, fileStream, { name: firstFileName, mimeType: type });
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.ACTIVE);
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
-  // it("should upload a file object", async () => {
-  //   const fileObject = await createFileLike(testDataPath + firstFileName);
-  //   const type = "image/png";
-  //   const file = await akord.file.upload(vaultId, fileObject, { name: firstFileName });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.name).toEqual(firstFileName);
-  //   expect(file.mimeType).toEqual(type);
-  // });
+  it("should upload a file object", async () => {
+    const fileObject = await createFileLike(testDataPath + firstFileName);
+    const type = "image/png";
+    const file = await akord.file.upload(vaultId, fileObject, { name: firstFileName });
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.ACTIVE);
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
   // const batchSize = 10;
   // it(`should upload a batch of ${batchSize} files`, async () => {
