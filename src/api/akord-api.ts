@@ -289,7 +289,7 @@ export default class AkordApi extends Api {
       .getTransactions();
   }
 
-  public async getApiKeys(): Promise<Array<ApiKey>> {
+  public async getApiKeys(): Promise<Paginated<ApiKey>> {
     return new ApiClient()
       .env(this.config)
       .getApiKeys();

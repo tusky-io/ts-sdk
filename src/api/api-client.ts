@@ -456,9 +456,9 @@ export class ApiClient {
 
   /**
    * Get user api keys
-   * @returns {Promise<ApiKey[]>}
+   * @returns {Promise<Paginated<ApiKey>>}
    */
-  async getApiKeys(): Promise<ApiKey[]> {
+  async getApiKeys(): Promise<Paginated<ApiKey>> {
     return this.get(
       `${this._apiUrl}/${this._apiKeyUri}`
     );
@@ -485,7 +485,7 @@ export class ApiClient {
    * @returns {Promise<ApiKey>}
    */
   async revokeApiKey(): Promise<ApiKey> {
-    return this.patch(
+    return this.delete(
       `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`
     );
   }

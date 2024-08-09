@@ -1,28 +1,32 @@
 import { Akord } from "../index";
-import { initInstance } from './common';
+import { cleanup, initInstance } from './common';
 import { apiKeyStatus } from '../constants';
 
 let akord: Akord;
 
 jest.setTimeout(3000000);
 
-describe("Testing me functions", () => {
+describe("Testing api key functions", () => {
 
   beforeAll(async () => {
     akord = await initInstance();
   });
 
+  afterAll(async () => {
+    await cleanup(akord);
+  });
+
   it("should generate new api key", async () => {
-    const apiKeys = await akord.apiKey.get();
-    expect(apiKeys).toBeTruthy();
-    expect(apiKeys[0]).toBeTruthy();
-    expect(apiKeys[0].key).toBeTruthy();
-    expect(apiKeys[0].address).toBeTruthy();
-    expect(apiKeys[0].status).toEqual(apiKeyStatus.ACTIVE);
+    const apiKey = await akord.apiKey.generate();
+    console.log(apiKey)
+    expect(apiKey).toBeTruthy();
+    expect(apiKey.key).toBeTruthy();
+    expect(apiKey.address).toBeTruthy();
+    expect(apiKey.status).toEqual(apiKeyStatus.ACTIVE);
   });
 
   it("should revoke the api key", async () => {
-    const apiKeys = await akord.apiKey.get();
+    const apiKeys = await akord.apiKey.listAll();
     expect(apiKeys).toBeTruthy();
     expect(apiKeys.length).toBeGreaterThan(0);
     const apiKeyToRevoke = apiKeys[0].key;

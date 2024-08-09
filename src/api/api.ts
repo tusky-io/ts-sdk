@@ -65,7 +65,7 @@ abstract class Api {
 
   abstract getMembers(vaultId: string): Promise<Array<Membership>>
 
-  abstract getApiKeys(): Promise<Array<ApiKey>>
+  abstract getApiKeys(): Promise<Paginated<ApiKey>>
 
   abstract generateApiKey(): Promise<ApiKey>
 
