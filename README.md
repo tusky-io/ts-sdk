@@ -1,5 +1,12 @@
 # Carmella SDK
 
+> NOTE: docs are OUTDATED
+> \
+> \
+> \
+> .
+
+
 Carmella SDK is a set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with [Akord](https://docs.akord.com/).
 
 This package can be used in both browser and Node.js environments.

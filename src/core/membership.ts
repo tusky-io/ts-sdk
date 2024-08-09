@@ -7,6 +7,10 @@ import { paginate } from "./common";
 import { MembershipService } from "./service/membership";
 import { BadRequest } from "../errors/bad-request";
 
+// NOTE: membership flow not working currently
+
+// TODO: move membership flow to vault module
+
 export const DEFAULT_ROLE = "CONTRIBUTOR";
 
 class MembershipModule {
