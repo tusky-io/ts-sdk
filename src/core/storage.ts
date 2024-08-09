@@ -9,10 +9,10 @@ class StorageModule {
   }
 
   /**
-   * Get storage balance
+   * Get currenlty authenticated user storage balance
    */
   public async get(): Promise<Storage> {
-    return await this.service.api.getStorageBalance();
+    return await this.service.api.getStorage();
   }
 }
 

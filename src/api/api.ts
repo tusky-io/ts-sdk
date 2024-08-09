@@ -41,7 +41,7 @@ abstract class Api {
 
   abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
 
-  abstract getStorageBalance(): Promise<Storage>
+  abstract getStorage(): Promise<Storage>
 
   abstract getUserPublicData(email: string): Promise<UserPublicInfo>
 

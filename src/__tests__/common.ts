@@ -26,12 +26,12 @@ export async function setupVault(isPublic = false): Promise<string> {
   return vaultId;
 }
 
-export async function cleanup(akord: Akord, vaultId: string): Promise<void> {
+export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   if (server) {
     server.close();
   }
-  if (vaultId) {
+  if (akord && vaultId) {
     await akord.vault.delete(vaultId);
   }
 }

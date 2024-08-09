@@ -35,6 +35,7 @@ export class ApiClient {
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
+  private _storageUri: string = "storage";
 
   // path params
   private _resourceId: string;
@@ -885,8 +886,8 @@ export class ApiClient {
     }
   }
 
-  async getStorageBalance(): Promise<Storage> {
-    const data = await this.get(`${this._apiUrl}/storage-balance`);
+  async getStorage(): Promise<Storage> {
+    const data = await this.get(`${this._apiUrl}/${this._storageUri}`);
     return new Storage(data);
   }
 }
