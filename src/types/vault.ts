@@ -11,7 +11,7 @@ export class Vault extends Encryptable {
   updatedAt: string;
   owner: string;
   size?: number;
-  trashSize?: number;
+  trash?: number;
   tags?: string[];
   @encrypted() name: string;
   @encrypted() description?: string;
@@ -28,7 +28,7 @@ export class Vault extends Encryptable {
     this.createdAt = vaultProto.createdAt;
     this.updatedAt = vaultProto.updatedAt;
     this.size = vaultProto.size;
-    this.trashSize = vaultProto.trashSize;
+    this.trash = vaultProto.trash;
     this.name = vaultProto.name;
     this.description = vaultProto.description;
     this.tags = vaultProto.tags;
