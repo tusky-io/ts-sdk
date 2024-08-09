@@ -672,7 +672,7 @@ export class ApiClient {
       vaultId: this._vaultId,
       parentId: this._parentId,
       name: this._name,
-      autoExecute: true
+      autoExecute: this._autoExecute
     });
 
     return this.post(`${this._apiUrl}/${this._folderUri}`);
@@ -726,7 +726,7 @@ export class ApiClient {
       name: this._name,
       description: this._description,
       public: this._public,
-      autoExecute: true
+      autoExecute: this._autoExecute
     });
 
     return this.post(`${this._apiUrl}/${this._vaultUri}`);
@@ -784,7 +784,7 @@ export class ApiClient {
       address: this._address,
       role: this._role,
       expiresAt: this._expiresAt,
-      autoExecute: true
+      autoExecute: this._autoExecute
     });
 
     return this.post(`${this._apiUrl}/${this._membershipUri}`);
