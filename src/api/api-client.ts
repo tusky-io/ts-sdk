@@ -568,6 +568,7 @@ export class ApiClient {
     const form = new FormData();
 
     form.append("vaultId", this._vaultId);
+    form.append("parentId", this._parentId);
     form.append("name", this._file.name);
 
     try {

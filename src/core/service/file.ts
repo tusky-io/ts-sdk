@@ -38,7 +38,7 @@ class FileService extends Service {
     return file;
   }
 
-  setFile(file: FileLike) {
+  async setFile(file: FileLike) {
     // TODO: encrypt file here
     this.file = file;
   }
