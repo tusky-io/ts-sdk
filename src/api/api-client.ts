@@ -35,6 +35,7 @@ export class ApiClient {
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
+  private _storageUri: string = "storage";
 
   // path params
   private _resourceId: string;
@@ -455,9 +456,9 @@ export class ApiClient {
 
   /**
    * Get user api keys
-   * @returns {Promise<ApiKey[]>}
+   * @returns {Promise<Paginated<ApiKey>>}
    */
-  async getApiKeys(): Promise<ApiKey[]> {
+  async getApiKeys(): Promise<Paginated<ApiKey>> {
     return this.get(
       `${this._apiUrl}/${this._apiKeyUri}`
     );
@@ -484,7 +485,7 @@ export class ApiClient {
    * @returns {Promise<ApiKey>}
    */
   async revokeApiKey(): Promise<ApiKey> {
-    return this.patch(
+    return this.delete(
       `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`
     );
   }
@@ -568,6 +569,7 @@ export class ApiClient {
     const form = new FormData();
 
     form.append("vaultId", this._vaultId);
+    form.append("parentId", this._parentId);
     form.append("name", this._file.name);
 
     try {
@@ -672,7 +674,7 @@ export class ApiClient {
       vaultId: this._vaultId,
       parentId: this._parentId,
       name: this._name,
-      autoExecute: true
+      autoExecute: this._autoExecute
     });
 
     return this.post(`${this._apiUrl}/${this._folderUri}`);
@@ -726,7 +728,7 @@ export class ApiClient {
       name: this._name,
       description: this._description,
       public: this._public,
-      autoExecute: true
+      autoExecute: this._autoExecute
     });
 
     return this.post(`${this._apiUrl}/${this._vaultUri}`);
@@ -784,7 +786,7 @@ export class ApiClient {
       address: this._address,
       role: this._role,
       expiresAt: this._expiresAt,
-      autoExecute: true
+      autoExecute: this._autoExecute
     });
 
     return this.post(`${this._apiUrl}/${this._membershipUri}`);
@@ -884,8 +886,8 @@ export class ApiClient {
     }
   }
 
-  async getStorageBalance(): Promise<Storage> {
-    const data = await this.get(`${this._apiUrl}/storage-balance`);
+  async getStorage(): Promise<Storage> {
+    const data = await this.get(`${this._apiUrl}/${this._storageUri}`);
     return new Storage(data);
   }
 }

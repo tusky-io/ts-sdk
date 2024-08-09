@@ -40,9 +40,11 @@ export class Akord {
   get file(): FileModule {
     return new FileModule(this.getConfig());
   }
-
   get apiKey(): ApiKeyModule {
     return new ApiKeyModule(this.getConfig());
+  }
+  get storage(): StorageModule {
+    return new StorageModule(this.getConfig());
   }
 
   private getConfig() {
@@ -52,9 +54,6 @@ export class Akord {
       encrypter: this.encrypter,
       userAgent: this.userAgent
     }
-  }
-  get storage(): StorageModule {
-    return new StorageModule(this.getConfig());
   }
 
   /**

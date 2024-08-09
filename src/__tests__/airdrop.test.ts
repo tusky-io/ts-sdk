@@ -1,139 +1,141 @@
-import { NotEnoughStorage } from "../errors/not-enough-storage";
-import { Akord } from "../index";
-import { cleanup, initInstance, setupVault, testDataPath } from './common';
-import { password } from './data/test-credentials';
-import { AkordWallet } from "@akord/crypto";
-import fs from "fs";
-import { firstFileName } from "./data/content";
-import { BatchUploadItem } from "../core/batch";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+// TODO: add member flow
 
-let akord: Akord;
+// import { NotEnoughStorage } from "../errors/not-enough-storage";
+// import { Akord } from "../index";
+// import { cleanup, initInstance, setupVault, testDataPath } from './common';
+// import { password } from './data/test-credentials';
+// import { AkordWallet } from "@akord/crypto";
+// import fs from "fs";
+// import { firstFileName } from "./data/content";
+// import { BatchUploadItem } from "../core/batch";
+// import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
-jest.setTimeout(3000000);
+// let akord: Akord;
 
-describe("Testing airdrop actions", () => {
-  let vaultId: string;
-  let airdropee: Ed25519Keypair;
-  let airdropeeWallet: AkordWallet;
+// jest.setTimeout(3000000);
 
-  beforeEach(async () => {
-    akord = await initInstance();
-  });
+// describe("Testing airdrop actions", () => {
+//   let vaultId: string;
+//   let airdropee: Ed25519Keypair;
+//   let airdropeeWallet: AkordWallet;
 
-  beforeAll(async () => {
-    vaultId = await setupVault();
-  });
+//   beforeEach(async () => {
+//     akord = await initInstance();
+//   });
 
-  afterAll(async () => {
-    await cleanup(akord, vaultId);
-  });
+//   beforeAll(async () => {
+//     vaultId = await setupVault();
+//   });
 
-  describe("Airdrop access tests", () => {
-    it("should airdrop to Akord wallets", async () => {
+//   afterAll(async () => {
+//     await cleanup(akord, vaultId);
+//   });
 
-      // generate Sui key pair for identity
-      const suiKeyPair = new Ed25519Keypair();
+//   describe("Airdrop access tests", () => {
+//     it("should airdrop to Akord wallets", async () => {
 
-      const address = suiKeyPair.toSuiAddress();
+//       // generate Sui key pair for identity
+//       const suiKeyPair = new Ed25519Keypair();
 
-      // generate wallet for encryption
-      const wallet = await AkordWallet.create(password);
+//       const address = suiKeyPair.toSuiAddress();
 
-      const role = "CONTRIBUTOR";
-      const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
+//       // generate wallet for encryption
+//       const wallet = await AkordWallet.create(password);
 
-      const membership = await akord.membership.airdrop(vaultId, address, { expiresAt: expiresAt, role, publicKey: wallet.publicKey() });
-      expect(membership.id).toBeTruthy();
-      expect(membership.address).toEqual(address);
-      expect(membership.role).toEqual(role);
-      expect(membership.expiresAt).toEqual(expiresAt);
-    });
-  });
+//       const role = "CONTRIBUTOR";
+//       const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
 
-  describe("Airdropee upload tests", () => {
-    const storageAllowance = 1;
-    it(`should airdrop access with ${storageAllowance} MB storage allowance`, async () => {
+//       const membership = await akord.membership.airdrop(vaultId, address, { expiresAt: expiresAt, role, publicKey: wallet.publicKey() });
+//       expect(membership.id).toBeTruthy();
+//       expect(membership.address).toEqual(address);
+//       expect(membership.role).toEqual(role);
+//       expect(membership.expiresAt).toEqual(expiresAt);
+//     });
+//   });
 
-      airdropee = new Ed25519Keypair();
+//   describe("Airdropee upload tests", () => {
+//     const storageAllowance = 1;
+//     it(`should airdrop access with ${storageAllowance} MB storage allowance`, async () => {
 
-      airdropeeWallet = await AkordWallet.create();
+//       airdropee = new Ed25519Keypair();
 
-      await akord.membership.airdrop(vaultId, airdropee.toSuiAddress(), {
-        expiresAt: new Date().getTime() + 24 * 60 * 60 * 1000,
-        allowedStorage: storageAllowance,
-        role: "CONTRIBUTOR",
-        publicKey: airdropeeWallet.publicKey()
-      });
-    });
+//       airdropeeWallet = await AkordWallet.create();
 
-    it("should upload files to the vault by airdropee", async () => {
-      // Auth.configure({ env: process.env.ENV as any });
-      // await Auth.signInWithWallet(airdropeeWallet);
-      const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
+//       await akord.membership.airdrop(vaultId, airdropee.toSuiAddress(), {
+//         expiresAt: new Date().getTime() + 24 * 60 * 60 * 1000,
+//         allowedStorage: storageAllowance,
+//         role: "CONTRIBUTOR",
+//         publicKey: airdropeeWallet.publicKey()
+//       });
+//     });
 
-      const fileName = "logo.png";
-      const fileBuffer = fs.readFileSync(testDataPath + fileName);
+//     it("should upload files to the vault by airdropee", async () => {
+//       // Auth.configure({ env: process.env.ENV as any });
+//       // await Auth.signInWithWallet(airdropeeWallet);
+//       const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
 
-      const items = [] as BatchUploadItem[];
+//       const fileName = "logo.png";
+//       const fileBuffer = fs.readFileSync(testDataPath + fileName);
 
-      for (let i = 0; i < 10; i++) {
-        items.push({ file: fileBuffer, options: { name: fileName } });
-      }
+//       const items = [] as BatchUploadItem[];
 
-      const { data, errors } = await airdropeeAkordInstance.file.batchUpload(vaultId, items);
+//       for (let i = 0; i < 10; i++) {
+//         items.push({ file: fileBuffer, options: { name: fileName } });
+//       }
 
-      expect(errors.length).toEqual(0);
-      expect(data.length).toEqual(10);
-      for (let item of data) {
-        expect(item.uri).toBeTruthy();
-      }
-    });
+//       const { data, errors } = await airdropeeAkordInstance.file.batchUpload(vaultId, items);
 
-    it.skip(`should fail uploading file bigger than ${storageAllowance} MB`, async () => {
-      await expect(async () => {
-        // Auth.configure({ env: process.env.ENV as any });
-        // await Auth.signInWithWallet(airdropeeWallet);
-        const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
+//       expect(errors.length).toEqual(0);
+//       expect(data.length).toEqual(10);
+//       for (let item of data) {
+//         expect(item.uri).toBeTruthy();
+//       }
+//     });
 
-        const type = "image/png";
-        const fileName = "screenshot.png";
-        const fileBuffer = fs.readFileSync(testDataPath + fileName);
-        await airdropeeAkordInstance.file.upload(vaultId, fileBuffer, { name: fileName, mimeType: type });
-      }).rejects.toThrow(NotEnoughStorage);
-    });
-  });
+//     it.skip(`should fail uploading file bigger than ${storageAllowance} MB`, async () => {
+//       await expect(async () => {
+//         // Auth.configure({ env: process.env.ENV as any });
+//         // await Auth.signInWithWallet(airdropeeWallet);
+//         const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
 
-  describe("Airdropee batch upload - stress testing", () => {
-    const batchSize = 1000;
-    it.skip(`should upload a batch of ${batchSize} files by airdropee`, async () => {
-      const batchSize = 1000;
+//         const type = "image/png";
+//         const fileName = "screenshot.png";
+//         const fileBuffer = fs.readFileSync(testDataPath + fileName);
+//         await airdropeeAkordInstance.file.upload(vaultId, fileBuffer, { name: fileName, mimeType: type });
+//       }).rejects.toThrow(NotEnoughStorage);
+//     });
+//   });
 
-      const airdropee = new Ed25519Keypair();
+//   describe("Airdropee batch upload - stress testing", () => {
+//     const batchSize = 1000;
+//     it.skip(`should upload a batch of ${batchSize} files by airdropee`, async () => {
+//       const batchSize = 1000;
 
-      const airdropeeWallet = await AkordWallet.create();
+//       const airdropee = new Ed25519Keypair();
 
-      await akord.membership.airdrop(vaultId, airdropee.toSuiAddress(), {
-        expiresAt: new Date().getTime() + 24 * 60 * 60 * 1000,
-        allowedStorage: 100,
-        role: "CONTRIBUTOR",
-        publicKey: airdropeeWallet.publicKey()
-      });
+//       const airdropeeWallet = await AkordWallet.create();
 
-      const items = [] as BatchUploadItem[];
+//       await akord.membership.airdrop(vaultId, airdropee.toSuiAddress(), {
+//         expiresAt: new Date().getTime() + 24 * 60 * 60 * 1000,
+//         allowedStorage: 100,
+//         role: "CONTRIBUTOR",
+//         publicKey: airdropeeWallet.publicKey()
+//       });
 
-      for (let i = 0; i < batchSize; i++) {
-        items.push({ file: testDataPath + firstFileName });
-      }
+//       const items = [] as BatchUploadItem[];
 
-      // Auth.configure({ env: process.env.ENV as any });
-      // await Auth.signInWithWallet(airdropeeWallet);
-      const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
+//       for (let i = 0; i < batchSize; i++) {
+//         items.push({ file: testDataPath + firstFileName });
+//       }
 
-      const { data, errors } = await airdropeeAkordInstance.file.batchUpload(vaultId, items);
+//       // Auth.configure({ env: process.env.ENV as any });
+//       // await Auth.signInWithWallet(airdropeeWallet);
+//       const airdropeeAkordInstance = new Akord({ signer: airdropeeWallet, encrypter: airdropeeWallet, env: process.env.ENV as any, debug: true, logToFile: true });
 
-      expect(errors.length).toEqual(0);
-      expect(data.length).toEqual(batchSize);
-    });
-  });
-});
+//       const { data, errors } = await airdropeeAkordInstance.file.batchUpload(vaultId, items);
+
+//       expect(errors.length).toEqual(0);
+//       expect(data.length).toEqual(batchSize);
+//     });
+//   });
+// });

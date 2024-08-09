@@ -1,15 +1,10 @@
-import { BadRequest } from "../errors/bad-request";
 import { Akord } from "../index";
-import { initInstance } from './common';
+import { cleanup, initInstance } from './common';
 
 
 let akord: Akord;
 
 jest.setTimeout(3000000);
-
-const testIfProd = process.env.ENV === 'v2' ? test : test.skip;
-const testIfDev = process.env.ENV === 'dev' ? test : test.skip;
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 describe("Testing storage functions", () => {
 
@@ -17,10 +12,14 @@ describe("Testing storage functions", () => {
     akord = await initInstance();
   });
 
-  it("should get storage balance", async () => {
-    const storageBalance = await akord.storage.get();
-    expect(storageBalance).toBeTruthy();
-    expect(storageBalance.storageTotal).toBeGreaterThan(0);
-    expect(storageBalance.storageTotal).toBeGreaterThan(0);
+  afterAll(async () => {
+    await cleanup(akord);
+  });
+
+  it("should get user storage balance", async () => {
+    const storage = await akord.storage.get();
+    expect(storage).toBeTruthy();
+    expect(storage.storageTotal).toBeGreaterThan(0);
+    expect(storage.storageAvailable).toBeGreaterThanOrEqual(0);
   });
 });

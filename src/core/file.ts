@@ -1,4 +1,4 @@
-import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES}  from "@akord/crypto";
+import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES } from "@akord/crypto";
 import { status } from "../constants";
 import { ApiClient } from "../api/api-client";
 import { FileSource, createFileLike } from "../types/file";
@@ -50,7 +50,8 @@ class FileModule {
   };
 
   constructor(config?: ServiceConfig) {
-    this.service = new FileService(config);  }
+    this.service = new FileService(config);
+  }
 
   // public async create(
   //   file: FileLike,
@@ -93,9 +94,13 @@ class FileModule {
       throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
     }
 
-    this.service.setFile(fileLike);
+    await this.service.setFile(fileLike);
 
-    return this.service.api.createFile({ vaultId: vaultId, file: fileLike });
+    return this.service.api.createFile({
+      vaultId: vaultId,
+      file: this.service.file,
+      parentId: this.service.parentId
+    });
   }
 
   /**

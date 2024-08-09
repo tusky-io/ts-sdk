@@ -1,6 +1,6 @@
 import { Akord } from "../index";
 import faker from '@faker-js/faker';
-import { initInstance, folderCreate, cleanup, testDataPath, vaultCreate, setupVault } from './common';
+import { initInstance, folderCreate, cleanup, testDataPath, vaultCreate } from './common';
 import { BadRequest } from "../errors/bad-request";
 import { firstFileName } from './data/content';
 import { status } from "../constants";
@@ -21,9 +21,9 @@ describe("Testing folder functions", () => {
     vaultId = vault.id;
   });
 
-  // afterAll(async () => {
-  //   await cleanup(akord, vaultId);
-  // });
+  afterAll(async () => {
+    await cleanup(akord, vaultId);
+  });
 
   it("should create root folder", async () => {
     rootFolderId = await folderCreate(akord, vaultId);
@@ -38,27 +38,31 @@ describe("Testing folder functions", () => {
     expect(id).toBeTruthy();
     expect(parentId).toEqual(vaultId);
 
-    const { id: rootFolderFileId } = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: rootFolderId });
+    const { id: rootFolderFileId, parentId: rootFolderFileParentId } = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: rootFolderId });
     expect(rootFolderFileId).toBeTruthy();
+    expect(rootFolderFileParentId).toEqual(rootFolderId);
 
-    const { id: subFolderFileId } = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: subFolderId });
+    const { id: subFolderFileId, parentId: subFolderFileParentId } = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: subFolderId });
     expect(subFolderFileId).toBeTruthy();
+    expect(subFolderFileParentId).toEqual(subFolderId);
 
     const allVaultFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined });
-    console.log(allVaultFiles);
     expect(allVaultFiles?.length).toEqual(3);
 
     const vaultRootFiles = await akord.file.listAll({ vaultId: vaultId });
-    console.log(vaultRootFiles);
-    expect(vaultRootFiles?.length).toEqual(3);
+    expect(vaultRootFiles?.length).toEqual(1);
+    expect(vaultRootFiles[0].id).toEqual(id);
+    expect(vaultRootFiles[0].parentId).toEqual(vaultId);
 
     const rootFolderFiles = await akord.file.listAll({ parentId: rootFolderId });
     expect(rootFolderFiles?.length).toEqual(1);
     expect(rootFolderFiles[0].id).toEqual(rootFolderFileId);
+    expect(rootFolderFiles[0].parentId).toEqual(rootFolderId);
 
     const subFolderFiles = await akord.file.listAll({ parentId: subFolderId });
     expect(subFolderFiles?.length).toEqual(1);
     expect(subFolderFiles[0].id).toEqual(subFolderFileId);
+    expect(subFolderFiles[0].parentId).toEqual(subFolderId);
   });
 
   it("should delete root folder", async () => {

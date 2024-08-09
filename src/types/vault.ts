@@ -11,6 +11,7 @@ export class Vault extends Encryptable {
   updatedAt: string;
   owner: string;
   size?: number;
+  trash?: number;
   tags?: string[];
   @encrypted() name: string;
   @encrypted() description?: string;
@@ -27,11 +28,11 @@ export class Vault extends Encryptable {
     this.createdAt = vaultProto.createdAt;
     this.updatedAt = vaultProto.updatedAt;
     this.size = vaultProto.size;
+    this.trash = vaultProto.trash;
     this.name = vaultProto.name;
     this.description = vaultProto.description;
     this.tags = vaultProto.tags;
     this.status = vaultProto.status;
-    this.tags = vaultProto.tags;
     this.memberships = vaultProto?.memberships?.map((membership: Membership) => new Membership(membership, keys));
     this.files = vaultProto?.files?.map((file: File) => new File(file, keys));
     this.folders = vaultProto?.folders?.map((folder: Folder) => new Folder(folder, keys));

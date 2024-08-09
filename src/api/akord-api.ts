@@ -157,10 +157,10 @@ export default class AkordApi extends Api {
     return { fileData, metadata };
   };
 
-  public async getStorageBalance(): Promise<Storage> {
+  public async getStorage(): Promise<Storage> {
     return new ApiClient()
       .env(this.config)
-      .getStorageBalance();
+      .getStorage();
   }
 
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {
@@ -289,7 +289,7 @@ export default class AkordApi extends Api {
       .getTransactions();
   }
 
-  public async getApiKeys(): Promise<Array<ApiKey>> {
+  public async getApiKeys(): Promise<Paginated<ApiKey>> {
     return new ApiClient()
       .env(this.config)
       .getApiKeys();
