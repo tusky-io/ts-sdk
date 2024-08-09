@@ -17,7 +17,6 @@ class VaultModule {
 
   protected defaultListOptions = {
     shouldDecrypt: true,
-    filter: { status: { eq: membershipStatus.ACCEPTED } }
   } as ListOptions;
 
   protected defaultGetOptions = {
