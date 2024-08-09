@@ -4,6 +4,7 @@ import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
 import EnokiSigner from "./enoki/signer";
 import { status } from "../constants";
+import { server } from "./server";
 
 export const TESTING_ENV = "testnet";
 
@@ -26,6 +27,10 @@ export async function setupVault(isPublic = false): Promise<string> {
 }
 
 export async function cleanup(akord: Akord, vaultId: string): Promise<void> {
+  jest.clearAllTimers();
+  if (server) {
+    server.close();
+  }
   if (vaultId) {
     await akord.vault.delete(vaultId);
   }
