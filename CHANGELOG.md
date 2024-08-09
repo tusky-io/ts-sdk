@@ -1,3 +1,10 @@
+# [0.6.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.6.0-dev.1...v0.6.0-dev.2) (2024-08-09)
+
+
+### Features
+
+* add trash size to vault ([68bc00c](https://github.com/Akord-com/carmella-sdk/commit/68bc00ca93e0345ba3bc83bb8c302eb4884c1e16))
+
 # [0.6.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.5.2-dev.1...v0.6.0-dev.1) (2024-08-08)
 
 
