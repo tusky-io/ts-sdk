@@ -1,3 +1,11 @@
+# [0.6.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.6.0-dev.3...v0.6.0-dev.4) (2024-08-09)
+
+
+### Bug Fixes
+
+* api key flow ([2b2125e](https://github.com/Akord-com/carmella-sdk/commit/2b2125ee7d5eeb9e6b37f67b6d6a3cfac75efbaf))
+* storage flow ([a2a576f](https://github.com/Akord-com/carmella-sdk/commit/a2a576f27f7f288d388f3df89c17049c9cd65ab5))
+
 # [0.6.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.6.0-dev.2...v0.6.0-dev.3) (2024-08-09)
 
 
