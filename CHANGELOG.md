@@ -1,3 +1,20 @@
+# [0.7.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.6.0...v0.7.0-dev.1) (2024-08-09)
+
+
+### Bug Fixes
+
+* api key flow ([2b2125e](https://github.com/Akord-com/carmella-sdk/commit/2b2125ee7d5eeb9e6b37f67b6d6a3cfac75efbaf))
+* autoExecute param ([755afca](https://github.com/Akord-com/carmella-sdk/commit/755afca62c82b349514f8489adbd1ed9e5be5eb0))
+* create file params ([92fa925](https://github.com/Akord-com/carmella-sdk/commit/92fa925a6312a57bdd8ba3044592f5e9e8aab61d))
+* storage flow ([a2a576f](https://github.com/Akord-com/carmella-sdk/commit/a2a576f27f7f288d388f3df89c17049c9cd65ab5))
+
+
+### Features
+
+* add trash size to vault ([68bc00c](https://github.com/Akord-com/carmella-sdk/commit/68bc00ca93e0345ba3bc83bb8c302eb4884c1e16))
+* trashSize -> trash ([69c6fe4](https://github.com/Akord-com/carmella-sdk/commit/69c6fe4e31b3a835196fcec1025ad78cc4fb8dbe))
+* vault filter cleanup ([c7aa5a4](https://github.com/Akord-com/carmella-sdk/commit/c7aa5a4b074c80ee7519894f70d64689e1cbc568))
+
 # [0.6.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.6.0-dev.3...v0.6.0-dev.4) (2024-08-09)
 
 
