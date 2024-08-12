@@ -14,8 +14,6 @@ export class Storage {
   refreshedAt: string
 
   constructor(json: any) {
-    this.storageAvailable = json.storageAvailable
-    this.storageTotal = json.storageTotal
     this.owner = json.owner
     this.host = json.host
     this.storageAvailable = json.storageAvailable
