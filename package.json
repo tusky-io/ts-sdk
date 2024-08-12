@@ -1,6 +1,6 @@
 {
   "name": "@akord/carmella-sdk",
-  "version": "0.8.0-dev.1",
+  "version": "0.8.0",
   "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
   "main": "lib/index.js",
   "repository": "git@github.com:Akord-com/carmella-sdk.git",

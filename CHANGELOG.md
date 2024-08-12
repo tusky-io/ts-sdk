@@ -1,3 +1,15 @@
+# [0.8.0](https://github.com/Akord-com/carmella-sdk/compare/v0.7.0...v0.8.0) (2024-08-12)
+
+
+### Bug Fixes
+
+* remove code duplicate ([8267c08](https://github.com/Akord-com/carmella-sdk/commit/8267c0853de8dc7214bdf710f23fb0fa55b44432))
+
+
+### Features
+
+* add more storage fields ([ba777fa](https://github.com/Akord-com/carmella-sdk/commit/ba777fa78853c937322bbf93f27351b36781853e))
+
 # [0.8.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.7.0...v0.8.0-dev.1) (2024-08-12)
 
 
