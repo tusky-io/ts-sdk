@@ -1,3 +1,10 @@
+# [0.7.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.7.0-dev.1...v0.7.0-dev.2) (2024-08-12)
+
+
+### Features
+
+* add more storage fields ([ba777fa](https://github.com/Akord-com/carmella-sdk/commit/ba777fa78853c937322bbf93f27351b36781853e))
+
 # [0.7.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.6.0...v0.7.0-dev.1) (2024-08-09)
 
 
