@@ -3,15 +3,12 @@ import { actions, objects } from "../constants"
 export interface Transaction {
   id: string,
   action: actions,
-  postedAt: string,
-  address: string,
-  publicSigningKey: string,
+  owner: string,
   vaultId: string,
-  actionRef: actions,
-  groupRef: string,
   objectId: string,
-  type: objects,
-  status: string
+  objectType: objects,
+  status: string,
+  timestamp: number
 }
 
 export interface CreateVaultTxPayload {
