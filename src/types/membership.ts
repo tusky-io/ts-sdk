@@ -9,8 +9,8 @@ export const activeStatus = ["accepted", "pending"] as StatusType[];
 export class Membership extends Encryptable {
   id: string;
   owner: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: number;
+  updatedAt: number;
   expiresAt: string;
   status: StatusType;
   address: string;

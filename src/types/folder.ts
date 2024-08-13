@@ -7,8 +7,8 @@ export class Folder extends Encryptable {
   id: string;
   type: string;
   owner: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: number;
+  updatedAt: number;
   status: string;
 
   vaultId: string;

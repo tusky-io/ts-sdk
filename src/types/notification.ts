@@ -4,7 +4,7 @@ export class Notification  {
   channels: string[]
   objectId: string
   address: string
-  createdAt: string
+  createdAt: number
 
   constructor(proto: any) {
     this.id = proto.id
