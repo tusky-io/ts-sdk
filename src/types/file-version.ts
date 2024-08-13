@@ -7,8 +7,8 @@ export class File extends Encryptable {
   ref: string; // file reference on chain
   mimeType: string;
   owner: string;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: string;
+  updatedAt: string;
   status: string;
   size: number;
   external?: boolean;

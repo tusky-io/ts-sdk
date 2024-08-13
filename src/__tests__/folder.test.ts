@@ -105,4 +105,21 @@ describe("Testing folder functions", () => {
     expect(folders[0]?.id).toEqual(subFolderId);
     expect(folders[0]?.parentId).toEqual(rootFolderId);
   });
+
+  it("should fail deleting root folder permanently", async () => {
+    await expect(async () =>
+      await akord.folder.deletePermanently(rootFolderId)
+    ).rejects.toThrow(BadRequest);
+  });
+
+  it("should delete root folder", async () => {
+    await akord.folder.delete(rootFolderId);
+
+    const rootFolder = await akord.folder.get(rootFolderId);
+    expect(rootFolder.status).toEqual(status.DELETED);
+  });
+
+  it("should delete root folder permanently", async () => {
+    await akord.folder.deletePermanently(rootFolderId);
+  });
 });

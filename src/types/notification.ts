@@ -1,10 +1,10 @@
-export class Notification  {
+export class Notification {
   id: string
   event: string
   channels: string[]
   objectId: string
   address: string
-  createdAt: number
+  createdAt: string
 
   constructor(proto: any) {
     this.id = proto.id

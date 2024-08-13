@@ -3,9 +3,9 @@ import { apiKeyStatus } from "../constants"
 export class ApiKey {
   key: string
   address: string
-  expiresAt: number
-  createdAt: number
-  updatedAt: number
+  expiresAt: string
+  createdAt: string
+  updatedAt: string
   status: apiKeyStatus
 
   constructor(json: any) {

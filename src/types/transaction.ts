@@ -8,7 +8,7 @@ export interface Transaction {
   objectId: string,
   objectType: objects,
   status: string,
-  timestamp: number
+  timestamp: string
 }
 
 export interface CreateVaultTxPayload {
