@@ -1,3 +1,10 @@
+# [0.10.0](https://github.com/Akord-com/carmella-sdk/compare/v0.9.0...v0.10.0) (2024-08-13)
+
+
+### Features
+
+* add deletePermanently() methods ([e5b8480](https://github.com/Akord-com/carmella-sdk/commit/e5b84805127869343f03ea2a0ed86d25dc3faac8))
+
 # [0.9.0](https://github.com/Akord-com/carmella-sdk/compare/v0.8.0...v0.9.0) (2024-08-13)
 
 
