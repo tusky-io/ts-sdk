@@ -1,3 +1,10 @@
+# [0.11.0](https://github.com/Akord-com/carmella-sdk/compare/v0.10.0...v0.11.0) (2024-08-13)
+
+
+### Features
+
+* go back to using strings for timestamps ([ddef91a](https://github.com/Akord-com/carmella-sdk/commit/ddef91a8f2ceea18ee9c622008bce0df24d9b982))
+
 # [0.10.0](https://github.com/Akord-com/carmella-sdk/compare/v0.9.0...v0.10.0) (2024-08-13)
 
 
