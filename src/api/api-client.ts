@@ -651,6 +651,24 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - resourceId()
+   * @uses:
+   * - autoExecute()
+   * @returns {Promise<void>}
+   */
+  async deleteFile(): Promise<void> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
+    }
+    this.data({ autoExecute: this._autoExecute });
+    return this.delete(`${this._apiUrl}/${this._fileUri}/${this._resourceId}`);
+  }
+
+  /**
+   *
+   * @requires:
    * - vaultId()
    * - name()
    * @uses:
@@ -710,6 +728,24 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - resourceId()
+   * @uses:
+   * - autoExecute()
+   * @returns {Promise<void>}
+   */
+  async deleteFolder(): Promise<void> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
+    }
+    this.data({ autoExecute: this._autoExecute });
+    return this.delete(`${this._apiUrl}/${this._folderUri}/${this._resourceId}`);
+  }
+
+  /**
+   *
+   * @requires:
    * - name()
    * @uses:
    * - description()
@@ -758,6 +794,24 @@ export class ApiClient {
       autoExecute: this._autoExecute
     });
     return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
+  }
+
+  /**
+  *
+  * @requires:
+  * - resourceId()
+  * @uses:
+  * - autoExecute()
+  * @returns {Promise<void>}
+  */
+  async deleteVault(): Promise<void> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it"
+      );
+    }
+    this.data({ autoExecute: this._autoExecute });
+    return this.delete(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
 
   /**

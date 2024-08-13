@@ -218,6 +218,16 @@ class FileModule {
     return this.service.api.updateFile({ id: id, status: status.ACTIVE });
   }
 
+  /**
+   * The file will be permanently deleted.
+   * This action is irrevocable and can only be performed if the file is already in trash.
+   * @param  {string} id file id
+   * @returns {Promise<void>}
+   */
+  public async deletePermanently(id: string): Promise<void> {
+    return this.service.api.deleteFile(id);
+  }
+
   public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
     const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
 

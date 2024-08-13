@@ -25,13 +25,19 @@ abstract class Api {
 
   abstract updateFile(tx: UpdateFileTxPayload): Promise<File>
 
+  abstract deleteFile(id: string): Promise<void>
+
   abstract createFolder(tx: CreateFolderTxPayload): Promise<Folder>
 
   abstract updateFolder(tx: UpdateFolderTxPayload): Promise<Folder>
 
+  abstract deleteFolder(id: string): Promise<void>
+
   abstract createVault(tx: CreateVaultTxPayload): Promise<Vault>
 
   abstract updateVault(tx: UpdateVaultTxPayload): Promise<Vault>
+
+  abstract deleteVault(id: string): Promise<void>
 
   abstract createMembership(tx: CreateMembershipTxPayload): Promise<Membership>
 
