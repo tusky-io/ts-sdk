@@ -52,6 +52,14 @@ export default class AkordApi extends Api {
       .updateFolder();
   };
 
+  public async deleteFolder(id: string): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(id)
+      .autoExecute(this.autoExecute)
+      .deleteFolder();
+  };
+
   public async createFile(tx: CreateFileTxPayload): Promise<File> {
     return new ApiClient()
       .env(this.config)
@@ -73,6 +81,14 @@ export default class AkordApi extends Api {
       .updateFile();
   };
 
+  public async deleteFile(id: string): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(id)
+      .autoExecute(this.autoExecute)
+      .deleteFile();
+  };
+
   public async createVault(tx: CreateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
@@ -92,6 +108,14 @@ export default class AkordApi extends Api {
       .status(tx.status)
       .autoExecute(this.autoExecute)
       .updateVault();
+  };
+
+  public async deleteVault(id: string): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .resourceId(id)
+      .autoExecute(this.autoExecute)
+      .deleteVault();
   };
 
   public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {

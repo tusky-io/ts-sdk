@@ -157,6 +157,16 @@ class VaultModule {
     const vault = await this.service.api.updateVault({ id: id, status: status.ACTIVE });
     return this.service.processVault(vault, true, this.service.keys);
   }
+
+  /**
+   * The vault and all its contents will be permanently deleted.
+   * This action is irrevocable and can only be performed if the vault is already in trash.
+   * @param  {string} id vault id
+   * @returns {Promise<void>}
+   */
+  public async deletePermanently(id: string): Promise<void> {
+    return this.service.api.deleteVault(id);
+  }
 };
 
 export {

@@ -193,6 +193,16 @@ class FolderModule {
   public async restore(id: string): Promise<Folder> {
     return this.service.api.updateFolder({ id: id, status: status.ACTIVE });
   }
+
+  /**
+   * The folder and all its contents will be permanently deleted.
+   * This action is irrevocable and can only be performed if the folder is already in trash.
+   * @param  {string} id folder id
+   * @returns {Promise<void>}
+   */
+  public async deletePermanently(id: string): Promise<void> {
+    return this.service.api.deleteFolder(id);
+  }
 };
 
 export type FolderSource = string | FileSystemEntry
