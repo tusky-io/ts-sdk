@@ -9,9 +9,9 @@ export class Storage {
   photos: number
   video: number
   trash: number
-  createdAt: string
-  updatedAt: string
-  refreshedAt: string
+  createdAt: number
+  updatedAt: number
+  refreshedAt: number
 
   constructor(json: any) {
     this.owner = json.owner

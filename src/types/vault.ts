@@ -7,8 +7,8 @@ export class Vault extends Encryptable {
   id: string;
   status: string;
   public: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: number;
+  updatedAt: number;
   owner: string;
   size?: number;
   trash?: number;

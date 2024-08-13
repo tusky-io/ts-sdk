@@ -9,11 +9,11 @@ export class ApiKey {
   status: apiKeyStatus
 
   constructor(json: any) {
-      this.key = json.key
-      this.address = json.address
-      this.expiresAt = json.expiresAt
-      this.createdAt = json.createdAt
-      this.updatedAt = json.updatedAt
-      this.status = json.status
+    this.key = json.key
+    this.address = json.address
+    this.expiresAt = json.expiresAt
+    this.createdAt = json.createdAt
+    this.updatedAt = json.updatedAt
+    this.status = json.status
   }
 }
