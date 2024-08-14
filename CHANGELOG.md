@@ -1,3 +1,10 @@
+## [0.11.1](https://github.com/Akord-com/carmella-sdk/compare/v0.11.0...v0.11.1) (2024-08-14)
+
+
+### Bug Fixes
+
+* download public files ([a7c846e](https://github.com/Akord-com/carmella-sdk/commit/a7c846ec37f0175cc4085b23886ce750fd5f6c21))
+
 # [0.11.0](https://github.com/Akord-com/carmella-sdk/compare/v0.10.0...v0.11.0) (2024-08-13)
 
 
