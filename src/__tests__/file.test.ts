@@ -41,10 +41,11 @@ describe("Testing file & folder upload functions", () => {
     fileId = file.id;
   });
 
-  //   it("should download file", async () => {
-  //   const response = await akord.file.download(fileId);
-  //   console.log(response);
-  // });
+  it("should download file", async () => {
+    const response = await akord.file.download(fileId);
+    const file = await createFileLike(testDataPath + firstFileName);
+    expect(response).toEqual(await file.arrayBuffer());
+  });
 
   it("should fail uploading an empty file", async () => {
     await expect(async () => {
@@ -65,15 +66,15 @@ describe("Testing file & folder upload functions", () => {
     expect(file.mimeType).toEqual(type);
   });
 
-  // it("should upload a file buffer without explicitly provided mime type", async () => {
-  //   const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
-  //   const type = "image/png";
+  it("should upload a file buffer without explicitly provided mime type", async () => {
+    const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
+    const type = "image/png";
 
-  //   const file = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName });
-  //   expect(file.id).toBeTruthy();
-  //   expect(file.name).toEqual(firstFileName);
-  //   expect(file.mimeType).toEqual(type);
-  // });
+    const file = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName });
+    expect(file.id).toBeTruthy();
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+  });
 
   it("should upload a file stream", async () => {
     const fileStream = fs.createReadStream(testDataPath + firstFileName);
@@ -98,6 +99,16 @@ describe("Testing file & folder upload functions", () => {
     expect(file.status).toEqual(status.ACTIVE);
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
+  });
+
+  it("should delete the file", async () => {
+    await akord.file.delete(fileId);
+
+    const file = await akord.file.get(fileId);
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.DELETED);
   });
 
   // const batchSize = 10;

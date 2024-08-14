@@ -229,8 +229,9 @@ class FileModule {
   }
 
   public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
-    const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
-
+    const file = await this.service.api.downloadFile(id, { responseType: options.responseType, public: false });
+    return file.fileData as any;
+    // TODO: handle encrypted files
     let stream: ReadableStream<Uint8Array>;
     if (this.service.isPublic) {
       stream = file.fileData as ReadableStream<Uint8Array>;
