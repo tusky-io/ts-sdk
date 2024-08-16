@@ -1,3 +1,10 @@
+# [0.12.0](https://github.com/Akord-com/carmella-sdk/compare/v0.11.1...v0.12.0) (2024-08-16)
+
+
+### Features
+
+* **file:** remove default list filter ([76555d0](https://github.com/Akord-com/carmella-sdk/commit/76555d0fc30d0c8fd301cb868d8ce5ef180b4f43))
+
 ## [0.11.1](https://github.com/Akord-com/carmella-sdk/compare/v0.11.0...v0.11.1) (2024-08-14)
 
 
