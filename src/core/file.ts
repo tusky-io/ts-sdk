@@ -36,9 +36,6 @@ class FileModule {
   protected defaultListOptions = {
     shouldDecrypt: true,
     parentId: undefined,
-    filter: {
-      status: { ne: status.DELETED }
-    }
   } as ListOptions;
 
   protected defaultGetOptions = {
