@@ -259,8 +259,7 @@ export default class AkordApi extends Api {
     return new ApiClient()
       .env(this.config)
       .queryParams({
-        tags: JSON.stringify(options.tags ? options.tags : {}),
-        filter: JSON.stringify(options.filter ? options.filter : {}),
+        status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
@@ -273,7 +272,7 @@ export default class AkordApi extends Api {
       .queryParams({
         vaultId: options.vaultId,
         parentId: options.parentId,
-        filter: JSON.stringify(options.filter ? options.filter : {}),
+        status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
@@ -286,7 +285,7 @@ export default class AkordApi extends Api {
       .queryParams({
         vaultId: options.vaultId,
         parentId: options.parentId,
-        filter: JSON.stringify(options.filter ? options.filter : {}),
+        status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })
@@ -299,7 +298,7 @@ export default class AkordApi extends Api {
       .vaultId(vaultId)
       .queryParams({
         vaultId: vaultId,
-        filter: JSON.stringify(options.filter ? options.filter : {}),
+        status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
       })

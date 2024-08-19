@@ -63,6 +63,15 @@ describe("Testing folder functions", () => {
     expect(subFolderFiles?.length).toEqual(1);
     expect(subFolderFiles[0].id).toEqual(subFolderFileId);
     expect(subFolderFiles[0].parentId).toEqual(subFolderId);
+
+    // should delete a file and list active/deleted files corretly
+    await akord.file.delete(subFolderFileId);
+    const allFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined });
+    const activeFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined, status: "active" });
+    const deletedFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined, status: "deleted" });
+    expect(allFiles?.length).toEqual(3);
+    expect(activeFiles?.length).toEqual(2);
+    expect(deletedFiles?.length).toEqual(1);
   });
 
   it("should delete root folder", async () => {
@@ -70,6 +79,8 @@ describe("Testing folder functions", () => {
 
     const rootFolder = await akord.folder.get(rootFolderId);
     expect(rootFolder.status).toEqual(status.DELETED);
+    const deletedFolders = await akord.folder.listAll({ vaultId: vaultId, parentId: undefined, status: "deleted" });
+    expect(deletedFolders?.length).toEqual(1);
 
     // this part is async
     // const subFolder = await akord.folder.get(subFolderId);

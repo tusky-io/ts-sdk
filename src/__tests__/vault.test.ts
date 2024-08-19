@@ -22,11 +22,13 @@ describe("Testing vault functions", () => {
     await cleanup(akord, vaultId);
   });
 
+  it("should create another vault", async () => {
+    await vaultCreate(akord, true);
+  });
+
   it("should list user vaults", async () => {
 
     const vaults = await akord.vault.listAll();
-
-    console.log(vaults)
 
     expect(vaults).toBeTruthy();
     expect(vaults[0]).toBeTruthy();
@@ -47,6 +49,29 @@ describe("Testing vault functions", () => {
 
     const vault = await akord.vault.get(vaultId);
     expect(vault.status).toEqual(status.DELETED);
+  });
+
+  it("should list user active/deleted vaults", async () => {
+
+    const activeVaults = await akord.vault.listAll({ status: "active" });
+
+    console.log(activeVaults)
+
+    expect(activeVaults).toBeTruthy();
+    expect(activeVaults.length).toBeGreaterThanOrEqual(1);
+    for (let vault of activeVaults) {
+      expect(vault.status).toEqual("active");
+    }
+
+    const deletedVaults = await akord.vault.listAll({ status: "deleted" });
+
+    console.log(deletedVaults)
+
+    expect(deletedVaults).toBeTruthy();
+    expect(deletedVaults.length).toBeGreaterThanOrEqual(1);
+    for (let vault of deletedVaults) {
+      expect(vault.status).toEqual("deleted");
+    }
   });
 
   it("should fail renaming the deleted vault", async () => {

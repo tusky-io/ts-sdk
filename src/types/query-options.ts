@@ -6,13 +6,9 @@ export type ListPaginatedApiOptions = {
 }
 
 export type ListApiOptions = ListPaginatedApiOptions & {
-  filter?: Object,
   parentId?: string,
   vaultId?: string,
-  tags?: {
-    values: string[],
-    searchCriteria?: SearchCriteria // default to CONTAINS_EVERY
-  }
+  status?: "active" | "deleted"
 }
 
 export type ListOptions = ListApiOptions & {

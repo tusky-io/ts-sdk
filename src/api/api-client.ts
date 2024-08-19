@@ -348,7 +348,7 @@ export class ApiClient {
   /**
    * Get vaults for currently authenticated user
    * @uses:
-   * - queryParams() - limit, nextToken, tags, filter
+   * - queryParams() - status, limit, nextToken
    * @returns {Promise<Paginated<Vault>>}
    */
   async getVaults(): Promise<Paginated<Vault>> {
@@ -358,7 +358,7 @@ export class ApiClient {
   /**
    * Get files for currently authenticated user
    * @uses:
-   * - queryParams() - vaultId, parentId, limit, nextToken, tags, filter
+   * - queryParams() - vaultId, parentId, status, limit, nextToken
    * @returns {Promise<Paginated<File>>}
    */
   async getFiles(): Promise<Paginated<File>> {
@@ -371,7 +371,7 @@ export class ApiClient {
   /**
    * Get folders for currently authenticated user
    * @uses:
-   * - queryParams() - vaultId, parentId, limit, nextToken, tags, filter
+   * - queryParams() - status, vaultId, parentId, limit, nextToken
    * @returns {Promise<Paginated<Folder>>}
    */
   async getFolders(): Promise<Paginated<Folder>> {
@@ -384,7 +384,7 @@ export class ApiClient {
    * Get memberships by vault id
    * @uses:
    * - vaultId()
-   * - queryParams() - limit, nextToken, filter
+   * - queryParams() - status, limit, nextToken
    * @returns {Promise<Paginated<Membership>>}
    */
   async getMembershipsByVaultId(): Promise<Paginated<Membership>> {
