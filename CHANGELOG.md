@@ -1,3 +1,10 @@
+# [0.13.0](https://github.com/Akord-com/carmella-sdk/compare/v0.12.0...v0.13.0) (2024-08-19)
+
+
+### Features
+
+* use carmella.io route ([cf8c754](https://github.com/Akord-com/carmella-sdk/commit/cf8c754f5f9b866790abec4743bfea4afcd659bf))
+
 # [0.12.0](https://github.com/Akord-com/carmella-sdk/compare/v0.11.1...v0.12.0) (2024-08-16)
 
 
