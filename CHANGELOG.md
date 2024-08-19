@@ -1,3 +1,10 @@
+## [0.14.1](https://github.com/Akord-com/carmella-sdk/compare/v0.14.0...v0.14.1) (2024-08-19)
+
+
+### Bug Fixes
+
+* export storage & api-key types ([5833049](https://github.com/Akord-com/carmella-sdk/commit/5833049e87331d747713f06094cde5a0cc97ff8b))
+
 # [0.14.0](https://github.com/Akord-com/carmella-sdk/compare/v0.13.0...v0.14.0) (2024-08-19)
 
 
