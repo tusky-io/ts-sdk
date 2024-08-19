@@ -1,3 +1,15 @@
+# [0.14.0](https://github.com/Akord-com/carmella-sdk/compare/v0.13.0...v0.14.0) (2024-08-19)
+
+
+### Bug Fixes
+
+* api config ([be96584](https://github.com/Akord-com/carmella-sdk/commit/be965843b1ad06be6d4bd68426fc93d7cf17b85d))
+
+
+### Features
+
+* add status query param ([ffa7893](https://github.com/Akord-com/carmella-sdk/commit/ffa78932fd5f3c93ef6606a5d944dc97f52fff4b))
+
 # [0.13.0](https://github.com/Akord-com/carmella-sdk/compare/v0.12.0...v0.13.0) (2024-08-19)
 
 
