@@ -19,14 +19,11 @@ class FolderModule {
   protected parentId?: string;
 
   protected defaultListOptions = {
-    shouldDecrypt: true,
-    filter: {
-      status: { ne: status.DELETED }
-    }
+    shouldDecrypt: true
   } as ListOptions;
 
   protected defaultGetOptions = {
-    shouldDecrypt: true,
+    shouldDecrypt: true
   } as GetOptions;
 
   protected defaultCreateOptions = {

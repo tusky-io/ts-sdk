@@ -21,13 +21,7 @@ class MembershipModule {
   }
 
   protected defaultListOptions = {
-    shouldDecrypt: true,
-    filter: {
-      or: [
-        { status: { eq: membershipStatus.ACCEPTED } },
-        { status: { eq: membershipStatus.PENDING } }
-      ]
-    }
+    shouldDecrypt: true
   } as ListOptions;
 
   protected defaultGetOptions = {
