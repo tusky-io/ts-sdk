@@ -5,3 +5,5 @@ export * from "./vault";
 export * from "./folder";
 export * from "./file-version";
 export * from "./notification";
+export * from "./storage";
+export * from "./api-key";
