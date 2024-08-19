@@ -2,19 +2,19 @@ export const apiConfig = (env: string) => {
   switch (env) {
     case "mainnet":
       return {
-        apiUrl: "https://carmella-storage.akord.link",
-        cdnUrl: "https://akrd.io",
+        apiUrl: "https://dev-api.carmella.io",
+        cdnUrl: "https://dev-cdn.carmella.io",
       };
     case "testnet":
     default:
       return {
-        apiUrl: "https://carmella-storage.akord.link",
-        cdnUrl: "https://akrd.io",
+        apiUrl: "https://api.carmella.io",
+        cdnUrl: "https://cdn.carmella.io",
       };
     case "local":
       return {
         apiUrl: "http://localhost:3000",
-        cdnUrl: "https://akrd.io"
+        cdnUrl: "http://localhost:3000/cached"
       };
   }
 };
