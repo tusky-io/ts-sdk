@@ -1,5 +1,5 @@
 import { Service, ServiceConfig } from "./service/service";
-import { PaymentSession, PaymentSessionOptions } from "../types/payment";
+import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
 
 class PaymentModule {
   protected service: Service;
@@ -11,6 +11,10 @@ class PaymentModule {
 
   constructor(config?: ServiceConfig) {
     this.service = new Service(config);
+  }
+
+  public async plans(): Promise<PaymentPlan[]> {
+    return await this.service.api.getPaymentPlans();
   }
 
   /**

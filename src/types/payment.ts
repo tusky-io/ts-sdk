@@ -15,3 +15,16 @@ export type PaymentSessionOptions = {
 
 export type PaymentSessionPriceLookupKey = 'monthly' | 'yearly'
 export type PaymentSessionQuantity = 1000 | 2000
+
+
+export type PaymentPlan = {
+  createdAt: number,
+  currentPeriodStart: number,
+  currentPeriodEnd: number,
+  cancelledAt: number | null,
+  status: 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid',
+  interval: 'month' | 'year',
+  amount: number,
+  currency: 'usd',
+  quantity: number,
+}

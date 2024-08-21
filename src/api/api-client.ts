@@ -19,7 +19,7 @@ import { Buffer } from "buffer";
 import { httpClient } from "./http";
 import { FileLike } from "../types/file";
 import { ApiKey } from "../types/api-key";
-import { PaymentSession } from "../types/payment";
+import { PaymentPlan, PaymentSession } from "../types/payment";
 
 const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
 
@@ -466,6 +466,9 @@ export class ApiClient {
     );
   }
 
+    async getPaymentPlans(): Promise<PaymentPlan[]> {
+      return this.get(`${this._apiUrl}/${this._paymentUri}`);
+    }
 
   /**
    * Generate new api key
