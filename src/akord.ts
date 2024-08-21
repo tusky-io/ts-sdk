@@ -15,6 +15,7 @@ import { Env } from "./env";
 import { Auth } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
+import { PaymentModule } from "./core/payment";
 
 export class Akord {
   public api: Api;
@@ -45,6 +46,9 @@ export class Akord {
   }
   get storage(): StorageModule {
     return new StorageModule(this.getConfig());
+  }
+  get payment(): PaymentModule {
+    return new PaymentModule(this.getConfig());
   }
 
   private getConfig() {

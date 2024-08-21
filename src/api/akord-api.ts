@@ -14,6 +14,7 @@ import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
+import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -185,6 +186,19 @@ export default class AkordApi extends Api {
     return new ApiClient()
       .env(this.config)
       .getStorage();
+  }
+
+  public async getPaymentPlans(): Promise<PaymentPlan[]> {
+    return new ApiClient()
+      .env(this.config)
+      .getPaymentPlans();
+  }
+
+  public async createPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession> {
+    return new ApiClient()
+      .env(this.config)
+      .data(options)
+      .createPaymentSession();
   }
 
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {

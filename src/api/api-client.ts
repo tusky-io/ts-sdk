@@ -19,6 +19,7 @@ import { Buffer } from "buffer";
 import { httpClient } from "./http";
 import { FileLike } from "../types/file";
 import { ApiKey } from "../types/api-key";
+import { PaymentPlan, PaymentSession } from "../types/payment";
 
 const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
 
@@ -36,6 +37,7 @@ export class ApiClient {
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
+  private _paymentUri: string = "payments";
 
   // path params
   private _resourceId: string;
@@ -464,6 +466,9 @@ export class ApiClient {
     );
   }
 
+    async getPaymentPlans(): Promise<PaymentPlan[]> {
+      return this.get(`${this._apiUrl}/${this._paymentUri}`);
+    }
 
   /**
    * Generate new api key
@@ -492,6 +497,10 @@ export class ApiClient {
 
   async post(url: string): Promise<any> {
     return this.fetch("post", url);
+  }
+
+  async put(url: string): Promise<any> {
+    return this.fetch("put", url);
   }
 
   async patch(url: string): Promise<any> {
@@ -943,6 +952,11 @@ export class ApiClient {
   async getStorage(): Promise<Storage> {
     const data = await this.get(`${this._apiUrl}/${this._storageUri}`);
     return new Storage(data);
+  }
+
+  async createPaymentSession(): Promise<PaymentSession> {
+    const data = await this.put(`${this._apiUrl}/${this._paymentUri}`);
+    return new PaymentSession(data);
   }
 }
 
