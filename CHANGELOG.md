@@ -1,3 +1,11 @@
+# [0.15.0](https://github.com/Akord-com/carmella-sdk/compare/v0.14.1...v0.15.0) (2024-08-21)
+
+
+### Features
+
+* add payment module ([cd2242a](https://github.com/Akord-com/carmella-sdk/commit/cd2242a6c29639aac6bcbd5f9fe50cb1ba1d16fe))
+* add support for get-payment-plans endpoint ([19be961](https://github.com/Akord-com/carmella-sdk/commit/19be961a5d2d5fcda175d123b07fd88acee98c03))
+
 ## [0.14.1](https://github.com/Akord-com/carmella-sdk/compare/v0.14.0...v0.14.1) (2024-08-19)
 
 
