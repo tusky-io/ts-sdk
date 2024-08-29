@@ -40,6 +40,10 @@ abstract class Api {
 
   abstract deleteVault(id: string): Promise<void>
 
+  abstract getTrash(): Promise<Folder>
+
+  abstract emptyTrash(): Promise<Folder>
+
   abstract createMembership(tx: CreateMembershipTxPayload): Promise<Membership>
 
   abstract updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership>

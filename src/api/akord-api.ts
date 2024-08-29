@@ -119,6 +119,18 @@ export default class AkordApi extends Api {
       .deleteVault();
   };
 
+  public async getTrash(): Promise<Folder> {
+    return new ApiClient()
+      .env(this.config)
+      .getTrash();
+  }
+
+  public async emptyTrash(): Promise<Folder> {
+    return new ApiClient()
+      .env(this.config)
+      .emptyTrash();
+  }
+
   public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
@@ -220,7 +232,6 @@ export default class AkordApi extends Api {
       .name(input.name)
       .picture(input.picture)
       .termsAccepted(input.termsAccepted)
-      .trashExpiration(input.trashExpiration)
       .updateMe();
   };
 

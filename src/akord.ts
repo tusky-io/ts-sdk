@@ -16,6 +16,7 @@ import { Auth } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
 import { PaymentModule } from "./core/payment";
+import { TrashModule } from "./core/trash";
 
 export class Akord {
   public api: Api;
@@ -40,6 +41,9 @@ export class Akord {
   }
   get file(): FileModule {
     return new FileModule(this.getConfig());
+  }
+  get trash(): TrashModule {
+    return new TrashModule(this.getConfig());
   }
   get apiKey(): ApiKeyModule {
     return new ApiKeyModule(this.getConfig());
