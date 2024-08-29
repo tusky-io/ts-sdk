@@ -1,3 +1,10 @@
+# [0.16.0](https://github.com/Akord-com/carmella-sdk/compare/v0.15.0...v0.16.0) (2024-08-29)
+
+
+### Features
+
+* add trash module ([f6d2ab4](https://github.com/Akord-com/carmella-sdk/commit/f6d2ab4d84b46b74c09b7a22abe11956c6d8f206))
+
 # [0.15.0](https://github.com/Akord-com/carmella-sdk/compare/v0.14.1...v0.15.0) (2024-08-21)
 
 
