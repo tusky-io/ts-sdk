@@ -1,3 +1,5 @@
+import { Folder } from "./folder"
+
 export class Storage {
   owner: string
   host: string
@@ -8,7 +10,7 @@ export class Storage {
   other: number
   photos: number
   video: number
-  trash: number
+  trash: Folder
   createdAt: string
   updatedAt: string
   refreshedAt: string
@@ -23,7 +25,7 @@ export class Storage {
     this.other = json.other
     this.photos = json.photos
     this.video = json.video
-    this.trash = json.trash
+    this.trash = new Folder(json.trash)
     this.createdAt = json.createdAt
     this.updatedAt = json.updatedAt
     this.refreshedAt = json.refreshedAt

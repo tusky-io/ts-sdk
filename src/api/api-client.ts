@@ -1,14 +1,12 @@
 import { AxiosInstance, AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { Membership, MembershipKeys } from "../types/membership";
+import { Membership } from "../types/membership";
 import { Transaction } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { Vault } from "../types/vault";
 import { Auth } from "../auth";
-import { Unauthorized } from "../errors/unauthorized";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
-import { NotFound } from "../errors/not-found";
 import { User, UserPublicInfo } from "../types/user";
 import { File, Folder } from "../types";
 import fetch from "cross-fetch";
@@ -21,8 +19,6 @@ import { FileLike } from "../types/file";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession } from "../types/payment";
 
-const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
-
 export class ApiClient {
   private _apiUrl: string;
   private _cdnUrl: string;
@@ -32,6 +28,7 @@ export class ApiClient {
   private _vaultUri: string = "vaults";
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
+  private _trashUri: string = "trash";
   private _membershipUri: string = "memberships";
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
@@ -289,7 +286,8 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async getMe(): Promise<User> {
-    return this.get(`${this._apiUrl}/${this._meUri}`);
+    const me = this.get(`${this._apiUrl}/${this._meUri}`);
+    return new User(me);
   }
 
   /**
@@ -308,8 +306,7 @@ export class ApiClient {
     this.data({
       name: this._name,
       picture: this._picture,
-      termsAccepted: this._termsAccepted,
-      trashExpiration: this._trashExpiration
+      termsAccepted: this._termsAccepted
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
@@ -821,6 +818,16 @@ export class ApiClient {
     }
     this.data({ autoExecute: this._autoExecute });
     return this.delete(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
+  }
+
+  async getTrash(): Promise<Folder> {
+    const data = this.get(`${this._apiUrl}/${this._trashUri}`);
+    return new Folder(data);
+  }
+
+  async emptyTrash(): Promise<Folder> {
+    const data = this.delete(`${this._apiUrl}/${this._trashUri}`);
+    return new Folder(data);
   }
 
   /**
