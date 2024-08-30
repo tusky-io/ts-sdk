@@ -286,7 +286,7 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async getMe(): Promise<User> {
-    const me = this.get(`${this._apiUrl}/${this._meUri}`);
+    const me = await this.get(`${this._apiUrl}/${this._meUri}`);
     return new User(me);
   }
 
