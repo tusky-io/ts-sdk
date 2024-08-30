@@ -69,10 +69,10 @@ This design is motivated by bundle size care: increase the package bundle size o
 Official supported plugins can be found at: [plugins](plugins)
 ```javascript 
 import { PubSubPlugin } from "@akord/carmella-sdk-pubsub-plugin"
-import { Akord, Auth } from "@akord/carmella-sdk-js";
+import { Akord } from "@akord/carmella-sdk";
 
-const { wallet } = await Auth.signIn('your_username', 'your_password');
-const akord = new Akord({ encrypter: wallet, signer: wallet, plugins: [new PubSubPlugin()] });
+const akord = new Akord({ apiKey: 'private_api_key', plugins: [new PubSubPlugin()] });
+await akord.storage.subscribe((notification) => console.log(notification), (err) => console.error(err))
 ```
 
 ### Examples
