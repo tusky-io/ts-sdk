@@ -1,5 +1,6 @@
 import { BadGateway } from "./bad-gateway";
 import { BadRequest } from "./bad-request";
+import { Conflict } from "./conflict";
 import { Forbidden } from "./forbidden";
 import { GatewayTimeout } from "./gateway-timeout";
 import { InternalError } from "./internal-error";
@@ -22,6 +23,8 @@ export const throwError = (status: number, message?: string, error?: Error) => {
       throw new Forbidden(message, error);
     case 404:
       throw new NotFound(message, error);
+    case 409:
+      throw new Conflict(message, error);
     case 429:
       throw new TooManyRequests(message, error);
     case 502:
