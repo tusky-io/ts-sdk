@@ -1,7 +1,6 @@
-import { EncryptedKeys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
-import { Vault } from "../../types";
+import { EncryptedVaultKeyPair, Vault } from "../../types";
 import { objects } from "../../constants";
 
 class VaultService extends Service {
@@ -28,11 +27,11 @@ class VaultService extends Service {
     this.setObject(this.vault);
   }
 
-  async processVault(object: Vault, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<Vault> {
+  async processVault(object: Vault, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<Vault> {
     const vault = new Vault(object, keys);
     if (shouldDecrypt && !vault.public) {
       try {
-        await vault.decrypt();
+        await vault.decrypt(this.encrypter);
       } catch (error) {
         throw new IncorrectEncryptionKey(error);
       }

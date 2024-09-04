@@ -95,6 +95,7 @@ export default class AkordApi extends Api {
       .public(tx.public)
       .name(tx.name)
       .description(tx.description)
+      .keys(tx.keys)
       .autoExecute(this.autoExecute)
       .createVault();
   };
@@ -207,6 +208,7 @@ export default class AkordApi extends Api {
       .picture(input.picture)
       .termsAccepted(input.termsAccepted)
       .trashExpiration(input.trashExpiration)
+      .encPrivateKey(input.encPrivateKey)
       .updateMe();
   };
 

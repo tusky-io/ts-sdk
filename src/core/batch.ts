@@ -154,7 +154,7 @@ class BatchModule {
       try {
         const fileModule = new FileModule(service);
         const object = await fileModule.upload(service.vaultId, item.file, item.options);
-        const file = await new FileService(service).processFile(object, !service.isPublic, service.keys);
+        const file = await new FileService(service).processFile(object, !service.isPublic, service.keys as any);
         if (options.onFileCreated) {
           await options.onFileCreated(file);
         }

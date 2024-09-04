@@ -10,6 +10,7 @@ export type UserMutable = {
   picture?: string,
   trashExpiration?: number,
   termsAccepted?: boolean // by setting it to true, the user accepts following terms: https://akord.com/terms-of-service-consumer
+  encPrivateKey?: string // encrypted user private key
 }
 
 export type UserPublicInfo = {

@@ -1,4 +1,5 @@
-import { Encryptable, encrypted, EncryptedKeys } from "@akord/crypto";
+import { EncryptedVaultKeyPair } from ".";
+import { Encryptable, encrypted } from "../crypto";
 
 export class File extends Encryptable {
   @encrypted() name: string;
@@ -22,11 +23,8 @@ export class File extends Encryptable {
   // vault context
   __public__?: boolean;
 
-  constructor(file: any, keys?: Array<EncryptedKeys>, publicKey?: string) {
-    super(
-      keys ? keys : file.__keys__,
-      publicKey ? publicKey : file.__publicKey__
-    );
+  constructor(file: any, keys?: Array<EncryptedVaultKeyPair>) {
+    super(keys ? keys : file.__keys__);
     this.id = file.id;
     this.blobId = file.blobId;
     this.ref = file.ref;

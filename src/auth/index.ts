@@ -1,5 +1,6 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
+import { Logger } from "../logger";
 
 export class Auth {
   public static authTokenProvider: () => Promise<string>
@@ -29,6 +30,7 @@ export class Auth {
         }
         throw new Unauthorized("Please add authTokenProvider or apiKey into config.")
       } catch (e) {
+        Logger.error(e)
         throw new Unauthorized("Invalid authorization.")
       }
     } else {

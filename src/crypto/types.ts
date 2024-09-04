@@ -1,8 +1,3 @@
-export type EncryptionMetadata = {
-  encryptedKey?: string,
-  iv?: string
-}
-
 export type EncryptedPayload = {
   encryptedData: EncryptedData,
   encryptedKey: string,
@@ -20,8 +15,9 @@ export type EncryptOptions = {
   prefixCiphertextWithIv?: boolean
 }
 
-export type AsymmetricEncryptedPayload = {
-  ciphertext: ArrayBufferLike,
-  nonce: ArrayBufferLike,
-  ephemPublicKey: ArrayBufferLike
+export type AsymEncryptedPayload = {
+  ciphertext: string,
+  nonce: string,
+  ephemPublicKey: string,
+  publicKey: string,
 }

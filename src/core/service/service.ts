@@ -1,23 +1,12 @@
 import { Api } from "../../api/api";
-import {
-  Encrypter,
-  jsonToBase64,
-  base64ToArray,
-  arrayToString,
-  stringToArray,
-  arrayToBase64,
-  base64ToJson,
-  deriveAddress,
-  EncryptedKeys
-} from "@akord/crypto";
+import { jsonToBase64, base64ToArray } from "../../crypto";
 import { actions } from '../../constants';
 import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
-import { EncryptOptions, EncryptedPayload } from "@akord/crypto/lib/types";
-import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
-import { getEncryptedPayload } from "../common";
-import { EncryptionMetadata } from "../../types/encryption";
 import { Signer } from "../../signer";
+import { EncryptedVaultKeyPair, VaultKeyPair } from "../../types";
+import { encryptWithPublicKey } from "../../crypto-lib";
+import Encrypter from "../../encrypter";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
@@ -27,7 +16,8 @@ class Service {
   signer: Signer
   encrypter: Encrypter
 
-  keys: Array<EncryptedKeys>
+  keys: Array<EncryptedVaultKeyPair>
+  decryptedKeys: Array<VaultKeyPair>
 
   vaultId: string
   parentId: string
@@ -43,11 +33,12 @@ class Service {
   constructor(config: ServiceConfig) {
     this.signer = config.signer;
     this.api = config.api;
-    this.encrypter = new Encrypter(config.encrypter?.wallet, config.encrypter?.keys, config.encrypter?.publicKey);
+    this.encrypter = config.encrypter;
     // set context from config / another service
     this.vault = config.vault;
     this.vaultId = config.vaultId;
     this.keys = config.keys;
+    this.decryptedKeys = config.decryptedKeys || [];
     this.objectId = config.objectId;
     this.isPublic = config.isPublic;
     this.type = config.type;
@@ -56,9 +47,24 @@ class Service {
     this.userAgent = config.userAgent;
   }
 
-  setKeys(keys: EncryptedKeys[]) {
+  setKeys(keys: EncryptedVaultKeyPair[]) {
     this.keys = keys;
-    this.encrypter.setKeys(keys);
+  }
+
+  setDecryptedKeys(keys: VaultKeyPair[]) {
+    this.decryptedKeys = keys;
+  }
+
+  async decryptKeys() {
+    if (!this.decryptedKeys || this.decryptedKeys.length === 0) {
+      this.decryptedKeys = [];
+      if (this.keys && this.keys.length > 0) {
+        for (let keypair of this.keys) {
+          const privateKey = await this.encrypter.decrypt(keypair.encPrivateKey);
+          this.decryptedKeys.push({ publicKey: base64ToArray(keypair.publicKey), privateKey: privateKey });
+        }
+      }
+    }
   }
 
   setVaultId(vaultId: string) {
@@ -89,22 +95,13 @@ class Service {
     this.vault = vault;
   }
 
-  setRawDataEncryptionPublicKey(publicKey: Uint8Array) {
-    this.encrypter.setRawPublicKey(publicKey);
-  }
-
   async processWriteString(data: string): Promise<string> {
     if (this.isPublic) return data;
-    let encryptedPayload: string;
-    try {
-      encryptedPayload = await this.encrypter.encryptRaw(stringToArray(data)) as string;
-    } catch (error) {
-      throw new IncorrectEncryptionKey(error);
-    }
-    const decodedPayload = base64ToJson(encryptedPayload) as any;
-    decodedPayload.publicAddress = (await this.getActiveKey()).address;
-    delete decodedPayload.publicKey;
-    return jsonToBase64(decodedPayload);
+    const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
+    console.log(currentVaultPublicKey)
+    console.log(base64ToArray(currentVaultPublicKey))
+    const encryptedMessage = await encryptWithPublicKey(base64ToArray(currentVaultPublicKey), data);
+    return jsonToBase64(encryptedMessage);
   }
 
   async setVaultContext(vaultId: string) {
@@ -117,82 +114,17 @@ class Service {
 
   async setMembershipKeys(object: Object) {
     if (!this.isPublic) {
-      const keys = object.__keys__.map(((keyPair: any) => {
-        return {
-          encPrivateKey: keyPair.encPrivateKey,
-          encPublicKey: keyPair.publicKey ? keyPair.publicKey : keyPair.encPublicKey
-        }
-      }))
-      this.setKeys(keys);
-      try {
-        if (object.__publicKey__) {
-          this.setRawDataEncryptionPublicKey(base64ToArray(object.__publicKey__));
-        } else {
-          const currentEncPublicKey = object.__keys__[object.__keys__.length - 1].encPublicKey;
-          const publicKey = await this.encrypter.wallet.decrypt(currentEncPublicKey);
-          this.setRawDataEncryptionPublicKey(publicKey);
-        }
-      } catch (error) {
-        throw new IncorrectEncryptionKey(error);
-      }
+      this.setKeys(object.__keys__);
     }
-  }
-
-  async processWriteRaw(data: ArrayBuffer, options?: EncryptOptions) {
-    let processedData: ArrayBuffer;
-    const encryptionMetadata = {} as EncryptionMetadata;
-    if (this.isPublic) {
-      processedData = data;
-    } else {
-      let encryptedFile: EncryptedPayload;
-      try {
-        encryptedFile = await this.encrypter.encryptRaw(new Uint8Array(data), options) as EncryptedPayload;
-      } catch (error) {
-        throw new IncorrectEncryptionKey(error);
-      }
-      processedData = encryptedFile.encryptedData.ciphertext as ArrayBuffer;
-      encryptionMetadata.iv = arrayToBase64(encryptedFile.encryptedData.iv);
-      encryptionMetadata.encryptedKey = encryptedFile.encryptedKey
-    }
-    return { processedData, encryptionMetadata }
-  }
-
-  async processReadRaw(data: ArrayBuffer | string, metadata: EncryptionMetadata, shouldDecrypt = true): Promise<ArrayBuffer> {
-    if (this.isPublic || !shouldDecrypt) {
-      return data as ArrayBuffer;
-    }
-
-    const encryptedPayload = getEncryptedPayload(data, metadata);
-    try {
-      if (encryptedPayload) {
-        return this.encrypter.decryptRaw(encryptedPayload, false);
-      } else {
-        return this.encrypter.decryptRaw(data as string);
-      }
-    } catch (error) {
-      throw new IncorrectEncryptionKey(error);
-    }
-  }
-
-  async processReadString(data: string, shouldDecrypt = true): Promise<string> {
-    if (this.isPublic || !shouldDecrypt) return data;
-    const decryptedDataRaw = await this.processReadRaw(data, {});
-    return arrayToString(decryptedDataRaw);
-  }
-
-  protected async getActiveKey() {
-    return {
-      address: await deriveAddress(this.encrypter.publicKey),
-      publicKey: arrayToBase64(this.encrypter.publicKey)
-    };
   }
 }
 
 export type ServiceConfig = {
+  decryptedKeys?: VaultKeyPair[];
   api?: Api,
   signer?: Signer,
   encrypter?: Encrypter,
-  keys?: Array<EncryptedKeys>
+  keys?: Array<EncryptedVaultKeyPair>
   vaultId?: string,
   objectId?: string,
   type?: ObjectType,

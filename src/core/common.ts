@@ -1,10 +1,9 @@
 import { ListOptions } from "../types/query-options";
 import lodash from "lodash";
-import { EncryptedPayload } from "@akord/crypto/lib/types";
-import { base64ToArray } from "@akord/crypto";
-import { EncryptionMetadata } from "../types/encryption";
+import { EncryptedPayload, EncryptionMetadata } from "../types/encryption";
 import PQueue from "@esm2cjs/p-queue";
 import { InternalError } from "../errors/internal-error";
+import { base64ToArray } from "../crypto";
 
 const DECRYPTION_CONCURRENCY = 1;
 

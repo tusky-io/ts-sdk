@@ -1,4 +1,3 @@
-import { AUTH_TAG_LENGTH_IN_BYTES, IV_LENGTH_IN_BYTES } from "@akord/crypto";
 import { status } from "../constants";
 import { ApiClient } from "../api/api-client";
 import { FileSource, createFileLike } from "../types/file";
@@ -14,6 +13,9 @@ import { importDynamic } from '../util/import';
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
+import { decryptWithPrivateKey } from "../crypto-lib";
+import { AsymEncryptedPayload } from "../crypto/types";
+import { arrayBufferToArray } from "../crypto";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const BYTES_IN_MB = 1000000;
@@ -93,11 +95,12 @@ class FileModule {
 
     await this.service.setFile(fileLike);
 
-    return this.service.api.createFile({
+    const fileResult = await this.service.api.createFile({
       vaultId: vaultId,
       file: this.service.file,
       parentId: this.service.parentId
     });
+    return this.service.processFile(fileResult, !this.service.isPublic, this.service.keys);
   }
 
   /**
@@ -227,28 +230,40 @@ class FileModule {
 
   public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
     const file = await this.service.api.downloadFile(id, { responseType: options.responseType, public: false });
-    return file.fileData as any;
-    // TODO: handle encrypted files
-    let stream: ReadableStream<Uint8Array>;
-    if (this.service.isPublic) {
-      stream = file.fileData as ReadableStream<Uint8Array>;
+    // TODO: send encryption context directly with the file data
+    const fileProto = await this.service.api.getFile(id);
+    this.service.setIsPublic(false);
+    if (fileProto.__public__) {
+      return file.fileData as ArrayBuffer;
     } else {
-      const encryptedKey = file.metadata.encryptedKey;
-      const iv = file.metadata.iv?.split(',');
-      const streamChunkSize = options.chunkSize ? options.chunkSize + AUTH_TAG_LENGTH_IN_BYTES + (iv ? 0 : IV_LENGTH_IN_BYTES) : null;
-      if (!this.service.keys && file.metadata.vaultId) {
-        await this.service.setVaultContext(file.metadata.vaultId);
-      } else {
-        const file = await this.service.api.getFile(id);
-        await this.service.setVaultContext(file.vaultId);
-      }
-      stream = await this.service.encrypter.decryptStream(file.fileData as ReadableStream, encryptedKey, streamChunkSize, iv);
+      const fileBuffer = arrayBufferToArray(file.fileData as ArrayBuffer);
+      const payload = JSON.parse(new TextDecoder().decode(fileBuffer)) as AsymEncryptedPayload;
+      const vaultEncPrivateKey = fileProto.__keys__.find((key) => key.publicKey === payload.publicKey).encPrivateKey;
+      const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
+      const decryptedFile = await decryptWithPrivateKey(privateKey, payload);
+      return decryptedFile.buffer;
     }
+    // TODO: handle encrypted files
+    // let stream: ReadableStream<Uint8Array>;
+    // if (this.service.isPublic) {
+    //   stream = file.fileData as ReadableStream<Uint8Array>;
+    // } else {
+    //   const encryptedKey = file.metadata.encryptedKey;
+    //   const iv = file.metadata.iv?.split(',');
+    //   const streamChunkSize = options.chunkSize ? options.chunkSize + AUTH_TAG_LENGTH_IN_BYTES + (iv ? 0 : IV_LENGTH_IN_BYTES) : null;
+    //   if (!this.service.keys && file.metadata.vaultId) {
+    //     await this.service.setVaultContext(file.metadata.vaultId);
+    //   } else {
+    //     const file = await this.service.api.getFile(id);
+    //     await this.service.setVaultContext(file.vaultId);
+    //   }
+    //   stream = await this.service.encrypter.decryptStream(file.fileData as ReadableStream, encryptedKey, streamChunkSize, iv);
+    // }
 
-    if (options.responseType === 'arraybuffer') {
-      return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
-    }
-    return stream;
+    // if (options.responseType === 'arraybuffer') {
+    //   return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
+    // }
+    // return stream;
   }
 
   private async saveFile(path: string, type: string, stream: ReadableStream, skipSave: boolean = false): Promise<string> {

@@ -1,4 +1,7 @@
-import { Encryptable, encrypted, EncryptedKeys } from "@akord/crypto";
+import { EncryptedVaultKeyPair } from ".";
+import { arrayToString, base64ToJson, Encryptable, encrypted } from "../crypto";
+import { decryptWithPrivateKey } from "../crypto-lib";
+import Encrypter, { Ed25519EncryptedPayload } from "../encrypter";
 
 export class Folder extends Encryptable {
   @encrypted() name: string;
@@ -18,11 +21,8 @@ export class Folder extends Encryptable {
   // vault context
   __public__?: boolean;
 
-  constructor(folder: any, keys?: Array<EncryptedKeys>) {
-    super(
-      keys ? keys : folder.__keys__,
-      folder.__publicKey__
-    );
+  constructor(folder: any, keys?: Array<EncryptedVaultKeyPair>) {
+    super(keys ? keys : folder.__keys__);
     this.id = folder.id;
     this.owner = folder.owner;
     this.createdAt = folder.createdAt;

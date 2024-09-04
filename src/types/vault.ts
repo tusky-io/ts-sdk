@@ -1,7 +1,9 @@
-import { Encryptable, encrypted, EncryptedKeys } from "@akord/crypto";
-import { Membership } from "./membership";
+import { EncryptedVaultKeyPair, Membership } from "./membership";
 import { Folder } from "./folder";
 import { File } from "./file-version";
+import { arrayToString, base64ToJson, Encryptable, encrypted } from "../crypto";
+import { decryptWithPrivateKey } from "../crypto-lib";
+import Encrypter, { Ed25519EncryptedPayload } from "../encrypter";
 
 export class Vault extends Encryptable {
   id: string;
@@ -20,8 +22,8 @@ export class Vault extends Encryptable {
   files?: Array<File>;
   folders?: Array<Folder>;
 
-  constructor(vaultProto: any, keys: Array<EncryptedKeys>) {
-    super(keys, null);
+  constructor(vaultProto: any, keys: Array<EncryptedVaultKeyPair>) {
+    super(keys);
     this.id = vaultProto.id;
     this.owner = vaultProto.owner;
     this.public = vaultProto.public;
@@ -33,9 +35,9 @@ export class Vault extends Encryptable {
     this.description = vaultProto.description;
     this.tags = vaultProto.tags;
     this.status = vaultProto.status;
-    this.memberships = vaultProto?.memberships?.map((membership: Membership) => new Membership(membership, keys));
-    this.files = vaultProto?.files?.map((file: File) => new File(file, keys));
-    this.folders = vaultProto?.folders?.map((folder: Folder) => new Folder(folder, keys));
+    // this.memberships = vaultProto?.memberships?.map((membership: Membership) => new Membership(membership, keys));
+    // this.files = vaultProto?.files?.map((file: File) => new File(file, keys));
+    // this.folders = vaultProto?.folders?.map((folder: Folder) => new Folder(folder, keys));
   }
 }
 
