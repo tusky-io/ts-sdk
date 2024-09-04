@@ -1,3 +1,10 @@
+# [0.17.0](https://github.com/Akord-com/carmella-sdk/compare/v0.16.1...v0.17.0) (2024-09-04)
+
+
+### Features
+
+* support Conflict error code ([9535e0e](https://github.com/Akord-com/carmella-sdk/commit/9535e0eeda51ef6b59bb7c4365ba8f70782523d1))
+
 ## [0.16.1](https://github.com/Akord-com/carmella-sdk/compare/v0.16.0...v0.16.1) (2024-08-30)
 
 
