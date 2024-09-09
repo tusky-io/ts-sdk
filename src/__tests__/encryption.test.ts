@@ -91,7 +91,7 @@ describe("Testing encryption functions", () => {
   it("should retrieve user encryption context", async () => {
     const user = await akord.me.get();
     console.log(user)
-    userKeyPair = (await AkordWallet.importFromEncBackupPhrase("passakordpass", user.name as string)).encryptionKeyPair;
+    userKeyPair = (await AkordWallet.importFromEncBackupPhrase("passakordpass", user.encPrivateKey as string)).encryptionKeyPair;
   });
 
   it("should create a private vault", async () => {

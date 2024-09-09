@@ -318,6 +318,7 @@ export class ApiClient {
    * - picture()
    * - termsAccepted()
    * - trashExpiration()
+   * - encPrivateKey()
    * @returns {Promise<User>}
    */
   async updateMe(): Promise<User> {
@@ -325,11 +326,11 @@ export class ApiClient {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
-      // name: this._name,
+      name: this._name,
       picture: this._picture,
       termsAccepted: this._termsAccepted,
       trashExpiration: this._trashExpiration,
-      name: this._encPrivateKey
+      encPrivateKey: this._encPrivateKey
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
