@@ -16,7 +16,6 @@ import {
 import { ready, crypto_sign_seed_keypair, KeyPair } from 'libsodium-wrappers'
 import nacl from 'tweetnacl'
 import { Wallet } from '.'
-import { Keypair } from '@mysten/sui/dist/cjs/cryptography/keypair'
 // import { HDKeyT } from 'ethereum-cryptography/pure/hdkey'
 import { Buffer } from 'buffer';
 
