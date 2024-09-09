@@ -38,7 +38,7 @@ jobs:
             aws-region: eu-central-1
 
       - name: Setup registry
-        run: yarn co:login
+        run: yarn set:registry
 
       - name: Install dependencies
         run: yarn install
