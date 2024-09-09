@@ -1,3 +1,10 @@
+# [0.20.0](https://github.com/Akord-com/carmella-sdk/compare/v0.19.0...v0.20.0) (2024-09-09)
+
+
+### Features
+
+* add react starter with Sui wallet auth ([c479592](https://github.com/Akord-com/carmella-sdk/commit/c47959272fd6b305b75ae1fd711265383f9f026f))
+
 # [0.19.0](https://github.com/Akord-com/carmella-sdk/compare/v0.18.0...v0.19.0) (2024-09-09)
 
 
