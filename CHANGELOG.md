@@ -1,3 +1,10 @@
+# [0.19.0](https://github.com/Akord-com/carmella-sdk/compare/v0.18.0...v0.19.0) (2024-09-09)
+
+
+### Features
+
+* export wallet & encrypter ([a4bfa1d](https://github.com/Akord-com/carmella-sdk/commit/a4bfa1d14894037f0fd0b9882286d05148c0e5f0))
+
 # [0.18.0](https://github.com/Akord-com/carmella-sdk/compare/v0.17.0...v0.18.0) (2024-09-09)
 
 
