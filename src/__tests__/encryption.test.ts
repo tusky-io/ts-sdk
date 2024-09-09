@@ -1,14 +1,20 @@
 import faker from '@faker-js/faker';
-import { decryptWithPrivateKey, encryptWithPublicKey, generateKeyPair } from '../crypto-lib';
 import { Encrypter } from '../encrypter';
 import { mockEnokiFlow } from './auth';
 import EnokiSigner from './enoki/signer';
 import { Akord } from '../akord';
-import { AkordWallet, arrayToString } from '../crypto';
+import { AkordWallet } from '../crypto';
 import { cleanup, testDataPath } from './common';
 import { createFileLike } from '../types/file';
 import { firstFileName } from './data/content';
 import { KeyPair } from 'libsodium-wrappers';
+import { keyInSelect } from 'readline-sync';
+
+function getAuthProvider() {
+  const options = ['Google', 'Twitch', 'Facebook'];
+  const index = keyInSelect(options, 'Please choose your auth provider:');
+  return options[index];
+}
 
 jest.setTimeout(3000000);
 
@@ -71,12 +77,11 @@ describe("Testing encryption functions", () => {
   it("should set user encryption context", async () => {
     const userWallet = await AkordWallet.create("passakordpass");
     console.log(userWallet)
-    // const userKeyPair = await generateKeyPair();
     const userKeyPair = userWallet.encryptionKeyPair;
-    console.log(userKeyPair)
-    const { jwt, address, keyPair } = await mockEnokiFlow();
+    const authProvider = getAuthProvider();
+    const { jwt, address, keyPair } = await mockEnokiFlow(authProvider);
     authToken = jwt;
-    signer = new EnokiSigner({ address: address, keypair: keyPair });
+    const signer = new EnokiSigner({ address: address, keypair: keyPair });
     akord = new Akord({ debug: true, logToFile: true, env: process.env.ENV as any, authTokenProvider: async () => jwt, signer: signer });
 
     console.log(userWallet.encBackupPhrase)

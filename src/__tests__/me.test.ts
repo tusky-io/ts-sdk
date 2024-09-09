@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import { Akord } from "../index";
-import { initInstance } from './common';
+import { cleanup, initInstance } from './common';
 
 let akord: Akord;
 
@@ -10,6 +10,10 @@ describe("Testing me functions", () => {
 
   beforeAll(async () => {
     akord = await initInstance();
+  });
+
+  afterAll(async () => {
+    await cleanup(akord);
   });
 
   it("should get me", async () => {
