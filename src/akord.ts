@@ -15,6 +15,8 @@ import { Auth } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
 import Encrypter from "./encrypter";
+import { PaymentModule } from "./core/payment";
+import { TrashModule } from "./core/trash";
 
 export class Akord {
   public api: Api;
@@ -40,11 +42,17 @@ export class Akord {
   get file(): FileModule {
     return new FileModule(this.getConfig());
   }
+  get trash(): TrashModule {
+    return new TrashModule(this.getConfig());
+  }
   get apiKey(): ApiKeyModule {
     return new ApiKeyModule(this.getConfig());
   }
   get storage(): StorageModule {
     return new StorageModule(this.getConfig());
+  }
+  get payment(): PaymentModule {
+    return new PaymentModule(this.getConfig());
   }
 
   private getConfig() {

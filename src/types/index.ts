@@ -7,3 +7,4 @@ export * from "./file-version";
 export * from "./notification";
 export * from "./storage";
 export * from "./api-key";
+export * from "./payment";

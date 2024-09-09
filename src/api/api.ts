@@ -10,6 +10,7 @@ import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
+import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
 
 abstract class Api {
   config: ApiConfig
@@ -41,6 +42,10 @@ abstract class Api {
 
   abstract deleteVault(id: string): Promise<void>
 
+  abstract getTrash(): Promise<Folder>
+
+  abstract emptyTrash(): Promise<Folder>
+
   abstract createMembership(tx: CreateMembershipTxPayload): Promise<Membership>
 
   abstract updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership>
@@ -50,6 +55,10 @@ abstract class Api {
   abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
 
   abstract getStorage(): Promise<Storage>
+
+  abstract getPaymentPlans(): Promise<PaymentPlan[]>
+
+  abstract createPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession>
 
   abstract getUserPublicData(email: string): Promise<UserPublicInfo>
 

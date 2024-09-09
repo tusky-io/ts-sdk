@@ -1,3 +1,51 @@
+# [0.17.0](https://github.com/Akord-com/carmella-sdk/compare/v0.16.1...v0.17.0) (2024-09-04)
+
+
+### Features
+
+* support Conflict error code ([9535e0e](https://github.com/Akord-com/carmella-sdk/commit/9535e0eeda51ef6b59bb7c4365ba8f70782523d1))
+
+## [0.16.1](https://github.com/Akord-com/carmella-sdk/compare/v0.16.0...v0.16.1) (2024-08-30)
+
+
+### Bug Fixes
+
+* typo ([384b339](https://github.com/Akord-com/carmella-sdk/commit/384b33934afd4e1fea7c97921fa2d5ab7074f308))
+
+# [0.16.0](https://github.com/Akord-com/carmella-sdk/compare/v0.15.0...v0.16.0) (2024-08-29)
+
+
+### Features
+
+* add trash module ([f6d2ab4](https://github.com/Akord-com/carmella-sdk/commit/f6d2ab4d84b46b74c09b7a22abe11956c6d8f206))
+
+# [0.15.0](https://github.com/Akord-com/carmella-sdk/compare/v0.14.1...v0.15.0) (2024-08-21)
+
+
+### Features
+
+* add payment module ([cd2242a](https://github.com/Akord-com/carmella-sdk/commit/cd2242a6c29639aac6bcbd5f9fe50cb1ba1d16fe))
+* add support for get-payment-plans endpoint ([19be961](https://github.com/Akord-com/carmella-sdk/commit/19be961a5d2d5fcda175d123b07fd88acee98c03))
+
+## [0.14.1](https://github.com/Akord-com/carmella-sdk/compare/v0.14.0...v0.14.1) (2024-08-19)
+
+
+### Bug Fixes
+
+* export storage & api-key types ([5833049](https://github.com/Akord-com/carmella-sdk/commit/5833049e87331d747713f06094cde5a0cc97ff8b))
+
+# [0.14.0](https://github.com/Akord-com/carmella-sdk/compare/v0.13.0...v0.14.0) (2024-08-19)
+
+
+### Bug Fixes
+
+* api config ([be96584](https://github.com/Akord-com/carmella-sdk/commit/be965843b1ad06be6d4bd68426fc93d7cf17b85d))
+
+
+### Features
+
+* add status query param ([ffa7893](https://github.com/Akord-com/carmella-sdk/commit/ffa78932fd5f3c93ef6606a5d944dc97f52fff4b))
+
 # [0.13.0](https://github.com/Akord-com/carmella-sdk/compare/v0.12.0...v0.13.0) (2024-08-19)
 
 

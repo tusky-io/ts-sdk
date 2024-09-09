@@ -1,14 +1,12 @@
 import { AxiosInstance, AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { Membership, MembershipKeys } from "../types/membership";
+import { Membership } from "../types/membership";
 import { Transaction } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { Vault } from "../types/vault";
 import { Auth } from "../auth";
-import { Unauthorized } from "../errors/unauthorized";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
-import { NotFound } from "../errors/not-found";
 import { User, UserPublicInfo } from "../types/user";
 import { EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
@@ -19,8 +17,7 @@ import { Buffer } from "buffer";
 import { httpClient } from "./http";
 import { FileLike } from "../types/file";
 import { ApiKey } from "../types/api-key";
-
-const GATEWAY_HEADER_PREFIX = "x-amz-meta-";
+import { PaymentPlan, PaymentSession } from "../types/payment";
 
 export class ApiClient {
   private _apiUrl: string;
@@ -31,11 +28,13 @@ export class ApiClient {
   private _vaultUri: string = "vaults";
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
+  private _trashUri: string = "trash";
   private _membershipUri: string = "memberships";
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
+  private _paymentUri: string = "payments";
 
   // path params
   private _resourceId: string;
@@ -308,7 +307,8 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async getMe(): Promise<User> {
-    return this.get(`${this._apiUrl}/${this._meUri}`);
+    const me = await this.get(`${this._apiUrl}/${this._meUri}`);
+    return new User(me);
   }
 
   /**
@@ -317,19 +317,17 @@ export class ApiClient {
    * - name()
    * - picture()
    * - termsAccepted()
-   * - trashExpiration()
    * - encPrivateKey()
    * @returns {Promise<User>}
    */
   async updateMe(): Promise<User> {
-    if (!this._name && !this._picture && !this._termsAccepted && !this._trashExpiration && !this._encPrivateKey) {
+    if (!this._name && !this._picture && !this._termsAccepted && !this._encPrivateKey) {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
       name: this._name,
       picture: this._picture,
       termsAccepted: this._termsAccepted,
-      trashExpiration: this._trashExpiration,
       encPrivateKey: this._encPrivateKey
     });
 
@@ -487,6 +485,9 @@ export class ApiClient {
     );
   }
 
+    async getPaymentPlans(): Promise<PaymentPlan[]> {
+      return this.get(`${this._apiUrl}/${this._paymentUri}`);
+    }
 
   /**
    * Generate new api key
@@ -515,6 +516,10 @@ export class ApiClient {
 
   async post(url: string): Promise<any> {
     return this.fetch("post", url);
+  }
+
+  async put(url: string): Promise<any> {
+    return this.fetch("put", url);
   }
 
   async patch(url: string): Promise<any> {
@@ -851,6 +856,16 @@ export class ApiClient {
     return this.delete(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
 
+  async getTrash(): Promise<Folder> {
+    const data = this.get(`${this._apiUrl}/${this._trashUri}`);
+    return new Folder(data);
+  }
+
+  async emptyTrash(): Promise<Folder> {
+    const data = this.delete(`${this._apiUrl}/${this._trashUri}`);
+    return new Folder(data);
+  }
+
   /**
    *
    * @requires:
@@ -980,6 +995,11 @@ export class ApiClient {
   async getStorage(): Promise<Storage> {
     const data = await this.get(`${this._apiUrl}/${this._storageUri}`);
     return new Storage(data);
+  }
+
+  async createPaymentSession(): Promise<PaymentSession> {
+    const data = await this.put(`${this._apiUrl}/${this._paymentUri}`);
+    return new PaymentSession(data);
   }
 }
 

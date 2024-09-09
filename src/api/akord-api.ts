@@ -14,6 +14,7 @@ import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
+import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -127,6 +128,18 @@ export default class AkordApi extends Api {
       .deleteVault();
   };
 
+  public async getTrash(): Promise<Folder> {
+    return new ApiClient()
+      .env(this.config)
+      .getTrash();
+  }
+
+  public async emptyTrash(): Promise<Folder> {
+    return new ApiClient()
+      .env(this.config)
+      .emptyTrash();
+  }
+
   public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
@@ -196,6 +209,19 @@ export default class AkordApi extends Api {
       .getStorage();
   }
 
+  public async getPaymentPlans(): Promise<PaymentPlan[]> {
+    return new ApiClient()
+      .env(this.config)
+      .getPaymentPlans();
+  }
+
+  public async createPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession> {
+    return new ApiClient()
+      .env(this.config)
+      .data(options)
+      .createPaymentSession();
+  }
+
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {
     return new ApiClient()
       .env(this.config)
@@ -215,7 +241,6 @@ export default class AkordApi extends Api {
       .name(input.name)
       .picture(input.picture)
       .termsAccepted(input.termsAccepted)
-      .trashExpiration(input.trashExpiration)
       .encPrivateKey(input.encPrivateKey)
       .updateMe();
   };
