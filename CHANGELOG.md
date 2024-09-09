@@ -1,3 +1,18 @@
+# [0.18.0](https://github.com/Akord-com/carmella-sdk/compare/v0.17.0...v0.18.0) (2024-09-09)
+
+
+### Bug Fixes
+
+* temp crypto dep fix for browser ([dcad7f1](https://github.com/Akord-com/carmella-sdk/commit/dcad7f1c3490e098bb01a2ef3d499442c74ab220))
+* use encPrivateKey field for user encryption context ([81205a0](https://github.com/Akord-com/carmella-sdk/commit/81205a0ed58ccfbb54f34f1ce8e4e5e455147111))
+
+
+### Features
+
+* add private vault support ([7b05444](https://github.com/Akord-com/carmella-sdk/commit/7b054442cb9e4d46c494f2b3da04937edb794e58))
+* add wallet based auth ([92c4c36](https://github.com/Akord-com/carmella-sdk/commit/92c4c36e6bb22559e863a39cd6290c5bfc1915cd))
+* configure multiple auth providers ([b91d797](https://github.com/Akord-com/carmella-sdk/commit/b91d797b73eed3a6634c9f68578bef31ec727561))
+
 # [0.17.0](https://github.com/Akord-com/carmella-sdk/compare/v0.16.1...v0.17.0) (2024-09-04)
 
 
