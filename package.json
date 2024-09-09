@@ -80,6 +80,6 @@
     "pngjs": "^7.0.0",
     "readline-sync": "^1.4.10",
     "ts-jest": "^28.0.5",
-    "typescript": "4.8.4"
+    "typescript": "^5.0.4"
   }
 }
