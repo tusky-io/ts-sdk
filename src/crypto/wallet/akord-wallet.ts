@@ -18,6 +18,7 @@ import nacl from 'tweetnacl'
 import { Wallet } from '.'
 import { Keypair } from '@mysten/sui/dist/cjs/cryptography/keypair'
 // import { HDKeyT } from 'ethereum-cryptography/pure/hdkey'
+import { Buffer } from 'buffer';
 
 const HD_SIGNING_PATH = 'm/0\'/0\'/0'
 const HD_ENCRYPTION_PATH = 'm/1\'/0\'/0'
@@ -84,9 +85,7 @@ class AkordWallet implements Wallet {
   static async create(password?: string): Promise<AkordWallet> {
     const backupPhrase = bip39.generateMnemonic();
     let encBackupPhrase: string;
-    console.log("PASSS: " + password)
     if (password) {
-      console.log("HERE IN ECNRYPT WITH PASSWORD: " )
       encBackupPhrase = await encryptWithPassword(password, backupPhrase);
     }
     const akordWallet = new AkordWallet(backupPhrase, encBackupPhrase);
