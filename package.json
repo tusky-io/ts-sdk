@@ -35,7 +35,6 @@
     "@akord/ts-cacheable": "1.0.13",
     "@esm2cjs/p-queue": "^7.3.0",
     "agentkeepalive": "^4.5.0",
-    "amazon-cognito-identity-js": "6.1.2",
     "axios": "0.27.2",
     "buffer": "^6.0.3",
     "cross-fetch": "^4.0.0",
