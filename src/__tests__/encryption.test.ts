@@ -1,9 +1,7 @@
 import faker from '@faker-js/faker';
-import { Encrypter } from '../encrypter';
 import { mockEnokiFlow } from './auth';
 import EnokiSigner from './enoki/signer';
-import { Akord } from '../akord';
-import { AkordWallet } from '../crypto';
+import { Akord, AkordWallet, Encrypter } from '../';
 import { cleanup, testDataPath } from './common';
 import { createFileLike } from '../types/file';
 import { firstFileName } from './data/content';

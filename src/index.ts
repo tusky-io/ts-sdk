@@ -13,4 +13,6 @@ Akord.init = async function (config: ClientConfig = {}): Promise<Akord> {
 
 export * from "./types";
 export * from "./plugin";
+export * from "./encrypter";
+export * from "./crypto/wallet";
 export { Akord, Auth };
