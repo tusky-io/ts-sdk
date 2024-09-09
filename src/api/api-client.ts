@@ -88,6 +88,7 @@ export class ApiClient {
   private _cancelHook: AbortController;
 
   // auxiliar
+  private _publicRoute: boolean;
   private _totalBytes: number;
   private _uploadedBytes: number;
 
@@ -129,6 +130,7 @@ export class ApiClient {
     clone._cancelHook = this._cancelHook;
     clone._totalBytes = this._totalBytes;
     clone._uploadedBytes = this._uploadedBytes;
+    clone._publicRoute = this._publicRoute;
     return clone;
   }
 
@@ -153,6 +155,11 @@ export class ApiClient {
 
   public(isPublic: boolean): ApiClient {
     this._public = isPublic;
+    return this;
+  }
+
+  publicRoute(publicRoute: boolean): ApiClient {
+    this._publicRoute = publicRoute;
     return this;
   }
 
@@ -377,7 +384,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<File>>}
    */
   async getFiles(): Promise<Paginated<File>> {
-    return this.public(true).get(
+    return this.get(
       `${this._apiUrl}/files`
     );
   }
@@ -390,7 +397,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Folder>>}
    */
   async getFolders(): Promise<Paginated<Folder>> {
-    return this.public(true).get(
+    return this.get(
       `${this._apiUrl}/folders`
     );
   }
@@ -452,7 +459,7 @@ export class ApiClient {
    * @returns {Promise<Vault>}
    */
   async getVault(): Promise<Vault> {
-    return this.public(true).get(
+    return this.get(
       `${this._apiUrl}/${this._vaultUri}/${this._resourceId}`
     );
   }
@@ -529,7 +536,7 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
-        ...(await Auth.getAuthorizationHeader())
+        ...(!this._publicRoute ? (await Auth.getAuthorizationHeader()) : {})
       },
     } as AxiosRequestConfig;
     if (this._data) {
@@ -703,6 +710,26 @@ export class ApiClient {
     });
 
     return this.post(`${this._apiUrl}/${this._folderUri}`);
+  }
+
+  /**
+ *
+ * @requires:
+ * - signature()
+ * @returns {Promise<string>}
+ */
+  async generateJWT(): Promise<string> {
+    if (!this._signature) {
+      throw new BadRequest(
+        "Missing signature input. Use ApiClient#signature() to add it"
+      );
+    }
+
+    this.data({
+      signature: this._signature
+    });
+
+    return this.post(`${this._apiUrl}/auth`);
   }
 
   /**
