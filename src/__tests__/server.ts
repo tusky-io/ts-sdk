@@ -5,7 +5,7 @@ let authCode = "";
 
 app.get('/auth', (req, res) => {
   authCode = req.query.code;
-  console.log(req.query)
+  console.log("Authorization code: " + authCode);
   res.send('Authorization code received. You can close this window and go back to the terminal.');
 });
 

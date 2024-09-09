@@ -1,10 +1,20 @@
-import { Encryptable, EncryptedKeys } from "@akord/crypto";
+import { Encryptable } from "../crypto";
 import { User } from "./user";
 
 export type RoleType = "viewer" | "contributor" | "owner";
 export type StatusType = "accepted" | "pending" | "revoked";
 
 export const activeStatus = ["accepted", "pending"] as StatusType[];
+
+export type EncryptedVaultKeyPair = {
+  publicKey: string,
+  encPrivateKey: string // vault private key encrypted with member private key
+};
+
+export type VaultKeyPair = {
+  publicKey: Uint8Array,
+  privateKey: Uint8Array,
+};
 
 export class Membership extends Encryptable {
   id: string;
@@ -20,13 +30,13 @@ export class Membership extends Encryptable {
   email: string;
   memberDetails: User;
   vaultId: string;
-  keys: EncryptedKeys[];
+  keys: VaultKeyPair[];
 
   // vault context
   __public__?: boolean;
 
-  constructor(membershipProto: any, keys?: Array<EncryptedKeys>) {
-    super(keys, null)
+  constructor(membershipProto: any, keys?: Array<EncryptedVaultKeyPair>) {
+    super(keys);
     this.id = membershipProto.id;
     this.owner = membershipProto.owner;
     this.address = membershipProto.address;
@@ -46,7 +56,7 @@ export class Membership extends Encryptable {
 
 export type MembershipKeys = {
   isEncrypted: boolean;
-  keys: EncryptedKeys[];
+  keys: EncryptedVaultKeyPair[];
   publicKey?: string;
 };
 

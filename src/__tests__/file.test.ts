@@ -1,4 +1,3 @@
-import { AkordWallet } from "@akord/crypto";
 import { BadRequest } from "../errors/bad-request";
 import { Akord } from "../index";
 import { createFileLike } from "../types/file";
@@ -9,7 +8,6 @@ import { PNG } from "pngjs";
 import { status } from "../constants";
 
 let akord: Akord;
-let wallet: AkordWallet;
 
 jest.setTimeout(3000000);
 

@@ -18,6 +18,8 @@ abstract class Api {
 
   constructor() { }
 
+  abstract generateJWT(input: { signature: string }): Promise<string>
+
   abstract getMe(): Promise<User>
 
   abstract updateMe(input: UserMutable): Promise<User>

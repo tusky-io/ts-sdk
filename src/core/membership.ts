@@ -1,5 +1,5 @@
-import { actions, membershipStatus } from "../constants";
-import { Membership, MembershipAirdropOptions, RoleType } from "../types/membership";
+import { membershipStatus } from "../constants";
+import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types/membership";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { ServiceConfig } from "./service/service";
 import { Paginated } from "../types/paginated";
@@ -83,19 +83,21 @@ class MembershipModule {
   }): Promise<Membership> {
     await this.service.setVaultContext(vaultId);
 
+    let keys: EncryptedVaultKeyPair[];
     if (!this.service.isPublic) {
       if (!options?.publicKey) {
         throw new BadRequest("Missing member public key for encryption context.");
       }
       // TODO: send encrypted keys
-      const keys = await this.service.prepareMemberKeys(options?.publicKey);
+      keys = await this.service.prepareMemberKeys(options?.publicKey);
     }
 
     const { membership } = await this.service.api.createMembership({
       vaultId: vaultId,
       address: address,
       expiresAt: options.expiresAt,
-      role: options.role || DEFAULT_ROLE
+      role: options.role || DEFAULT_ROLE,
+      // keys: keys
     });
     return new Membership(membership);
   }
@@ -122,7 +124,7 @@ class MembershipModule {
   public async revoke(id: string): Promise<Membership> {
     await this.service.setVaultContextFromMembershipId(id);
 
-    let data: { id: string, value: any }[];
+    let keys: Map<string, EncryptedVaultKeyPair[]>;
     if (!this.service.isPublic) {
       const memberships = await this.listAll(this.service.vaultId, { shouldDecrypt: false });
 
@@ -137,21 +139,13 @@ class MembershipModule {
         memberPublicKeys.set(member.id, publicKey);
       }));
       const { memberKeys } = await this.service.rotateMemberKeys(memberPublicKeys);
-
-      // upload new state for all active members
-      data = [];
-      await Promise.all(activeMembers.map(async (member: Membership) => {
-        const memberService = new MembershipService(this.service);
-        memberService.setVaultId(this.service.vaultId);
-        memberService.setObjectId(member.id);
-        memberService.setObject(member);
-        data.push({ id: member.id, value: { keys: memberKeys.get(member.id) } });
-      }));
+      keys = memberKeys;
     }
 
     const { membership } = await this.service.api.updateMembership({
       id: id,
-      status: membershipStatus.REVOKED
+      status: membershipStatus.REVOKED,
+      // keys: keys
     });
     return new Membership(membership);
   }

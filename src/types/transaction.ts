@@ -1,3 +1,4 @@
+import { EncryptedVaultKeyPair } from "."
 import { actions, objects } from "../constants"
 
 export interface Transaction {
@@ -14,7 +15,8 @@ export interface Transaction {
 export interface CreateVaultTxPayload {
   name?: string,
   description?: string
-  public?: boolean
+  public?: boolean,
+  keys?: Array<EncryptedVaultKeyPair>
 }
 
 export interface UpdateVaultTxPayload {

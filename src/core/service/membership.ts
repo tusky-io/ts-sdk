@@ -1,7 +1,9 @@
 import { objects } from "../../constants";
-import { EncryptedKeys, Encrypter, base64ToArray, generateKeyPair, Keys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
+import { EncryptedVaultKeyPair } from "../../types";
+import { arrayToBase64, base64ToArray, jsonToBase64 } from "../../crypto";
+import { encryptWithPublicKey, generateKeyPair } from "../../crypto-lib";
 
 class MembershipService extends Service {
 
@@ -21,44 +23,38 @@ class MembershipService extends Service {
     this.setObjectId(membershipId);
   }
 
-  async prepareMemberKeys(publicKey: string): Promise<EncryptedKeys[]> {
-    if (!this.isPublic) {
-      const keysEncrypter = new Encrypter(this.encrypter.wallet, this.encrypter.keys, base64ToArray(publicKey));
-      try {
-        const keys = await keysEncrypter.encryptMemberKeys([]);
-        return keys.map((keyPair: EncryptedKeys) => {
-          delete keyPair.publicKey;
-          return keyPair;
-        });
-      } catch (error) {
-        throw new IncorrectEncryptionKey(error);
-      }
-    } else {
-      return null;
+  async prepareMemberKeys(publicKey: string): Promise<EncryptedVaultKeyPair[]> {
+    const keys = [] as EncryptedVaultKeyPair[];
+    await this.decryptKeys();
+    for (let keypair of this.decryptedKeys) {
+      // encrypt private key with member's public key
+      const memberEncPrivateKey = await encryptWithPublicKey(base64ToArray(publicKey), keypair.privateKey);
+      keys.push({
+        publicKey: arrayToBase64(keypair.publicKey),
+        encPrivateKey: jsonToBase64(memberEncPrivateKey)
+      });
     }
+    return keys;
   }
 
   async rotateMemberKeys(publicKeys: Map<string, string>): Promise<{
-    memberKeys: Map<string, EncryptedKeys[]>,
-    keyPair: Keys
+    memberKeys: Map<string, EncryptedVaultKeyPair[]>,
+    keypair: any
   }> {
-    const memberKeys = new Map<string, EncryptedKeys[]>();
+    const memberKeys = new Map<string, EncryptedVaultKeyPair[]>();
     // generate a new vault key pair
-    const keyPair = await generateKeyPair();
+    const keypair = await generateKeyPair();
 
     for (let [memberId, publicKey] of publicKeys) {
-      const memberKeysEncrypter = new Encrypter(
-        this.encrypter.wallet,
-        this.encrypter.keys,
-        base64ToArray(publicKey)
-      );
       try {
-        memberKeys.set(memberId, [await memberKeysEncrypter.encryptMemberKey(keyPair)]);
+        // encrypt private key with member's public key
+        const memberEncPrivateKey = await encryptWithPublicKey(base64ToArray(publicKey), keypair.privateKey);
+        memberKeys.set(memberId, [{ publicKey: arrayToBase64(keypair.publicKey), encPrivateKey: jsonToBase64(memberEncPrivateKey) }]);
       } catch (error) {
         throw new IncorrectEncryptionKey(error);
       }
     }
-    return { memberKeys, keyPair };
+    return { memberKeys, keypair };
   }
 }
 

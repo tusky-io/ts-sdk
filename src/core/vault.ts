@@ -1,5 +1,4 @@
-import { membershipStatus, status } from "../constants";
-import { EncryptedKeys } from "@akord/crypto";
+import { status } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
@@ -7,6 +6,8 @@ import { paginate, processListItems } from "./common";
 import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
+import { arrayToBase64 } from "../crypto";
+import { generateKeyPair } from "../crypto-lib";
 
 class VaultModule {
   protected service: VaultService;
@@ -39,6 +40,8 @@ class VaultModule {
       ...options
     }
     const result = await this.service.api.getVault(vaultId, getOptions);
+    console.log(result)
+    console.log(result.membership?.items?.[0])
     return this.service.processVault(result, !result.public && getOptions.shouldDecrypt, result.__keys__);
   }
 
@@ -98,23 +101,28 @@ class VaultModule {
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
 
-    let keys: EncryptedKeys[];
     if (!this.service.isPublic) {
-      const { memberKeys, keyPair } = await memberService.rotateMemberKeys(
-        new Map([["member", this.service.encrypter.wallet.publicKey()]])
-      );
-      // TODO: send encrypted keys
-      const keys = memberKeys.get("member");
-      this.service.setRawDataEncryptionPublicKey(keyPair.publicKey);
-      this.service.setKeys([{ encPublicKey: keys[0].encPublicKey, encPrivateKey: keys[0].encPrivateKey }]);
-      memberService.setRawDataEncryptionPublicKey(keyPair.publicKey);
-      memberService.setKeys([{ encPublicKey: keys[0].encPublicKey, encPrivateKey: keys[0].encPrivateKey }]);
+      const vaultKeyPair = await generateKeyPair();
+      this.service.setDecryptedKeys([{
+        publicKey: vaultKeyPair.publicKey,
+        privateKey: vaultKeyPair.privateKey
+      }]);
+      // encrypt vault private key to user public key
+      console.log("encrypt vault private key")
+      const encryptedVaultPrivateKey = await this.service.encrypter.encrypt(vaultKeyPair.privateKey)
+      const keys = [{
+        publicKey: arrayToBase64(vaultKeyPair.publicKey),
+        encPrivateKey: encryptedVaultPrivateKey
+      }];
+      this.service.setKeys(keys);
     }
 
     await this.service.setName(name);
-    await this.service.setDescription(createOptions.description);
+    if(createOptions.description) {
+      await this.service.setDescription(createOptions.description);
+    }
 
-    const vault = await this.service.api.createVault({ name: this.service.name, description: this.service.description, public: this.service.isPublic });
+    const vault = await this.service.api.createVault({ name: this.service.name, description: this.service.description, public: this.service.isPublic, keys: this.service.keys });
 
     // if (!this.service.api.autoExecute) {
     //   const signature = await this.service.signer.sign(bytes);

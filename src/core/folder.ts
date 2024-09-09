@@ -53,7 +53,7 @@ class FolderModule {
     //   await this.service.api.postTransaction(digest, signature);
     // }
 
-    return this.service.processFolder(folder, !this.service.isPublic, this.service.keys) as any;
+    return this.service.processFolder(folder, !this.service.isPublic, this.service.keys);
   }
 
   /**

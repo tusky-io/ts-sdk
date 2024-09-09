@@ -1,7 +1,6 @@
 import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
 import { ClientConfig } from "./config";
-import { Crypto, Encrypter } from "@akord/crypto";
 import { Logger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
@@ -15,6 +14,7 @@ import { Env } from "./env";
 import { Auth } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
+import Encrypter from "./encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 
@@ -69,11 +69,10 @@ export class Akord {
    */
   constructor(config: ClientConfig = {}) {
     this.signer = config.signer;
-    this.encrypter = new Encrypter(config.encrypter, null, null);
+    this.encrypter = config.encrypter;
     this.env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
     this.userAgent = config.userAgent;
-    Crypto.configure({ wallet: config.encrypter });
     Auth.configure({ authTokenProvider: config.authTokenProvider, apiKey: config.apiKey });
     Plugins.register(config?.plugins, this.env);
     Logger.debug = config?.debug;

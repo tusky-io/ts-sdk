@@ -8,7 +8,7 @@ import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { User, UserPublicInfo } from "../types/user";
-import { File, Folder } from "../types";
+import { EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
 import { Logger } from "../logger";
@@ -48,6 +48,7 @@ export class ApiClient {
   // vault specific
   private _public: boolean
   private _description: string
+  private _keys: Array<EncryptedVaultKeyPair>
 
   // member specific
   private _address: string;
@@ -62,6 +63,7 @@ export class ApiClient {
   private _picture: string;
   private _termsAccepted: boolean;
   private _trashExpiration: number;
+  private _encPrivateKey: string
 
   private _autoExecute: boolean
 
@@ -85,6 +87,7 @@ export class ApiClient {
   private _cancelHook: AbortController;
 
   // auxiliar
+  private _publicRoute: boolean;
   private _totalBytes: number;
   private _uploadedBytes: number;
 
@@ -105,12 +108,14 @@ export class ApiClient {
     clone._digest = this._digest;
     clone._name = this._name;
     clone._description = this._description;
+    clone._keys = this._keys;
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
+    clone._encPrivateKey = this._encPrivateKey;
 
     clone._status = this._status;
     clone._autoExecute = this._autoExecute;
@@ -124,6 +129,7 @@ export class ApiClient {
     clone._cancelHook = this._cancelHook;
     clone._totalBytes = this._totalBytes;
     clone._uploadedBytes = this._uploadedBytes;
+    clone._publicRoute = this._publicRoute;
     return clone;
   }
 
@@ -148,6 +154,16 @@ export class ApiClient {
 
   public(isPublic: boolean): ApiClient {
     this._public = isPublic;
+    return this;
+  }
+
+  publicRoute(publicRoute: boolean): ApiClient {
+    this._publicRoute = publicRoute;
+    return this;
+  }
+
+  keys(keys: Array<EncryptedVaultKeyPair>): ApiClient {
+    this._keys = keys;
     return this;
   }
 
@@ -208,6 +224,11 @@ export class ApiClient {
 
   trashExpiration(trashExpiration: number): ApiClient {
     this._trashExpiration = trashExpiration;
+    return this;
+  }
+
+  encPrivateKey(encPrivateKey: string): ApiClient {
+    this._encPrivateKey = encPrivateKey;
     return this;
   }
 
@@ -296,17 +317,18 @@ export class ApiClient {
    * - name()
    * - picture()
    * - termsAccepted()
-   * - trashExpiration()
+   * - encPrivateKey()
    * @returns {Promise<User>}
    */
   async updateMe(): Promise<User> {
-    if (!this._name && !this._picture && !this._termsAccepted && !this._trashExpiration) {
+    if (!this._name && !this._picture && !this._termsAccepted && !this._encPrivateKey) {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
       name: this._name,
       picture: this._picture,
-      termsAccepted: this._termsAccepted
+      termsAccepted: this._termsAccepted,
+      encPrivateKey: this._encPrivateKey
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
@@ -361,7 +383,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<File>>}
    */
   async getFiles(): Promise<Paginated<File>> {
-    return this.public(true).get(
+    return this.get(
       `${this._apiUrl}/files`
     );
   }
@@ -374,7 +396,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Folder>>}
    */
   async getFolders(): Promise<Paginated<Folder>> {
-    return this.public(true).get(
+    return this.get(
       `${this._apiUrl}/folders`
     );
   }
@@ -436,7 +458,7 @@ export class ApiClient {
    * @returns {Promise<Vault>}
    */
   async getVault(): Promise<Vault> {
-    return this.public(true).get(
+    return this.get(
       `${this._apiUrl}/${this._vaultUri}/${this._resourceId}`
     );
   }
@@ -520,7 +542,7 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
-        ...(await Auth.getAuthorizationHeader())
+        ...(!this._publicRoute ? (await Auth.getAuthorizationHeader()) : {})
       },
     } as AxiosRequestConfig;
     if (this._data) {
@@ -578,16 +600,8 @@ export class ApiClient {
     form.append("parentId", this._parentId);
     form.append("name", this._file.name);
 
-    try {
-      const buffer = await this._file.arrayBuffer()
-      // const blob = new Blob([buffer], { type: 'application/octet-stream' });
-      form.append("file", Buffer.from(buffer), { filename: this._file.name });
-    } catch (e) {
-      form.append("file", this._file, {
-        filename: "file",
-        contentType: "application/octet-stream",
-      });
-    }
+    const buffer = await this._file.arrayBuffer();
+    form.append("file", Buffer.from(buffer), { filename: this._file.name, contentType: this._file.type });
 
     const config = {
       method: "post",
@@ -705,6 +719,26 @@ export class ApiClient {
   }
 
   /**
+ *
+ * @requires:
+ * - signature()
+ * @returns {Promise<string>}
+ */
+  async generateJWT(): Promise<string> {
+    if (!this._signature) {
+      throw new BadRequest(
+        "Missing signature input. Use ApiClient#signature() to add it"
+      );
+    }
+
+    this.data({
+      signature: this._signature
+    });
+
+    return this.post(`${this._apiUrl}/auth`);
+  }
+
+  /**
    *
    * @requires:
    * - resourceId()
@@ -756,6 +790,7 @@ export class ApiClient {
    * @uses:
    * - description()
    * - public()
+   * - keys()
    * - autoExecute()
    * @returns {Promise<Vault>}
    */
@@ -770,6 +805,7 @@ export class ApiClient {
       name: this._name,
       description: this._description,
       public: this._public,
+      keys: this._keys,
       autoExecute: this._autoExecute
     });
 

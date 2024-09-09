@@ -4,26 +4,50 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import EnokiClient from "./enoki/client";
 import { getAuthCode } from './server';
 
-export const GOOGLE_CLIENT_ID = '52977920067-5hf88uveake073ent9s5snn0d8kfrf0t.apps.googleusercontent.com';
-export const GOOGLE_API_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 const REDIRECT_URI = 'http://localhost:3000/auth';
 
-export async function getAuthorizationCode(nonce: string) {
+export const AuthProvider = {
+  "Google": {
+    "CLIENT_ID": "52977920067-5hf88uveake073ent9s5snn0d8kfrf0t.apps.googleusercontent.com",
+    "CLIENT_SECRET": process.env.GOOGLE_CLIENT_SECRET,
+    "OAUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
+    "TOKEN_ENDPOINT": "https://oauth2.googleapis.com/token"
+  },
+  "Facebook": {
+    "CLIENT_ID": "1030800888399080",
+    "CLIENT_SECRET": process.env.FACEBOOK_CLIENT_SECRET,
+    "OAUTH_URL": "https://www.facebook.com/v11.0/dialog/oauth",
+    "TOKEN_ENDPOINT": "https://graph.facebook.com/v11.0/oauth/access_token"
+  },
+  "Twitch": {
+    "CLIENT_ID": "g924m6acqg8w9gw9hxstdl5q2uugup",
+    "CLIENT_SECRET": process.env.TWITCH_CLIENT_SECRET,
+    "OAUTH_URL": "https://id.twitch.tv/oauth2/authorize",
+    "TOKEN_ENDPOINT": "https://id.twitch.tv/oauth2/token"
+  },
+  // TODO: configure Apple
+  // "Apple": {
+  //   "CLIENT_ID": "",
+  //   "CLIENT_SECRET": "",
+  //   "OAUTH_URL": "https://appleid.apple.com/auth/authorize",
+  //   "TOKEN_ENDPOINT": "https://appleid.apple.com/auth/token"
+  // }
+}
+
+const defaultAuthProvider = 'Google';
+
+export async function getAuthorizationCode(nonce: string, authProvider = defaultAuthProvider) {
   const params = new URLSearchParams({
     nonce: nonce,
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: AuthProvider[authProvider].CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: "code",
-    // TODO: Eventually fetch the scopes for this client ID from the Enoki service:
-    scope: [
-      "openid",
-      // Merge the requested scopes in with the required openid scopes:
-    ].filter(Boolean).join(" ")
+    scope: "openid",
   });
 
-  const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  const oauthUrl = `${AuthProvider[authProvider].OAUTH_URL}?${params}`;
 
-  console.log("Sign in with google first with the following url and come back later: ");
+  console.log(`Sign in with ${authProvider} first with the following url and come back later: `);
   console.log(oauthUrl);
 
   // Wait for the authorization code to be captured by the local server
@@ -35,32 +59,33 @@ export async function getAuthorizationCode(nonce: string) {
   return authorizationCode;
 }
 
-export async function getIdTokenWithAuthorizationCode(code: string) {
-
+export async function getIdTokenWithAuthorizationCode(code: string, authProvider = defaultAuthProvider) {
+  if (!AuthProvider[authProvider].CLIENT_SECRET) {
+    throw new Error(`Missing ${authProvider} client secret, please configure it in .env file.`);
+  }
   const params = new URLSearchParams({
     code: code,
-    client_id: GOOGLE_CLIENT_ID,
-    client_secret: process.env.GOOGLE_CLIENT_SECRET,
+    client_id: AuthProvider[authProvider].CLIENT_ID,
+    client_secret: AuthProvider[authProvider].CLIENT_SECRET,
     redirect_uri: REDIRECT_URI,
     grant_type: 'authorization_code'
   } as any).toString()
 
   // Exchange the authorization code for an access token
   try {
-    const tokenResponse = await axios.post(GOOGLE_API_TOKEN_ENDPOINT, params, {
+    const tokenResponse = await axios.post(AuthProvider[authProvider].TOKEN_ENDPOINT, params, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
     const tokens = tokenResponse.data;
-    console.log(tokens)
-    console.log(`Id token: ${tokens.id_token}`);
+    console.log(`JWT: ${tokens.id_token}`);
     return tokens.id_token
   } catch (error) {
     console.log(error)
   }
 }
 
-export const mockEnokiFlow = async (): Promise<{ jwt: string, keyPair: Ed25519Keypair, address: string }> => {
+export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise<{ jwt: string, keyPair: Ed25519Keypair, address: string }> => {
   // generate ephemeral key pair
   const ephemeralKeyPair = new Ed25519Keypair();
 
@@ -68,8 +93,8 @@ export const mockEnokiFlow = async (): Promise<{ jwt: string, keyPair: Ed25519Ke
 
   const createZkLoginResponse = await enokiClient.createZkLoginNonce(ephemeralKeyPair);
 
-  const authorizationCode = await getAuthorizationCode(createZkLoginResponse.data.nonce);
+  const authorizationCode = await getAuthorizationCode(createZkLoginResponse.data.nonce, authProvider);
 
-  const idToken = await getIdTokenWithAuthorizationCode(authorizationCode);
+  const idToken = await getIdTokenWithAuthorizationCode(authorizationCode, authProvider);
   return { jwt: idToken, address: ephemeralKeyPair.toSuiAddress(), keyPair: ephemeralKeyPair };
 };

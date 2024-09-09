@@ -1,9 +1,10 @@
-import { EncryptedKeys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
-import { File } from "../../types";
+import { EncryptedVaultKeyPair, File } from "../../types";
 import { objects } from "../../constants";
-import { FileLike } from "../../types/file";
+import { createFileLike, FileLike } from "../../types/file";
+import { arrayBufferToArray, base64ToArray } from "../../crypto";
+import { encryptWithPublicKey } from "../../crypto-lib";
 
 class FileService extends Service {
 
@@ -26,11 +27,11 @@ class FileService extends Service {
     this.setObjectId(fileId);
   }
 
-  async processFile(object: File, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<File> {
+  async processFile(object: File, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<File> {
     const file = new File(object, keys);
     if (shouldDecrypt) {
       try {
-        await file.decrypt();
+        await file.decrypt(this.encrypter);
       } catch (error) {
         throw new IncorrectEncryptionKey(error);
       }
@@ -39,12 +40,20 @@ class FileService extends Service {
   }
 
   async setFile(file: FileLike) {
-    // TODO: encrypt file here
-    this.file = file;
+    if (this.isPublic) {
+      this.file = file;
+    } else {
+      await this.setName(file.name);
+      const fileBuffer = arrayBufferToArray(await file.arrayBuffer());
+      const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
+      const encryptedFile = await encryptWithPublicKey(base64ToArray(currentVaultPublicKey), fileBuffer);
+      this.file = await createFileLike(new TextEncoder().encode(JSON.stringify(encryptedFile)), { name: this.name, mimeType: file.type, lastModified: file.lastModified });
+      console.log(this.file)
+    }
   }
 
   async setName(name: string) {
-    this.name =  await this.processWriteString(name);
+    this.name = await this.processWriteString(name);
   }
 }
 

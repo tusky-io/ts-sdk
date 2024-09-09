@@ -1,7 +1,6 @@
-import { EncryptedKeys } from "@akord/crypto";
 import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
-import { Folder } from "../../types";
+import { EncryptedVaultKeyPair, Folder } from "../../types";
 import { objects } from "../../constants";
 
 class FolderService extends Service {
@@ -24,11 +23,11 @@ class FolderService extends Service {
     this.setObjectId(folderId);
   }
 
-  async processFolder(object: Folder, shouldDecrypt: boolean, keys?: EncryptedKeys[]): Promise<Folder> {
+  async processFolder(object: Folder, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<Folder> {
     const folder = new Folder(object, keys);
     if (shouldDecrypt) {
       try {
-        await folder.decrypt();
+        await folder.decrypt(this.encrypter);
       } catch (error) {
         throw new IncorrectEncryptionKey(error);
       }

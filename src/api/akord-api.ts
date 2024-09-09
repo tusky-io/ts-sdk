@@ -32,6 +32,14 @@ export default class AkordApi extends Api {
     this.autoExecute = config.autoExecute;
   }
 
+  public async generateJWT(payload: { signature: string }): Promise<string> {
+    return new ApiClient()
+      .env(this.config)
+      .signature(payload.signature)
+      .publicRoute(true)
+      .generateJWT();
+  };
+
   public async createFolder(tx: CreateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
@@ -96,6 +104,7 @@ export default class AkordApi extends Api {
       .public(tx.public)
       .name(tx.name)
       .description(tx.description)
+      .keys(tx.keys)
       .autoExecute(this.autoExecute)
       .createVault();
   };
@@ -232,6 +241,7 @@ export default class AkordApi extends Api {
       .name(input.name)
       .picture(input.picture)
       .termsAccepted(input.termsAccepted)
+      .encPrivateKey(input.encPrivateKey)
       .updateMe();
   };
 
