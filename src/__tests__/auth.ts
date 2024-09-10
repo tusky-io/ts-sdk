@@ -3,8 +3,15 @@ import axios from 'axios';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import EnokiClient from "./enoki/client";
 import { getAuthCode } from './server';
+import { keyInSelect } from 'readline-sync';
 
 const REDIRECT_URI = 'http://localhost:3000/auth';
+
+function getAuthProvider() {
+  const options = ['Google', 'Twitch', 'Facebook'];
+  const index = keyInSelect(options, 'Please choose your auth provider:');
+  return options[index];
+}
 
 export const AuthProvider = {
   "Google": {
@@ -85,6 +92,33 @@ export async function getIdTokenWithAuthorizationCode(code: string, authProvider
   }
 }
 
+export async function getIdTokenWithImplicitFlow(nonce: string, authProvider = defaultAuthProvider) {
+  if (!AuthProvider[authProvider].CLIENT_SECRET) {
+    throw new Error(`Missing ${authProvider} client secret, please configure it in .env file.`);
+  }
+  const params = new URLSearchParams({
+    nonce: nonce,
+    client_id: AuthProvider[authProvider].CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    access_type: "offline",
+    response_type: "code token",
+    scope: "openid",
+  }).toString()
+
+  const oauthUrl = `${AuthProvider[authProvider].OAUTH_URL}?${params}`;
+
+  console.log(`Sign in with ${authProvider} first with the following url and come back later: `);
+  console.log(oauthUrl);
+
+  // Wait for the authorization code to be captured by the local server
+  let authorizationCode;
+  while (!authorizationCode) {
+    authorizationCode = getAuthCode();
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+  return authorizationCode;
+}
+
 export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise<{ jwt: string, keyPair: Ed25519Keypair, address: string }> => {
   // generate ephemeral key pair
   const ephemeralKeyPair = new Ed25519Keypair();
@@ -92,6 +126,8 @@ export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise
   const enokiClient = new EnokiClient({ apiKey: process.env.ENOKI_PUB_KEY as string });
 
   const createZkLoginResponse = await enokiClient.createZkLoginNonce(ephemeralKeyPair);
+
+  // const idToken = await getIdTokenWithImplicitFlow(createZkLoginResponse.data.nonce, authProvider);
 
   const authorizationCode = await getAuthorizationCode(createZkLoginResponse.data.nonce, authProvider);
 

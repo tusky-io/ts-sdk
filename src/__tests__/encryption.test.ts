@@ -1,18 +1,9 @@
 import faker from '@faker-js/faker';
-import { mockEnokiFlow } from './auth';
-import EnokiSigner from './enoki/signer';
 import { Akord, AkordWallet, Encrypter } from '../';
 import { cleanup, testDataPath } from './common';
 import { createFileLike } from '../types/file';
 import { firstFileName } from './data/content';
-import { KeyPair } from 'libsodium-wrappers';
-import { keyInSelect } from 'readline-sync';
-
-function getAuthProvider() {
-  const options = ['Google', 'Twitch', 'Facebook'];
-  const index = keyInSelect(options, 'Please choose your auth provider:');
-  return options[index];
-}
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 jest.setTimeout(3000000);
 
@@ -22,10 +13,8 @@ describe("Testing encryption functions", () => {
   });
 
   let akord: Akord;
-  let userKeyPair: KeyPair;
   let vaultId: string;
-  let authToken: string;
-  let signer: EnokiSigner;
+  let password: string;
 
   // it("should encrypt & decrypt message in the vault", async () => {
   //   const message = faker.random.words();
@@ -73,31 +62,30 @@ describe("Testing encryption functions", () => {
   // });
 
   it("should set user encryption context", async () => {
-    const userWallet = await AkordWallet.create("passakordpass");
-    console.log(userWallet)
-    const userKeyPair = userWallet.encryptionKeyPair;
-    const authProvider = getAuthProvider();
-    const { jwt, address, keyPair } = await mockEnokiFlow(authProvider);
-    authToken = jwt;
-    const signer = new EnokiSigner({ address: address, keypair: keyPair });
-    akord = new Akord({ debug: true, logToFile: true, env: process.env.ENV as any, authTokenProvider: async () => jwt, signer: signer });
+    const keypair = new Ed25519Keypair();
+    akord = Akord
+      .useWallet({ walletSigner: keypair })
+      .useLogger({ debug: true, logToFile: true })
+      .env(process.env.ENV as any)
 
-    console.log(userWallet.encBackupPhrase)
+    await akord.signIn();
+
+    password = faker.random.word();
+
+    const userWallet = await AkordWallet.create(password);
+
     await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
   });
 
   it("should retrieve user encryption context", async () => {
     const user = await akord.me.get();
-    console.log(user)
-    userKeyPair = (await AkordWallet.importFromEncBackupPhrase("passakordpass", user.encPrivateKey as string)).encryptionKeyPair;
+    const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
+    const encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+    akord.useEncrypter(encrypter);
   });
 
   it("should create a private vault", async () => {
     const name = faker.random.words();
-    console.log(userKeyPair)
-    const encrypter = new Encrypter({ keypair: userKeyPair });
-
-    akord = new Akord({ encrypter: encrypter, debug: true, logToFile: true, env: process.env.ENV as any, authTokenProvider: async () => authToken, signer: signer });
 
     const vault = await akord.vault.create(name, { public: false });
 

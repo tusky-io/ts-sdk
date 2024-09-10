@@ -1,6 +1,6 @@
 import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
-import { ClientConfig } from "./config";
+import { ApiKeyConfig, AuthTokenProviderConfig, ClientConfig, LoggerConfig, OAuthConfig, WalletConfig } from "./config";
 import { Logger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
@@ -14,18 +14,16 @@ import { Env } from "./env";
 import { Auth } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
-import Encrypter from "./encrypter";
+import { Encrypter } from "./encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 
 export class Akord {
   public api: Api;
-  private signer: Signer;
-  private encrypter: Encrypter;
-  private env: Env;
-  private userAgent: string;
-
-  public static init: (config?: ClientConfig) => Promise<Akord>;
+  private _signer: Signer;
+  private _encrypter: Encrypter;
+  private _env: Env;
+  private _userAgent: string;
 
   get me(): MeModule {
     return new MeModule(this.getConfig());
@@ -55,12 +53,63 @@ export class Akord {
     return new PaymentModule(this.getConfig());
   }
 
+  static useOAuth(config: OAuthConfig): Akord {
+    const instance = new Akord({ ...config, authType: "OAuth" });
+    return instance;
+  }
+
+  static useWallet(config: WalletConfig): Akord {
+    const instance = new Akord({ ...config, authType: "Wallet" });
+    return instance;
+  }
+
+  static useApiKey(config: ApiKeyConfig): Akord {
+    const instance = new Akord({ ...config, authType: "ApiKey" });
+    return instance;
+  }
+
+  static useAuthTokenProvider(config: AuthTokenProviderConfig): Akord {
+    const instance = new Akord({ ...config, authType: "AuthTokenProvider" });
+    return instance;
+  }
+
+  async signIn(): Promise<this> {
+    await Auth.signIn();
+    return this;
+  }
+
+  useLogger(config: LoggerConfig): this {
+    Logger.debug = config?.debug;
+    Logger.logToFile = config?.logToFile;
+    return this;
+  }
+
+  useSigner(signer: Signer): this {
+    this._signer = signer;
+    return this;
+  }
+
+  useEncrypter(encrypter: Encrypter): this {
+    this._encrypter = encrypter;
+    return this;
+  }
+
+  env(env: Env): this {
+    this._env = env;
+    return this;
+  }
+
+  userAgent(userAgent: string): this {
+    this._userAgent = userAgent;
+    return this;
+  }
+
   private getConfig() {
     return {
       api: this.api,
-      signer: this.signer,
-      encrypter: this.encrypter,
-      userAgent: this.userAgent
+      signer: this._signer,
+      encrypter: this._encrypter,
+      userAgent: this._userAgent
     }
   }
 
@@ -68,14 +117,15 @@ export class Akord {
    * @param  {ClientConfig} config
    */
   constructor(config: ClientConfig = {}) {
-    this.signer = config.signer;
-    this.encrypter = config.encrypter;
-    this.env = config.env || 'testnet';
+    this._signer = config.signer;
+    this._encrypter = config.encrypter;
+    this._env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
-    this.userAgent = config.userAgent;
-    Auth.configure({ authTokenProvider: config.authTokenProvider, apiKey: config.apiKey });
-    Plugins.register(config?.plugins, this.env);
+    this._userAgent = config.userAgent;
+    Auth.configure(config);
+    Plugins.register(config?.plugins, this._env);
     Logger.debug = config?.debug;
+    Logger.logToFile = config?.logToFile;
     CacheBusters.cache = config?.cache;
   }
 }
