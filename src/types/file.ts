@@ -43,7 +43,9 @@ export namespace NodeJs {
         const fileType = mimeType || mime.lookup(fileName) || DEFAULT_FILE_TYPE;
         const fileLastModified = lastModified || stats.ctime.getTime();
 
-        const file = new File([fs.readFileSync(filePath)], fileName, fileType, fileLastModified) as NodeJs.File;
+        //TODO: avoid using readFileSync - reads full file into memory
+        //const file = new File([fs.readFileSync(filePath)], fileName, fileType, fileLastModified) as NodeJs.File;
+        const file = fs.createReadStream(filePath);
         return file;
       } else {
         throw new BadRequest("Method not valid for browsers.");

@@ -16,17 +16,22 @@ import { ServiceConfig } from './service/service';
 import { decryptWithPrivateKey } from "../crypto-lib";
 import { AsymEncryptedPayload } from "../crypto/types";
 import { arrayBufferToArray } from "../crypto";
+import * as tus from 'tus-js-client'
+import { Logger } from "../logger";
+import { Auth } from "../auth";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const BYTES_IN_MB = 1000000;
-export const DEFAULT_CHUNK_SIZE_IN_BYTES = 10 * BYTES_IN_MB;
-export const MINIMAL_CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
-export const CHUNKS_CONCURRENCY = 25;
-export const UPLOADER_POLLING_RATE_IN_MILLISECONDS = 2500;
+export const DEFAULT_CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
+
+export const UPLOADER_SERVER_MAX_CONNECTIONS_PER_CLIENT = 20;
 
 export const EMPTY_FILE_ERROR_MESSAGE = "Cannot upload an empty file";
 
 class FileModule {
+  
+  public static uploads: tus.Upload[] = [];
+
   protected contentType = null as string;
   protected client: ApiClient;
   protected type: "File";
@@ -71,6 +76,73 @@ class FileModule {
   //   }
   // }
 
+  /**
+   * Generate preconfigured Tus uploader
+   * @param  {string} vaultId
+   * @param  {FileSource} file file source: web File object, file path, buffer or stream
+   * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
+   * @returns Promise with file id & uri
+   */
+    public async uploader(
+      vaultId: string,
+      file: FileSource = null,
+      options: FileUploadOptions = {}
+    ): Promise<tus.Upload> {
+      await this.service.setVaultContext(vaultId);
+
+      let fileLike = null;
+      if (file) {
+        const fileLike = await createFileLike(file, { name: file.name, ...options });
+      
+        if (fileLike.size === 0) {
+          throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
+        }
+      }
+
+      const upload = new tus.Upload(fileLike as any, {
+        endpoint: `${this.service.api.config.apiUrl}/uploads`,
+        retryDelays: [0, 500, 2000, 5000, 10000],
+        metadata: {
+          filename: file.name,
+          filetype: file.type,
+          vaultId: vaultId,
+          parentId: options.parentId ? options.parentId : vaultId,
+          //encryptedKey: "encryptedKey",
+        },
+        uploadDataDuringCreation: true,
+        parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
+        chunkSize: DEFAULT_CHUNK_SIZE_IN_BYTES,
+        headers: {
+          ...(await Auth.getAuthorizationHeader() as Record<string, string>),
+        },
+        onBeforeRequest: async (req) => {
+            console.log('Uploading chunk...')
+            //const xhr = req.getUnderlyingObject();
+            // Encrypt the chunk here...
+            // Read the original chunk data
+            // const originalChunk = xhr.body;
+
+            // Modify the chunk data
+            // const modifiedChunk = await encrypt(originalChunk);
+        
+            // Update the request body with the modified chunk
+            // xhr.send(modifiedChunk);
+        },
+        onError: (error) => {
+          Logger.error('Failed because: ' + error)
+        },
+        onProgress: (bytesUploaded, bytesTotal) => {
+          var percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)
+          console.log(bytesUploaded, bytesTotal, percentage + '%')
+        },
+        onSuccess: function () {
+          console.log('Download %s from %s', upload, upload.url)
+        },
+      })
+      FileModule.uploads.push(upload);
+      return upload;
+    }
+  
 
   /**
    * Upload file
@@ -83,24 +155,21 @@ class FileModule {
     vaultId: string,
     file: FileSource,
     options: FileUploadOptions = {}
-  ): Promise<File> {
-    await this.service.setVaultContext(vaultId);
-    this.service.setParentId(options.parentId ? options.parentId : vaultId);
-
-    const fileLike = await createFileLike(file, { name: file.name, ...options });
-
-    if (fileLike.size === 0) {
-      throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
-    }
-
-    await this.service.setFile(fileLike);
-
-    const fileResult = await this.service.api.createFile({
-      vaultId: vaultId,
-      file: this.service.file,
-      parentId: this.service.parentId
+  ): Promise<string> {
+    const upload = await this.uploader(vaultId, file, options);
+    await new Promise<void>((resolve, reject) => {
+      upload.options.onSuccess = () => {
+        console.log('Upload completed successfully');
+        resolve();
+      };
+      upload.options.onError = (error) => {
+        console.error('Upload failed:', error);
+        reject(error);
+      };    
+      upload.start();
     });
-    return this.service.processFile(fileResult, !this.service.isPublic, this.service.keys);
+    const uploadId = upload.url.split('/').pop();
+    return uploadId;
   }
 
   /**
@@ -110,14 +179,14 @@ class FileModule {
    * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
    * @returns Promise with array of data response & errors if any
    */
-  public async batchUpload(vaultId: string, items: {
-    file: FileSource,
-    options?: FileUploadOptions
-  }[]): Promise<{ data: File[], errors: any[] }> {
-    const batchModule = new BatchModule(this.service);
-    const { data, errors } = await batchModule.batchUpload(vaultId, items);
-    return { data, errors };
-  }
+  // public async batchUpload(vaultId: string, items: {
+  //   file: FileSource,
+  //   options?: FileUploadOptions
+  // }[]): Promise<{ data: File[], errors: any[] }> {
+  //   const batchModule = new BatchModule(this.service);
+  //   const { data, errors } = await batchModule.batchUpload(vaultId, items);
+  //   return { data, errors };
+  // }
 
   /**
    * @param  {string} id
@@ -300,8 +369,11 @@ export type FileUploadResult = {
 }
 
 export type Hooks = {
-  progressHook?: (percentageProgress: number, bytesProgress?: number, id?: string) => void,
-  cancelHook?: AbortController
+  onProgress?: ((bytesSent: number, bytesTotal: number) => void) | null,
+  onChunkComplete?: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null,
+  onSuccess?: (() => void) | null,
+  onError?: ((error: Error | tus.DetailedError) => void) | null,
+
 }
 
 export type FileOptions = {
@@ -311,7 +383,6 @@ export type FileOptions = {
 }
 
 export type FileUploadOptions = Hooks & FileOptions & {
-  public?: boolean,
   chunkSize?: number,
   parentId?: string,
 }

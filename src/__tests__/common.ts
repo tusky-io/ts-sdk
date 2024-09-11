@@ -22,8 +22,8 @@ export async function initInstance(): Promise<Akord> {
 
 export async function setupVault(isPublic = false): Promise<string> {
   const akord = await initInstance();
-  const { vaultId } = await vaultCreate(akord, isPublic);
-  return vaultId;
+  const vault = await vaultCreate(akord, isPublic);
+  return vault.id;
 }
 
 export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {

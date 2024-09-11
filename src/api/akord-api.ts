@@ -181,8 +181,8 @@ export default class AkordApi extends Api {
       .env(this.config)
       .resourceId(id)
       .public(options.public)
-      .progressHook(options.progressHook)
-      .cancelHook(options.cancelHook)
+      // .progressHook(options.progressHook)
+      // .cancelHook(options.cancelHook)
       .downloadFile();
 
     let fileData: ArrayBuffer | ReadableStream<Uint8Array>;
