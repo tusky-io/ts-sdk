@@ -1,3 +1,10 @@
+# [0.21.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0-dev.1...v0.21.0-dev.2) (2024-09-11)
+
+
+### Features
+
+* add decryption worker ([b9856ca](https://github.com/Akord-com/carmella-sdk/commit/b9856ca2956c2aed93662e3a2c89d9410caf58c8))
+
 # [0.21.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.20.0...v0.21.0-dev.1) (2024-09-11)
 
 
