@@ -2,11 +2,12 @@
   "name": "@akord/carmella-sdk",
   "version": "0.21.0-dev.1",
   "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
-  "main": "lib/index.js",
+  "main": "lib/bundle.js",
   "repository": "git@github.com:Akord-com/carmella-sdk.git",
   "scripts": {
     "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
-    "build": "rm -r lib || true && tsc -p .",
+    "build:dev": "rm -r lib || true && tsc -p .",
+    "build": "webpack --mode production",
     "set:registry": "bash ./registry.sh",
     "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1"
   },
@@ -73,13 +74,23 @@
     "@types/readline-sync": "^1.4.8",
     "@types/streamsaver": "^2.0.1",
     "@types/uuid": "^8.3.4",
+    "copy-webpack-plugin": "^12.0.2",
     "dotenv": "^16.0.2",
     "express": "^4.19.2",
     "google-auth-library": "^9.12.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
+    "node-polyfill-webpack-plugin": "^4.0.0",
     "pngjs": "^7.0.0",
     "readline-sync": "^1.4.10",
-    "typescript": "^5.0.4"
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.0.4",
+    "webpack": "^5.94.0",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "browser": {
+    "crypto": false,
+    "fs": false
   }
 }
