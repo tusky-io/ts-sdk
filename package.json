@@ -3,6 +3,7 @@
   "version": "0.21.0-dev.2",
   "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
   "main": "lib/bundle.js",
+  "types": "lib/index.d.ts",
   "repository": "git@github.com:Akord-com/carmella-sdk.git",
   "scripts": {
     "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
