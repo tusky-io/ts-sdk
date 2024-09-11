@@ -1,3 +1,10 @@
+# [0.21.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0-dev.2...v0.21.0-dev.3) (2024-09-11)
+
+
+### Features
+
+* add types declaration ([5050e01](https://github.com/Akord-com/carmella-sdk/commit/5050e01be6846c5a8c282f77f5ab5dbafea3aede))
+
 # [0.21.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0-dev.1...v0.21.0-dev.2) (2024-09-11)
 
 
