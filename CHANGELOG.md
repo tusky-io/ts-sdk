@@ -1,3 +1,10 @@
+# [0.21.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.20.0...v0.21.0-dev.1) (2024-09-11)
+
+
+### Features
+
+* use tus protocol ([c5f979e](https://github.com/Akord-com/carmella-sdk/commit/c5f979e067844b2000462342e9bba118776c8966))
+
 # [0.20.0](https://github.com/Akord-com/carmella-sdk/compare/v0.19.0...v0.20.0) (2024-09-09)
 
 
