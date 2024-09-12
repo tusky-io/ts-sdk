@@ -92,7 +92,7 @@ class FileModule {
 
       let fileLike = null;
       if (file) {
-        const fileLike = await createFileLike(file, { name: file.name, ...options });
+        fileLike = await createFileLike(file, { name: file.name, ...options });
       
         if (fileLike.size === 0) {
           throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
@@ -101,13 +101,13 @@ class FileModule {
 
       const upload = new tus.Upload(fileLike as any, {
         endpoint: `${this.service.api.config.apiUrl}/uploads`,
-        retryDelays: [0, 500, 2000, 5000, 10000],
+        retryDelays: [0, 500, 2000, 5000],
         metadata: {
-          filename: file.name,
-          filetype: file.type,
+          // filename: file.name, //auto-populated when using Uppy
+          // filetype: file.type, //auto-populated when using Uppy
+          // encryptedKey: "encryptedKey",
           vaultId: vaultId,
           parentId: options.parentId ? options.parentId : vaultId,
-          //encryptedKey: "encryptedKey",
         },
         uploadDataDuringCreation: true,
         parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
@@ -116,10 +116,9 @@ class FileModule {
           ...(await Auth.getAuthorizationHeader() as Record<string, string>),
         },
         onBeforeRequest: async (req) => {
-            console.log('Uploading chunk...')
-            //const xhr = req.getUnderlyingObject();
             // Encrypt the chunk here...
             // Read the original chunk data
+            // const xhr = req.getUnderlyingObject();
             // const originalChunk = xhr.body;
 
             // Modify the chunk data
@@ -128,16 +127,9 @@ class FileModule {
             // Update the request body with the modified chunk
             // xhr.send(modifiedChunk);
         },
-        onError: (error) => {
-          Logger.error('Failed because: ' + error)
-        },
-        onProgress: (bytesUploaded, bytesTotal) => {
-          var percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)
-          console.log(bytesUploaded, bytesTotal, percentage + '%')
-        },
-        onSuccess: function () {
-          console.log('Download %s from %s', upload, upload.url)
-        },
+        onError: options.onError,
+        onProgress: options.onProgress,
+        onSuccess: options.onSuccess,
       })
       FileModule.uploads.push(upload);
       return upload;
@@ -159,11 +151,15 @@ class FileModule {
     const upload = await this.uploader(vaultId, file, options);
     await new Promise<void>((resolve, reject) => {
       upload.options.onSuccess = () => {
-        console.log('Upload completed successfully');
+        if (options.onSuccess) {
+          options.onSuccess();
+        }
         resolve();
       };
       upload.options.onError = (error) => {
-        console.error('Upload failed:', error);
+        if (options.onError) {
+          options.onError(error);
+        }
         reject(error);
       };    
       upload.start();
@@ -373,7 +369,6 @@ export type Hooks = {
   onChunkComplete?: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null,
   onSuccess?: (() => void) | null,
   onError?: ((error: Error | tus.DetailedError) => void) | null,
-
 }
 
 export type FileOptions = {

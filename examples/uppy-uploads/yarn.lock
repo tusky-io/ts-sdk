@@ -12,10 +12,10 @@
     module-error "^1.0.2"
     run-parallel-limit "^1.1.0"
 
-"@akord/carmella-sdk@^0.20.0":
-  version "0.20.0"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.20.0.tgz#99c940ab6107eb0cd03e4eff07ac06d69347cc6a"
-  integrity sha512-jV/yNP81w93brQx5x2rvKxvCdvXy8QDqgibglzQemZexs6CTuK/cQ/EmE2JkhKR0WplIWMouh24kOiiC7tLjhA==
+"@akord/carmella-sdk@^0.21.0-dev.3":
+  version "0.21.0-dev.3"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.21.0-dev.3.tgz#e66fea1b2e69d65f643764751106cf8503ba4a8b"
+  integrity sha512-kQsIuM9O0ncplIocbxKS+5lgNsyZaY45G+oegLx2GgO7eUSOkmg4Aisk11whtJhfW0XmdaPqO2j2bUnD3tdjCA==
   dependencies:
     "@akord/browser-level" "^1.0.2"
     "@akord/ts-cacheable" "1.0.13"
@@ -34,6 +34,7 @@
     memorystorage "^0.12.0"
     reflect-metadata "^0.1.13"
     rxjs "^7.5.6"
+    tus-js-client "^4.1.0"
     tweetnacl "^1.0.3"
     uuid "^8.3.2"
     web-streams-polyfill "^3.2.1"
@@ -2119,6 +2120,11 @@
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/prettier/-/prettier-2.7.3.tgz#3e51a17e291d01d17d3fc61422015a933af7a08f"
   integrity sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==
 
+"@types/prop-types@*":
+  version "15.7.12"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/prop-types/-/prop-types-15.7.12.tgz#12bb1e2be27293c1406acb6af1c3f3a1481d98c6"
+  integrity sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==
+
 "@types/q@^1.5.1":
   version "1.5.8"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/q/-/q-1.5.8.tgz#95f6c6a08f2ad868ba230ead1d2d7f7be3db3837"
@@ -2134,6 +2140,21 @@
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/range-parser/-/range-parser-1.2.7.tgz#50ae4353eaaddc04044279812f52c8c65857dbcb"
   integrity sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==
 
+"@types/react-dom@^18.3.0":
+  version "18.3.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/react-dom/-/react-dom-18.3.0.tgz#0cbc818755d87066ab6ca74fbedb2547d74a82b0"
+  integrity sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react@*", "@types/react@^18.3.5":
+  version "18.3.5"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/react/-/react-18.3.5.tgz#5f524c2ad2089c0ff372bbdabc77ca2c4dbadf8f"
+  integrity sha512-WeqMfGJLGuLCqHGYRGHxnKrXcTitc6L/nBUWfWPcTarG3t9PsquqUMuVeXZeca+mglY4Vo5GZjCi0A3Or2lnxA==
+  dependencies:
+    "@types/prop-types" "*"
+    csstype "^3.0.2"
+
 "@types/resolve@1.17.1":
   version "1.17.1"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/resolve/-/resolve-1.17.1.tgz#3afd6ad8967c77e4376c598a82ddd58f46ec45d6"
@@ -2145,11 +2166,6 @@
   version "0.12.0"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/retry/-/retry-0.12.0.tgz#2b35eccfcee7d38cd72ad99232fbd58bffb3c84d"
   integrity sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==
-
-"@types/retry@0.12.2":
-  version "0.12.2"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@types/retry/-/retry-0.12.2.tgz#ed279a64fa438bb69f2480eda44937912bb7480a"
-  integrity sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==
 
 "@types/semver@^7.3.12":
   version "7.5.8"
@@ -2319,14 +2335,24 @@
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@ungap/structured-clone/-/structured-clone-1.2.0.tgz#756641adb587851b5ccb3e095daf27ae581c8406"
   integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
-"@uppy/companion-client@^4.1.0":
-  version "4.1.0"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/companion-client/-/companion-client-4.1.0.tgz#9478c62ae31d6353ce0a37aa6a1a329a36e67e3a"
-  integrity sha512-nQ8CQfZcYVBNtFQ6ePj7FDIq38DXlH0YpzP/91LR9gnDVISJKKUuvWfr6tPktj1lRw9FZV8jLmlMKT2ituVKiw==
+"@uppy/audio@^2.0.1":
+  version "2.0.1"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/audio/-/audio-2.0.1.tgz#92e082fea8cca69d0b298776533219b4befdd37a"
+  integrity sha512-k51ycdvyxYHVSf7Em6k102geMxXk2pgejS35PCFVhKbjlij1cM8SVHMLHSkXGZkIneRizAsEL9cr0u1scvR0hg==
   dependencies:
+    "@uppy/utils" "^6.0.1"
+    preact "^10.5.13"
+
+"@uppy/compressor@^2.1.0":
+  version "2.1.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/compressor/-/compressor-2.1.0.tgz#eee555e28f86fc42c666f6cc37ee5dfe1ebd75e9"
+  integrity sha512-F3fBqKSlMy/JCdT0sn6l+I+WlSRox2+/85JU1C51HdOgFbrzFnf0s0yNSLv201f5TRJsvaAWQDF/O+UV26YUsA==
+  dependencies:
+    "@transloadit/prettier-bytes" "^0.3.4"
     "@uppy/utils" "^6.0.2"
-    namespace-emitter "^2.0.1"
-    p-retry "^6.1.0"
+    compressorjs "^1.2.1"
+    preact "^10.5.13"
+    promise-queue "^2.2.5"
 
 "@uppy/core@^4.2.0":
   version "4.2.0"
@@ -2411,6 +2437,14 @@
     "@uppy/utils" "^6.0.2"
     use-sync-external-store "^1.2.0"
 
+"@uppy/screen-capture@^4.1.0":
+  version "4.1.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/screen-capture/-/screen-capture-4.1.0.tgz#84737104fb166d4c253ac715dd8dbe4e7afb90c3"
+  integrity sha512-1JYQaSYirwtrES60XaT5e+tMHnYRepyIB/soClJbxUbiPcFDfB0KVQYzeo4kPRp/ZgDHCMEooUCV38uhpZs7OA==
+  dependencies:
+    "@uppy/utils" "^6.0.2"
+    preact "^10.5.13"
+
 "@uppy/status-bar@^4.0.3":
   version "4.0.3"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/status-bar/-/status-bar-4.0.3.tgz#74101de0cd9c5dec26e06578bfa72bb960d3ef85"
@@ -2433,15 +2467,6 @@
   dependencies:
     "@uppy/utils" "^6.0.0"
     exifr "^7.0.0"
-
-"@uppy/tus@^4.1.0":
-  version "4.1.0"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/tus/-/tus-4.1.0.tgz#58c7f3b8b9123306ae2f2a95e78ea42824a43018"
-  integrity sha512-RK/37h3gVzd0e6JO+fAcwI0iiQEzKPXJWmnre6JKGJLl35eH1PYi/2wBiTUPuVifnJzfA0g8yK+WRbZ7Jz83Lw==
-  dependencies:
-    "@uppy/companion-client" "^4.1.0"
-    "@uppy/utils" "^6.0.2"
-    tus-js-client "^4.1.0"
 
 "@uppy/utils@^6.0.0", "@uppy/utils@^6.0.1", "@uppy/utils@^6.0.2":
   version "6.0.2"
@@ -3165,6 +3190,11 @@ bluebird@^3.7.2:
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
   integrity sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==
 
+blueimp-canvas-to-blob@^3.29.0:
+  version "3.29.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/blueimp-canvas-to-blob/-/blueimp-canvas-to-blob-3.29.0.tgz#d965f06cb1a67fdae207a2be56683f55ef531466"
+  integrity sha512-0pcSSGxC0QxT+yVkivxIqW0Y4VlO2XSDPofBAqoJ1qJxgH9eiUDLv50Rixij2cDuEfx4M6DpD9UGZpRhT5Q8qg==
+
 body-parser@1.20.3:
   version "1.20.3"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/body-parser/-/body-parser-1.20.3.tgz#1953431221c6fb5cd63c4b36d53fab0928e548c6"
@@ -3195,6 +3225,11 @@ boolbase@^1.0.0, boolbase@~1.0.0:
   version "1.0.0"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/boolbase/-/boolbase-1.0.0.tgz#68dff5fbe60c51eb37725ea9e3ed310dcc1e776e"
   integrity sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==
+
+bootstrap-icons@^1.11.3:
+  version "1.11.3"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/bootstrap-icons/-/bootstrap-icons-1.11.3.tgz#03f9cb754ec005c52f9ee616e2e84a82cab3084b"
+  integrity sha512-+3lpHrCw/it2/7lBL15VR0HEumaBss0+f/Lb6ZvHISn1mlK83jjFpooTLsMWbIjJMDjDjOExMsTxnXSIT4k4ww==
 
 bootstrap@^5.2.3:
   version "5.3.3"
@@ -3538,6 +3573,14 @@ compression@^1.7.4:
     safe-buffer "5.1.2"
     vary "~1.1.2"
 
+compressorjs@^1.2.1:
+  version "1.2.1"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/compressorjs/-/compressorjs-1.2.1.tgz#4dee18ef5032f8166bd0a3258f045eda2cd07671"
+  integrity sha512-+geIjeRnPhQ+LLvvA7wxBQE5ddeLU7pJ3FsKFWirDw6veY3s9iLxAQEw7lXGHnhCJvBujEQWuNnGzZcvCvdkLQ==
+  dependencies:
+    blueimp-canvas-to-blob "^3.29.0"
+    is-blob "^2.1.0"
+
 concat-map@0.0.1:
   version "0.0.1"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
@@ -3834,6 +3877,11 @@ cssstyle@^2.3.0:
   integrity sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==
   dependencies:
     cssom "~0.3.6"
+
+csstype@^3.0.2:
+  version "3.1.3"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/csstype/-/csstype-3.1.3.tgz#d80ff294d114fb0e6ac500fbf85b60137d7eff81"
+  integrity sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==
 
 custom-error-instance@2.1.1:
   version "2.1.1"
@@ -5581,6 +5629,11 @@ is-binary-path@~2.1.0:
   dependencies:
     binary-extensions "^2.0.0"
 
+is-blob@^2.1.0:
+  version "2.1.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/is-blob/-/is-blob-2.1.0.tgz#e36cd82c90653f1e1b930f11baf9c64216a05385"
+  integrity sha512-SZ/fTft5eUhQM6oF/ZaASFDEdbFVe89Imltn9uZr03wdKMcWNVYSMjQPFtg05QuNkt5l5c135ElvXEQG0rk4tw==
+
 is-boolean-object@^1.1.0:
   version "1.1.2"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/is-boolean-object/-/is-boolean-object-1.1.2.tgz#5c6dc200246dd9321ae4b885a114bb1f75f63719"
@@ -5680,11 +5733,6 @@ is-negative-zero@^2.0.3:
   version "2.0.3"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/is-negative-zero/-/is-negative-zero-2.0.3.tgz#ced903a027aca6381b777a5743069d7376a49747"
   integrity sha512-5KoIu2Ngpyek75jXodFvnafB6DJgr3u8uuK0LEZJjrU19DrMD3EVERaR8sjz8CCGgpZvxPl9SuE1GMVPFHx1mw==
-
-is-network-error@^1.0.0:
-  version "1.1.0"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/is-network-error/-/is-network-error-1.1.0.tgz#d26a760e3770226d11c169052f266a4803d9c997"
-  integrity sha512-tUdRRAnhT+OtCZR/LxZelH/C7QtjtFrTu5tXCA8pl55eTUElUHT+GPYV8MBMBvea/j+NxQqVt3LbWMRir7Gx9g==
 
 is-number-object@^1.0.4:
   version "1.0.7"
@@ -7301,15 +7349,6 @@ p-retry@^4.5.0:
     "@types/retry" "0.12.0"
     retry "^0.13.1"
 
-p-retry@^6.1.0:
-  version "6.2.0"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/p-retry/-/p-retry-6.2.0.tgz#8d6df01af298750009691ce2f9b3ad2d5968f3bd"
-  integrity sha512-JA6nkq6hKyWLLasXQXUrO4z8BUZGUt/LjlJxx8Gb2+2ntodU/SS63YZ8b0LUTbQ8ZB9iwOfhEPhg4ykKnn2KsA==
-  dependencies:
-    "@types/retry" "0.12.2"
-    is-network-error "^1.0.0"
-    retry "^0.13.1"
-
 p-timeout@^6.1.2:
   version "6.1.2"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/p-timeout/-/p-timeout-6.1.2.tgz#22b8d8a78abf5e103030211c5fc6dee1166a6aa5"
@@ -8063,6 +8102,11 @@ process-nextick-args@~2.0.0:
   version "2.0.1"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
+
+promise-queue@^2.2.5:
+  version "2.2.5"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/promise-queue/-/promise-queue-2.2.5.tgz#2f6f5f7c0f6d08109e967659c79b88a9ed5e93b4"
+  integrity sha512-p/iXrPSVfnqPft24ZdNNLECw/UrtLTpT3jpAAMzl/o5/rDsGCPo3/CQS2611flL6LkoEJ3oQZw7C8Q80ZISXRQ==
 
 promise@^8.1.0:
   version "8.3.0"
