@@ -8,10 +8,6 @@ export const apiConfig = (env: string) => {
     case "testnet":
     default:
       return {
-        apiUrl: "http://localhost:3001",
-        cdnUrl: "http://localhost:3001/cached"
-      };
-      return {
         apiUrl: "https://dev-api.carmella.io",
         cdnUrl: "https://dev-cdn.carmella.io",
       };
