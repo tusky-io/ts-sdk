@@ -30,8 +30,10 @@ export type AuthProvider = "Google" | "Twitch" | "Facebook";
 export type WalletType = "Sui";
 
 export interface OAuthConfig {
-  authProvider: AuthProvider
-  clientId: string,
+  authProvider?: AuthProvider
+  redirectUri?: string
+  clientId?: string,
+  storage?: Storage,
 }
 
 export interface WalletConfig {

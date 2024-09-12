@@ -16,7 +16,7 @@ function getAuthProvider() {
 export const AuthProvider = {
   "Google": {
     "CLIENT_ID": "52977920067-5hf88uveake073ent9s5snn0d8kfrf0t.apps.googleusercontent.com",
-    "CLIENT_SECRET": process.env.GOOGLE_CLIENT_SECRET,
+    "CLIENT_SECRET": "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",
     "OAUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
     "TOKEN_ENDPOINT": "https://oauth2.googleapis.com/token"
   },
@@ -49,7 +49,9 @@ export async function getAuthorizationCode(nonce: string, authProvider = default
     client_id: AuthProvider[authProvider].CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: "code",
-    scope: "openid",
+    scope: "openid profile",
+    access_type: "offline",
+    prompt: "consent"
   });
 
   const oauthUrl = `${AuthProvider[authProvider].OAUTH_URL}?${params}`;
@@ -75,7 +77,7 @@ export async function getIdTokenWithAuthorizationCode(code: string, authProvider
     client_id: AuthProvider[authProvider].CLIENT_ID,
     client_secret: AuthProvider[authProvider].CLIENT_SECRET,
     redirect_uri: REDIRECT_URI,
-    grant_type: 'authorization_code'
+    grant_type: 'authorization_code',
   } as any).toString()
 
   // Exchange the authorization code for an access token
@@ -85,6 +87,7 @@ export async function getIdTokenWithAuthorizationCode(code: string, authProvider
     });
 
     const tokens = tokenResponse.data;
+    console.log(tokens)
     console.log(`JWT: ${tokens.id_token}`);
     return tokens.id_token
   } catch (error) {

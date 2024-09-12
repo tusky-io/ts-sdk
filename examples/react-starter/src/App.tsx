@@ -4,7 +4,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import { useCurrentAccount, useSignPersonalMessage, useCurrentWallet } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Akord, Encrypter, AkordWallet } from "@akord/carmella-sdk";
+import { Akord } from "@akord/carmella-sdk";
 window.Buffer = window.Buffer || require("buffer").Buffer;
 
 function App() {
@@ -16,33 +16,65 @@ function App() {
   const account = useCurrentAccount();
   const wallet = useCurrentWallet();
 
-  const signInForm = () => {
+  const signInWithWalletForm = () => {
     return (
-      <button type="submit" onClick={() => handleSignIn()}>
+      <button type="submit" onClick={() => handleSignInWithWallet()}>
         Sign in with wallet
       </button>
     )
   }
 
-  const handleSignIn = async () => {
-    const akord = await Akord
+  const signInWithGoogleForm = () => {
+    return (
+      <button type="submit" onClick={() => handleSignInWithGoogle()}>
+        Sign in with Google
+      </button>
+    )
+  }
+
+  const handleSignInWithWallet = async () => {
+    const akord = Akord
       .useWallet({ walletSignFnClient: signPersonalMessage })
       .useLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any)
-      .signIn();
+      .env(process.env.ENV as any);
 
+    await akord.signIn()
     const user = await akord.me.get();
     // TODO: prompt for password
     let password = "passakordpass";
-    if (!user.encPrivateKey) {
-      const userWallet = await AkordWallet.create(password);
-      const userKeyPair = userWallet.encryptionKeyPair;
-      await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
-      akord.useEncrypter(new Encrypter({ keypair: userKeyPair }));
-    } else {
-      const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
-      akord.useEncrypter(new Encrypter({ keypair: userWallet.encryptionKeyPair }));
-    }
+    // if (!user.encPrivateKey) {
+    //   const userWallet = await AkordWallet.create(password);
+    //   const userKeyPair = userWallet.encryptionKeyPair;
+    //   await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
+    //   akord.useEncrypter(new Encrypter({ keypair: userKeyPair }));
+    // } else {
+    //   const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
+    //   akord.useEncrypter(new Encrypter({ keypair: userWallet.encryptionKeyPair }));
+    // }
+    setAkord(akord);
+  };
+
+  const handleSignInWithGoogle = async () => {
+    const akord = Akord
+      .useOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" })
+      .useLogger({ debug: true, logToFile: true })
+      .env(process.env.ENV as any);
+
+    console.log("Start sign iun")
+    await akord.signIn();
+    console.log("After sign iun")
+    const user = await akord.me.get();
+    // TODO: prompt for password
+    // let password = "passakordpass";
+    // if (!user.encPrivateKey) {
+    //   const userWallet = await AkordWallet.create(password);
+    //   const userKeyPair = userWallet.encryptionKeyPair;
+    //   await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
+    //   akord.useEncrypter(new Encrypter({ keypair: userKeyPair }));
+    // } else {
+    //   const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
+    //   akord.useEncrypter(new Encrypter({ keypair: userWallet.encryptionKeyPair }));
+    // }
     setAkord(akord);
   };
 
@@ -97,7 +129,8 @@ function App() {
       </header>
       <main className="vh-100 d-flex justify-content-center align-items-center">
         <ConnectButton id="connect_button" />
-        {akord ? uploadForm() : signInForm()}
+        {akord ? uploadForm() : signInWithWalletForm()}
+        {akord ? <></> : signInWithGoogleForm()}
       </main>
     </div>
     </>

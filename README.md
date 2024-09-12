@@ -88,13 +88,16 @@ const akord = new Akord({ encrypter: wallet, signer: wallet, plugins: [new PubSu
 import { Akord } from "@akord/carmella-sdk";
 const akord = Akord.useOAuth({ authProvider: "Google", clientId: "your-google-client-id" });
 
-// sign-in to Akord
+// init OAuth flow
 await akord.signIn();
+
+// handle auth callback
+await akord.handleOAuthCallback();
 ```
 
 ##### use Sui Wallet
 ```js
-// in React app
+// on the browser
 import { Akord } from "@akord/carmella-sdk";
 import { useSignPersonalMessage } from "@mysten/dapp-kit";
 
@@ -114,7 +117,7 @@ import { Akord } from "@akord/carmella-sdk";
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // generate new Sui Key Pair
  const keypair = new Ed25519Keypair();
- const akord = Akord
+ const akord = await Akord
       .useWallet({ walletSigner: keypair })
       .useLogger({ debug: true, logToFile: true });
       .signIn();
