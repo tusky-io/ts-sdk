@@ -382,8 +382,6 @@ async function encryptWithPassword(password: string, plaintext: string): Promise
       derivedKey
     )
 
-    console.log(encryptedPayload)
-
     const payload = {
       encryptedPayload: encryptedPayload,
       salt: arrayToBase64(salt)
@@ -405,10 +403,8 @@ async function encryptWithPassword(password: string, plaintext: string): Promise
  */
 async function decryptWithPassword(password: string, strPayload: string): Promise<string> {
   try {
-    console.log(password)
     const parsedPayload = base64ToJson(strPayload) as any
 
-    console.log(parsedPayload)
     const encryptedPayload = parsedPayload.encryptedPayload
     const salt = base64ToArray(parsedPayload.salt)
 

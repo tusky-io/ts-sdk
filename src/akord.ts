@@ -1,6 +1,7 @@
 import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
-import { ApiKeyConfig, AuthTokenProviderConfig, ClientConfig, LoggerConfig, OAuthConfig, WalletConfig } from "./config";
+import { ClientConfig, LoggerConfig } from "./config";
+import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
 import { Logger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
@@ -20,6 +21,7 @@ import { TrashModule } from "./core/trash";
 
 export class Akord {
   public api: Api;
+  public address: string;
   private _signer: Signer;
   private _encrypter: Encrypter;
   private _env: Env;
@@ -74,7 +76,19 @@ export class Akord {
   }
 
   async signIn(): Promise<this> {
-    await Auth.signIn();
+    const { address } = await Auth.signIn();
+    this.setAddress(address);
+    return this;
+  }
+
+  async initOAuthFlow(): Promise<this> {
+    await Auth.initOAuthFlow();
+    return this;
+  }
+
+  async handleOAuthCallback(): Promise<this> {
+    const { address } = await Auth.handleOAuthCallback();
+    this.setAddress(address);
     return this;
   }
 
@@ -111,6 +125,10 @@ export class Akord {
       encrypter: this._encrypter,
       userAgent: this._userAgent
     }
+  }
+
+  private setAddress(address: string) {
+    this.address = address;
   }
 
   /**

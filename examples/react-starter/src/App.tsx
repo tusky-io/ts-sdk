@@ -60,9 +60,8 @@ function App() {
       .useLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any);
 
-    console.log("Start sign iun")
     await akord.signIn();
-    console.log("After sign iun")
+    console.log("ADDRESS: " + akord.address);
     const user = await akord.me.get();
     // TODO: prompt for password
     // let password = "passakordpass";

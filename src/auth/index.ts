@@ -1,11 +1,13 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
 import { Logger } from "../logger";
-import { AuthProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../config";
-import { Akord } from "../akord";
+import { AuthProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Conflict } from "../errors/conflict";
 import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
 import { OAuth } from "./oauth";
+import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
+import AkordApi from "../api/akord-api";
+import { Env } from "../env";
 
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
@@ -16,6 +18,8 @@ export type SignPersonalMessageClient = (
 ) => void;
 
 export class Auth {
+  private static env: Env
+
   public static authTokenProvider: () => Promise<string>
 
   private static authType: AuthType;
@@ -52,7 +56,7 @@ export class Auth {
     this.storage = options.storage;
   }
 
-  public static async signIn(): Promise<void> {
+  public static async signIn(): Promise<{ address?: string }> {
     switch (this.authType) {
       case "Wallet": {
         const message = new TextEncoder().encode("hello");
@@ -65,11 +69,11 @@ export class Auth {
               },
               {
                 onSuccess: (data: { signature: string }) => {
-                  console.log("Message signed on client: " + data.signature);
+                  Logger.log("Message signed on client: " + data.signature);
                   resolve(data.signature);
                 },
                 onError: (error: Error) => {
-                  console.log("Error signing on client:", error);
+                  Logger.log("Error signing on client: " + error);
                   reject(error);
                 },
               }
@@ -82,10 +86,11 @@ export class Auth {
         } else {
           throw new Conflict("Missing wallet signing function for Wallet based auth.");
         }
-        const publicAkord = new Akord({ debug: true, logToFile: true, env: process.env.ENV as any });
-        const jwt = await publicAkord.api.generateJWT({ signature });
+        const publicKey = await verifyPersonalMessageSignature(message, signature);
+        const address = publicKey.toSuiAddress();
+        const jwt = await new AkordApi({ debug: true, logToFile: true, env: this.env }).verifyAuthChallenge({ signature });
         this.authTokenProvider = async () => jwt;
-        break;
+        return { address };
       }
       case "OAuth": {
         const queryString = window.location.search;
@@ -101,17 +106,38 @@ export class Auth {
 
         if (code) {
           // step 2: if code is in the URL, exchange it for tokens
-          await aOuthClient.handleOAuthCallback();
+          const { address } = await aOuthClient.handleOAuthCallback();
+          return { address };
         } else {
           // step 1: if no code in the URL, initiate the OAuth flow
-          console.log('No authorization code found, redirecting to OAuth provider...');
-          await aOuthClient.redirectToOAuthProvider();
+          Logger.log('No authorization code found, redirecting to OAuth provider...');
+          await aOuthClient.initOAuthFlow();
+          return {};
         }
-        break;
       }
       default:
         throw new Error(`Missing or unsupported auth type for sign in: ${this.authType}`);
     }
+  }
+
+  public static async initOAuthFlow(): Promise<void> {
+    const aOuthClient = new OAuth({
+      clientId: this.clientId,
+      redirectUri: this.redirectUri,
+      authProvider: this.authProvider,
+      storage: this.storage
+    });
+    await aOuthClient.initOAuthFlow();
+  }
+
+  public static async handleOAuthCallback(): Promise<{ address: string }> {
+    const aOuthClient = new OAuth({
+      clientId: this.clientId,
+      redirectUri: this.redirectUri,
+      authProvider: this.authProvider,
+      storage: this.storage
+    });
+    return aOuthClient.handleOAuthCallback();
   }
 
   public static async getAuthorizationHeader(): Promise<AxiosRequestHeaders> {
@@ -133,13 +159,10 @@ export class Auth {
           storage: this.storage
         });
         let idToken = aOuthClient.getIdToken();
-        if (aOuthClient.isTokenExpired(idToken)) {
-          console.log('Token is expired or about to expire. Refreshing tokens...');
-
+        if (aOuthClient.isTokenExpiringSoon(idToken)) {
+          Logger.log('Token is expired or about to expire. Refreshing tokens...');
           await aOuthClient.refreshTokens();
-
-          console.log('Tokens refreshed successfully.');
-
+          Logger.log('Tokens refreshed successfully.');
           idToken = aOuthClient.getIdToken();
         }
         return {
@@ -169,6 +192,7 @@ export class Auth {
 
 type AuthOptions = {
   authType?: AuthType,
+  env?: Env,
   authTokenProvider?: () => Promise<string>
   apiKey?: string,
 } & OAuthConfig & WalletConfig

@@ -25,7 +25,7 @@ export class Storage {
     this.other = json.other
     this.photos = json.photos
     this.video = json.video
-    this.trash = new Folder(json.trash)
+    this.trash = json.trash ? new Folder(json.trash) : undefined
     this.createdAt = json.createdAt
     this.updatedAt = json.updatedAt
     this.refreshedAt = json.refreshedAt

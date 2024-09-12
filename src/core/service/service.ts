@@ -98,8 +98,6 @@ class Service {
   async processWriteString(data: string): Promise<string> {
     if (this.isPublic) return data;
     const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
-    console.log(currentVaultPublicKey)
-    console.log(base64ToArray(currentVaultPublicKey))
     const encryptedMessage = await encryptWithPublicKey(base64ToArray(currentVaultPublicKey), data);
     return jsonToBase64(encryptedMessage);
   }
