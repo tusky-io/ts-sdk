@@ -43,8 +43,7 @@ const { Akord } = require("@akord/carmella-sdk");
 ```js
 import { Akord } from "@akord/carmella-sdk";
 
-const akord = Akord
-  .useOAuth({ authProvider: "Google", clientId: "your-google-client-id" });
+const akord = Akord.withOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" });
 ```
 
 #### Upload file to Akord
@@ -86,7 +85,7 @@ const akord = new Akord({ encrypter: wallet, signer: wallet, plugins: [new PubSu
 ##### use OAuth (Google, Twitch, Facebook)
 ```js
 import { Akord } from "@akord/carmella-sdk";
-const akord = Akord.useOAuth({ authProvider: "Google", clientId: "your-google-client-id" });
+const akord = Akord.withAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" });
 
 // init OAuth flow
 await akord.signIn();
@@ -104,8 +103,8 @@ import { useSignPersonalMessage } from "@mysten/dapp-kit";
 const { mutate: signPersonalMessage } = useSignPersonalMessage();
 
 const akord = await Akord
-      .useWallet({ walletSignFnClient: signPersonalMessage })
-      .useLogger({ debug: true, logToFile: true })
+      .withWallet({ walletSignFnClient: signPersonalMessage })
+      .withLogger({ debug: true, logToFile: true })
 
 // sign-in to Akord (this will prompt the wallet & ask for user signature)
 await akord.signIn();
@@ -118,21 +117,21 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // generate new Sui Key Pair
  const keypair = new Ed25519Keypair();
  const akord = await Akord
-      .useWallet({ walletSigner: keypair })
-      .useLogger({ debug: true, logToFile: true });
+      .withWallet({ walletSigner: keypair })
+      .withLogger({ debug: true, logToFile: true });
       .signIn();
 ```
 
 ##### use API key
 ```js
 import { Akord } from "@akord/carmella-sdk";
-const akord = Akord.useApiKey({ apiKey: "you-api-key" });
+const akord = Akord.withApiKey({ apiKey: "you-api-key" });
 ```
 
 ##### use self-managed auth token provider
 ```js
 import { Akord } from "@akord/carmella-sdk";
-const akord = Akord.useAuthTokenProvider({ authTokenProvider: async () => "your-self-managed-jwt" });
+const akord = Akord.withAuthTokenProvider({ authTokenProvider: async () => "your-self-managed-jwt" });
 ```
 
 ## Modules

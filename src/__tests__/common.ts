@@ -12,16 +12,16 @@ export async function initInstance(): Promise<Akord> {
   if (process.env.API_KEY) {
     console.log("--- API key flow");
     return Akord
-      .useApiKey({ apiKey: process.env.API_KEY })
-      .useLogger({ debug: true, logToFile: true })
+      .withApiKey({ apiKey: process.env.API_KEY })
+      .withLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any);
   } else {
     console.log("--- mock Enoki flow");
     const { jwt, address, keyPair } = await mockEnokiFlow();
     return Akord
-      .useAuthTokenProvider({ authTokenProvider: async () => jwt })
-      .useLogger({ debug: true, logToFile: true })
-      .useSigner(new EnokiSigner({ address: address, keypair: keyPair }))
+      .withAuthTokenProvider({ authTokenProvider: async () => jwt })
+      .withLogger({ debug: true, logToFile: true })
+      .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
       .env(process.env.ENV as any);
   }
 }

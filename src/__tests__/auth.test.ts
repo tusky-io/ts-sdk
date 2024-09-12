@@ -15,8 +15,8 @@ describe("Testing auth functions", () => {
   it("should authenticate with Sui wallet", async () => {
     const keypair = new Ed25519Keypair();
     akord = Akord
-      .useWallet({ walletSigner: keypair })
-      .useLogger({ debug: true, logToFile: true })
+      .withWallet({ walletSigner: keypair })
+      .withLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any)
 
     await akord.signIn();

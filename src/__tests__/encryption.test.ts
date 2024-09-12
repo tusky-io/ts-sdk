@@ -64,8 +64,8 @@ describe("Testing encryption functions", () => {
   it("should set user encryption context", async () => {
     const keypair = new Ed25519Keypair();
     akord = Akord
-      .useWallet({ walletSigner: keypair })
-      .useLogger({ debug: true, logToFile: true })
+      .withWallet({ walletSigner: keypair })
+      .withLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any)
 
     await akord.signIn();
@@ -81,7 +81,7 @@ describe("Testing encryption functions", () => {
     const user = await akord.me.get();
     const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
     const encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
-    akord.useEncrypter(encrypter);
+    akord.withEncrypter(encrypter);
   });
 
   it("should create a private vault", async () => {

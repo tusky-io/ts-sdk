@@ -26,7 +26,7 @@ function App() {
 
   const signInWithGoogleForm = () => {
     return (
-      <button type="submit" onClick={() => handleSignInWithGoogle()}>
+      <button type="submit" onClick={() => handleSignInWithOAuth("Google")}>
         Sign in with Google
       </button>
     )
@@ -34,8 +34,8 @@ function App() {
 
   const handleSignInWithWallet = async () => {
     const akord = Akord
-      .useWallet({ walletSignFnClient: signPersonalMessage })
-      .useLogger({ debug: true, logToFile: true })
+      .withWallet({ walletSignFnClient: signPersonalMessage })
+      .withLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any);
 
     await akord.signIn()
@@ -54,10 +54,10 @@ function App() {
     setAkord(akord);
   };
 
-  const handleSignInWithGoogle = async () => {
+  const handleSignInWithOAuth = async (authProvider: string) => {
     const akord = Akord
-      .useOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" })
-      .useLogger({ debug: true, logToFile: true })
+      .withOAuth({ authProvider: authProvider as any, redirectUri: "http://localhost:3000" })
+      .withLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any);
 
     await akord.signIn();

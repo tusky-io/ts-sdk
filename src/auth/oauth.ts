@@ -116,7 +116,7 @@ class OAuth {
       client_id: AuthProviderConfig[this.authProvider].CLIENT_ID,
       redirect_uri: this.redirectUri,
       response_type: "code",
-      scope: "openid email profile",
+      scope: "openid",
       access_type: "offline",
       prompt: "consent"
     });

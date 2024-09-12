@@ -55,22 +55,22 @@ export class Akord {
     return new PaymentModule(this.getConfig());
   }
 
-  static useOAuth(config: OAuthConfig): Akord {
+  static withOAuth(config: OAuthConfig): Akord {
     const instance = new Akord({ ...config, authType: "OAuth" });
     return instance;
   }
 
-  static useWallet(config: WalletConfig): Akord {
+  static withWallet(config: WalletConfig): Akord {
     const instance = new Akord({ ...config, authType: "Wallet" });
     return instance;
   }
 
-  static useApiKey(config: ApiKeyConfig): Akord {
+  static withApiKey(config: ApiKeyConfig): Akord {
     const instance = new Akord({ ...config, authType: "ApiKey" });
     return instance;
   }
 
-  static useAuthTokenProvider(config: AuthTokenProviderConfig): Akord {
+  static withAuthTokenProvider(config: AuthTokenProviderConfig): Akord {
     const instance = new Akord({ ...config, authType: "AuthTokenProvider" });
     return instance;
   }
@@ -92,18 +92,18 @@ export class Akord {
     return this;
   }
 
-  useLogger(config: LoggerConfig): this {
+  withLogger(config: LoggerConfig): this {
     Logger.debug = config?.debug;
     Logger.logToFile = config?.logToFile;
     return this;
   }
 
-  useSigner(signer: Signer): this {
+  withSigner(signer: Signer): this {
     this._signer = signer;
     return this;
   }
 
-  useEncrypter(encrypter: Encrypter): this {
+  withEncrypter(encrypter: Encrypter): this {
     this._encrypter = encrypter;
     return this;
   }
