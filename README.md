@@ -88,10 +88,13 @@ import { Akord } from "@akord/carmella-sdk";
 const akord = Akord.withAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" });
 
 // init OAuth flow
-await akord.signIn();
+await akord.initOAuthFlow();
 
-// handle auth callback
+// handle OAuth callback
 await akord.handleOAuthCallback();
+
+// or perform the entire flow in one go
+await akord.signIn();
 ```
 
 ##### use Sui Wallet
@@ -132,6 +135,12 @@ const akord = Akord.withApiKey({ apiKey: "you-api-key" });
 ```js
 import { Akord } from "@akord/carmella-sdk";
 const akord = Akord.withAuthTokenProvider({ authTokenProvider: async () => "your-self-managed-jwt" });
+```
+
+##### clear current auth session
+```js
+import { Akord } from "@akord/carmella-sdk";
+Akord.signOut();
 ```
 
 ## Modules

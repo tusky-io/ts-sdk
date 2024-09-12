@@ -81,6 +81,12 @@ export class Akord {
     return this;
   }
 
+  signOut(): this {
+    Auth.signOut();
+    this.setAddress(undefined);
+    return this;
+  }
+
   async initOAuthFlow(): Promise<this> {
     await Auth.initOAuthFlow();
     return this;

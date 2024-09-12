@@ -9,6 +9,10 @@ import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 import AkordApi from "../api/akord-api";
 import { Env } from "../env";
 
+export const STORAGE_PATH_ACCESS_TOKEN = "carmella_access_token";
+export const STORAGE_PATH_ID_TOKEN = "carmella_id_token";
+export const STORAGE_PATH_REFRESH_TOKEN = "carmella_refresh_token";
+
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
   callbacks: {
@@ -118,6 +122,13 @@ export class Auth {
       default:
         throw new Error(`Missing or unsupported auth type for sign in: ${this.authType}`);
     }
+  }
+
+  public static signOut(): void {
+    // clear auth tokens from the storage
+    this.storage.removeItem(STORAGE_PATH_ACCESS_TOKEN);
+    this.storage.removeItem(STORAGE_PATH_ID_TOKEN);
+    this.storage.removeItem(STORAGE_PATH_REFRESH_TOKEN);
   }
 
   public static async initOAuthFlow(): Promise<void> {

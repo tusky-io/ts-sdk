@@ -5,6 +5,7 @@ import { BadRequest } from '../errors/bad-request';
 import { Logger } from '../logger';
 import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
+import { STORAGE_PATH_ACCESS_TOKEN, STORAGE_PATH_ID_TOKEN, STORAGE_PATH_REFRESH_TOKEN } from '.';
 
 export const AuthProviderConfig = {
   "Google": {
@@ -25,10 +26,6 @@ export const AuthProviderConfig = {
   //   "AUTH_URL": "https://appleid.apple.com/auth/authorize",
   // }
 }
-
-const STORAGE_PATH_ACCESS_TOKEN = "access_token";
-const STORAGE_PATH_ID_TOKEN = "id_token";
-const STORAGE_PATH_REFRESH_TOKEN = "refresh_token";
 
 class OAuth {
   private clientId: string;
