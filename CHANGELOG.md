@@ -1,3 +1,14 @@
+# [0.21.0](https://github.com/Akord-com/carmella-sdk/compare/v0.20.0...v0.21.0) (2024-09-12)
+
+
+### Features
+
+* add sign out function ([f3d7754](https://github.com/Akord-com/carmella-sdk/commit/f3d775480d49c3eb60e931445bddec55be502cc8))
+* change to with from use to avoid React hook naming convention collision ([0483984](https://github.com/Akord-com/carmella-sdk/commit/0483984abd5000416e5b079b882a68a4b5be83bb))
+* implement oauth flow ([99afe9f](https://github.com/Akord-com/carmella-sdk/commit/99afe9fca0a225412d063c6792b517d8032a0926))
+* refresh token logic + use api auth/token endpoint ([d9d8ad3](https://github.com/Akord-com/carmella-sdk/commit/d9d8ad307588faabf07888ecc675788a4c34db44))
+* support builder pattern with chaining for Akord init ([3f7560f](https://github.com/Akord-com/carmella-sdk/commit/3f7560f759745b980bbe90754372c3fb945082fa))
+
 # [0.20.0](https://github.com/Akord-com/carmella-sdk/compare/v0.19.0...v0.20.0) (2024-09-09)
 
 
