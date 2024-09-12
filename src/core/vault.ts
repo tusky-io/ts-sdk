@@ -40,8 +40,6 @@ class VaultModule {
       ...options
     }
     const result = await this.service.api.getVault(vaultId, getOptions);
-    console.log(result)
-    console.log(result.membership?.items?.[0])
     return this.service.processVault(result, !result.public && getOptions.shouldDecrypt, result.__keys__);
   }
 
@@ -108,7 +106,6 @@ class VaultModule {
         privateKey: vaultKeyPair.privateKey
       }]);
       // encrypt vault private key to user public key
-      console.log("encrypt vault private key")
       const encryptedVaultPrivateKey = await this.service.encrypter.encrypt(vaultKeyPair.privateKey)
       const keys = [{
         publicKey: arrayToBase64(vaultKeyPair.publicKey),

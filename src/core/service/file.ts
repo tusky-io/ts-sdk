@@ -48,7 +48,6 @@ class FileService extends Service {
       const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
       const encryptedFile = await encryptWithPublicKey(base64ToArray(currentVaultPublicKey), fileBuffer);
       this.file = await createFileLike(new TextEncoder().encode(JSON.stringify(encryptedFile)), { name: this.name, mimeType: file.type, lastModified: file.lastModified });
-      console.log(this.file)
     }
   }
 

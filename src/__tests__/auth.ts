@@ -3,13 +3,20 @@ import axios from 'axios';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import EnokiClient from "./enoki/client";
 import { getAuthCode } from './server';
+import { keyInSelect } from 'readline-sync';
 
 const REDIRECT_URI = 'http://localhost:3000/auth';
+
+function getAuthProvider() {
+  const options = ['Google', 'Twitch', 'Facebook'];
+  const index = keyInSelect(options, 'Please choose your auth provider:');
+  return options[index];
+}
 
 export const AuthProvider = {
   "Google": {
     "CLIENT_ID": "52977920067-5hf88uveake073ent9s5snn0d8kfrf0t.apps.googleusercontent.com",
-    "CLIENT_SECRET": process.env.GOOGLE_CLIENT_SECRET,
+    "CLIENT_SECRET": "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",
     "OAUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
     "TOKEN_ENDPOINT": "https://oauth2.googleapis.com/token"
   },
@@ -42,7 +49,9 @@ export async function getAuthorizationCode(nonce: string, authProvider = default
     client_id: AuthProvider[authProvider].CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: "code",
-    scope: "openid",
+    scope: "openid profile",
+    access_type: "offline",
+    prompt: "consent"
   });
 
   const oauthUrl = `${AuthProvider[authProvider].OAUTH_URL}?${params}`;
@@ -68,7 +77,7 @@ export async function getIdTokenWithAuthorizationCode(code: string, authProvider
     client_id: AuthProvider[authProvider].CLIENT_ID,
     client_secret: AuthProvider[authProvider].CLIENT_SECRET,
     redirect_uri: REDIRECT_URI,
-    grant_type: 'authorization_code'
+    grant_type: 'authorization_code',
   } as any).toString()
 
   // Exchange the authorization code for an access token
@@ -78,11 +87,39 @@ export async function getIdTokenWithAuthorizationCode(code: string, authProvider
     });
 
     const tokens = tokenResponse.data;
+    console.log(tokens)
     console.log(`JWT: ${tokens.id_token}`);
     return tokens.id_token
   } catch (error) {
     console.log(error)
   }
+}
+
+export async function getIdTokenWithImplicitFlow(nonce: string, authProvider = defaultAuthProvider) {
+  if (!AuthProvider[authProvider].CLIENT_SECRET) {
+    throw new Error(`Missing ${authProvider} client secret, please configure it in .env file.`);
+  }
+  const params = new URLSearchParams({
+    nonce: nonce,
+    client_id: AuthProvider[authProvider].CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    access_type: "offline",
+    response_type: "code token",
+    scope: "openid",
+  }).toString()
+
+  const oauthUrl = `${AuthProvider[authProvider].OAUTH_URL}?${params}`;
+
+  console.log(`Sign in with ${authProvider} first with the following url and come back later: `);
+  console.log(oauthUrl);
+
+  // Wait for the authorization code to be captured by the local server
+  let authorizationCode;
+  while (!authorizationCode) {
+    authorizationCode = getAuthCode();
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+  return authorizationCode;
 }
 
 export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise<{ jwt: string, keyPair: Ed25519Keypair, address: string }> => {
@@ -92,6 +129,8 @@ export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise
   const enokiClient = new EnokiClient({ apiKey: process.env.ENOKI_PUB_KEY as string });
 
   const createZkLoginResponse = await enokiClient.createZkLoginNonce(ephemeralKeyPair);
+
+  // const idToken = await getIdTokenWithImplicitFlow(createZkLoginResponse.data.nonce, authProvider);
 
   const authorizationCode = await getAuthorizationCode(createZkLoginResponse.data.nonce, authProvider);
 
