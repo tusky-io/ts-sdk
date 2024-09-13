@@ -4,7 +4,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import { useCurrentAccount, useSignPersonalMessage, useCurrentWallet } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Akord } from "@akord/carmella-sdk";
+import { Akord, AkordWallet, Encrypter } from "@akord/carmella-sdk";
 window.Buffer = window.Buffer || require("buffer").Buffer;
 
 function App() {
@@ -38,19 +38,11 @@ function App() {
       .withLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any);
 
-    await akord.signIn()
-    const user = await akord.me.get();
-    // TODO: prompt for password
-    let password = "passakordpass";
-    // if (!user.encPrivateKey) {
-    //   const userWallet = await AkordWallet.create(password);
-    //   const userKeyPair = userWallet.encryptionKeyPair;
-    //   await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
-    //   akord.useEncrypter(new Encrypter({ keypair: userKeyPair }));
-    // } else {
-    //   const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
-    //   akord.useEncrypter(new Encrypter({ keypair: userWallet.encryptionKeyPair }));
-    // }
+    await akord.signIn();
+    console.log("ADDRESS: " + akord.address);
+
+    await handleEncryptionContext(akord);
+
     setAkord(akord);
   };
 
@@ -62,19 +54,28 @@ function App() {
 
     await akord.signIn();
     console.log("ADDRESS: " + akord.address);
-    const user = await akord.me.get();
-    // TODO: prompt for password
-    // let password = "passakordpass";
-    // if (!user.encPrivateKey) {
-    //   const userWallet = await AkordWallet.create(password);
-    //   const userKeyPair = userWallet.encryptionKeyPair;
-    //   await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
-    //   akord.useEncrypter(new Encrypter({ keypair: userKeyPair }));
-    // } else {
-    //   const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
-    //   akord.useEncrypter(new Encrypter({ keypair: userWallet.encryptionKeyPair }));
-    // }
+
+    await handleEncryptionContext(akord);
+
     setAkord(akord);
+  };
+
+  const handleEncryptionContext = async (akord: Akord) => {
+    const user = await akord.me.get();
+    // prompt the user for a password
+    const password = window.prompt("Please enter your password:");
+    if (!password) {
+      throw new Error("Password input canceled.");
+    }
+    if (!user.encPrivateKey) {
+      const userWallet = await AkordWallet.create(password);
+      const userKeyPair = userWallet.encryptionKeyPair;
+      await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
+      akord.withEncrypter(new Encrypter({ keypair: userKeyPair }));
+    } else {
+      const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
+      akord.withEncrypter(new Encrypter({ keypair: userWallet.encryptionKeyPair }));
+    }
   };
 
   const handleUpload = async (files: FileList | null) => {
