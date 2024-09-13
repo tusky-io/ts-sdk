@@ -639,8 +639,16 @@ export class ApiClient {
     form.append("parentId", this._parentId);
     form.append("name", this._file.name);
 
-    const buffer = await this._file.arrayBuffer();
-    form.append("file", Buffer.from(buffer), { filename: this._file.name, contentType: this._file.type });
+    try {
+      const buffer = await this._file.arrayBuffer()
+      // const blob = new Blob([buffer], { type: 'application/octet-stream' });
+      form.append("file", Buffer.from(buffer), { filename: this._file.name, contentType: this._file.type });
+    } catch (e) {
+      form.append("file", this._file, {
+        filename: "file",
+        contentType: "application/octet-stream",
+      });
+    }
 
     const config = {
       method: "post",
