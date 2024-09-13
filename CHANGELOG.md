@@ -1,3 +1,11 @@
+## [0.21.1](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0...v0.21.1) (2024-09-13)
+
+
+### Bug Fixes
+
+* append file in browser ([6fb7a58](https://github.com/Akord-com/carmella-sdk/commit/6fb7a5895bb2e9b84f6312e70e4600d1094cbdec))
+* get auth tokens path ([4bb5c28](https://github.com/Akord-com/carmella-sdk/commit/4bb5c28777a85e69390cee4ae37940d13b71604a))
+
 # [0.21.0](https://github.com/Akord-com/carmella-sdk/compare/v0.20.0...v0.21.0) (2024-09-12)
 
 
