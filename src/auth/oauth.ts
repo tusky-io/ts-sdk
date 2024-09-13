@@ -167,21 +167,21 @@ class OAuth {
 
   getAccessToken() {
     if (!this.accessToken) {
-      this.accessToken = this.storage.getItem('access_token');
+      this.accessToken = this.storage.getItem(STORAGE_PATH_ACCESS_TOKEN);
     }
     return this.accessToken;
   }
 
   getRefreshToken() {
     if (!this.refreshToken) {
-      this.refreshToken = this.storage.getItem('refresh_token');
+      this.refreshToken = this.storage.getItem(STORAGE_PATH_REFRESH_TOKEN);
     }
     return this.refreshToken;
   }
 
   getIdToken() {
     if (!this.idToken) {
-      this.idToken = this.storage.getItem('id_token');
+      this.idToken = this.storage.getItem(STORAGE_PATH_ID_TOKEN);
     }
     return this.idToken;
   }

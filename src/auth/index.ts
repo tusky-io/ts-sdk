@@ -163,13 +163,15 @@ export class Auth {
       }
       case "OAuth": {
         const aOuthClient = new OAuth({
-
           clientId: this.clientId,
           redirectUri: this.redirectUri,
           authProvider: this.authProvider,
           storage: this.storage
         });
         let idToken = aOuthClient.getIdToken();
+        if (!idToken) {
+          throw new Unauthorized("Invalid authorization.");
+        }
         if (aOuthClient.isTokenExpiringSoon(idToken)) {
           Logger.log('Token is expired or about to expire. Refreshing tokens...');
           await aOuthClient.refreshTokens();
