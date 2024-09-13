@@ -30,10 +30,10 @@
     module-error "^1.0.2"
     run-parallel-limit "^1.1.0"
 
-"@akord/carmella-sdk@0.21.1":
-  version "0.21.1"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.21.1.tgz#f45e4d6bcaad8789a492280091beef3c25407d6f"
-  integrity sha512-NK4g3BKc5WYeF/WtEscj8aoxl2YhWPG3nlHfEJfNdXev6GVr2OI51zF3mGGwExNTfpBLM9WpblXdzlvZvVWsEg==
+"@akord/carmella-sdk@0.21.2":
+  version "0.21.2"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.21.2.tgz#6d7baea8949ab3c5cbc85c69887504b8cae3b0b5"
+  integrity sha512-hDxuGDlVZc0zV/D0TcvDW5gGmRUsactli5QdDY9QsmsuwvSKqky8PxJQ9KsRxB296KndAdVU7b7Q8XrL+qiy8Q==
   dependencies:
     "@akord/browser-level" "^1.0.2"
     "@akord/ts-cacheable" "1.0.13"
