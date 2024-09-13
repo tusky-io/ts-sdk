@@ -1,3 +1,10 @@
+## [0.21.2](https://github.com/Akord-com/carmella-sdk/compare/v0.21.1...v0.21.2) (2024-09-13)
+
+
+### Bug Fixes
+
+* set default storage ([42ecb1c](https://github.com/Akord-com/carmella-sdk/commit/42ecb1cbb65de64234a1d0877f3c1567abda45e8))
+
 ## [0.21.1](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0...v0.21.1) (2024-09-13)
 
 
