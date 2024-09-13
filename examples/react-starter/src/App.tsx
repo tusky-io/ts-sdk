@@ -32,6 +32,14 @@ function App() {
     )
   }
 
+  const signOut = () => {
+    return (
+      <button type="submit" onClick={() => handleSignOut()}>
+        Sign out
+      </button>
+    )
+  }
+
   const handleSignInWithWallet = async () => {
     const akord = Akord
       .withWallet({ walletSignFnClient: signPersonalMessage })
@@ -58,6 +66,15 @@ function App() {
     await handleEncryptionContext(akord);
 
     setAkord(akord);
+  };
+
+
+  const handleSignOut = async () => {
+    if (akord) {
+      akord.signOut();
+      console.log("ADDRESS: " + akord.address);
+    }
+    setAkord(null)
   };
 
   const handleEncryptionContext = async (akord: Akord) => {
@@ -130,7 +147,7 @@ function App() {
       <main className="vh-100 d-flex justify-content-center align-items-center">
         <ConnectButton id="connect_button" />
         {akord ? uploadForm() : signInWithWalletForm()}
-        {akord ? <></> : signInWithGoogleForm()}
+        {akord ? signOut() : signInWithGoogleForm()}
       </main>
     </div>
     </>
