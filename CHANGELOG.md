@@ -1,3 +1,13 @@
+# [0.22.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.21.2...v0.22.0-dev.1) (2024-09-16)
+
+
+### Features
+
+* add decryption worker ([b9856ca](https://github.com/Akord-com/carmella-sdk/commit/b9856ca2956c2aed93662e3a2c89d9410caf58c8))
+* add types declaration ([5050e01](https://github.com/Akord-com/carmella-sdk/commit/5050e01be6846c5a8c282f77f5ab5dbafea3aede))
+* add uppy uploads starter ([330019d](https://github.com/Akord-com/carmella-sdk/commit/330019d3d725db9e31ff1b7af754168ac63bc40f))
+* use tus protocol ([c5f979e](https://github.com/Akord-com/carmella-sdk/commit/c5f979e067844b2000462342e9bba118776c8966))
+
 ## [0.21.2](https://github.com/Akord-com/carmella-sdk/compare/v0.21.1...v0.21.2) (2024-09-13)
 
 
