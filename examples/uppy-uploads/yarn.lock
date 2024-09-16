@@ -2350,7 +2350,7 @@
     "@uppy/utils" "^6.0.1"
     preact "^10.5.13"
 
-"@uppy/companion-client@^4.1.0":
+"@uppy/companion-client@^4.0.1", "@uppy/companion-client@^4.1.0":
   version "4.1.0"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/companion-client/-/companion-client-4.1.0.tgz#9478c62ae31d6353ce0a37aa6a1a329a36e67e3a"
   integrity sha512-nQ8CQfZcYVBNtFQ6ePj7FDIq38DXlH0YpzP/91LR9gnDVISJKKUuvWfr6tPktj1lRw9FZV8jLmlMKT2ituVKiw==
@@ -2407,6 +2407,16 @@
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/drag-drop/-/drag-drop-4.0.2.tgz#fce95bddf344518818b541f74493b1a6e5e2c585"
   integrity sha512-0/b8hBAX8tDBikkr2tORtKT3gEcCxQlygSBCJrbLTQTDh4poTpmHWyquqvsCcBtW7AqULhQn5h/xSSacBnEf/Q==
   dependencies:
+    "@uppy/utils" "^6.0.2"
+    preact "^10.5.13"
+
+"@uppy/dropbox@^4.1.0":
+  version "4.1.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/dropbox/-/dropbox-4.1.0.tgz#05f1028db2c12e4f7bb1514d1493b938f1706f58"
+  integrity sha512-Ha+WhJwQyQ+VRMrfPKdr+tuEBKRUMMeCfqfDpjasiwJSgDxQUFgGhv81ZoHXYtxs/aOwucsMl3G4tt9FM3EK/w==
+  dependencies:
+    "@uppy/companion-client" "^4.1.0"
+    "@uppy/provider-views" "^4.0.1"
     "@uppy/utils" "^6.0.2"
     preact "^10.5.13"
 
@@ -2484,7 +2494,18 @@
     "@uppy/utils" "^6.0.0"
     exifr "^7.0.0"
 
-"@uppy/tus@^4.1.0":
+"@uppy/transloadit@^4.1.0":
+  version "4.1.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/transloadit/-/transloadit-4.1.0.tgz#a1414d868c510354d574a447fba7515b682929dd"
+  integrity sha512-3VDLFL14BIjkgM/Q540/RYOhG0t0QFkr1YF8I1VbcaG6/zLEJy4cWtx9pYmTnTDi+XtY3YRRhblazPS97rUeXQ==
+  dependencies:
+    "@uppy/companion-client" "^4.0.1"
+    "@uppy/provider-views" "^4.0.1"
+    "@uppy/tus" "^4.0.1"
+    "@uppy/utils" "^6.0.2"
+    component-emitter "^2.0.0"
+
+"@uppy/tus@^4.0.1", "@uppy/tus@^4.1.0":
   version "4.1.0"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@uppy/tus/-/tus-4.1.0.tgz#58c7f3b8b9123306ae2f2a95e78ea42824a43018"
   integrity sha512-RK/37h3gVzd0e6JO+fAcwI0iiQEzKPXJWmnre6JKGJLl35eH1PYi/2wBiTUPuVifnJzfA0g8yK+WRbZ7Jz83Lw==
@@ -3577,6 +3598,11 @@ commondir@^1.0.1:
   version "1.0.1"
   resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/commondir/-/commondir-1.0.1.tgz#ddd800da0c66127393cca5950ea968a3aaf1253b"
   integrity sha512-W9pAhw0ja1Edb5GVdIF1mjZw/ASI0AlShXM83UUGe2DVr5TdAPEA1OA8m/g8zWp9x6On7gqufY+FatDbC3MDQg==
+
+component-emitter@^2.0.0:
+  version "2.0.0"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/component-emitter/-/component-emitter-2.0.0.tgz#3a137dfe66fcf2efe3eab7cb7d5f51741b3620c6"
+  integrity sha512-4m5s3Me2xxlVKG9PkZpQqHQR7bgpnN7joDMJ4yvVkVXngjoITG76IaZmzmywSeRTeTpc6N6r3H3+KyUurV8OYw==
 
 compressible@~2.0.16:
   version "2.0.18"
