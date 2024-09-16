@@ -11,7 +11,7 @@ import { User, UserPublicInfo } from "../types/user";
 import { EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
-import { Logger } from "../logger";
+import { logger } from "../logger";
 import FormData from "form-data";
 import { Buffer } from "buffer";
 import { httpClient } from "./http";
@@ -587,13 +587,14 @@ export class ApiClient {
     if (this._data) {
       config.data = this._data;
     }
-    Logger.log(`Request ${config.method}: ` + config.url);
+    logger.info(`Request ${config.method}: ` + config.url);
 
     return await retry(async () => {
       try {
         const response = await this._httpClient(config);
         return response.data;
       } catch (error) {
+        logger.debug(config);
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
     });
@@ -678,13 +679,15 @@ export class ApiClient {
       },
     } as AxiosRequestConfig;
 
-    Logger.log(`Request ${config.method}: ` + config.url);
+    logger.info(`Request ${config.method}: ` + config.url);
 
     try {
       const response = await this._httpClient(config);
+      logger.debug(response.data);
       return response.data;
     } catch (error) {
-      Logger.error(error)
+      logger.debug(config);
+      logger.error(error);
       throwError(error.response?.status, error.response?.data?.msg, error);
     }
   }
@@ -1084,7 +1087,7 @@ export class ApiClient {
 
     const url = `${this._apiUrl}/files/${this._resourceId}/data`;
 
-    Logger.log(`Request ${config.method}: ` + url);
+    logger.info(`Request ${config.method}: ` + url);
 
     try {
       const response = await fetch(url, config);
@@ -1122,7 +1125,7 @@ async function retry<T>(
     } catch (error) {
       if (retryableErrors.some((type) => error instanceof type)) {
         attempt++;
-        Logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
+        logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
         if (attempt >= retries) {
           throw error;
         }

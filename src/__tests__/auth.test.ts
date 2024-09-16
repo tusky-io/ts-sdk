@@ -16,7 +16,7 @@ describe("Testing auth functions", () => {
     const keypair = new Ed25519Keypair();
     akord = Akord
       .withWallet({ walletSigner: keypair })
-      .withLogger({ debug: true, logToFile: true })
+      .withLogger({ logLevel: "debug", logToFile: true })
       .withApi({ env: process.env.ENV as any })
 
     await akord.signIn();

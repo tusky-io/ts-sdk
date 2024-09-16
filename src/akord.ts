@@ -2,7 +2,7 @@ import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
 import { ApiConfig, ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
-import { Logger } from "./logger";
+import { ConsoleLogger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
 import { VaultModule } from "./core/vault";
@@ -99,8 +99,8 @@ export class Akord {
   }
 
   withLogger(config: LoggerConfig): this {
-    Logger.debug = config?.debug;
-    Logger.logToFile = config?.logToFile;
+    const logger = config.logger ? config.logger : new ConsoleLogger(config);
+    setLogger(logger);
     return this;
   }
 
@@ -147,8 +147,6 @@ export class Akord {
     this.api = config.api ? config.api : new AkordApi(config);
     Auth.configure(config);
     Plugins.register(config?.plugins, this._env);
-    Logger.debug = config?.debug;
-    Logger.logToFile = config?.logToFile;
     CacheBusters.cache = config?.cache;
   }
 }

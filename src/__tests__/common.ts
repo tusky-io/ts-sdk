@@ -13,14 +13,14 @@ export async function initInstance(): Promise<Akord> {
     console.log("--- API key flow");
     return Akord
       .withApiKey({ apiKey: process.env.API_KEY })
-      .withLogger({ debug: true, logToFile: true })
+      .withLogger({ logLevel: "debug", logToFile: true })
       .withApi({ env: process.env.ENV as any })
   } else {
     console.log("--- mock Enoki flow");
     const { jwt, address, keyPair } = await mockEnokiFlow();
     return Akord
       .withAuthTokenProvider({ authTokenProvider: async () => jwt })
-      .withLogger({ debug: true, logToFile: true })
+      .withLogger({ logLevel: "debug", logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
       .withApi({ env: process.env.ENV as any })
   }

@@ -1,6 +1,6 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
-import { Logger } from "../logger";
+import { logger, Logger } from "../logger";
 import { AuthProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Conflict } from "../errors/conflict";
 import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
@@ -73,11 +73,11 @@ export class Auth {
               },
               {
                 onSuccess: (data: { signature: string }) => {
-                  Logger.log("Message signed on client: " + data.signature);
+                  logger.info("Message signed on client: " + data.signature);
                   resolve(data.signature);
                 },
                 onError: (error: Error) => {
-                  Logger.log("Error signing on client: " + error);
+                  logger.info("Error signing on client: " + error);
                   reject(error);
                 },
               }
@@ -114,7 +114,7 @@ export class Auth {
           return { address };
         } else {
           // step 1: if no code in the URL, initiate the OAuth flow
-          Logger.log('No authorization code found, redirecting to OAuth provider...');
+          logger.info('No authorization code found, redirecting to OAuth provider...');
           await aOuthClient.initOAuthFlow();
           return {};
         }
@@ -173,9 +173,9 @@ export class Auth {
           throw new Unauthorized("Invalid authorization.");
         }
         if (aOuthClient.isTokenExpiringSoon(idToken)) {
-          Logger.log('Token is expired or about to expire. Refreshing tokens...');
+          logger.info('Token is expired or about to expire. Refreshing tokens...');
           await aOuthClient.refreshTokens();
-          Logger.log('Tokens refreshed successfully.');
+          logger.info('Tokens refreshed successfully.');
           idToken = aOuthClient.getIdToken();
         }
         return {
@@ -193,7 +193,7 @@ export class Auth {
           }
           throw new Unauthorized("Please add authTokenProvider into config.");
         } catch (e) {
-          Logger.error(e)
+          logger.error(e)
           throw new Unauthorized("Invalid authorization.");
         }
       }

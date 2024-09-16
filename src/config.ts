@@ -4,7 +4,7 @@ import { Signer } from "./signer"
 import { Env } from "./env"
 import { Encrypter } from "./encrypter"
 import { AuthType } from "./types/auth"
-import { Logger } from "./logger"
+import { Logger, LogLevel } from "./logger"
 import AkordApi from "./api/akord-api"
 
 export interface ClientConfig {
@@ -25,7 +25,7 @@ export interface ClientConfig {
 }
 
 export interface LoggerConfig {
-  debug?: boolean
+  logLevel?: LogLevel // ex: debug
   logToFile?: boolean
   logger?: Logger
 }

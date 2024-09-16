@@ -2,7 +2,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import EnokiClient from './enoki';
 import { AuthProvider, OAuthConfig } from '../types/auth';
 import { BadRequest } from '../errors/bad-request';
-import { Logger } from '../logger';
+import { logger } from '../logger';
 import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
 import { STORAGE_PATH_ACCESS_TOKEN, STORAGE_PATH_ID_TOKEN, STORAGE_PATH_REFRESH_TOKEN } from '.';
@@ -67,7 +67,7 @@ class OAuth {
     const code = urlParams.get('code');
 
     if (code) {
-      Logger.log('Authorization Code:' + code);
+      logger.info('Authorization Code:' + code);
       // exchange the authorization code for tokens
       await this.exchangeCodeForTokens(code);
 
@@ -96,7 +96,7 @@ class OAuth {
       this.storage.setItem(STORAGE_PATH_ID_TOKEN, this.idToken);
       this.storage.setItem(STORAGE_PATH_REFRESH_TOKEN, this.refreshToken);
     } catch (error) {
-      Logger.error(error);
+      logger.error(error);
     }
   }
 
