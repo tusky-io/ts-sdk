@@ -30,6 +30,7 @@ export default class AkordApi extends Api {
   constructor(config: ClientConfig) {
     super();
     this.config = apiConfig(config.env);
+    this.userAgent = config.userAgent;
     this.autoExecute = config.autoExecute;
   }
 

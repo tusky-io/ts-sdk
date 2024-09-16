@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { Akord, AkordWallet, Encrypter } from '../';
+import { Akord, AkordWallet } from '../';
 import { cleanup, testDataPath } from './common';
 import { createFileLike } from '../types/file';
 import { firstFileName } from './data/content';
@@ -66,7 +66,7 @@ describe("Testing encryption functions", () => {
     akord = Akord
       .withWallet({ walletSigner: keypair })
       .withLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any)
+      .withApi({ env: process.env.ENV as any })
 
     await akord.signIn();
 
@@ -77,11 +77,8 @@ describe("Testing encryption functions", () => {
     await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
   });
 
-  it("should retrieve user encryption context", async () => {
-    const user = await akord.me.get();
-    const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
-    const encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
-    akord.withEncrypter(encrypter);
+  it("should set user encryption context", async () => {
+    await akord.withEncrypter({ password: password });
   });
 
   it("should create a private vault", async () => {
@@ -102,7 +99,8 @@ describe("Testing encryption functions", () => {
   });
 
   it("should upload a private file", async () => {
-    const file = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    const file = await akord.file.get(id);
     console.log(file)
     const type = "image/png";
     console.log(file)

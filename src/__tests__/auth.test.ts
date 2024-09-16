@@ -17,7 +17,7 @@ describe("Testing auth functions", () => {
     akord = Akord
       .withWallet({ walletSigner: keypair })
       .withLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any)
+      .withApi({ env: process.env.ENV as any })
 
     await akord.signIn();
   });

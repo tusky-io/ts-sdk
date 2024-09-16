@@ -4,6 +4,8 @@ import { Signer } from "./signer"
 import { Env } from "./env"
 import { Encrypter } from "./encrypter"
 import { AuthType } from "./types/auth"
+import { Logger } from "./logger"
+import AkordApi from "./api/akord-api"
 
 export interface ClientConfig {
   env?: Env
@@ -23,6 +25,18 @@ export interface ClientConfig {
 }
 
 export interface LoggerConfig {
-  debug: boolean
-  logToFile: boolean
+  debug?: boolean
+  logToFile?: boolean
+  logger?: Logger
+}
+
+export interface EncrypterConfig {
+  encrypter?: Encrypter
+  password?: string
+}
+
+export interface ApiConfig {
+  api?: AkordApi
+  env?: Env
+  userAgent?: string
 }

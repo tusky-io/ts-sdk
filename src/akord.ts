@@ -1,6 +1,6 @@
 import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
-import { ClientConfig, LoggerConfig } from "./config";
+import { ApiConfig, ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
 import { Logger } from "./logger";
 import { FolderModule } from "./core/folder";
@@ -18,6 +18,7 @@ import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
+import { AkordWallet } from "./crypto";
 
 export class Akord {
   public api: Api;
@@ -25,7 +26,6 @@ export class Akord {
   private _signer: Signer;
   private _encrypter: Encrypter;
   private _env: Env;
-  private _userAgent: string;
 
   get me(): MeModule {
     return new MeModule(this.getConfig());
@@ -109,18 +109,19 @@ export class Akord {
     return this;
   }
 
-  withEncrypter(encrypter: Encrypter): this {
-    this._encrypter = encrypter;
+  async withEncrypter(config: EncrypterConfig): Promise<this> {
+    if (config.encrypter) {
+      this._encrypter = config.encrypter;
+    } else if (config.password) {
+      const user = await this.me.get();
+      const userWallet = await AkordWallet.importFromEncBackupPhrase(config.password, user.encPrivateKey as string);
+      this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+    }
     return this;
   }
 
-  env(env: Env): this {
-    this._env = env;
-    return this;
-  }
-
-  userAgent(userAgent: string): this {
-    this._userAgent = userAgent;
+  withApi(config: ApiConfig): this {
+    this.api = config.api ? config.api : new AkordApi(config);
     return this;
   }
 
@@ -129,7 +130,6 @@ export class Akord {
       api: this.api,
       signer: this._signer,
       encrypter: this._encrypter,
-      userAgent: this._userAgent
     }
   }
 
@@ -145,7 +145,6 @@ export class Akord {
     this._encrypter = config.encrypter;
     this._env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
-    this._userAgent = config.userAgent;
     Auth.configure(config);
     Plugins.register(config?.plugins, this._env);
     Logger.debug = config?.debug;

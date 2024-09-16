@@ -14,7 +14,7 @@ export async function initInstance(): Promise<Akord> {
     return Akord
       .withApiKey({ apiKey: process.env.API_KEY })
       .withLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any);
+      .withApi({ env: process.env.ENV as any })
   } else {
     console.log("--- mock Enoki flow");
     const { jwt, address, keyPair } = await mockEnokiFlow();
@@ -22,7 +22,7 @@ export async function initInstance(): Promise<Akord> {
       .withAuthTokenProvider({ authTokenProvider: async () => jwt })
       .withLogger({ debug: true, logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
-      .env(process.env.ENV as any);
+      .withApi({ env: process.env.ENV as any })
   }
 }
 

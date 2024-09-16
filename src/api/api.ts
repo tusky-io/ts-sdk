@@ -16,6 +16,7 @@ import { CreateChallengeRequestPayload, GenerateJWTRequestPayload, GenerateJWTRe
 abstract class Api {
   config: ApiConfig
   autoExecute: boolean // if set to true, transactions will be admin signed & executed
+  userAgent: string // client name
 
   constructor() { }
 
