@@ -57,7 +57,7 @@ export class Auth {
     this.authProvider = options.authProvider;
     this.clientId = options.clientId;
     this.redirectUri = options.redirectUri;
-    this.storage = options.storage || sessionStorage;
+    this.storage = options.storage || globalThis.sessionStorage;
   }
 
   public static async signIn(): Promise<{ address?: string }> {

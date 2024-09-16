@@ -51,7 +51,7 @@ class OAuth {
     this.redirectUri = config.redirectUri;
     this.authProvider = config.authProvider;
     this.clientId = config.clientId || AuthProviderConfig[this.authProvider].CLIENT_ID;
-    this.storage = config.storage || sessionStorage;
+    this.storage = config.storage || globalThis.sessionStorage;
   }
 
   // redirect to OAuth provider's authorization URL
