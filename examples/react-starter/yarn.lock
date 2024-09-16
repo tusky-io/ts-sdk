@@ -30,10 +30,10 @@
     module-error "^1.0.2"
     run-parallel-limit "^1.1.0"
 
-"@akord/carmella-sdk@0.19.0":
-  version "0.19.0"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.19.0.tgz#4a3b40835df320dc6832195b33d0353e8cd6a10e"
-  integrity sha512-OV0tbJd++Ebj8jniQX4jJd7pcDj6t6GbcEWkQF15G7EbL1ghY2/J1DjMlKtjGZBPH/GNvf9XJX89SPV+K38q2A==
+"@akord/carmella-sdk@0.21.2":
+  version "0.21.2"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@akord/carmella-sdk/-/carmella-sdk-0.21.2.tgz#6d7baea8949ab3c5cbc85c69887504b8cae3b0b5"
+  integrity sha512-hDxuGDlVZc0zV/D0TcvDW5gGmRUsactli5QdDY9QsmsuwvSKqky8PxJQ9KsRxB296KndAdVU7b7Q8XrL+qiy8Q==
   dependencies:
     "@akord/browser-level" "^1.0.2"
     "@akord/ts-cacheable" "1.0.13"
@@ -2308,12 +2308,12 @@
 
 "@tanstack/query-core@5.55.4":
   version "5.55.4"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@tanstack/query-core/-/query-core-5.55.4.tgz#21ef6c6505bf108570f1c18f5f3b90efc8b1c2d6"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@tanstack/query-core/-/query-core-5.55.4.tgz"
   integrity sha512-uoRqNnRfzOH4OMIoxj8E2+Us89UIGXfau981qYJWsNMkFS1GXR4UIyzUTVGq4N7SDLHgFPpo6IOazqUV5gkMZA==
 
 "@tanstack/react-query@^5.37.1":
   version "5.55.4"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@tanstack/react-query/-/react-query-5.55.4.tgz#4c8f54a05704e9f9a9ffc77a6dfa79b5a33f9905"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/@tanstack/react-query/-/react-query-5.55.4.tgz"
   integrity sha512-e3uX5XkLD9oTV66/VsVpkYz3Ds/ps/Yk+V5d89xthAbtNIKKBEm4FdNb9yISFzGEGezUzVO68qmfmiSrtScvsg==
   dependencies:
     "@tanstack/query-core" "5.55.4"
@@ -9979,7 +9979,7 @@ typedarray-to-buffer@^3.1.5:
 
 typescript@^5.0.4:
   version "5.5.4"
-  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/typescript/-/typescript-5.5.4.tgz#d9852d6c82bad2d2eda4fd74a5762a8f5909e9ba"
+  resolved "https://akord-014401813129.d.codeartifact.eu-central-1.amazonaws.com/npm/carmella/typescript/-/typescript-5.5.4.tgz"
   integrity sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==
 
 unbox-primitive@^1.0.2:

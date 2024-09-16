@@ -18,6 +18,7 @@ import { httpClient } from "./http";
 import { FileLike } from "../types/file";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession } from "../types/payment";
+import { GenerateJWTResponsePayload } from "../types/auth";
 
 export class ApiClient {
   private _apiUrl: string;
@@ -44,6 +45,13 @@ export class ApiClient {
   private _status: string
   private _vaultId: string;
   private _parentId: string;
+
+  // auth specific
+  private _authProvider: string;
+  private _redirectUri: string;
+  private _refreshToken: string;
+  private _authCode: string
+  private _grantType: string
 
   // vault specific
   private _public: boolean
@@ -116,6 +124,12 @@ export class ApiClient {
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
     clone._encPrivateKey = this._encPrivateKey;
+
+    clone._authProvider = this._authProvider;
+    clone._redirectUri = this._redirectUri;
+    clone._refreshToken = this._refreshToken;
+    clone._authCode = this._authCode;
+    clone._grantType = this._grantType;
 
     clone._status = this._status;
     clone._autoExecute = this._autoExecute;
@@ -229,6 +243,31 @@ export class ApiClient {
 
   encPrivateKey(encPrivateKey: string): ApiClient {
     this._encPrivateKey = encPrivateKey;
+    return this;
+  }
+
+  authProvider(authProvider: string): ApiClient {
+    this._authProvider = authProvider;
+    return this;
+  }
+
+  redirectUri(redirectUri: string): ApiClient {
+    this._redirectUri = redirectUri;
+    return this;
+  }
+
+  refreshToken(refreshToken: string): ApiClient {
+    this._refreshToken = refreshToken;
+    return this;
+  }
+
+  authCode(authCode: string): ApiClient {
+    this._authCode = authCode;
+    return this;
+  }
+
+  grantType(grantType: string): ApiClient {
+    this._grantType = grantType;
     return this;
   }
 
@@ -485,9 +524,9 @@ export class ApiClient {
     );
   }
 
-    async getPaymentPlans(): Promise<PaymentPlan[]> {
-      return this.get(`${this._apiUrl}/${this._paymentUri}`);
-    }
+  async getPaymentPlans(): Promise<PaymentPlan[]> {
+    return this.get(`${this._apiUrl}/${this._paymentUri}`);
+  }
 
   /**
    * Generate new api key
@@ -600,8 +639,16 @@ export class ApiClient {
     form.append("parentId", this._parentId);
     form.append("name", this._file.name);
 
-    const buffer = await this._file.arrayBuffer();
-    form.append("file", Buffer.from(buffer), { filename: this._file.name, contentType: this._file.type });
+    try {
+      const buffer = await this._file.arrayBuffer()
+      // const blob = new Blob([buffer], { type: 'application/octet-stream' });
+      form.append("file", Buffer.from(buffer), { filename: this._file.name, contentType: this._file.type });
+    } catch (e) {
+      form.append("file", this._file, {
+        filename: "file",
+        contentType: "application/octet-stream",
+      });
+    }
 
     const config = {
       method: "post",
@@ -637,7 +684,7 @@ export class ApiClient {
       const response = await this._httpClient(config);
       return response.data;
     } catch (error) {
-      console.log(error)
+      Logger.error(error)
       throwError(error.response?.status, error.response?.data?.msg, error);
     }
   }
@@ -721,10 +768,30 @@ export class ApiClient {
   /**
  *
  * @requires:
- * - signature()
+ * - address()
  * @returns {Promise<string>}
  */
-  async generateJWT(): Promise<string> {
+  async createAuthChallenge(): Promise<string> {
+    if (!this._address) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#address() to add it"
+      );
+    }
+
+    this.data({
+      address: this._address
+    });
+
+    return this.post(`${this._apiUrl}/auth/create-challenge`);
+  }
+
+  /**
+*
+* @requires:
+* - signature()
+* @returns {Promise<string>}
+*/
+  async verifyAuthChallenge(): Promise<string> {
     if (!this._signature) {
       throw new BadRequest(
         "Missing signature input. Use ApiClient#signature() to add it"
@@ -735,7 +802,42 @@ export class ApiClient {
       signature: this._signature
     });
 
-    return this.post(`${this._apiUrl}/auth`);
+    return this.post(`${this._apiUrl}/auth/verify-challenge`);
+  }
+
+  /**
+  *
+  * @requires:
+  * - authProvider()
+  * - grantType()
+  * @uses:
+  * - redirectUri()
+  * - code()
+  * - refreshToken()
+  * @returns {Promise<string>}
+  */
+  async generateJWT(): Promise<GenerateJWTResponsePayload> {
+    if (!this._authProvider) {
+      throw new BadRequest(
+        "Missing authProvider input. Use ApiClient#authProvider() to add it"
+      );
+    }
+
+    if (!this._grantType) {
+      throw new BadRequest(
+        "Missing grantType input. Use ApiClient#grantType() to add it"
+      );
+    }
+
+    this.data({
+      authProvider: this._authProvider,
+      grantType: this._grantType,
+      redirectUri: this._redirectUri,
+      code: this._authCode,
+      refreshToken: this._refreshToken,
+    });
+
+    return this.post(`${this._apiUrl}/auth/token`);
   }
 
   /**
@@ -1020,7 +1122,7 @@ async function retry<T>(
     } catch (error) {
       if (retryableErrors.some((type) => error instanceof type)) {
         attempt++;
-        console.log(`Retry attempt ${attempt} failed. Retrying...`);
+        Logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
         if (attempt >= retries) {
           throw error;
         }

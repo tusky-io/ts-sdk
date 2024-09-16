@@ -41,9 +41,9 @@ const { Akord } = require("@akord/carmella-sdk");
 
 #### Init Akord
 ```js
-import { Akord, Auth } from "@akord/carmella-sdk";
-const { wallet } = await Auth.signIn(email, password);
-const akord = new Akord({ signer: wallet, encrypter: wallet });
+import { Akord } from "@akord/carmella-sdk";
+
+const akord = Akord.withOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" });
 ```
 
 #### Upload file to Akord
@@ -81,79 +81,67 @@ const akord = new Akord({ encrypter: wallet, signer: wallet, plugins: [new PubSu
 - See different setups under [examples](examples).
 
 ## Authentication
-Use `Auth` module to handle authentication.
 
+##### use OAuth (Google, Twitch, Facebook)
 ```js
-import { Auth } from "@akord/carmella-sdk";
+import { Akord } from "@akord/carmella-sdk";
+const akord = Akord.withAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" });
+
+// init OAuth flow
+await akord.initOAuthFlow();
+
+// handle OAuth callback
+await akord.handleOAuthCallback();
+
+// or perform the entire flow in one go
+await akord.signIn();
 ```
 
-- By default `Auth` is using SRP authentication
-- `Auth` stores tokens in `Storage` implementation 
-- `Storage` defaults to localStorage on web & memoryStorage on nodeJs
-- `Storage` implementation can be configured with `Auth.configure({ storage: window.sessionStorage })`
-- `Auth` is automatically refreshing tokens in SRP mode
-- On server side it is recommended to use API keys: `Auth.configure({ apiKey: 'your_api_key' })`
-- API key: can be generated over web app & over CLI
-
-##### use short living token with refresh
+##### use Sui Wallet
 ```js
-import { Auth } from "@akord/carmella-sdk";
-Auth.configure({ storage: window.sessionStorage }); // optionally - configure tokens store
+// on the browser
+import { Akord } from "@akord/carmella-sdk";
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
+
+const { mutate: signPersonalMessage } = useSignPersonalMessage();
+
+const akord = await Akord
+      .withWallet({ walletSignFnClient: signPersonalMessage })
+      .withLogger({ debug: true, logToFile: true })
+
+// sign-in to Akord (this will prompt the wallet & ask for user signature)
+await akord.signIn();
 ```
+
+```js
+// on the server
+import { Akord } from "@akord/carmella-sdk";
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+// generate new Sui Key Pair
+ const keypair = new Ed25519Keypair();
+ const akord = await Akord
+      .withWallet({ walletSigner: keypair })
+      .withLogger({ debug: true, logToFile: true });
+      .signIn();
+```
+
 ##### use API key
 ```js
-import { Auth } from "@akord/carmella-sdk";
-Auth.configure({ apiKey: "api_key" });
+import { Akord } from "@akord/carmella-sdk";
+const akord = Akord.withApiKey({ apiKey: "you-api-key" });
 ```
-##### use self-managed auth token
+
+##### use self-managed auth token provider
 ```js
-import { Akord, Auth } from "@akord/carmella-sdk";
-Auth.configure({ authToken: "auth_token" });
+import { Akord } from "@akord/carmella-sdk";
+const akord = Akord.withAuthTokenProvider({ authTokenProvider: async () => "your-self-managed-jwt" });
 ```
 
-#### `signIn(email, password)`
-
-- `email` (`string`, required)
-- `password` (`string`, required)
-- returns `Promise<{ wallet, jwt }>` - Promise with JWT token & Akord Wallet
-
-<details>
-  <summary>example</summary>
-
+##### clear current auth session
 ```js
-const { wallet } = await Auth.signIn("winston@gmail.com", "1984");
+import { Akord } from "@akord/carmella-sdk";
+Akord.signOut();
 ```
-</details>
-
-#### `signUp(email, password)`
-
-- `email` (`string`, required)
-- `password` (`string`, required)
-- `clientMetadata` (`any`, optional) - JSON client metadata, ex: { clientType: "CLI" }
-- returns `Promise<{ wallet }>` - Promise with Akord Wallet
-
-<details>
-  <summary>example</summary>
-
-```js
-const { wallet } = await Auth.signUp("winston@gmail.com", "1984");
-```
-</details>
-
-#### `verifyAccount(email, code)`
-
-- `email` (`string`, required)
-- `code` (`string`, required)
-- returns `Promise<void>`
-
-<details>
-  <summary>example</summary>
-
-```js
-await Auth.verifyAccount("winston@gmail.com", 123456);
-```
-</details>
-
 
 ## Modules
 

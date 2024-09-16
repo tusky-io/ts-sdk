@@ -11,6 +11,7 @@ import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
+import { CreateChallengeRequestPayload, GenerateJWTRequestPayload, GenerateJWTResponsePayload, VerifyChallengeRequestPayload } from "../types/auth";
 
 abstract class Api {
   config: ApiConfig
@@ -18,7 +19,11 @@ abstract class Api {
 
   constructor() { }
 
-  abstract generateJWT(input: { signature: string }): Promise<string>
+  abstract generateJWT(payload: GenerateJWTRequestPayload): Promise<GenerateJWTResponsePayload>
+
+  abstract createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<string>
+
+  abstract verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<string>
 
   abstract getMe(): Promise<User>
 

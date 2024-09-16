@@ -15,6 +15,7 @@ import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
+import { CreateChallengeRequestPayload, GenerateJWTRequestPayload, GenerateJWTResponsePayload, VerifyChallengeRequestPayload } from "../types/auth";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -32,12 +33,32 @@ export default class AkordApi extends Api {
     this.autoExecute = config.autoExecute;
   }
 
-  public async generateJWT(payload: { signature: string }): Promise<string> {
+  public async generateJWT(payload: GenerateJWTRequestPayload): Promise<GenerateJWTResponsePayload> {
+    return new ApiClient()
+      .env(this.config)
+      .authProvider(payload.authProvider)
+      .grantType(payload.grantType)
+      .authCode(payload.authCode)
+      .refreshToken(payload.refreshToken)
+      .redirectUri(payload.redirectUri)
+      .publicRoute(true)
+      .generateJWT();
+  };
+
+  public async createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<string> {
+    return new ApiClient()
+      .env(this.config)
+      .address(payload.address)
+      .publicRoute(true)
+      .createAuthChallenge();
+  };
+
+  public async verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<string> {
     return new ApiClient()
       .env(this.config)
       .signature(payload.signature)
       .publicRoute(true)
-      .generateJWT();
+      .verifyAuthChallenge();
   };
 
   public async createFolder(tx: CreateFolderTxPayload): Promise<Folder> {

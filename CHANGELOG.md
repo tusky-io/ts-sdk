@@ -1,30 +1,28 @@
-# [0.21.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0-dev.3...v0.21.0-dev.4) (2024-09-12)
+## [0.21.2](https://github.com/Akord-com/carmella-sdk/compare/v0.21.1...v0.21.2) (2024-09-13)
+
+
+### Bug Fixes
+
+* set default storage ([42ecb1c](https://github.com/Akord-com/carmella-sdk/commit/42ecb1cbb65de64234a1d0877f3c1567abda45e8))
+
+## [0.21.1](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0...v0.21.1) (2024-09-13)
+
+
+### Bug Fixes
+
+* append file in browser ([6fb7a58](https://github.com/Akord-com/carmella-sdk/commit/6fb7a5895bb2e9b84f6312e70e4600d1094cbdec))
+* get auth tokens path ([4bb5c28](https://github.com/Akord-com/carmella-sdk/commit/4bb5c28777a85e69390cee4ae37940d13b71604a))
+
+# [0.21.0](https://github.com/Akord-com/carmella-sdk/compare/v0.20.0...v0.21.0) (2024-09-12)
 
 
 ### Features
 
-* add uppy uploads starter ([330019d](https://github.com/Akord-com/carmella-sdk/commit/330019d3d725db9e31ff1b7af754168ac63bc40f))
-
-# [0.21.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0-dev.2...v0.21.0-dev.3) (2024-09-11)
-
-
-### Features
-
-* add types declaration ([5050e01](https://github.com/Akord-com/carmella-sdk/commit/5050e01be6846c5a8c282f77f5ab5dbafea3aede))
-
-# [0.21.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.21.0-dev.1...v0.21.0-dev.2) (2024-09-11)
-
-
-### Features
-
-* add decryption worker ([b9856ca](https://github.com/Akord-com/carmella-sdk/commit/b9856ca2956c2aed93662e3a2c89d9410caf58c8))
-
-# [0.21.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.20.0...v0.21.0-dev.1) (2024-09-11)
-
-
-### Features
-
-* use tus protocol ([c5f979e](https://github.com/Akord-com/carmella-sdk/commit/c5f979e067844b2000462342e9bba118776c8966))
+* add sign out function ([f3d7754](https://github.com/Akord-com/carmella-sdk/commit/f3d775480d49c3eb60e931445bddec55be502cc8))
+* change to with from use to avoid React hook naming convention collision ([0483984](https://github.com/Akord-com/carmella-sdk/commit/0483984abd5000416e5b079b882a68a4b5be83bb))
+* implement oauth flow ([99afe9f](https://github.com/Akord-com/carmella-sdk/commit/99afe9fca0a225412d063c6792b517d8032a0926))
+* refresh token logic + use api auth/token endpoint ([d9d8ad3](https://github.com/Akord-com/carmella-sdk/commit/d9d8ad307588faabf07888ecc675788a4c34db44))
+* support builder pattern with chaining for Akord init ([3f7560f](https://github.com/Akord-com/carmella-sdk/commit/3f7560f759745b980bbe90754372c3fb945082fa))
 
 # [0.20.0](https://github.com/Akord-com/carmella-sdk/compare/v0.19.0...v0.20.0) (2024-09-09)
 
