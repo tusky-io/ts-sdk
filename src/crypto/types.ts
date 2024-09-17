@@ -1,6 +1,6 @@
 export type EncryptedPayload = {
   encryptedData: EncryptedData,
-  encryptedKey: string,
+  encryptedKey: AsymEncryptedPayload,
   publicKey?: string
 }
 
@@ -20,4 +20,9 @@ export type AsymEncryptedPayload = {
   nonce: string,
   ephemPublicKey: string,
   publicKey: string,
+}
+
+export type EncryptionMetadata = {
+  encryptedKey?: string,
+  iv?: string
 }

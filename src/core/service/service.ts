@@ -5,7 +5,7 @@ import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
 import { Signer } from "../../signer";
 import { EncryptedVaultKeyPair, VaultKeyPair } from "../../types";
-import { encryptWithPublicKey } from "../../crypto-lib";
+import { encryptWithPublicKey } from "../../crypto/lib";
 import Encrypter from "../../encrypter";
 
 export const STATE_CONTENT_TYPE = "application/json";

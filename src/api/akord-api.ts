@@ -8,7 +8,7 @@ import { CreateFileTxPayload, CreateFolderTxPayload, CreateMembershipTxPayload, 
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserMutable, UserPublicInfo } from "../types/user";
-import { EncryptionMetadata } from "../types/encryption";
+import { EncryptionMetadata } from "../crypto/types";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";

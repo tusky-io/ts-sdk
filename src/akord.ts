@@ -2,7 +2,7 @@ import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
 import { ApiConfig, ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
-import { ConsoleLogger, setLogger } from "./logger";
+import { ConsoleLogger, logger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
 import { VaultModule } from "./core/vault";
@@ -19,6 +19,7 @@ import { Encrypter } from "./encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 import { AkordWallet } from "./crypto";
+import { Conflict } from "./errors/conflict";
 
 export class Akord {
   public api: Api;
@@ -114,8 +115,29 @@ export class Akord {
       this._encrypter = config.encrypter;
     } else if (config.password) {
       const user = await this.me.get();
-      const userWallet = await AkordWallet.importFromEncBackupPhrase(config.password, user.encPrivateKey as string);
-      this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+      if (!user.encPrivateKey) {
+        // generate new user encryption content
+        const userWallet = await AkordWallet.create(config.password, config.keystore);
+        const userKeyPair = userWallet.encryptionKeyPair;
+        await this.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
+        this._encrypter = new Encrypter({ keypair: userKeyPair });
+      } else {
+        // retrieve and decrypt existing user encryption content
+        const userWallet = await AkordWallet.importFromEncBackupPhrase(config.password, user.encPrivateKey, config.keystore);
+        this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+      }
+    } else if (config.keystore) {
+      const user = await this.me.get();
+      if (!user.encPrivateKey) {
+        throw new Conflict("The user needs to configure their encryption password/backup phrase.");
+      }
+      try {
+        const userWallet = await AkordWallet.importFromKeystore(user.encPrivateKey as string);
+        this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+      } catch (error) {
+        logger.error(error);
+        throw new Conflict("The user needs to provide the password again.");
+      }
     }
     return this;
   }

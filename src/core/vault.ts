@@ -7,7 +7,7 @@ import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
 import { arrayToBase64 } from "../crypto";
-import { generateKeyPair } from "../crypto-lib";
+import { generateKeyPair } from "../crypto/lib";
 
 class VaultModule {
   protected service: VaultService;

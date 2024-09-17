@@ -1,9 +1,9 @@
 import { ListOptions } from "../types/query-options";
 import lodash from "lodash";
-import { EncryptedPayload, EncryptionMetadata } from "../types/encryption";
+import { AsymEncryptedPayload, EncryptedPayload, EncryptionMetadata } from "../crypto/types";
 import PQueue from "@esm2cjs/p-queue";
 import { InternalError } from "../errors/internal-error";
-import { base64ToArray } from "../crypto";
+import { base64ToArray, base64ToJson } from "../crypto";
 
 const DECRYPTION_CONCURRENCY = 1;
 
@@ -51,7 +51,7 @@ export const getEncryptedPayload = (data: ArrayBuffer | string, metadata: Encryp
   const { encryptedKey, iv } = metadata;
   if (encryptedKey && iv) {
     return {
-      encryptedKey,
+      encryptedKey: base64ToJson(encryptedKey) as AsymEncryptedPayload,
       encryptedData: {
         iv: base64ToArray(iv),
         ciphertext: data as ArrayBuffer

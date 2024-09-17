@@ -32,7 +32,8 @@ export interface LoggerConfig {
 
 export interface EncrypterConfig {
   encrypter?: Encrypter
-  password?: string
+  password?: string // password to decrypt user's encryption key
+  keystore?: boolean // indicate whether should import the key from the keystore
 }
 
 export interface ApiConfig {

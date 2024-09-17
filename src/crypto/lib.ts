@@ -14,12 +14,11 @@ import {
   base64ToJson,
   jsonToBase64,
   stringToArray
-} from './crypto/encoding'
-import { EncryptedData } from './types/encryption';
+} from './encoding'
 
 import jsSHA from 'jssha';
-import { AsymEncryptedPayload } from './crypto/types';
-import { logger } from './logger';
+import { AsymEncryptedPayload, EncryptedData } from './types';
+import { logger } from '../logger';
 
 const HASH_ALGORITHM = 'SHA-256'
 
@@ -187,9 +186,9 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey): Promise<string | 
  * @param {CryptoKey} key
  * @returns {Promise.<ArrayBuffer>} Promise of ArrayBuffer represents the plaintext
  */
-async function decrypt(encryptedPayload: string, key: CryptoKey): Promise<ArrayBuffer> {
+async function decrypt(encryptedPayload: string | EncryptedData, key: CryptoKey): Promise<ArrayBuffer> {
   try {
-    const payload = decodePayload(encryptedPayload);
+    const payload = (<EncryptedData>encryptedPayload)?.ciphertext ? encryptedPayload as EncryptedData : decodePayload(encryptedPayload as string);
     const plaintext = await crypto.subtle.decrypt(
       {
         name: SYMMETRIC_KEY_ALGORITHM,
