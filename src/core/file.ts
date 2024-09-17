@@ -98,31 +98,12 @@ class FileModule {
       }
     }
 
-    let accessKey: CryptoKey;
-    let encryptedAesKey: string;
-    if (!this.service.isPublic) {
-      // get vault's current public key
-      const currentVaultPublicKey = this.service.keys[this.service.keys.length - 1].publicKey;
-
-      // generate fresh access key
-      const accessKey = await generateKey();
-
-      // export to base64 & encrypt it with vault's public key
-      const accessKeyB64 = await exportKeyToBase64(accessKey)
-      const encryptedKey = await encryptWithPublicKey(
-        base64ToArray(currentVaultPublicKey),
-        accessKeyB64
-      )
-      encryptedAesKey = jsonToBase64(encryptedKey);
-    }
-
     const upload = new tus.Upload(fileLike as any, {
       endpoint: `${this.service.api.config.apiUrl}/uploads`,
       retryDelays: [0, 500, 2000, 5000],
       metadata: {
         // filename: file.name, //auto-populated when using Uppy
         // filetype: file.type, //auto-populated when using Uppy
-        encryptedAesKey: encryptedAesKey,
         vaultId: vaultId,
         parentId: options.parentId ? options.parentId : vaultId,
       },
@@ -138,8 +119,31 @@ class FileModule {
           const xhr = req.getUnderlyingObject();
           const originalChunk = xhr.body;
 
-          // encrypt file chunk with access key
-          const encryptedChunk = await encrypt(originalChunk, accessKey);
+          // TODO: save & reuse the same AES key for multiple chunks
+
+          // get vault's current public key
+          const currentVaultPublicKey = this.service.keys[this.service.keys.length - 1].publicKey;
+
+          // generate fresh AES key
+          const aesKey = await generateKey();
+
+          // export to base64 & encrypt it with vault's public key
+          const accessKeyB64 = await exportKeyToBase64(aesKey)
+          const encryptedKey = await encryptWithPublicKey(
+            base64ToArray(currentVaultPublicKey),
+            accessKeyB64
+          )
+          const encryptedAesKey = jsonToBase64(encryptedKey);
+
+          const metadataHeader = xhr.getHeader("metadata");
+
+          // TODO: check the right format
+          metadataHeader["encryptedAesKey"] = encryptedAesKey;
+
+          xhr.setHeader("metadata",  metadataHeader);
+
+          // encrypt file chunk with file AES key
+          const encryptedChunk = await encrypt(originalChunk, aesKey);
 
           // update the request body with the encrypted chunk
           xhr.send(encryptedChunk);
