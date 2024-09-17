@@ -15,6 +15,7 @@ export class File extends Encryptable {
   external?: boolean;
   numberOfChunks?: number;
   chunkSize?: number;
+  encryptedAesKey?: string; // encrypted AES key used to encrypt private files
 
   vaultId: string;
   parentId?: string;
@@ -35,6 +36,7 @@ export class File extends Encryptable {
     this.size = file.size;
     this.numberOfChunks = file.numberOfChunks;
     this.chunkSize = file.chunkSize;
+    this.encryptedAesKey = file.encryptedAesKey;
     this.name = file.name;
     this.status = file.status;
     this.external = file.external;

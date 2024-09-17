@@ -14,10 +14,11 @@ import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
 import { decrypt, decryptWithPrivateKey, encrypt, encryptWithPublicKey, exportKeyToBase64, generateKey, importKeyFromBase64 } from "../crypto/lib";
-import { EncryptedPayload } from "../crypto/types";
-import { arrayBufferToArray, arrayToString, base64ToArray, jsonToBase64 } from "../crypto";
+import { AsymEncryptedPayload } from "../crypto/types";
+import { arrayBufferToArray, arrayToString, base64ToArray, base64ToJson, jsonToBase64 } from "../crypto";
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
+import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const BYTES_IN_MB = 1000000;
@@ -140,7 +141,7 @@ class FileModule {
           // TODO: check the right format
           metadataHeader["encryptedAesKey"] = encryptedAesKey;
 
-          xhr.setHeader("metadata",  metadataHeader);
+          xhr.setHeader("metadata", metadataHeader);
 
           // encrypt file chunk with file AES key
           const encryptedChunk = await encrypt(originalChunk, aesKey);
@@ -318,20 +319,31 @@ class FileModule {
   public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
     const file = await this.service.api.downloadFile(id, { responseType: options.responseType, public: false });
     // TODO: send encryption context directly with the file data
-    const fileProto = await this.service.api.getFile(id);
+    const fileMetadata = new File(await this.service.api.getFile(id));
     this.service.setIsPublic(false);
-    if (fileProto.__public__) {
+    if (fileMetadata.__public__) {
       return file.fileData as ArrayBuffer;
     } else {
       const fileBuffer = arrayBufferToArray(file.fileData as ArrayBuffer);
-      const payload = JSON.parse(new TextDecoder().decode(fileBuffer)) as EncryptedPayload;
-      const vaultEncPrivateKey = fileProto.__keys__.find((key) => key.publicKey === payload.publicKey).encPrivateKey;
+
+      if (!fileMetadata.encryptedAesKey) {
+        throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
+      }
+
+      const encryptedKeyPayload = base64ToJson(fileMetadata.encryptedAesKey) as AsymEncryptedPayload;
+
+      // decrypt vault's private key
+      const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedKeyPayload.publicKey).encPrivateKey;
       const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
-      const decryptedKey = await decryptWithPrivateKey(privateKey, payload.encryptedKey)
-      const accessKey = await importKeyFromBase64(arrayToString(decryptedKey));
+
+      // decrypt AES key with vault's private key
+      const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedKeyPayload);
+      const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
+
+      // decrypt file with AES key
       const decryptedFile = await decrypt(
-        payload.encryptedData,
-        accessKey
+        fileBuffer as any, // TODO: handle encoding/formatting
+        aesKey
       )
       return decryptedFile;
       // const vaultEncPrivateKey = fileProto.__keys__.find((key) => key.publicKey === payload.publicKey).encPrivateKey;
