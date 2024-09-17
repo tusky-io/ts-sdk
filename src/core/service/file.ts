@@ -4,7 +4,8 @@ import { EncryptedVaultKeyPair, File } from "../../types";
 import { objects } from "../../constants";
 import { createFileLike, FileLike } from "../../types/file";
 import { arrayBufferToArray, base64ToArray } from "../../crypto";
-import { encryptWithPublicKey } from "../../crypto-lib";
+import { encrypt, encryptWithPublicKey, exportKeyToBase64, generateKey } from "../../crypto/lib";
+import { EncryptedData } from "../../crypto/types";
 
 class FileService extends Service {
 
@@ -46,8 +47,26 @@ class FileService extends Service {
       await this.setName(file.name);
       const fileBuffer = arrayBufferToArray(await file.arrayBuffer());
       const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
-      const encryptedFile = await encryptWithPublicKey(base64ToArray(currentVaultPublicKey), fileBuffer);
-      this.file = await createFileLike(new TextEncoder().encode(JSON.stringify(encryptedFile)), { name: this.name, mimeType: file.type, lastModified: file.lastModified });
+
+      // generate fresh access key
+      const accessKey = await generateKey();
+
+      // encrypt access key with vault's public key
+      const accessKeyB64 = await exportKeyToBase64(accessKey)
+      const encryptedKey = await encryptWithPublicKey(
+        base64ToArray(currentVaultPublicKey),
+        accessKeyB64
+      )
+
+      // encrypt file with access key
+      const encryptedData = await encrypt(fileBuffer, accessKey);
+
+      const encryptedPayload = {
+        encryptedData: encryptedData as EncryptedData,
+        encryptedKey: encryptedKey,
+        publicKey: currentVaultPublicKey
+      }
+      this.file = await createFileLike(new TextEncoder().encode(JSON.stringify(encryptedPayload)), { name: this.name, mimeType: file.type, lastModified: file.lastModified });
     }
   }
 
