@@ -58,11 +58,13 @@ export class Akord {
 
   static withOAuth(config: OAuthConfig): Akord {
     const instance = new Akord({ ...config, authType: "OAuth" });
+    instance.setAddress(Auth.getAddress());
     return instance;
   }
 
   static withWallet(config: WalletConfig): Akord {
     const instance = new Akord({ ...config, authType: "Wallet" });
+    instance.setAddress(Auth.getAddress());
     return instance;
   }
 

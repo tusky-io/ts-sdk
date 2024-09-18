@@ -5,7 +5,7 @@ import { BadRequest } from '../errors/bad-request';
 import { logger } from '../logger';
 import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
-import { STORAGE_PATH_ACCESS_TOKEN, STORAGE_PATH_ID_TOKEN, STORAGE_PATH_REFRESH_TOKEN } from '.';
+import { DEFAULT_STORAGE, JWTClient } from './jwt';
 
 export const AuthProviderConfig = {
   "Google": {
@@ -32,9 +32,7 @@ class OAuth {
   private redirectUri: string;
   private authProvider: AuthProvider;
 
-  private accessToken: string;
-  private idToken: string;
-  private refreshToken: string;
+  private jwtClient: JWTClient;
 
   private storage: Storage;
 
@@ -51,7 +49,8 @@ class OAuth {
     this.redirectUri = config.redirectUri;
     this.authProvider = config.authProvider;
     this.clientId = config.clientId || AuthProviderConfig[this.authProvider].CLIENT_ID;
-    this.storage = config.storage || globalThis.sessionStorage;
+    this.storage = config.storage || DEFAULT_STORAGE;
+    this.jwtClient = new JWTClient({ storage: this.storage });
   }
 
   // redirect to OAuth provider's authorization URL
@@ -73,7 +72,7 @@ class OAuth {
 
       const enokiClient = new EnokiClient({ apiKey: "enoki_public_ab093e91616fc8fe6125017946ea2548" });
 
-      const { address } = await enokiClient.getZkLogin(this.getIdToken());
+      const { address } = await enokiClient.getZkLogin(this.jwtClient.getIdToken());
       return { address };
     } else {
       throw new Error('Authorization code not found.');
@@ -88,13 +87,10 @@ class OAuth {
         redirectUri: this.redirectUri,
         authCode: code
       });
-      this.accessToken = accessToken;
-      this.idToken = idToken;
-      this.refreshToken = refreshToken;
 
-      this.storage.setItem(STORAGE_PATH_ACCESS_TOKEN, this.accessToken);
-      this.storage.setItem(STORAGE_PATH_ID_TOKEN, this.idToken);
-      this.storage.setItem(STORAGE_PATH_REFRESH_TOKEN, this.refreshToken);
+      this.jwtClient.setAccessToken(accessToken);
+      this.jwtClient.setRefreshToken(refreshToken);
+      this.jwtClient.setIdToken(idToken);
     } catch (error) {
       logger.error(error);
     }
@@ -124,7 +120,7 @@ class OAuth {
 
   async refreshTokens(): Promise<void> {
     try {
-      const refreshToken = this.getRefreshToken();
+      const refreshToken = this.jwtClient.getRefreshToken();
       if (!refreshToken) {
         throw new Unauthorized("Session expired. Please login again.");
       }
@@ -134,57 +130,14 @@ class OAuth {
         grantType: "refreshToken",
         refreshToken: refreshToken
       });
-      this.accessToken = accessToken;
-      this.idToken = idToken;
 
-      this.storage.setItem(STORAGE_PATH_ACCESS_TOKEN, this.accessToken);
-      this.storage.setItem(STORAGE_PATH_ID_TOKEN, this.idToken);
+      this.jwtClient.setAccessToken(accessToken);
+      this.jwtClient.setIdToken(idToken);
+
     } catch (error) {
       throw new Error(`Failed to refresh tokens: ${error}`);
     }
   };
-
-  isTokenExpiringSoon(token: string, bufferTime: number = 10): boolean {
-    // function to decode a JWT
-    const decode = (token: string): any => {
-      // split the JWT into its parts (header, payload, signature)
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-
-      // decode the base64 encoded payload
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-
-      return JSON.parse(jsonPayload);
-    };
-    const decoded = decode(token) as any;
-    const currentTime = Math.floor(Date.now() / 1000);
-    // check if the token will expire within the next `bufferTime` seconds
-    const tokenExpiringSoon = currentTime >= (decoded.exp - bufferTime);
-    return tokenExpiringSoon;
-  };
-
-  getAccessToken() {
-    if (!this.accessToken) {
-      this.accessToken = this.storage.getItem(STORAGE_PATH_ACCESS_TOKEN);
-    }
-    return this.accessToken;
-  }
-
-  getRefreshToken() {
-    if (!this.refreshToken) {
-      this.refreshToken = this.storage.getItem(STORAGE_PATH_REFRESH_TOKEN);
-    }
-    return this.refreshToken;
-  }
-
-  getIdToken() {
-    if (!this.idToken) {
-      this.idToken = this.storage.getItem(STORAGE_PATH_ID_TOKEN);
-    }
-    return this.idToken;
-  }
 }
 
 export {

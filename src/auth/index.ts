@@ -1,17 +1,14 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
-import { logger, Logger } from "../logger";
-import { AuthProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
+import { logger } from "../logger";
+import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Conflict } from "../errors/conflict";
 import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
 import { OAuth } from "./oauth";
 import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 import AkordApi from "../api/akord-api";
 import { Env } from "../env";
-
-export const STORAGE_PATH_ACCESS_TOKEN = "carmella_access_token";
-export const STORAGE_PATH_ID_TOKEN = "carmella_id_token";
-export const STORAGE_PATH_REFRESH_TOKEN = "carmella_refresh_token";
+import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
 
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
@@ -22,11 +19,13 @@ export type SignPersonalMessageClient = (
 ) => void;
 
 export class Auth {
-  private static env: Env
+  private static env: Env;
 
-  public static authTokenProvider: () => Promise<string>
+  public static authTokenProvider: AuthTokenProvider;
 
   private static authType: AuthType;
+
+  private static jwtClient: JWTClient;
 
   // OAuth
   private static authProvider: AuthProvider;
@@ -57,7 +56,8 @@ export class Auth {
     this.authProvider = options.authProvider;
     this.clientId = options.clientId;
     this.redirectUri = options.redirectUri;
-    this.storage = options.storage || globalThis.sessionStorage;
+    this.storage = options.storage || DEFAULT_STORAGE;
+    this.jwtClient = new JWTClient({ storage: this.storage });
   }
 
   public static async signIn(): Promise<{ address?: string }> {
@@ -93,7 +93,7 @@ export class Auth {
         const publicKey = await verifyPersonalMessageSignature(message, signature);
         const address = publicKey.toSuiAddress();
         const jwt = await new AkordApi({ debug: true, logToFile: true, env: this.env }).verifyAuthChallenge({ signature });
-        this.authTokenProvider = async () => jwt;
+        this.jwtClient.setIdToken(jwt);
         return { address };
       }
       case "OAuth": {
@@ -126,9 +126,7 @@ export class Auth {
 
   public static signOut(): void {
     // clear auth tokens from the storage
-    this.storage.removeItem(STORAGE_PATH_ACCESS_TOKEN);
-    this.storage.removeItem(STORAGE_PATH_ID_TOKEN);
-    this.storage.removeItem(STORAGE_PATH_REFRESH_TOKEN);
+    this.jwtClient.clearTokens();
   }
 
   public static async initOAuthFlow(): Promise<void> {
@@ -162,30 +160,42 @@ export class Auth {
         throw new Unauthorized("Please add apiKey into config.");
       }
       case "OAuth": {
-        const aOuthClient = new OAuth({
-          clientId: this.clientId,
-          redirectUri: this.redirectUri,
-          authProvider: this.authProvider,
-          storage: this.storage
-        });
-        let idToken = aOuthClient.getIdToken();
+        let idToken = this.jwtClient.getIdToken();
         if (!idToken) {
           throw new Unauthorized("Invalid authorization.");
         }
-        if (aOuthClient.isTokenExpiringSoon(idToken)) {
+        if (this.jwtClient.isTokenExpiringSoon(idToken)) {
           logger.info('Token is expired or about to expire. Refreshing tokens...');
-          await aOuthClient.refreshTokens();
+          const oauthClient = new OAuth({
+            clientId: this.clientId,
+            redirectUri: this.redirectUri,
+            authProvider: this.authProvider,
+            storage: this.storage
+          });
+          await oauthClient.refreshTokens();
           logger.info('Tokens refreshed successfully.');
-          idToken = aOuthClient.getIdToken();
+          idToken = this.jwtClient.getIdToken();
         }
         return {
           "Authorization": `Bearer ${idToken}`
         }
       }
-      case "Wallet":
+      // TODO: consolidate OAuth & Wallet flow with refresh token logic
+      case "Wallet": {
+        let idToken = this.jwtClient.getIdToken();
+        if (!idToken) {
+          throw new Unauthorized("Invalid authorization.");
+        }
+        if (this.jwtClient.isTokenExpiringSoon(idToken, 0)) {
+          throw new Unauthorized("JWT is expired, please log in again.");
+        }
+        return {
+          "Authorization": `Bearer ${idToken}`
+        }
+      }
       case "AuthTokenProvider": {
         try {
-          const token = await this.authTokenProvider();
+          const token = this.authTokenProvider();
           if (token) {
             return {
               "Authorization": `Bearer ${token}`
@@ -201,12 +211,37 @@ export class Auth {
         throw new Unauthorized(`Missing or unsupported auth type: ${this.authType}`);
     }
   }
+
+  public static getAddress(): string {
+    switch (this.authType) {
+      case "OAuth":
+      case "Wallet": {
+        let idToken = this.jwtClient.getIdToken();
+        if (idToken) {
+          const address = decode(idToken).address;
+          return address;
+        }
+        break;
+      }
+      case "AuthTokenProvider": {
+        const token = this.authTokenProvider();
+        if (token) {
+          const address = decode(token).address;
+          return address;
+        }
+        break;
+      }
+      default:
+        return undefined;
+    }
+    return undefined;
+  }
 }
 
 type AuthOptions = {
   authType?: AuthType,
   env?: Env,
-  authTokenProvider?: () => Promise<string>
+  authTokenProvider?: AuthTokenProvider
   apiKey?: string,
 } & OAuthConfig & WalletConfig
 
