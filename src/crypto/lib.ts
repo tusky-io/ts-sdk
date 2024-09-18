@@ -19,6 +19,7 @@ import {
 import jsSHA from 'jssha';
 import { AsymEncryptedPayload, EncryptedData } from './types';
 import { logger } from '../logger';
+import { DecryptStreamController, StreamSlicer, transformStream } from './stream';
 
 const HASH_ALGORITHM = 'SHA-256'
 
@@ -463,6 +464,17 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: A
 //   const decryptedDataArray = await decryptHybridRaw(encryptedPayload, privateKey, true)
 //   return arrayToString(decryptedDataArray)
 // }
+
+async function decryptStream(stream: ReadableStream, aesKey: CryptoKey, chunkSize: number, iv?: string[]): Promise<any> {
+  if (stream === null) return null
+  try {
+    const slicesStream = transformStream(stream, new StreamSlicer(chunkSize));
+    return transformStream(slicesStream, new DecryptStreamController(aesKey, iv));
+  } catch (error) {
+    console.log(error)
+  }
+  return null;
+}
 
 /**
  * Derive two passwords from input password
