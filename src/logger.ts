@@ -48,7 +48,8 @@ export class ConsoleLogger implements Logger {
 
   private logToFile(message: any): void {
     const fs = importDynamic("fs");
-    const logMessage = `${new Date().toISOString()} [${this.currentLogLevel}] ${JSON.stringify(message, (key, value) => key === '_sessionCache' ? undefined : value, 2)}\n`;
+    const util = importDynamic("util");
+    const logMessage = `${new Date().toISOString()} [${this.currentLogLevel}] ${util.inspect(message, { depth: null, colors: false })}\n`;
     fs.appendFileSync(LOG_FILE, logMessage);
   }
 
