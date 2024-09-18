@@ -62,11 +62,11 @@ class FileService extends Service {
       const encryptedData = await encrypt(fileBuffer, accessKey);
 
       const encryptedPayload = {
-        encryptedData: encryptedData as EncryptedData,
+       // encryptedData: encryptedData as EncryptedData,
         encryptedKey: encryptedKey,
         publicKey: currentVaultPublicKey
       }
-      this.file = await createFileLike(new TextEncoder().encode(JSON.stringify(encryptedPayload)), { name: this.name, mimeType: file.type, lastModified: file.lastModified });
+      //this.file = await createFileLike(new TextEncoder().encode(JSON.stringify(encryptedPayload)), { name: this.name, mimeType: file.type, lastModified: file.lastModified });
     }
   }
 

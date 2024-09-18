@@ -43,10 +43,8 @@ export namespace NodeJs {
         const fileType = mimeType || mime.lookup(fileName) || DEFAULT_FILE_TYPE;
         const fileLastModified = lastModified || stats.ctime.getTime();
 
-        //TODO: avoid using readFileSync - reads full file into memory
-        //const file = new File([fs.readFileSync(filePath)], fileName, fileType, fileLastModified) as NodeJs.File;
         const file = fs.createReadStream(filePath);
-        return file;
+        return { file, options: { name: fileName, mimeType: fileType, lastModified: fileLastModified } };
       } else {
         throw new BadRequest("Method not valid for browsers.");
       }
@@ -55,11 +53,11 @@ export namespace NodeJs {
 }
 
 export async function createFileLike(source: FileSource, options: FileOptions = {})
-  : Promise<FileLike> {
+  : Promise<{ file: FileLike, options?: FileOptions }> {
   const name = options.name || (source as any).name;
   if (!isServer()) {
     if (source instanceof File) {
-      return source;
+      return { file: source, options: { name, mimeType: source.type, lastModified: source.lastModified } };
     }
     if (!name) {
       throw new BadRequest("File name is required, please provide it in the file options.");
@@ -69,22 +67,22 @@ export async function createFileLike(source: FileSource, options: FileOptions = 
       console.warn("Missing file mime type. If this is unintentional, please provide it in the file options.");
     }
     if (source instanceof Uint8Array || source instanceof ArrayBuffer || source instanceof Blob) {
-      return new File([source as any], name, { type: mimeType, lastModified: options.lastModified });
+      return { file: new File([source as any], name, { type: mimeType, lastModified: options.lastModified }), options: { name, mimeType, lastModified: options.lastModified } };
     } else if (source instanceof Array) {
-      return new File(source, name, { type: mimeType, lastModified: options.lastModified });
+      return { file: new File(source, name, { type: mimeType, lastModified: options.lastModified }), options: { name, mimeType, lastModified: options.lastModified } };
     }
   } else {
     const nodeJsFile = (await import("../types/file")).NodeJs.File;
     if (typeof source?.read === 'function') {
-      return nodeJsFile.fromReadable(source, name, options.mimeType, options.lastModified);
+      return { file: await nodeJsFile.fromReadable(source, name, options.mimeType, options.lastModified) };
     } else if (source instanceof Uint8Array || source instanceof Buffer || source instanceof ArrayBuffer) {
-      return new nodeJsFile([source as any], name, options.mimeType, options.lastModified);
+      return { file: new nodeJsFile([source as any], name, options.mimeType, options.lastModified) };
     } else if (source instanceof nodeJsFile) {
-      return source;
+      return { file: source, options: { name, mimeType: source.type, lastModified: source.lastModified } };
     } else if (typeof source === "string") {
       return nodeJsFile.fromPath(source, name, options.mimeType, options.lastModified);
     } else if (source instanceof Array) {
-      return new nodeJsFile(source, name, options.mimeType, options.lastModified);
+      return { file: new nodeJsFile(source, name, options.mimeType, options.lastModified) };
     }
   }
   throw new BadRequest("File source is not supported. Please provide a valid source: web File object, file path, buffer or stream.");

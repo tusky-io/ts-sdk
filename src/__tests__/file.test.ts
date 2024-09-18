@@ -28,8 +28,9 @@ describe("Testing file & folder upload functions", () => {
   });
 
   it("should upload file from path", async () => {
-    const file = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
     const type = "image/png";
+    const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -41,8 +42,9 @@ describe("Testing file & folder upload functions", () => {
 
   it("should download file", async () => {
     const response = await akord.file.download(fileId);
-    const file = await createFileLike(testDataPath + firstFileName);
-    expect(response).toEqual(await file.arrayBuffer());
+    const buffer = fs.readFileSync(testDataPath + firstFileName);
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+    expect(response).toEqual(arrayBuffer);
   });
 
   it("should fail uploading an empty file", async () => {
@@ -55,7 +57,9 @@ describe("Testing file & folder upload functions", () => {
     const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
     const type = "image/png";
 
-    const file = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName, mimeType: type });
+    const id = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName, mimeType: type });
+    
+    const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -68,7 +72,8 @@ describe("Testing file & folder upload functions", () => {
     const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
     const type = "image/png";
 
-    const file = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName });
+    const id = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName });
+    const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
@@ -78,7 +83,8 @@ describe("Testing file & folder upload functions", () => {
     const fileStream = fs.createReadStream(testDataPath + firstFileName);
     const type = "image/png";
 
-    const file = await akord.file.upload(vaultId, fileStream, { name: firstFileName, mimeType: type });
+    const id = await akord.file.upload(vaultId, fileStream, { name: firstFileName, mimeType: type });
+    const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -90,7 +96,8 @@ describe("Testing file & folder upload functions", () => {
   it("should upload a file object", async () => {
     const fileObject = await createFileLike(testDataPath + firstFileName);
     const type = "image/png";
-    const file = await akord.file.upload(vaultId, fileObject, { name: firstFileName });
+    const id = await akord.file.upload(vaultId, fileObject, { name: firstFileName });
+    const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);

@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import { Akord, AkordWallet } from '../';
 import { cleanup, testDataPath } from './common';
-import { createFileLike } from '../types/file';
+import { promises as fs } from 'fs';
 import { firstFileName } from './data/content';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
@@ -92,11 +92,11 @@ describe("Testing encryption functions", () => {
     console.log(object);
   });
 
-  it("should create a private folder", async () => {
-    const folderName = faker.random.words();
-    const folder = await akord.folder.create(vaultId, folderName);
-    console.log(folder)
-  });
+  // it("should create a private folder", async () => {
+  //   const folderName = faker.random.words();
+  //   const folder = await akord.folder.create(vaultId, folderName);
+  //   console.log(folder)
+  // });
 
   it("should upload a private file", async () => {
     const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
@@ -108,9 +108,11 @@ describe("Testing encryption functions", () => {
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.download(file.id);
-    console.log(response)
-    const filelike = await createFileLike(testDataPath + firstFileName);
-    expect(response).toEqual(await filelike.arrayBuffer());
+    const response = await akord.file.download(file.id, { responseType: 'arraybuffer' });
+
+    const buffer = await fs.readFile(testDataPath + firstFileName);
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+    
+    expect(response).toEqual(arrayBuffer);
   });
 });

@@ -158,7 +158,7 @@ async function signString(payload: string, privateKey: Uint8Array): Promise<stri
  * @param {CryptoKey} key
  * @returns {Promise.<string>} Promise of base64 string represents the ciphertext along with iv
  */
-async function encrypt(plaintext: Uint8Array, key: CryptoKey): Promise<string | EncryptedData> {
+async function encrypt(plaintext: Uint8Array, key: CryptoKey, encode: boolean = true): Promise<string | Uint8Array> {
   try {
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_IN_BYTES))
 
@@ -170,11 +170,13 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey): Promise<string | 
       key,
       plaintext,
     )
-    return encodePayload(ciphertextArray, iv)
-    // return {
-    //   ciphertext: ciphertextArray,
-    //   iv: iv,
-    // }
+    if (encode) {
+      return encodePayload(ciphertextArray, iv)
+    }
+    const combinedArray = new Uint8Array(iv.length + ciphertextArray.byteLength);
+    combinedArray.set(iv, 0);
+    combinedArray.set(new Uint8Array(ciphertextArray), iv.length);
+    return combinedArray;
   } catch (error) {
     throw new Error("Web Crypto encryption error: " + error)
   }
@@ -558,4 +560,5 @@ export {
   derivePasswords,
   deriveAddress,
   importRSACryptoKey,
+  decryptStream
 }
