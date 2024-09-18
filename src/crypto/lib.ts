@@ -471,7 +471,7 @@ async function decryptStream(stream: ReadableStream, aesKey: CryptoKey, chunkSiz
     const slicesStream = transformStream(stream, new StreamSlicer(chunkSize));
     return transformStream(slicesStream, new DecryptStreamController(aesKey, iv));
   } catch (error) {
-    console.log(error)
+    logger.error(error)
   }
   return null;
 }

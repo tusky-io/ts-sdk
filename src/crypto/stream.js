@@ -1,5 +1,6 @@
 import { ReadableStream, TransformStream } from "web-streams-polyfill/ponyfill";
-import { IV_LENGTH_IN_BYTES } from './functions';
+import { IV_LENGTH_IN_BYTES } from './lib';
+import { logger } from '../logger';
 
 export class DecryptStreamController {
   constructor(key, iv, index, id) {
@@ -30,7 +31,7 @@ export class DecryptStreamController {
       }
       this.index += 1;
     } catch (e) {
-      console.log(e)
+      logger.error(e)
     }
   }
 }
@@ -140,7 +141,7 @@ async function getCleartext(key, ivBytes, bytes) {
       bytes,
     )
   } catch (e) {
-    console.log(e)
+    logger.error(e)
   }
 }
 
