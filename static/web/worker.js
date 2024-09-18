@@ -147,7 +147,7 @@
         const base64Key = file.key;
         const key = base64Key ? await getDecryptionKey(base64Key) : null;
         const slicesStream = transformStream(stream, new StreamSlicer(chunkSize, MODE_DECRYPT))
-        return new transformStream(slicesStream, new DecryptStreamController(key, iv, startChunkIndex, file.id))
+        return new transformStream(slicesStream, new DecryptStreamController(key, iv, startChunkIndex, file.id, files))
       }
       
       async function getDecryptionKey(base64Key) {

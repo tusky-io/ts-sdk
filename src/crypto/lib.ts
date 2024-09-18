@@ -20,6 +20,7 @@ import jsSHA from 'jssha';
 import { AsymEncryptedPayload, EncryptedData } from './types';
 import { logger } from '../logger';
 import { DecryptStreamController, StreamSlicer, transformStream } from './stream';
+import { ReadableStream } from "web-streams-polyfill/ponyfill";
 
 const HASH_ALGORITHM = 'SHA-256'
 
@@ -467,7 +468,7 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: A
 //   return arrayToString(decryptedDataArray)
 // }
 
-async function decryptStream(stream: ReadableStream, aesKey: CryptoKey, chunkSize: number, iv?: string[]): Promise<any> {
+async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoKey, chunkSize: number, iv?: string[]): Promise<any> {
   if (stream === null) return null
   try {
     const slicesStream = transformStream(stream, new StreamSlicer(chunkSize));
