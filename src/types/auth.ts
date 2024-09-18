@@ -25,8 +25,10 @@ export interface ApiKeyConfig {
 }
 
 export interface AuthTokenProviderConfig {
-  authTokenProvider: () => Promise<string>
+  authTokenProvider: AuthTokenProvider
 }
+
+export type AuthTokenProvider = () => string;
 
 export type CreateChallengeRequestPayload = {
   address: string
