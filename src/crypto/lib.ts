@@ -472,7 +472,7 @@ async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoK
   if (stream === null) return null
   try {
     const slicesStream = transformStream(stream, new StreamSlicer(chunkSize));
-    return transformStream(slicesStream, new DecryptStreamController(aesKey, iv));
+    return transformStream(slicesStream, new DecryptStreamController(aesKey));
   } catch (error) {
     logger.error(error)
   }

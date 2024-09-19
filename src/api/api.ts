@@ -1,6 +1,6 @@
 import { Vault } from "../types/vault";
-import { Membership, MembershipKeys } from "../types/membership";
-import { CreateVaultTxPayload, CreateFileTxPayload, CreateFolderTxPayload, Transaction, UpdateVaultTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, CreateMembershipTxPayload, UpdateFileTxPayload } from "../types/transaction";
+import { Membership } from "../types/membership";
+import { CreateVaultTxPayload, CreateFolderTxPayload, UpdateVaultTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, CreateMembershipTxPayload, UpdateFileTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserMutable, UserPublicInfo } from "../types/user";
@@ -30,8 +30,6 @@ abstract class Api {
 
   abstract updateMe(input: UserMutable): Promise<User>
 
-  abstract createFile(tx: CreateFileTxPayload): Promise<File>
-
   abstract updateFile(tx: UpdateFileTxPayload): Promise<File>
 
   abstract deleteFile(id: string): Promise<void>
@@ -58,7 +56,7 @@ abstract class Api {
 
   abstract postTransaction(digest: string, signature: string): Promise<any>
 
-  abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
+  abstract downloadFile(id: string, options?: FileGetOptions): Promise<ArrayBuffer | ReadableStream<Uint8Array>>
 
   abstract getStorage(): Promise<Storage>
 

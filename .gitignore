@@ -17,4 +17,5 @@ yarn-error.log*
 akord.log*
 
 src/__tests__/data/out/*
+src/__tests__/data/generated/*
 !/**/.gitkeep

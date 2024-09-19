@@ -96,6 +96,7 @@
   "browser": {
     "crypto": false,
     "fs": false,
-    "path": false
+    "path": false,
+    "./src/types/file.ts": "./src/types/browser/file.ts"
   }
 }

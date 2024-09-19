@@ -3,23 +3,22 @@ import { ApiClient } from "../api/api-client";
 import { FileSource, createFileLike } from "../types/file";
 import { BadRequest } from "../errors/bad-request";
 import { StreamConverter } from "../util/stream-converter";
-import { File, Vault } from "../types";
+import { File } from "../types";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
-import { BatchModule } from './batch';
 import { isServer } from '../util/platform';
 import { importDynamic } from '../util/import';
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
 import { AsymEncryptedPayload } from "../crypto/types";
-import { arrayToString, base64ToArray, base64ToJson, base64ToString, jsonToBase64, stringToBase64 } from "../crypto";
-import { AUTH_TAG_LENGTH_IN_BYTES, decrypt, decryptStream, decryptWithPrivateKey, encrypt, encryptWithPublicKey, exportKeyToBase64, generateKey, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
+import { arrayToString, base64ToJson} from "../crypto";
+import { decryptStream, decryptWithPrivateKey, importKeyFromBase64 } from "../crypto/lib";
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
-import { Readable } from 'stream'; //conditionally
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
+import EncryptableHttpStack from "../crypto/tus/http-stack";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -27,175 +26,9 @@ export const DEFAULT_FILE_NAME = "unnamed";
 export const BYTES_IN_MB = 1000000;
 export const CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
 
-export const CONTENT_LENGTH_HEADER = "Content-Length";
-export const UPLOAD_LENGTH_HEADER = "Upload-Length";
-export const UPLOAD_OFFSET_HEADER = "Upload-Offset";
-export const UPLOAD_METADATA_HEADER = "Upload-Metadata";
-export const UPLOAD_METADATA_CHUNK_SIZE_KEY = "chunkSize";
-export const UPLOAD_METADATA_NUMBER_OF_CHUNKS_KEY = "numberOfChunks";
-export const UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY = "encryptedAesKey";
-export const UPLOAD_METADATA_FILENAME_KEY = "filename";
-
 export const UPLOADER_SERVER_MAX_CONNECTIONS_PER_CLIENT = 20;
 export const EMPTY_FILE_ERROR_MESSAGE = "Cannot upload an empty file";
 
-
-
-class EncryptableHttpStack {
-  private defaultStack: tus.HttpStack;
-  private vault: Vault;
-  private uploadAes: Map<string, { aesKey: CryptoKey, encryptedAesKey: string }> = new Map();
-  private publicKey?: string;
-
-  constructor(defaultStack: tus.HttpStack, vault: Vault) {
-    this.defaultStack = defaultStack;
-    if (!vault) {
-      throw new Error("Vault is required");
-    }
-    this.vault = vault;
-    if (!vault.public) {
-      if (!vault.__keys__ || vault.__keys__.length === 0) {
-        throw new Error("Encrypted vault has no keys");
-      }
-      this.publicKey = vault.__keys__[vault.__keys__.length - 1].publicKey;
-    }
-  }
-
-  createRequest(method: string, url: string): tus.HttpRequest {
-    const request = this.defaultStack.createRequest(method, url);
-    if (method !== 'POST' && method !== 'PATCH') {
-      return request;
-    }
-
-    if (this.vault.public) {
-      return request;
-    }
-
-    let uploadId = null;
-    if (method === 'PATCH') {
-      uploadId = url.split('/').pop();
-    }
-
-    const originalSend = request.send.bind(request);
-    request.send = async (body: any) => {
-
-      // get aes key
-      const { aesKey, encryptedAesKey } = await this.generateAesKey(uploadId);
-
-      // encrypt the body
-      const bodyUint8Array = await this.bodyAsUint8Array(body);
-      const encryptedBody = await encrypt(bodyUint8Array, aesKey, false) as Uint8Array;
-      request.setHeader(CONTENT_LENGTH_HEADER, encryptedBody.byteLength.toString());
-      
-      // encrypt the filename
-      const filename = this.getMetadata(request, UPLOAD_METADATA_FILENAME_KEY) || 'unnamed';
-      const encryptedFileName = await encryptWithPublicKey(base64ToArray(this.publicKey), filename);
-      const encryptedFileNameB64 = jsonToBase64(encryptedFileName);
-      this.putMetadata(request, UPLOAD_METADATA_FILENAME_KEY, stringToBase64(encryptedFileNameB64));
-
-      // set the upload length
-      const originalUploadLength = parseInt(request.getHeader(UPLOAD_LENGTH_HEADER) as string);
-      const numberOfChunks = Math.ceil(originalUploadLength / CHUNK_SIZE_IN_BYTES);
-      const uploadLength = originalUploadLength + numberOfChunks * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES);
-      request.setHeader(UPLOAD_LENGTH_HEADER, uploadLength.toString());
-      
-      this.putMetadata(request, UPLOAD_METADATA_NUMBER_OF_CHUNKS_KEY, stringToBase64(numberOfChunks.toString()));
-      this.putMetadata(request, UPLOAD_METADATA_CHUNK_SIZE_KEY, stringToBase64(CHUNK_SIZE_IN_BYTES.toString()));
-      this.putMetadata(request, UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY, stringToBase64(encryptedAesKey));
-  
-      // override request upload-offset to account for encryption bytes
-      const originalRequestOffset = request.getHeader(UPLOAD_OFFSET_HEADER) as string;
-      if (originalRequestOffset) {
-        const currentRequestChunk = Math.floor(parseInt(originalRequestOffset) / CHUNK_SIZE_IN_BYTES);
-        const encryptedRequestOffset = parseInt(originalRequestOffset) - (currentRequestChunk * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES));
-        request.setHeader(UPLOAD_OFFSET_HEADER, encryptedRequestOffset.toString());
-      }
-
-      // send the request
-      const response = await originalSend(encryptedBody);
-
-      // cache the aes key
-      uploadId = response.getHeader("Location");
-      if (uploadId) {
-        this.uploadAes.set(uploadId.split('/').pop(), { aesKey, encryptedAesKey });
-      }
-
-      // override response upload-offset to allow reading from proper place in source file
-      const originalResponseOffset = parseInt(response.getHeader(UPLOAD_OFFSET_HEADER) as string);
-      const currentResponseChunk = Math.ceil(originalResponseOffset / CHUNK_SIZE_IN_BYTES);
-      const encryptedResponseOffset = originalResponseOffset - (currentResponseChunk * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES));
-      
-      const originalGetHeader = response.getHeader.bind(response);
-      response.getHeader = (key: string) => {
-        if (key === UPLOAD_OFFSET_HEADER) {
-          return encryptedResponseOffset.toString();
-        }
-        return originalGetHeader(key);
-      }
-      return response as tus.HttpResponse;
-    }
-    return request;
-  }
-
-  getName(): string {
-    return 'EncryptableHttpStack';
-  }
-
-  private async bodyAsUint8Array(body: any): Promise<Uint8Array> {
-    if (body instanceof ArrayBuffer) {
-      return new Uint8Array(body);
-    } else if (body instanceof Buffer) {
-      return new Uint8Array(body.buffer);
-    } else if (body.read) {
-      return await this.streamToUint8Array(body);
-    } else {
-      throw new Error("Unsupported body type");
-    }
-  }
-
-  private async streamToUint8Array(stream: Readable): Promise<Uint8Array> {
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-      stream.on('error', (err) => reject(err));
-      stream.on('end', () => resolve(Buffer.concat(chunks)));
-    }).then(buffer => new Uint8Array(buffer as any));
-  }
-
-  private async generateAesKey(uploadId?: string): Promise<{ aesKey: CryptoKey, encryptedAesKey: string }> {
-    if (uploadId) {
-      const existingUpload = this.uploadAes.get(uploadId);
-      if (existingUpload) {
-        return existingUpload;
-      }
-    }
-    const aesKey = await generateKey();
-    const accessKeyB64 = await exportKeyToBase64(aesKey)
-    const encryptedAesKey = jsonToBase64(await encryptWithPublicKey(
-        base64ToArray(this.publicKey),
-        accessKeyB64
-      )
-    )
-    return { aesKey, encryptedAesKey };
-  }
-
-  private putMetadata(request: tus.HttpRequest, key: string, value: string): void {
-    const existingMetadata = request.getHeader(UPLOAD_METADATA_HEADER)?.split(',') ?? [];
-    const newMetadata = existingMetadata.filter(item => !item.startsWith(`${key} `));
-    newMetadata.push(`${key} ${value}`);
-    const metadataHeader = newMetadata.join(',');
-    request.setHeader(UPLOAD_METADATA_HEADER, metadataHeader);
-  }
-
-  private getMetadata(request: tus.HttpRequest, key: string): string {
-    const metadataHeader = request.getHeader(UPLOAD_METADATA_HEADER);
-    if (!metadataHeader) {
-      return null;
-    }
-    const metadata = metadataHeader.split(',').find(item => item.startsWith(key));
-    return metadata ? base64ToString((metadata.split(' ')[1])) : null;
-  }
-}
 
 class FileModule {
 
@@ -259,21 +92,21 @@ class FileModule {
 
     let fileLike = null;
     if (file) {
-      fileLike = await createFileLike(file, { name: file.name, ...options });
+      fileLike = await createFileLike(file);
 
       if (fileLike.size === 0) {
         throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
       }
     }
 
-    const upload = new tus.Upload(fileLike?.file as any, {
+    const upload = new tus.Upload(fileLike as any, {
       endpoint: `${this.service.api.config.apiUrl}/uploads`,
       retryDelays: [0, 500, 2000, 5000],
       metadata: {
         vaultId: vaultId,
-        parentId: options.parentId ? options.parentId : vaultId,
-        filename: fileLike && fileLike.options.name ? fileLike.options.name : DEFAULT_FILE_NAME, //auto-populated when using Uppy
-        filetype: fileLike && fileLike.options.mimeType ? fileLike.options.mimeType : DEFAULT_FILE_TYPE, //auto-populated when using Uppy
+        parentId: options?.parentId || vaultId,
+        filename: options?.name || fileLike?.name || DEFAULT_FILE_NAME, //auto-populated when using Uppy
+        filetype: options?.mimeType || fileLike?.type || DEFAULT_FILE_TYPE, //auto-populated when using Uppy
       },
       uploadDataDuringCreation: true,
       parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
@@ -456,14 +289,13 @@ class FileModule {
     
     let stream: ReadableStream<Uint8Array>;
     if (fileMetadata.__public__) {
-      return file.fileData as ArrayBuffer;
+      stream = file as ReadableStream<Uint8Array>;
     } else {
       const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as AsymEncryptedPayload;
 
       if (!fileMetadata.encryptedAesKey) {
         throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
       }
-
 
       // decrypt vault's private key
       const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedAesKey.publicKey).encPrivateKey;
@@ -473,13 +305,12 @@ class FileModule {
       const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
       const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
 
-      stream = await decryptStream(file.fileData as ReadableStream, aesKey, CHUNK_SIZE_IN_BYTES, null);
-
-      if (options.responseType === 'arraybuffer') {
-        return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
-      }
-      return stream;
+      stream = await decryptStream(file as ReadableStream, aesKey, CHUNK_SIZE_IN_BYTES);
     }
+    if (options.responseType === 'arraybuffer') {
+      return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
+    }
+    return stream;
   }
 
   private async saveFile(path: string, type: string, stream: ReadableStream, skipSave: boolean = false): Promise<string> {

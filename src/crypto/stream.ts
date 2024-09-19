@@ -11,9 +11,8 @@ export class DecryptStreamController {
   private file?: any;
   private files?: Map<any, any>;
 
-  constructor(key: CryptoKey, iv: string[], index: number = 0, id?: string, files?: Map<any, any>) {
+  constructor(key: CryptoKey, index: number = 0, id?: string, files?: Map<any, any>) {
     this.key = key;
-    this.iv = iv;
     this.index = index;
     this.files = files;
     if (id) {
@@ -22,16 +21,8 @@ export class DecryptStreamController {
   }
 
   async transform(chunk: Uint8Array, controller: any) {
-    let ivBytes: Uint8Array;
-    let ciphertextBytes: Uint8Array;
-
-    if (this.iv) {
-      ivBytes = toByteArray(this.iv[this.index]);
-      ciphertextBytes = chunk;
-    } else {
-      ivBytes = chunk.slice(0, IV_LENGTH_IN_BYTES);
-      ciphertextBytes = chunk.slice(IV_LENGTH_IN_BYTES);
-    }
+    const ivBytes = chunk.slice(0, IV_LENGTH_IN_BYTES);
+    const ciphertextBytes = chunk.slice(IV_LENGTH_IN_BYTES);
 
     try {
       const cleartext = await getCleartext(this.key, ivBytes, ciphertextBytes);

@@ -1,10 +1,9 @@
 import { BadRequest } from "../errors/bad-request";
 import { Akord } from "../index";
 import { createFileLike } from "../types/file";
-import { cleanup, initInstance, testDataPath, vaultCreate } from './common';
+import { cleanup, generateAndSavePixelFile, initInstance, testDataGeneratedPath, testDataPath, vaultCreate } from './common';
 import { firstFileName } from './data/content';
-import fs from "fs";
-import { PNG } from "pngjs";
+import { createReadStream, promises as fs } from 'fs';
 import { status } from "../constants";
 
 let akord: Akord;
@@ -14,7 +13,6 @@ jest.setTimeout(3000000);
 describe("Testing file & folder upload functions", () => {
 
   let vaultId: string;
-  let fileId: string;
 
   beforeAll(async () => {
     akord = await initInstance();
@@ -24,10 +22,16 @@ describe("Testing file & folder upload functions", () => {
   });
 
   afterAll(async () => {
+    const files = await akord.file.list({ vaultId: vaultId });
+    for (const file of files.items) {
+      await akord.file.delete(file.id);
+      await akord.file.deletePermanently(file.id);
+    }
+
     await cleanup(akord, vaultId);
   });
 
-  it("should upload file from path", async () => {
+  it("should upload single-chunk file from path and download it", async () => {
     const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
     const type = "image/png";
     const file = await akord.file.get(id);
@@ -37,12 +41,29 @@ describe("Testing file & folder upload functions", () => {
     expect(file.status).toEqual(status.ACTIVE);
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
-    fileId = file.id;
+
+    const response = await akord.file.download(file.id, { responseType: 'arraybuffer' });
+    const buffer = await fs.readFile(testDataPath + firstFileName);
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+    expect(response).toEqual(arrayBuffer);
   });
 
-  it("should download file", async () => {
-    const response = await akord.file.download(fileId);
-    const buffer = fs.readFileSync(testDataPath + firstFileName);
+  it("should upload multi-chunk file from path and download it", async () => {
+    const fileName = "11mb.png";
+    await generateAndSavePixelFile(11, testDataGeneratedPath + fileName);
+    const id = await akord.file.upload(vaultId, testDataGeneratedPath + fileName);
+
+    const type = "image/png";
+    const file = await akord.file.get(id);
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.ACTIVE);
+    expect(file.name).toEqual(fileName);
+    expect(file.mimeType).toEqual(type);
+
+    const response = await akord.file.download(file.id, { responseType: 'arraybuffer' });
+    const buffer = await fs.readFile(testDataGeneratedPath + fileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
   });
@@ -54,10 +75,10 @@ describe("Testing file & folder upload functions", () => {
   });
 
   it("should upload a file buffer", async () => {
-    const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
+    const buffer = await fs.readFile(testDataPath + firstFileName);
     const type = "image/png";
 
-    const id = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName, mimeType: type });
+    const id = await akord.file.upload(vaultId, buffer, { name: firstFileName, mimeType: type });
     
     const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
@@ -68,19 +89,17 @@ describe("Testing file & folder upload functions", () => {
     expect(file.mimeType).toEqual(type);
   });
 
-  it("should upload a file buffer without explicitly provided mime type", async () => {
-    const fileBuffer = fs.readFileSync(testDataPath + firstFileName);
-    const type = "image/png";
+  it("should upload a file buffer without provided mime type", async () => {
+    const buffer = await fs.readFile(testDataPath + firstFileName);
 
-    const id = await akord.file.upload(vaultId, fileBuffer, { name: firstFileName });
+    const id = await akord.file.upload(vaultId, buffer, { name: firstFileName });
     const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.name).toEqual(firstFileName);
-    expect(file.mimeType).toEqual(type);
   });
 
   it("should upload a file stream", async () => {
-    const fileStream = fs.createReadStream(testDataPath + firstFileName);
+    const fileStream = createReadStream(testDataPath + firstFileName);
     const type = "image/png";
 
     const id = await akord.file.upload(vaultId, fileStream, { name: firstFileName, mimeType: type });
@@ -106,16 +125,6 @@ describe("Testing file & folder upload functions", () => {
     expect(file.mimeType).toEqual(type);
   });
 
-  it("should delete the file", async () => {
-    await akord.file.delete(fileId);
-
-    const file = await akord.file.get(fileId);
-    expect(file.id).toBeTruthy();
-    expect(file.vaultId).toEqual(vaultId);
-    expect(file.parentId).toEqual(vaultId);
-    expect(file.status).toEqual(status.DELETED);
-  });
-
   // const batchSize = 10;
   // it(`should upload a batch of ${batchSize} files`, async () => {
   //   const fileName = "logo.png"
@@ -131,39 +140,3 @@ describe("Testing file & folder upload functions", () => {
   //   expect(data.length).toEqual(batchSize);
   // });
 });
-
-// generate & save 11 MB pixel png file
-
-const generateAndSavePixelFile = async (fileSizeMB: number, filePath: string) => {
-  const totalBytes = fileSizeMB * 1024;
-  const totalPixels = totalBytes / 4; // each pixel is 4 bytes (RGBA)
-  const imageSize = Math.sqrt(totalPixels);
-  let buffer = new Uint8Array(totalBytes);
-
-  // fill the buffer with random pixel data
-  for (let i = 0; i < totalBytes; i++) {
-    buffer[i] = Math.floor(Math.random() * 256);
-  }
-
-  // create a PNG object
-  const png = new PNG({
-    width: imageSize,
-    height: imageSize
-  });
-
-  // copy buffer data into the PNG data
-  png.data = Buffer.from(buffer);
-
-  // pack & save the PNG buffer
-  await new Promise<void>((resolve, reject) => {
-    const writeStream = fs.createWriteStream(filePath);
-    png.pack().pipe(writeStream)
-      .on('finish', () => {
-        resolve();
-      })
-      .on('error', (err) => {
-        reject(err);
-      });
-  });
-
-}

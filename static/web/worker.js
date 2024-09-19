@@ -139,15 +139,14 @@
         if (file.chunkSize) {
           chunkSize = file.chunkSize;
         } else if (file.key) {
-          chunkSize = file.iv ? file.size + AUTH_TAG_SIZE_IN_BYTES : file.size + AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES;
+          chunkSize = file.size + AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES;
         } else {
           chunkSize = file.size > MAX_SLICE_SIZE ? DEFAUTL_CHUNK_SIZE : file.size;
         }
-        const iv = file.iv;
         const base64Key = file.key;
         const key = base64Key ? await getDecryptionKey(base64Key) : null;
         const slicesStream = transformStream(stream, new StreamSlicer(chunkSize, MODE_DECRYPT))
-        return new transformStream(slicesStream, new DecryptStreamController(key, iv, startChunkIndex, file.id, files))
+        return new transformStream(slicesStream, new DecryptStreamController(key, startChunkIndex, file.id, files))
       }
       
       async function getDecryptionKey(base64Key) {
