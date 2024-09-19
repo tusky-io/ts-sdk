@@ -12,7 +12,7 @@ import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
 import { Env } from "./env";
-import { Auth } from "./auth";
+import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./encrypter";
@@ -57,11 +57,13 @@ export class Akord {
 
   static withOAuth(config: OAuthConfig): Akord {
     const instance = new Akord({ ...config, authType: "OAuth" });
+    instance.setAddress(Auth.getAddress());
     return instance;
   }
 
   static withWallet(config: WalletConfig): Akord {
     const instance = new Akord({ ...config, authType: "Wallet" });
+    instance.setAddress(Auth.getAddress());
     return instance;
   }
 
@@ -140,7 +142,7 @@ export class Akord {
   /**
    * @param  {ClientConfig} config
    */
-  constructor(config: ClientConfig = {}) {
+  constructor(config: ClientConfig & AuthOptions = {}) {
     this._signer = config.signer;
     this._encrypter = config.encrypter;
     this._env = config.env || 'testnet';
