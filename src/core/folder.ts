@@ -85,7 +85,7 @@ class FolderModule {
         } else {
           // upload file
           const fileModule = new FileModule(this.service);
-          await fileModule.upload(fullPath, options);
+          //await fileModule.upload(fullPath, options);
           logger.info("Uploaded file: " + fullPath + " to folder: " + options.parentId);
         }
       }
