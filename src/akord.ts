@@ -12,7 +12,7 @@ import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
 import { Env } from "./env";
-import { Auth } from "./auth";
+import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./encrypter";
@@ -140,7 +140,7 @@ export class Akord {
   /**
    * @param  {ClientConfig} config
    */
-  constructor(config: ClientConfig = {}) {
+  constructor(config: ClientConfig & AuthOptions = {}) {
     this._signer = config.signer;
     this._encrypter = config.encrypter;
     this._env = config.env || 'testnet';

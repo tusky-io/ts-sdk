@@ -203,7 +203,7 @@ export class Auth {
   }
 }
 
-type AuthOptions = {
+export type AuthOptions = {
   authType?: AuthType,
   env?: Env,
   authTokenProvider?: () => Promise<string>
