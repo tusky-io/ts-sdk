@@ -1,18 +1,27 @@
+import { Env } from "../env";
 import { isServer } from "../util/platform";
 
-export const STORAGE_PATH_ACCESS_TOKEN = "carmella_access_token";
-export const STORAGE_PATH_ID_TOKEN = "carmella_id_token";
-export const STORAGE_PATH_REFRESH_TOKEN = "carmella_refresh_token";
+const STORAGE_PATH_PREFIX = "akord";
 
 class JWTClient {
+  private env: Env;
+
   private accessToken: string;
   private idToken: string;
   private refreshToken: string;
 
+  private STORAGE_PATH_ACCESS_TOKEN: string;
+  private STORAGE_PATH_ID_TOKEN: string;
+  private STORAGE_PATH_REFRESH_TOKEN: string;
+
   private storage: Storage;
 
-  constructor(config?: { storage?: Storage }) {
+  constructor(config?: { storage?: Storage, env?: Env }) {
     this.storage = config?.storage || DEFAULT_STORAGE;
+    this.env = config?.env || "testnet";
+    this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_access_token`;
+    this.STORAGE_PATH_ID_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_id_token`;
+    this.STORAGE_PATH_REFRESH_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_refresh_token`;
   }
 
   isTokenExpiringSoon(token: string, bufferTime: number = 10): boolean {
@@ -25,44 +34,44 @@ class JWTClient {
 
   getAccessToken() {
     if (!this.accessToken) {
-      this.accessToken = this.storage.getItem(STORAGE_PATH_ACCESS_TOKEN);
+      this.accessToken = this.storage.getItem(this.STORAGE_PATH_ACCESS_TOKEN);
     }
     return this.accessToken;
   }
 
   getRefreshToken() {
     if (!this.refreshToken) {
-      this.refreshToken = this.storage.getItem(STORAGE_PATH_REFRESH_TOKEN);
+      this.refreshToken = this.storage.getItem(this.STORAGE_PATH_REFRESH_TOKEN);
     }
     return this.refreshToken;
   }
 
   getIdToken() {
     if (!this.idToken) {
-      this.idToken = this.storage.getItem(STORAGE_PATH_ID_TOKEN);
+      this.idToken = this.storage.getItem(this.STORAGE_PATH_ID_TOKEN);
     }
     return this.idToken;
   }
 
   setAccessToken(accessToken: string) {
     this.accessToken = accessToken;
-    this.storage.setItem(STORAGE_PATH_ACCESS_TOKEN, this.accessToken);
+    this.storage.setItem(this.STORAGE_PATH_ACCESS_TOKEN, this.accessToken);
   }
 
   setRefreshToken(refreshToken: string) {
     this.refreshToken = refreshToken;
-    this.storage.setItem(STORAGE_PATH_REFRESH_TOKEN, this.refreshToken);
+    this.storage.setItem(this.STORAGE_PATH_REFRESH_TOKEN, this.refreshToken);
   }
 
   setIdToken(idToken: string) {
     this.idToken = idToken;
-    this.storage.setItem(STORAGE_PATH_ID_TOKEN, this.idToken);
+    this.storage.setItem(this.STORAGE_PATH_ID_TOKEN, this.idToken);
   }
 
   clearTokens() {
-    this.storage.removeItem(STORAGE_PATH_ACCESS_TOKEN);
-    this.storage.removeItem(STORAGE_PATH_ID_TOKEN);
-    this.storage.removeItem(STORAGE_PATH_REFRESH_TOKEN);
+    this.storage.removeItem(this.STORAGE_PATH_ACCESS_TOKEN);
+    this.storage.removeItem(this.STORAGE_PATH_ID_TOKEN);
+    this.storage.removeItem(this.STORAGE_PATH_REFRESH_TOKEN);
   }
 }
 
