@@ -1,3 +1,11 @@
+# [0.22.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.1...v0.22.0-dev.2) (2024-09-19)
+
+
+### Features
+
+* enable auth config in Akord constuctor ([0d25519](https://github.com/Akord-com/carmella-sdk/commit/0d25519d571fc42581b527409383e8ea1546c098))
+* save JWT from wallet-based auth, retrieve address from session & refactor JWT client ([5f589cd](https://github.com/Akord-com/carmella-sdk/commit/5f589cda1bfb2b6de53954768eb7322409124f61))
+
 # [0.22.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.21.2...v0.22.0-dev.1) (2024-09-16)
 
 
