@@ -1,3 +1,10 @@
+# [0.22.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.2...v0.22.0-dev.3) (2024-09-19)
+
+
+### Features
+
+* make auth storage path env specific ([7bac05c](https://github.com/Akord-com/carmella-sdk/commit/7bac05c5d7a84ffa3ed689d57ca8338a1e35ac2c))
+
 # [0.22.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.1...v0.22.0-dev.2) (2024-09-19)
 
 
