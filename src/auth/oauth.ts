@@ -6,6 +6,7 @@ import { Logger } from '../logger';
 import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
 import { DEFAULT_STORAGE, JWTClient } from './jwt';
+import { Env } from '../env';
 
 export const AuthProviderConfig = {
   "Google": {
@@ -28,6 +29,8 @@ export const AuthProviderConfig = {
 }
 
 class OAuth {
+  private env: Env;
+
   private clientId: string;
   private redirectUri: string;
   private authProvider: AuthProvider;
@@ -46,11 +49,12 @@ class OAuth {
     if (!config.redirectUri) {
       throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
     }
+    this.env = config.env;
     this.redirectUri = config.redirectUri;
     this.authProvider = config.authProvider;
     this.clientId = config.clientId || AuthProviderConfig[this.authProvider].CLIENT_ID;
     this.storage = config.storage || DEFAULT_STORAGE;
-    this.jwtClient = new JWTClient({ storage: this.storage });
+    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
   // redirect to OAuth provider's authorization URL
@@ -81,7 +85,7 @@ class OAuth {
 
   async exchangeCodeForTokens(code: string) {
     try {
-      const { idToken, accessToken, refreshToken } = await new AkordApi({ debug: true, logToFile: true }).generateJWT({
+      const { idToken, accessToken, refreshToken } = await new AkordApi({ debug: true, logToFile: true, env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "code",
         redirectUri: this.redirectUri,
