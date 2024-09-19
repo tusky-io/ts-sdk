@@ -118,6 +118,7 @@ export class Akord {
 
   env(env: Env): this {
     this._env = env;
+    Auth.setEnv(this._env);
     return this;
   }
 

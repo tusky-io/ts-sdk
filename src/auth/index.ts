@@ -47,6 +47,7 @@ export class Auth {
     // reset previous configuration
     this.authType = options.authType;
     this.apiKey = options.apiKey;
+    this.env = options.env;
     this.authTokenProvider = options.authTokenProvider;
     // walet-based auth
     this.walletType = options.walletType;
@@ -57,7 +58,12 @@ export class Auth {
     this.clientId = options.clientId;
     this.redirectUri = options.redirectUri;
     this.storage = options.storage || DEFAULT_STORAGE;
-    this.jwtClient = new JWTClient({ storage: this.storage });
+    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
+  }
+
+  public static setEnv(env: Env) {
+    this.env = env;
+    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
   public static async signIn(): Promise<{ address?: string }> {
@@ -244,5 +250,3 @@ export type AuthOptions = {
   authTokenProvider?: AuthTokenProvider
   apiKey?: string,
 } & OAuthConfig & WalletConfig
-
-Auth.configure()

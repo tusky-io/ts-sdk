@@ -1,5 +1,6 @@
 import { SignPersonalMessageClient } from "../auth"
 import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519"
+import { Env } from "../env";
 
 export type AuthType = "OAuth" | "Wallet" | "ApiKey" | "AuthTokenProvider";
 
@@ -12,6 +13,7 @@ export interface OAuthConfig {
   redirectUri?: string
   clientId?: string,
   storage?: Storage,
+  env?: Env,
 }
 
 export interface WalletConfig {
