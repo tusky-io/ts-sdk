@@ -100,6 +100,7 @@ export class Auth {
         const publicKey = await verifyPersonalMessageSignature(message, signature);
         const address = publicKey.toSuiAddress();
         const jwt = await new AkordApi({ debug: true, logToFile: true, env: this.env }).verifyAuthChallenge({ signature });
+        this.jwtClient.setAddress(address);
         this.jwtClient.setIdToken(jwt);
         return { address };
       }
@@ -223,12 +224,7 @@ export class Auth {
     switch (this.authType) {
       case "OAuth":
       case "Wallet": {
-        let idToken = this.jwtClient.getIdToken();
-        if (idToken) {
-          const address = decode(idToken).address;
-          return address;
-        }
-        break;
+        return this.jwtClient.getAddress();
       }
       case "AuthTokenProvider": {
         const token = this.authTokenProvider();

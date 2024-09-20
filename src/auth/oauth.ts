@@ -85,6 +85,7 @@ class OAuth {
           throwError(error.response?.status, error.response?.data?.msg, error);
         }
       });
+      this.jwtClient.setAddress(address);
       return { address };
     } else {
       throw new Unauthorized("Authorization code not found.");
