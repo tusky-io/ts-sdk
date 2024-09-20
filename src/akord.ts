@@ -150,6 +150,7 @@ export class Akord {
     this.api = config.api ? config.api : new AkordApi(config);
     this._userAgent = config.userAgent;
     Auth.configure(config);
+    this.setAddress(Auth.getAddress());
     Plugins.register(config?.plugins, this._env);
     Logger.debug = config?.debug;
     Logger.logToFile = config?.logToFile;
