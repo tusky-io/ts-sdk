@@ -1,3 +1,10 @@
+# [0.22.0-dev.5](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.4...v0.22.0-dev.5) (2024-09-20)
+
+
+### Features
+
+* add retry on enoki calls ([8b449e2](https://github.com/Akord-com/carmella-sdk/commit/8b449e24e6448f1fff4ae7fed20894f2a8600a84))
+
 # [0.22.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.3...v0.22.0-dev.4) (2024-09-20)
 
 
