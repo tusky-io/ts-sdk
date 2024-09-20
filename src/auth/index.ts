@@ -9,6 +9,7 @@ import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 import AkordApi from "../api/akord-api";
 import { Env } from "../env";
 import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
+import { BadRequest } from "../errors/bad-request";
 
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
@@ -126,7 +127,7 @@ export class Auth {
         }
       }
       default:
-        throw new Error(`Missing or unsupported auth type for sign in: ${this.authType}`);
+        throw new BadRequest(`Missing or unsupported auth type for sign in: ${this.authType}`);
     }
   }
 

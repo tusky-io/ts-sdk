@@ -1,5 +1,5 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import EnokiClient from './enoki';
+import EnokiClient, { ENOKI_PUBLIC_API_KEY } from './enoki';
 import { AuthProvider, OAuthConfig } from '../types/auth';
 import { BadRequest } from '../errors/bad-request';
 import { Logger } from '../logger';
@@ -7,6 +7,8 @@ import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
 import { DEFAULT_STORAGE, JWTClient } from './jwt';
 import { Env } from '../env';
+import { retry } from '../api/api-client';
+import { throwError } from '../errors/error-factory';
 
 export const AuthProviderConfig = {
   "Google": {
@@ -39,6 +41,7 @@ class OAuth {
   private authProvider: AuthProvider;
 
   private jwtClient: JWTClient;
+  private enokiClient: EnokiClient;
 
   private storage: Storage;
 
@@ -55,6 +58,7 @@ class OAuth {
     this.clientId = config.clientId || AuthProviderConfig[this.authProvider].CLIENT_ID;
     this.storage = config.storage || DEFAULT_STORAGE;
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
+    this.enokiClient = new EnokiClient({ apiKey: ENOKI_PUBLIC_API_KEY });
   }
 
   // redirect to OAuth provider's authorization URL
@@ -74,12 +78,16 @@ class OAuth {
       // exchange the authorization code for tokens
       await this.exchangeCodeForTokens(code);
 
-      const enokiClient = new EnokiClient({ apiKey: "enoki_public_ab093e91616fc8fe6125017946ea2548" });
-
-      const { address } = await enokiClient.getZkLogin(this.jwtClient.getIdToken());
+      const { address } = await retry(async () => {
+        try {
+          return this.enokiClient.getZkLogin(this.jwtClient.getIdToken());
+        } catch (error) {
+          throwError(error.response?.status, error.response?.data?.msg, error);
+        }
+      });
       return { address };
     } else {
-      throw new Error('Authorization code not found.');
+      throw new Unauthorized("Authorization code not found.");
     }
   }
 
@@ -107,9 +115,13 @@ class OAuth {
     // generate ephemeral key pair
     const ephemeralKeyPair = new Ed25519Keypair();
 
-    const enokiClient = new EnokiClient({ apiKey: "enoki_public_ab093e91616fc8fe6125017946ea2548" });
-
-    const createZkLoginResponse = await enokiClient.createZkLoginNonce(ephemeralKeyPair);
+    const createZkLoginResponse = await retry(async () => {
+      try {
+        return this.enokiClient.createZkLoginNonce(ephemeralKeyPair);
+      } catch (error) {
+        throwError(error.response?.status, error.response?.data?.msg, error);
+      }
+    });
 
     if (!this.redirectUri) {
       throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
@@ -145,7 +157,8 @@ class OAuth {
       this.jwtClient.setIdToken(idToken);
 
     } catch (error) {
-      throw new Error(`Failed to refresh tokens: ${error}`);
+      Logger.error(error);
+      throw new Unauthorized("Failed to refresh tokens.");
     }
   };
 }
