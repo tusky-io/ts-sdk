@@ -1,3 +1,10 @@
+# [0.22.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.3...v0.22.0-dev.4) (2024-09-20)
+
+
+### Features
+
+* use auth provider specific scopes ([2ecbf48](https://github.com/Akord-com/carmella-sdk/commit/2ecbf48c62d8b45840ec4e39eb55c53bef15390b))
+
 # [0.22.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.2...v0.22.0-dev.3) (2024-09-19)
 
 
