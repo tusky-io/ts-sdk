@@ -79,9 +79,46 @@ class FileModule {
   /**
    * Generate preconfigured Tus uploader
    * @param  {string} vaultId
-   * @param  {FileSource} file file source: web File object, file path, buffer or stream
-   * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
-   * @returns Promise with file id & uri
+   * @param  {FileSource} file 
+   *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
+   *    Browser: File | Blob | Uint8Array | ArrayBuffer
+   * @param  {FileUploadOptions} options parent id, file name file mime type, etc
+   * @returns Promise with tus.Upload instance
+   * 
+   *
+   * <b>Example 1 - use in Browser with Uppy upload</b>
+   * 
+   * const uploader = akord.zip.uploader(vaultId)
+   * 
+   * const uppy = new Uppy({
+   *    restrictions: {
+   *      allowedFileTypes: ['.zip', 'application/zip', 'application/x-zip-compressed'],
+   *      maxFileSize: 1000000000,
+   *    },
+   *    autoProceed: false
+   *  })
+   *  .use(Tus, uploader.options)
+   * 
+   * uppy.addFile(file)
+   * uppy.upload()
+   * 
+   * 
+   * <b>Example 2 - use in Nodejs</b>
+   * 
+   * const uploader = akord.zip.uploader(vaultId, file, {
+   *    onSuccess: () => {
+   *      console.log('Upload complete');
+   *    },
+   *    onError: (error) => {
+   *      console.log('Upload error', error);
+   *    },
+   *    onProgress: (progress) => {
+   *      console.log('Upload progress', progress);
+   *    }
+   * })
+   * 
+   * uploader.start()
+   * 
    */
   public async uploader(
     vaultId: string,
@@ -92,7 +129,7 @@ class FileModule {
 
     let fileLike = null;
     if (file) {
-      fileLike = await createFileLike(file);
+      fileLike = await fileSourceToTusFile(file);
 
       if (fileLike.size === 0) {
         throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
@@ -127,9 +164,11 @@ class FileModule {
   /**
    * Upload file
    * @param  {string} vaultId
-   * @param  {FileSource} file file source: web File object, file path, buffer or stream
-   * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
-   * @returns Promise with file id & uri
+   * @param  {FileSource} file 
+   *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
+   *    Browser: File | Blob | Uint8Array | ArrayBuffer
+   * @param  {FileUploadOptions} options parent id, file name file mime type, etc.
+   * @returns Promise with upload id
    */
   public async upload(
     vaultId: string,
@@ -353,16 +392,17 @@ export type Hooks = {
   onError?: ((error: Error | tus.DetailedError) => void) | null,
 }
 
-export type FileOptions = {
+export type FileMetadtaOptions = {
   name?: string,
   mimeType?: string,
   lastModified?: number
 }
 
-export type FileUploadOptions = Hooks & FileOptions & {
-  chunkSize?: number,
-  parentId?: string,
+export type FileLocationOptions = {
+  parentId?: string
 }
+
+export type FileUploadOptions = Hooks & FileLocationOptions & FileMetadtaOptions
 
 export type FileDownloadOptions = Hooks & {
   path?: string,

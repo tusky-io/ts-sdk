@@ -8,6 +8,7 @@ import { MembershipModule } from "./core/membership";
 import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
 import { FileModule } from "./core/file";
+import { ZipModule } from "./core/zip";
 import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
@@ -42,6 +43,9 @@ export class Akord {
   }
   get file(): FileModule {
     return new FileModule(this.getConfig());
+  }
+  get zip(): ZipModule {
+    return new ZipModule(this.getConfig());
   }
   get trash(): TrashModule {
     return new TrashModule(this.getConfig());
