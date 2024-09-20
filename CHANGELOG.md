@@ -1,3 +1,10 @@
+# [0.22.0-dev.6](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.5...v0.22.0-dev.6) (2024-09-20)
+
+
+### Bug Fixes
+
+* set address from session in akord constructor ([1287490](https://github.com/Akord-com/carmella-sdk/commit/1287490c4d9ffc4af85d0d496d00565641795560))
+
 # [0.22.0-dev.5](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.4...v0.22.0-dev.5) (2024-09-20)
 
 
