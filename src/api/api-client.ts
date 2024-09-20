@@ -1109,7 +1109,7 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function retry<T>(
+export async function retry<T>(
   fn: () => Promise<T>,
   retries: number = 5,
   delayMs: number = 1000
