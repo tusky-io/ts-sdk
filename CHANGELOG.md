@@ -1,3 +1,10 @@
+# [0.22.0-dev.7](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.6...v0.22.0-dev.7) (2024-09-20)
+
+
+### Features
+
+* store user address in session ([0aa2de2](https://github.com/Akord-com/carmella-sdk/commit/0aa2de23620f8b1671ac668d2a155e85853ea4bd))
+
 # [0.22.0-dev.6](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.5...v0.22.0-dev.6) (2024-09-20)
 
 
