@@ -1,3 +1,10 @@
+# [0.22.0-dev.8](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.7...v0.22.0-dev.8) (2024-09-24)
+
+
+### Features
+
+* try to use refresh token if id token not found ([9970e3f](https://github.com/Akord-com/carmella-sdk/commit/9970e3ff140e2fb9be6b0dee001f9c638e5068ee))
+
 # [0.22.0-dev.7](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.6...v0.22.0-dev.7) (2024-09-20)
 
 
