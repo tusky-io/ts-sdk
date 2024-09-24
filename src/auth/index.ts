@@ -169,17 +169,20 @@ export class Auth {
       }
       case "OAuth": {
         let idToken = this.jwtClient.getIdToken();
+        const oauthClient = new OAuth({
+          clientId: this.clientId,
+          redirectUri: this.redirectUri,
+          authProvider: this.authProvider,
+          storage: this.storage
+        });
         if (!idToken) {
-          throw new Unauthorized("Invalid authorization.");
+          Logger.log('Id token not found. Trying to use refresh token...');
+          await oauthClient.refreshTokens();
+          Logger.log('Tokens refreshed successfully.');
+          idToken = this.jwtClient.getIdToken();
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
           Logger.log('Token is expired or about to expire. Refreshing tokens...');
-          const oauthClient = new OAuth({
-            clientId: this.clientId,
-            redirectUri: this.redirectUri,
-            authProvider: this.authProvider,
-            storage: this.storage
-          });
           await oauthClient.refreshTokens();
           Logger.log('Tokens refreshed successfully.');
           idToken = this.jwtClient.getIdToken();
