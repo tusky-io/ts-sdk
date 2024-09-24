@@ -145,7 +145,7 @@ class OAuth {
     try {
       const refreshToken = this.jwtClient.getRefreshToken();
       if (!refreshToken) {
-        throw new Unauthorized("Session expired. Please login again.");
+        throw new Unauthorized("Session expired. Please log in again.");
       }
 
       const { idToken, accessToken } = await new AkordApi({ debug: true, logToFile: true }).generateJWT({
