@@ -102,7 +102,7 @@ const commonWebConfig = {
       },
     ],
   },
-  devtool: 'source-map',
+  // devtool: 'source-map',
   optimization: {
     minimize: true,
     minimizer: [new TerserPlugin({
