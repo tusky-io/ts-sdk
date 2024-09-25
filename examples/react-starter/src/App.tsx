@@ -4,7 +4,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import { useCurrentAccount, useSignPersonalMessage, useCurrentWallet } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Akord, AkordWallet, Encrypter } from "@akord/carmella-sdk";
+import { Akord } from "@akord/carmella-sdk";
 window.Buffer = window.Buffer || require("buffer").Buffer;
 
 function App() {
@@ -43,8 +43,8 @@ function App() {
   const handleSignInWithWallet = async () => {
     const akord = Akord
       .withWallet({ walletSignFnClient: signPersonalMessage, walletAccount: account })
-      .withLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any);
+      .withLogger({ logLevel: "debug", logToFile: true })
+      .withApi({ env: process.env.ENV as any });
 
     await akord.signIn();
     console.log("ADDRESS: " + akord.address);
@@ -57,8 +57,8 @@ function App() {
   const handleSignInWithOAuth = async (authProvider: string) => {
     const akord = Akord
       .withOAuth({ authProvider: authProvider as any, redirectUri: "http://localhost:3000" })
-      .withLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any);
+      .withLogger({ logLevel: "debug", logToFile: true })
+      .withApi({ env: process.env.ENV as any });
 
     await akord.signIn();
     console.log("ADDRESS: " + akord.address);
@@ -84,15 +84,8 @@ function App() {
     if (!password) {
       throw new Error("Password input canceled.");
     }
-    if (!user.encPrivateKey) {
-      const userWallet = await AkordWallet.create(password);
-      const userKeyPair = userWallet.encryptionKeyPair;
-      await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
-      akord.withEncrypter(new Encrypter({ keypair: userKeyPair }));
-    } else {
-      const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
-      akord.withEncrypter(new Encrypter({ keypair: userWallet.encryptionKeyPair }));
-    }
+    // set encryption context from password & use keystore to persist encryption session
+    await akord.withEncrypter({ password: password, keystore: true });
   };
 
   const handleUpload = async (files: FileList | null) => {
