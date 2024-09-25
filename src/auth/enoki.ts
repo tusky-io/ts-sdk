@@ -1,6 +1,6 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Unauthorized } from '../errors/unauthorized';
-import { Logger } from '../logger';
+import { logger } from '../logger';
 
 export const ENOKI_API_URL = 'https://api.enoki.mystenlabs.com/v1';
 export const ENOKI_PUBLIC_API_KEY = "enoki_public_ab093e91616fc8fe6125017946ea2548";
