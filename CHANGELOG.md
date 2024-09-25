@@ -1,3 +1,10 @@
+# [0.22.0-dev.15](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.14...v0.22.0-dev.15) (2024-09-25)
+
+
+### Bug Fixes
+
+* reinitialize tus request headers ([2a57d60](https://github.com/Akord-com/carmella-sdk/commit/2a57d60081c79995b3af7fc9be4ff959917e26ec))
+
 # [0.22.0-dev.14](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.13...v0.22.0-dev.14) (2024-09-25)
 
 
