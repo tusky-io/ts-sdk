@@ -10,9 +10,12 @@ class JWTClient {
   private idToken: string;
   private refreshToken: string;
 
+  private address: string;
+
   private STORAGE_PATH_ACCESS_TOKEN: string;
   private STORAGE_PATH_ID_TOKEN: string;
   private STORAGE_PATH_REFRESH_TOKEN: string;
+  private STORAGE_PATH_ADDRESS: string;
 
   private storage: Storage;
 
@@ -22,6 +25,7 @@ class JWTClient {
     this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_access_token`;
     this.STORAGE_PATH_ID_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_id_token`;
     this.STORAGE_PATH_REFRESH_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_refresh_token`;
+    this.STORAGE_PATH_ADDRESS = `${STORAGE_PATH_PREFIX}_${this.env}_address`;
   }
 
   isTokenExpiringSoon(token: string, bufferTime: number = 10): boolean {
@@ -68,10 +72,23 @@ class JWTClient {
     this.storage.setItem(this.STORAGE_PATH_ID_TOKEN, this.idToken);
   }
 
+  setAddress(address: string) {
+    this.address = address;
+    this.storage.setItem(this.STORAGE_PATH_ADDRESS, address);
+  }
+
+  getAddress() {
+    if (!this.address) {
+      this.address = this.storage.getItem(this.STORAGE_PATH_ADDRESS);
+    }
+    return this.address;
+  }
+
   clearTokens() {
     this.storage.removeItem(this.STORAGE_PATH_ACCESS_TOKEN);
     this.storage.removeItem(this.STORAGE_PATH_ID_TOKEN);
     this.storage.removeItem(this.STORAGE_PATH_REFRESH_TOKEN);
+    this.storage.removeItem(this.STORAGE_PATH_ADDRESS);
   }
 }
 

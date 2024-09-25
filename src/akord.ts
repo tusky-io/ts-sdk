@@ -176,6 +176,7 @@ export class Akord {
     this._env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
     Auth.configure(config);
+    this.setAddress(Auth.getAddress());
     Plugins.register(config?.plugins, this._env);
     CacheBusters.cache = config?.cache;
   }

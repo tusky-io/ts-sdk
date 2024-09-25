@@ -1,3 +1,38 @@
+# [0.22.0-dev.8](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.7...v0.22.0-dev.8) (2024-09-24)
+
+
+### Features
+
+* try to use refresh token if id token not found ([9970e3f](https://github.com/Akord-com/carmella-sdk/commit/9970e3ff140e2fb9be6b0dee001f9c638e5068ee))
+
+# [0.22.0-dev.7](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.6...v0.22.0-dev.7) (2024-09-20)
+
+
+### Features
+
+* store user address in session ([0aa2de2](https://github.com/Akord-com/carmella-sdk/commit/0aa2de23620f8b1671ac668d2a155e85853ea4bd))
+
+# [0.22.0-dev.6](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.5...v0.22.0-dev.6) (2024-09-20)
+
+
+### Bug Fixes
+
+* set address from session in akord constructor ([1287490](https://github.com/Akord-com/carmella-sdk/commit/1287490c4d9ffc4af85d0d496d00565641795560))
+
+# [0.22.0-dev.5](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.4...v0.22.0-dev.5) (2024-09-20)
+
+
+### Features
+
+* add retry on enoki calls ([8b449e2](https://github.com/Akord-com/carmella-sdk/commit/8b449e24e6448f1fff4ae7fed20894f2a8600a84))
+
+# [0.22.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.3...v0.22.0-dev.4) (2024-09-20)
+
+
+### Features
+
+* use auth provider specific scopes ([2ecbf48](https://github.com/Akord-com/carmella-sdk/commit/2ecbf48c62d8b45840ec4e39eb55c53bef15390b))
+
 # [0.22.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.2...v0.22.0-dev.3) (2024-09-19)
 
 

@@ -1,6 +1,6 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
-import { logger } from "../logger";
+import { Logger } from "../logger";
 import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Conflict } from "../errors/conflict";
 import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
@@ -9,6 +9,7 @@ import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 import AkordApi from "../api/akord-api";
 import { Env } from "../env";
 import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
+import { BadRequest } from "../errors/bad-request";
 
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
@@ -79,11 +80,11 @@ export class Auth {
               },
               {
                 onSuccess: (data: { signature: string }) => {
-                  logger.info("Message signed on client: " + data.signature);
+                  Logger.info("Message signed on client: " + data.signature);
                   resolve(data.signature);
                 },
                 onError: (error: Error) => {
-                  logger.info("Error signing on client: " + error);
+                  Logger.info("Error signing on client: " + error);
                   reject(error);
                 },
               }
@@ -99,6 +100,7 @@ export class Auth {
         const publicKey = await verifyPersonalMessageSignature(message, signature);
         const address = publicKey.toSuiAddress();
         const jwt = await new AkordApi({ debug: true, logToFile: true, env: this.env }).verifyAuthChallenge({ signature });
+        this.jwtClient.setAddress(address);
         this.jwtClient.setIdToken(jwt);
         return { address };
       }
@@ -120,13 +122,13 @@ export class Auth {
           return { address };
         } else {
           // step 1: if no code in the URL, initiate the OAuth flow
-          logger.info('No authorization code found, redirecting to OAuth provider...');
+          Logger.info('No authorization code found, redirecting to OAuth provider...');
           await aOuthClient.initOAuthFlow();
           return {};
         }
       }
       default:
-        throw new Error(`Missing or unsupported auth type for sign in: ${this.authType}`);
+        throw new BadRequest(`Missing or unsupported auth type for sign in: ${this.authType}`);
     }
   }
 
@@ -167,19 +169,22 @@ export class Auth {
       }
       case "OAuth": {
         let idToken = this.jwtClient.getIdToken();
+        const oauthClient = new OAuth({
+          clientId: this.clientId,
+          redirectUri: this.redirectUri,
+          authProvider: this.authProvider,
+          storage: this.storage
+        });
         if (!idToken) {
-          throw new Unauthorized("Invalid authorization.");
+          Logger.log('Id token not found. Trying to use refresh token...');
+          await oauthClient.refreshTokens();
+          Logger.log('Tokens refreshed successfully.');
+          idToken = this.jwtClient.getIdToken();
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
-          logger.info('Token is expired or about to expire. Refreshing tokens...');
-          const oauthClient = new OAuth({
-            clientId: this.clientId,
-            redirectUri: this.redirectUri,
-            authProvider: this.authProvider,
-            storage: this.storage
-          });
+          Logger.log('Token is expired or about to expire. Refreshing tokens...');
           await oauthClient.refreshTokens();
-          logger.info('Tokens refreshed successfully.');
+          Logger.info('Tokens refreshed successfully.');
           idToken = this.jwtClient.getIdToken();
         }
         return {
@@ -209,7 +214,7 @@ export class Auth {
           }
           throw new Unauthorized("Please add authTokenProvider into config.");
         } catch (e) {
-          logger.error(e)
+          Logger.error(e)
           throw new Unauthorized("Invalid authorization.");
         }
       }
@@ -222,12 +227,7 @@ export class Auth {
     switch (this.authType) {
       case "OAuth":
       case "Wallet": {
-        let idToken = this.jwtClient.getIdToken();
-        if (idToken) {
-          const address = decode(idToken).address;
-          return address;
-        }
-        break;
+        return this.jwtClient.getAddress();
       }
       case "AuthTokenProvider": {
         const token = this.authTokenProvider();
