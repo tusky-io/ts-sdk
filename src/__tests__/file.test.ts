@@ -1,10 +1,10 @@
 import { BadRequest } from "../errors/bad-request";
 import { Akord } from "../index";
-import { createFileLike } from "../types/file";
 import { cleanup, generateAndSavePixelFile, initInstance, testDataGeneratedPath, testDataPath, vaultCreate } from './common';
 import { firstFileName } from './data/content';
 import { createReadStream, promises as fs } from 'fs';
 import { status } from "../constants";
+import { pathToReadable } from "../types/node/file";
 
 let akord: Akord;
 
@@ -113,7 +113,7 @@ describe("Testing file & folder upload functions", () => {
   });
 
   it("should upload a file object", async () => {
-    const fileObject = await createFileLike(testDataPath + firstFileName);
+    const fileObject = await pathToReadable(testDataPath + firstFileName);
     const type = "image/png";
     const id = await akord.file.upload(vaultId, fileObject, { name: firstFileName });
     const file = await akord.file.get(id);

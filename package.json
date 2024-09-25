@@ -9,16 +9,19 @@
     ".": {
       "require": "./lib/web/index.js",
       "import": "./lib/web/index.esm.js",
+      "default": "./lib/web/cjs/index.js",
       "types": "./lib/web/types/index.d.ts"
     },
     "./node": {
       "require": "./lib/node/index.js",
       "import": "./lib/node/index.esm.js",
+      "default": "./lib/node/cjs/index.js",
       "types": "./lib/node/types/index.d.ts"
     },
     "./web": {
       "require": "./lib/web/index.js",
       "import": "./lib/web/index.esm.js",
+      "default": "./lib/web/cjs/index.js",
       "types": "./lib/web/types/index.d.ts"
     }
   },

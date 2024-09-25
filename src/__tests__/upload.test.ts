@@ -1,6 +1,5 @@
 import { BadRequest } from "../errors/bad-request";
 import { Akord, Auth } from "../index";
-import { createFileLike } from "../types/file";
 import { TESTING_ENV, cleanup, initInstance, setupVault, testDataPath, vaultCreate } from './common';
 import { firstFileName } from './data/content';
 import fs from "fs";
