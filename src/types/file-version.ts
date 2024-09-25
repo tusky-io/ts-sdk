@@ -1,3 +1,4 @@
+import { FileLocationOptions, FileMetadataOptions, Hooks } from "../core/file";
 import { EncryptedVaultKeyPair } from ".";
 import { Encryptable, encrypted } from "../crypto";
 
@@ -45,4 +46,12 @@ export class File extends Encryptable {
     this.tags = file.tags;
     this.__public__ = file.__public__;
   }
+}
+
+export type FileUploadOptions = Hooks & FileLocationOptions & FileMetadataOptions
+
+export type FileDownloadOptions = Hooks & {
+  path?: string,
+  skipSave?: boolean,
+  public?: boolean,
 }

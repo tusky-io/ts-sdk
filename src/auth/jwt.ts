@@ -1,4 +1,4 @@
-import { Env } from "../env";
+import { Env } from "../types/env";
 import { isServer } from "../util/platform";
 
 const STORAGE_PATH_PREFIX = "akord";

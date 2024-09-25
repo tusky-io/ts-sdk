@@ -78,7 +78,7 @@ describe("Testing encryption functions", () => {
     await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
   });
 
-  it("should set user encryption context", async () => {
+  it("should set user encryption context from password & persist encryption session with keystore", async () => {
     await akord.withEncrypter({ password: password, keystore: true });
   });
 
