@@ -12,7 +12,7 @@ import { ZipModule } from "./core/zip";
 import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
-import { Env } from "./env";
+import { Env } from "./types/env";
 import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
@@ -122,13 +122,13 @@ export class Akord {
     } else if (config.password) {
       const user = await this.me.get();
       if (!user.encPrivateKey) {
-        // generate new user encryption content
+        logger.info("Generate new user encryption context");
         const userWallet = await AkordWallet.create(config.password, config.keystore);
         const userKeyPair = userWallet.encryptionKeyPair;
         await this.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
         this._encrypter = new Encrypter({ keypair: userKeyPair });
       } else {
-        // retrieve and decrypt existing user encryption content
+        logger.info("Retrieve and decrypt existing user encryption content with password");
         const userWallet = await AkordWallet.importFromEncBackupPhrase(config.password, user.encPrivateKey, config.keystore);
         this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
       }
@@ -138,6 +138,7 @@ export class Akord {
         throw new Conflict("The user needs to configure their encryption password/backup phrase.");
       }
       try {
+        logger.info("Retrieve and decrypt existing user encryption content from keystore");
         const userWallet = await AkordWallet.importFromKeystore(user.encPrivateKey as string);
         this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
       } catch (error) {

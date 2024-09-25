@@ -1,7 +1,7 @@
 import { Api } from "./api/api"
 import { Plugin } from "./plugin"
 import { Signer } from "./signer"
-import { Env } from "./env"
+import { Env } from "./types/env"
 import { Encrypter } from "./encrypter"
 import { Logger, LogLevel } from "./logger"
 import AkordApi from "./api/akord-api"

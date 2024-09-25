@@ -6,7 +6,7 @@ import { logger } from '../logger';
 import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
 import { DEFAULT_STORAGE, JWTClient } from './jwt';
-import { Env } from '../env';
+import { Env } from '../types/env';
 import { retry } from '../api/api-client';
 import { throwError } from '../errors/error-factory';
 

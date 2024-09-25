@@ -3,8 +3,8 @@ import { BadRequest } from "../errors/bad-request";
 import { Service, ServiceConfig } from './service/service';
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
-import { CHUNK_SIZE_IN_BYTES, EMPTY_FILE_ERROR_MESSAGE, FileLocationOptions, FileMetadtaOptions, FileUploadOptions, Hooks } from "./file";
-
+import { CHUNK_SIZE_IN_BYTES, EMPTY_FILE_ERROR_MESSAGE } from "./file";
+import { ZipUploadOptions } from "types/zip";
 
 class ZipModule {
 
@@ -131,8 +131,6 @@ class ZipModule {
     return uploadId;
   }
 }
-
-export type ZipUploadOptions = Hooks & FileLocationOptions & FileMetadtaOptions
 
 export {
   ZipModule

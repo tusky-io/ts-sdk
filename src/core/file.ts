@@ -3,7 +3,7 @@ import { status } from "../constants";
 import { ApiClient } from "../api/api-client";
 import { BadRequest } from "../errors/bad-request";
 import { StreamConverter } from "../util/stream-converter";
-import { File } from "../types";
+import { File, FileDownloadOptions, FileUploadOptions } from "../types";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
@@ -392,7 +392,7 @@ export type Hooks = {
   onError?: ((error: Error | tus.DetailedError) => void) | null,
 }
 
-export type FileMetadtaOptions = {
+export type FileMetadataOptions = {
   name?: string,
   mimeType?: string,
   lastModified?: number
@@ -400,14 +400,6 @@ export type FileMetadtaOptions = {
 
 export type FileLocationOptions = {
   parentId?: string
-}
-
-export type FileUploadOptions = Hooks & FileLocationOptions & FileMetadtaOptions
-
-export type FileDownloadOptions = Hooks & {
-  path?: string,
-  skipSave?: boolean,
-  public?: boolean,
 }
 
 export type FileGetOptions = FileDownloadOptions & {

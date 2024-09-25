@@ -1,12 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
 import PQueue, { AbortError } from "@esm2cjs/p-queue";
 import { Service, ServiceConfig } from "../core";
-import { FileSource, fileSourceToTusFile } from "../types/node/file";
-import { EMPTY_FILE_ERROR_MESSAGE, FileModule, FileUploadOptions, Hooks } from "./file";
+import { FileSource, fileSourceToTusFile } from "@env/types/file";
+import { EMPTY_FILE_ERROR_MESSAGE, FileModule, Hooks } from "./file";
 import { actions, objects } from "../constants";
 import { ObjectType } from "../types/object";
 import { BadRequest } from "../errors/bad-request";
-import { File, Folder } from "../types";
+import { File, FileUploadOptions, Folder } from "../types";
 import lodash from "lodash";
 import { FileService } from "./service/file";
 import { FolderService } from "./service/folder";

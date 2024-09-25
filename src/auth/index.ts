@@ -7,7 +7,7 @@ import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
 import { OAuth } from "./oauth";
 import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 import AkordApi from "../api/akord-api";
-import { Env } from "../env";
+import { Env } from "../types/env";
 import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 
