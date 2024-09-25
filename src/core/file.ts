@@ -1,6 +1,6 @@
+import { FileSource, fileSourceToTusFile } from "@env/types/file";
 import { status } from "../constants";
 import { ApiClient } from "../api/api-client";
-import { FileSource, createFileLike } from "../types/file";
 import { BadRequest } from "../errors/bad-request";
 import { StreamConverter } from "../util/stream-converter";
 import { File } from "../types";

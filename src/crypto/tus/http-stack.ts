@@ -1,4 +1,5 @@
 
+import { tusFileToUint8Array } from "@env/types/file";
 import { base64ToArray, base64ToString, jsonToBase64, stringToBase64 } from "../";
 import { CHUNK_SIZE_IN_BYTES } from "../../core/file";
 import { Vault } from "../../types";
@@ -56,7 +57,7 @@ export default class EncryptableHttpStack {
         const { aesKey, encryptedAesKey } = await this.generateAesKey(uploadId);
   
         // encrypt the body
-        const bodyUint8Array = await this.bodyAsUint8Array(body);
+        const bodyUint8Array = await tusFileToUint8Array(body);
         const encryptedBody = await encrypt(bodyUint8Array, aesKey, false) as Uint8Array;
         request.setHeader(CONTENT_LENGTH_HEADER, encryptedBody.byteLength.toString());
         
@@ -112,27 +113,6 @@ export default class EncryptableHttpStack {
   
     getName(): string {
       return 'EncryptableHttpStack';
-    }
-  
-    private async bodyAsUint8Array(body: Pick<ReadableStreamDefaultReader, 'read'>): Promise<Uint8Array> {
-      if (body instanceof ArrayBuffer) {
-        return new Uint8Array(body);
-      } else if (body instanceof Buffer) {
-        return new Uint8Array(body.buffer);
-      } else if (body.read) {
-        return await this.streamToUint8Array(body);
-      } else {
-        throw new Error("Unsupported body type");
-      }
-    }
-  
-    private async streamToUint8Array(stream: any): Promise<Uint8Array> {
-      return new Promise((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-        stream.on('error', (err) => reject(err));
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
-      }).then(buffer => new Uint8Array(buffer as any));
     }
   
     private async generateAesKey(uploadId?: string): Promise<{ aesKey: CryptoKey, encryptedAesKey: string }> {

@@ -1,6 +1,15 @@
 import { BadRequest } from "../../errors/bad-request";
 
-export async function createFileLike(source: FileSource): Promise<TusFile> {
+export async function tusFileToUint8Array(source: TusFile): Promise<Uint8Array> {
+  if (source instanceof File) {
+    return new Uint8Array(await source.arrayBuffer());
+  } else if (source instanceof Blob) {
+    return new Uint8Array(await source.arrayBuffer());
+  } else {
+    throw new BadRequest("File source is not supported. Please provide a valid source: File, Blob, Uint8Array, or ArrayBuffer.");
+  }
+}
+export async function fileSourceToTusFile(source: FileSource): Promise<TusFile> {
   if (source instanceof File || source instanceof Blob) {
     return source;
   } else if (source instanceof Uint8Array || source instanceof ArrayBuffer) {

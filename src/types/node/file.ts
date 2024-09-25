@@ -1,13 +1,13 @@
 import { Readable } from "stream";
-import { NotFound } from "../errors/not-found";
-import { BadRequest } from "../errors/bad-request";
-import { DEFAULT_FILE_TYPE } from "../core/file";
-import { getMimeTypeFromFileName } from "../util/mime-types";
+import { NotFound } from "../../errors/not-found";
+import { BadRequest } from "../../errors/bad-request";
+import { DEFAULT_FILE_TYPE } from "../../core/file";
+import { getMimeTypeFromFileName } from "../../util/mime-types";
 import path from "path";
 import { createReadStream, existsSync, statSync } from "fs";
 
 
-export const fromPath = async (filePath: string): Promise<Readable> => {
+export const pathToReadable = async (filePath: string): Promise<Readable> => {
   if (!existsSync(filePath)) {
     throw new NotFound("Could not find a file in your filesystem: " + filePath);
   }
@@ -24,15 +24,34 @@ export const fromPath = async (filePath: string): Promise<Readable> => {
   file.lastModified = fileLastModified;
   file.size = fileSize;
   return file;
-} 
+}
 
-export async function createFileLike(source: FileSource): Promise<TusFile> {
+export const streamToUint8Array = async (stream: Readable): Promise<Uint8Array> => {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    stream.on('error', (err) => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks as any)));
+  }).then(buffer => new Uint8Array(buffer as Buffer));
+}
+
+export async function tusFileToUint8Array(source: TusFile): Promise<Uint8Array> {
+  if (source instanceof Buffer) {
+    return new Uint8Array(source);
+  } else if (source instanceof Readable) {
+    return streamToUint8Array(source);
+  }
+  throw new BadRequest("File source is not supported. Please provide a valid source: web File object, file path, buffer or stream.");
+}
+
+
+export async function fileSourceToTusFile(source: FileSource): Promise<TusFile> {
   if (source instanceof Buffer) {
     return source;
   } else if (source instanceof Readable) {
     return source;
   } else if (typeof source === "string") {
-    return fromPath(source);
+    return pathToReadable(source);
   } else if (source instanceof ArrayBuffer) {
     return Buffer.from(source);
   } else if (source instanceof Uint8Array) {

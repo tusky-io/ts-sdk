@@ -1,4 +1,4 @@
-import { FileSource, fileSourceToTusFile } from "../types/file";
+import { FileSource, fileSourceToTusFile } from "@env/types/file";
 import { BadRequest } from "../errors/bad-request";
 import { Service, ServiceConfig } from './service/service';
 import * as tus from 'tus-js-client'

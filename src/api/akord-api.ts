@@ -25,7 +25,6 @@ const DEFAULT_LIMIT = 1000;
 
 export default class AkordApi extends Api {
 
-  public config!: ApiConfig;
 
   constructor(config: ClientConfig) {
     super();

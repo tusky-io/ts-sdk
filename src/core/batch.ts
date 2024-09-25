@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import PQueue, { AbortError } from "@esm2cjs/p-queue";
 import { Service, ServiceConfig } from "../core";
-import { FileSource, createFileLike } from "../types/file";
+import { FileSource, fileSourceToTusFile } from "../types/node/file";
 import { EMPTY_FILE_ERROR_MESSAGE, FileModule, FileUploadOptions, Hooks } from "./file";
 import { actions, objects } from "../constants";
 import { ObjectType } from "../types/object";

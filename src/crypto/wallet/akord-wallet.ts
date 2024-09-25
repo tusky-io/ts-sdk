@@ -219,7 +219,7 @@ class AkordWallet implements Wallet {
    */
   async getRoot(): Promise<HDKey> {
     const seed = await bip39.mnemonicToSeed(this.backupPhrase)
-    return HDKey.fromMasterSeed(seed)
+    return HDKey.fromMasterSeed(new Uint8Array(seed))
   }
 
   /**
