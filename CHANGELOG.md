@@ -1,3 +1,10 @@
+# [0.22.0-dev.14](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.13...v0.22.0-dev.14) (2024-09-25)
+
+
+### Features
+
+* export file source type ([51e0196](https://github.com/Akord-com/carmella-sdk/commit/51e0196349efc2d0923e1660461e9d87298e7c78))
+
 # [0.22.0-dev.13](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.12...v0.22.0-dev.13) (2024-09-25)
 
 
