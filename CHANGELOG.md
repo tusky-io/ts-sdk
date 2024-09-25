@@ -1,3 +1,10 @@
+# [0.22.0-dev.11](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.10...v0.22.0-dev.11) (2024-09-25)
+
+
+### Features
+
+* update starter to the newest SDK ([aff7c10](https://github.com/Akord-com/carmella-sdk/commit/aff7c106597f3c57ef439a5678169973f26b764e))
+
 # [0.22.0-dev.10](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.9...v0.22.0-dev.10) (2024-09-25)
 
 
