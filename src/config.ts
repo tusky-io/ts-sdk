@@ -11,7 +11,7 @@ export interface ClientConfig {
   env?: Env
   signer?: Signer,
   encrypter?: Encrypter,
-  debug?: boolean
+  logLevel?: LogLevel
   logToFile?: boolean
   cache?: boolean
   api?: Api

@@ -79,7 +79,12 @@ describe("Testing encryption functions", () => {
   });
 
   it("should set user encryption context", async () => {
-    await akord.withEncrypter({ password: password });
+    await akord.withEncrypter({ password: password, keystore: true });
+  });
+
+  it("should retrieve user context from session", async () => {
+    akord = new Akord({ authType: "Wallet", env: process.env.ENV as any, logLevel: "debug" });
+    await akord.withEncrypter({ keystore: true });
   });
 
   it("should create a private vault", async () => {
@@ -137,7 +142,7 @@ describe("Testing encryption functions", () => {
 
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
-    
+
     expect(response).toEqual(arrayBuffer);
   });
 });

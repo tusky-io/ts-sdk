@@ -97,7 +97,7 @@ class OAuth {
       if (!this.redirectUri) {
         throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
       }
-      const { idToken, accessToken, refreshToken } = await new AkordApi({ debug: true, logToFile: true, env: this.env }).generateJWT({
+      const { idToken, accessToken, refreshToken } = await new AkordApi({ env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "code",
         redirectUri: this.redirectUri,
@@ -148,7 +148,7 @@ class OAuth {
         throw new Unauthorized("Session expired. Please log in again.");
       }
 
-      const { idToken, accessToken } = await new AkordApi({ debug: true, logToFile: true }).generateJWT({
+      const { idToken, accessToken } = await new AkordApi({ env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "refreshToken",
         refreshToken: refreshToken

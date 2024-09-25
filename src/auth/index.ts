@@ -85,7 +85,7 @@ export class Auth {
         } else {
           throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
         }
-        const api = new AkordApi({ debug: true, logToFile: true, env: this.env });
+        const api = new AkordApi({ env: this.env });
         const { nonce } = await api.createAuthChallenge({ address });
 
         const message = new TextEncoder().encode("akord:login:" + nonce);
