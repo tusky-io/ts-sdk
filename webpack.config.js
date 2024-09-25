@@ -80,7 +80,7 @@ const commonWebConfig = {
   target: 'web',
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.json" })],
+    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.web.json" })],
     alias: {
       '@env/types': path.resolve(__dirname, 'src/types/web'),
     }
@@ -93,6 +93,7 @@ const commonWebConfig = {
           {
             loader: 'ts-loader',
             options: {
+              configFile: 'tsconfig.web.json',
               compiler: 'ts-patch/compiler',
             },
           }
@@ -142,4 +143,4 @@ const esmWebConfig = {
   },
 };
 
-module.exports = [cjsNodeConfig, esmNodeConfig, cjsWebConfig, esmWebConfig];
+module.exports = [cjsNodeConfig, esmNodeConfig, esmWebConfig, cjsWebConfig];
