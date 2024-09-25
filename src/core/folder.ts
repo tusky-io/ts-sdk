@@ -3,7 +3,7 @@ import { Folder } from "../types/folder";
 import { isServer } from "../util/platform";
 import { importDynamic } from "../util/import";
 import { BadRequest } from "../errors/bad-request";
-import { Logger } from "../logger";
+import { logger } from "../logger";
 import { FileModule } from "./file";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
@@ -79,14 +79,14 @@ class FolderModule {
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
           const { folderId } = await this.create(vaultId, file, { parentId: options.parentId });
-          Logger.log("Created folder: " + file);
+          logger.info("Created folder: " + file);
           // recursively process the subdirectory
           await this.upload(vaultId, fullPath, { ...options, parentId: folderId });
         } else {
           // upload file
           const fileModule = new FileModule(this.service);
-          await fileModule.upload(fullPath, options);
-          Logger.log("Uploaded file: " + fullPath + " to folder: " + options.parentId);
+          //await fileModule.upload(fullPath, options);
+          logger.info("Uploaded file: " + fullPath + " to folder: " + options.parentId);
         }
       }
     }

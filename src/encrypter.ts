@@ -1,5 +1,5 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { decryptWithPrivateKey, encryptWithPublicKey } from './crypto-lib';
+import { decryptWithPrivateKey, encryptWithPublicKey } from './crypto/lib';
 import { KeyPair } from 'libsodium-wrappers';
 import { base64ToJson, jsonToBase64 } from './crypto';
 

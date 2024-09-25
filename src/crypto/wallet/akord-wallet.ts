@@ -12,7 +12,7 @@ import {
   deriveKey,
   deriveAddress,
   signString,
-} from '../../crypto-lib'
+} from '../lib'
 import { ready, crypto_sign_seed_keypair, KeyPair } from 'libsodium-wrappers'
 import nacl from 'tweetnacl'
 import { Wallet } from '.'
@@ -81,11 +81,11 @@ class AkordWallet implements Wallet {
    * @param {string} [password]
    * @returns {Promise.<AkordWallet>} Promise of AkordWallet object
    */
-  static async create(password?: string): Promise<AkordWallet> {
+  static async create(password?: string, keystore?: boolean): Promise<AkordWallet> {
     const backupPhrase = bip39.generateMnemonic();
     let encBackupPhrase: string;
     if (password) {
-      encBackupPhrase = await encryptWithPassword(password, backupPhrase);
+      encBackupPhrase = await encryptWithPassword(password, backupPhrase, keystore);
     }
     const akordWallet = new AkordWallet(backupPhrase, encBackupPhrase);
     await akordWallet.deriveKeys();
@@ -98,9 +98,10 @@ class AkordWallet implements Wallet {
    * - derive wallet keys from backup phrase
    * @param {string} password
    * @param {string} encBackupPhrase
+   * @param {boolean} keystore
    * @returns {Promise.<AkordWallet>} Promise of AkordWallet object
    */
-  static async importFromEncBackupPhrase(password: string, encBackupPhrase: string): Promise<AkordWallet> {
+  static async importFromEncBackupPhrase(password: string, encBackupPhrase: string, keystore?: boolean): Promise<AkordWallet> {
     if (!password)
       throw new Error('Akord Wallet error: The password cannot be null.')
     if (!encBackupPhrase)
@@ -108,7 +109,7 @@ class AkordWallet implements Wallet {
         'Akord Wallet error: The encrypted backup phrase cannot be null.'
       )
 
-    const backupPhrase = await decryptWithPassword(password, encBackupPhrase)
+    const backupPhrase = await decryptWithPassword(password, encBackupPhrase, keystore)
     if (!this.isValidMnemonic(backupPhrase))
       throw new Error('Akord Wallet error: Invalid backup phrase.')
     const akordWallet = new AkordWallet(backupPhrase, encBackupPhrase)
@@ -186,9 +187,9 @@ class AkordWallet implements Wallet {
     return akordWallet
   }
 
-  static async changePassword(oldPassword: string, newPassword: string, encBackupPhrase: string): Promise<AkordWallet> {
+  static async changePassword(oldPassword: string, newPassword: string, encBackupPhrase: string, keystore?: boolean): Promise<AkordWallet> {
     // decrypt backup phrase with the old password
-    const backupPhrase = await decryptWithPassword(oldPassword, encBackupPhrase)
+    const backupPhrase = await decryptWithPassword(oldPassword, encBackupPhrase, keystore)
     if (!this.isValidMnemonic(backupPhrase))
       throw new Error('Akord Wallet error: Invalid backup phrase.')
     // encrypt backup phrase with the new password
@@ -218,7 +219,7 @@ class AkordWallet implements Wallet {
    */
   async getRoot(): Promise<HDKey> {
     const seed = await bip39.mnemonicToSeed(this.backupPhrase)
-    return HDKey.fromMasterSeed(seed)
+    return HDKey.fromMasterSeed(new Uint8Array(seed))
   }
 
   /**
@@ -367,15 +368,17 @@ class AkordWallet implements Wallet {
  * @param {string} plaintext utf-8 string plaintext
  * @returns {Promise.<string>} Promise of string represents stringified payload
  */
-async function encryptWithPassword(password: string, plaintext: string): Promise<string> {
+async function encryptWithPassword(password: string, plaintext: string, keystore?: boolean): Promise<string> {
   try {
     const salt = crypto.getRandomValues(
       new Uint8Array(SALT_LENGTH)
     )
     const derivedKey = await deriveKey(password, salt)
 
-    // const keystore = await Keystore.instance();
-    // await keystore.store('passwordKey', derivedKey)
+    if (keystore) {
+      const keystore = await Keystore.instance();
+      await keystore.store('passwordKey', derivedKey)
+    }
 
     const encryptedPayload = await encrypt(
       stringToArray(plaintext),
@@ -401,7 +404,7 @@ async function encryptWithPassword(password: string, plaintext: string): Promise
  * @param {string} strPayload stringified payload
  * @returns {Promise.<string>} Promise of string represents utf-8 plaintext
  */
-async function decryptWithPassword(password: string, strPayload: string): Promise<string> {
+async function decryptWithPassword(password: string, strPayload: string, keystore?: boolean): Promise<string> {
   try {
     const parsedPayload = base64ToJson(strPayload) as any
 
@@ -410,8 +413,10 @@ async function decryptWithPassword(password: string, strPayload: string): Promis
 
     const derivedKey = await deriveKey(password, salt)
 
-    // const keystore = await Keystore.instance();
-    // await keystore.store('passwordKey', derivedKey)
+    if (keystore) {
+      const keystore = await Keystore.instance();
+      await keystore.store('passwordKey', derivedKey)
+    }
 
     const plaintext = await decrypt(encryptedPayload, derivedKey)
     return arrayToString(plaintext)

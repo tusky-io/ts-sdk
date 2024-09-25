@@ -3,13 +3,15 @@ import { Plugin } from "./plugin"
 import { Signer } from "./signer"
 import { Env } from "./env"
 import { Encrypter } from "./encrypter"
+import { Logger, LogLevel } from "./logger"
+import AkordApi from "./api/akord-api"
 import { AuthTokenProvider, AuthType } from "./types/auth"
 
 export interface ClientConfig {
   env?: Env
   signer?: Signer,
   encrypter?: Encrypter,
-  debug?: boolean
+  logLevel?: LogLevel
   logToFile?: boolean
   cache?: boolean
   api?: Api
@@ -23,6 +25,19 @@ export interface ClientConfig {
 }
 
 export interface LoggerConfig {
-  debug: boolean
-  logToFile: boolean
+  logLevel?: LogLevel // ex: debug
+  logToFile?: boolean
+  logger?: Logger
+}
+
+export interface EncrypterConfig {
+  encrypter?: Encrypter
+  password?: string // password to decrypt user's encryption key
+  keystore?: boolean // indicate whether should import the key from the keystore
+}
+
+export interface ApiConfig {
+  api?: AkordApi
+  env?: Env
+  userAgent?: string
 }

@@ -14,11 +14,13 @@ import {
   base64ToJson,
   jsonToBase64,
   stringToArray
-} from './crypto/encoding'
-import { EncryptedData } from './types/encryption';
+} from './encoding'
 
 import jsSHA from 'jssha';
-import { AsymEncryptedPayload } from './crypto/types';
+import { AsymEncryptedPayload, EncryptedData } from './types';
+import { logger } from '../logger';
+import { DecryptStreamController, StreamSlicer, transformStream } from './stream';
+import { ReadableStream } from "web-streams-polyfill/ponyfill";
 
 const HASH_ALGORITHM = 'SHA-256'
 
@@ -157,7 +159,7 @@ async function signString(payload: string, privateKey: Uint8Array): Promise<stri
  * @param {CryptoKey} key
  * @returns {Promise.<string>} Promise of base64 string represents the ciphertext along with iv
  */
-async function encrypt(plaintext: Uint8Array, key: CryptoKey): Promise<string | EncryptedData> {
+async function encrypt(plaintext: Uint8Array, key: CryptoKey, encode: boolean = true): Promise<string | Uint8Array> {
   try {
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_IN_BYTES))
 
@@ -169,11 +171,13 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey): Promise<string | 
       key,
       plaintext,
     )
-    return encodePayload(ciphertextArray, iv)
-    // return {
-    //   ciphertext: ciphertextArray,
-    //   iv: iv,
-    // }
+    if (encode) {
+      return encodePayload(ciphertextArray, iv)
+    }
+    const combinedArray = new Uint8Array(iv.length + ciphertextArray.byteLength);
+    combinedArray.set(iv, 0);
+    combinedArray.set(new Uint8Array(ciphertextArray), iv.length);
+    return combinedArray;
   } catch (error) {
     throw new Error("Web Crypto encryption error: " + error)
   }
@@ -186,9 +190,9 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey): Promise<string | 
  * @param {CryptoKey} key
  * @returns {Promise.<ArrayBuffer>} Promise of ArrayBuffer represents the plaintext
  */
-async function decrypt(encryptedPayload: string, key: CryptoKey): Promise<ArrayBuffer> {
+async function decrypt(encryptedPayload: string | EncryptedData, key: CryptoKey): Promise<ArrayBuffer> {
   try {
-    const payload = decodePayload(encryptedPayload);
+    const payload = (<EncryptedData>encryptedPayload)?.ciphertext ? encryptedPayload as EncryptedData : decodePayload(encryptedPayload as string);
     const plaintext = await crypto.subtle.decrypt(
       {
         name: SYMMETRIC_KEY_ALGORITHM,
@@ -309,8 +313,6 @@ async function deriveAddress(publicKey: Uint8Array) {
  * @returns {Promise.<string>} Promise of base64 string represents the encrypted payload
  */
 async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | Uint8Array): Promise<AsymEncryptedPayload> {
-  console.log(publicKey)
-  console.log(publicKey.length)
   try {
     await ready;
     const ephemeralKeyPair = crypto_box_keypair();
@@ -330,9 +332,9 @@ async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | U
       publicKey: arrayToBase64(publicKey)
     }
   } catch (error) {
-    console.log(publicKey)
-    console.log("Message")
-    console.log(plaintext)
+    logger.debug(publicKey);
+    logger.debug(plaintext);
+    logger.debug(error);
     throw new Error("Sodium encryption error: " + error);
   }
 }
@@ -346,7 +348,6 @@ async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | U
 async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: AsymEncryptedPayload): Promise<Uint8Array> {
   try {
     await ready;
-    console.log(encryptedPayload)
     const plaintext = crypto_box_open_easy(
       base64ToArray(encryptedPayload.ciphertext),
       base64ToArray(encryptedPayload.nonce),
@@ -355,6 +356,8 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: A
     )
     return plaintext
   } catch (error) {
+    logger.debug(encryptedPayload);
+    logger.debug(error);
     throw new Error("Sodium decryption error: " + error)
   }
 }
@@ -465,6 +468,17 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: A
 //   return arrayToString(decryptedDataArray)
 // }
 
+async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoKey, chunkSize: number, iv?: string[]): Promise<any> {
+  if (stream === null) return null
+  try {
+    const slicesStream = transformStream(stream, new StreamSlicer(chunkSize));
+    return transformStream(slicesStream, new DecryptStreamController(aesKey));
+  } catch (error) {
+    logger.error(error)
+  }
+  return null;
+}
+
 /**
  * Derive two passwords from input password
  * @param {string} password
@@ -547,4 +561,5 @@ export {
   derivePasswords,
   deriveAddress,
   importRSACryptoKey,
+  decryptStream
 }

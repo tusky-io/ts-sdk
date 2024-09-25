@@ -20,7 +20,10 @@ module.exports = {
     "<rootDir>/node_modules/(?!@assemblyscript/.*)"
   ],
 
-
+  moduleNameMapper: {
+    '^@env/types(.*)$': '<rootDir>/src/types/node/$1',
+  },
+  
   transform: {
     '^.+\\.(ts|js)$': 'ts-jest'
   }

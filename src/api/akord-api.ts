@@ -8,7 +8,7 @@ import { CreateFileTxPayload, CreateFolderTxPayload, CreateMembershipTxPayload, 
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserMutable, UserPublicInfo } from "../types/user";
-import { EncryptionMetadata } from "../types/encryption";
+import { EncryptionMetadata } from "../crypto/types";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
@@ -25,11 +25,11 @@ const DEFAULT_LIMIT = 1000;
 
 export default class AkordApi extends Api {
 
-  public config!: ApiConfig;
 
   constructor(config: ClientConfig) {
     super();
     this.config = apiConfig(config.env);
+    this.userAgent = config.userAgent;
     this.autoExecute = config.autoExecute;
   }
 
@@ -89,16 +89,6 @@ export default class AkordApi extends Api {
       .resourceId(id)
       .autoExecute(this.autoExecute)
       .deleteFolder();
-  };
-
-  public async createFile(tx: CreateFileTxPayload): Promise<File> {
-    return new ApiClient()
-      .env(this.config)
-      .file(tx.file)
-      .vaultId(tx.vaultId)
-      .parentId(tx.parentId)
-      .autoExecute(this.autoExecute)
-      .createFile();
   };
 
   public async updateFile(tx: UpdateFileTxPayload): Promise<File> {
@@ -198,8 +188,8 @@ export default class AkordApi extends Api {
       .getMembers();
   };
 
-  public async downloadFile(id: string, options: FileGetOptions = {}): Promise<{ fileData: ArrayBuffer | ReadableStream<Uint8Array>, metadata: EncryptionMetadata & { vaultId?: string } }> {
-    const { response } = await new ApiClient()
+  public async downloadFile(id: string, options: FileGetOptions = {}): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
+    const response = await new ApiClient()
       .env(this.config)
       .resourceId(id)
       .public(options.public)
@@ -207,22 +197,17 @@ export default class AkordApi extends Api {
       // .cancelHook(options.cancelHook)
       .downloadFile();
 
-    let fileData: ArrayBuffer | ReadableStream<Uint8Array>;
+    let data: ArrayBuffer | ReadableStream<Uint8Array>;
     if (options.responseType === 'arraybuffer') {
-      fileData = await response.arrayBuffer();
+      data = await response.arrayBuffer();
     } else {
       if (response.body.getReader) {
-        fileData = response.body;
+        data = response.body;
       } else {
-        fileData = StreamConverter.fromAsyncIterable(response.body as unknown as AsyncIterable<Uint8Array>);
+        data = StreamConverter.fromAsyncIterable(response.body as unknown as AsyncIterable<Uint8Array>);
       }
     }
-    const metadata = {
-      encryptedKey: response.headers.get("x-amz-meta-encrypted-key") || response.headers.get("x-amz-meta-encryptedkey"),
-      iv: response.headers.get("x-amz-meta-initialization-vector") || response.headers.get("x-amz-meta-iv"),
-      vaultId: response.headers.get("x-amz-meta-vault-id")
-    };
-    return { fileData, metadata };
+    return data;
   };
 
   public async getStorage(): Promise<Storage> {

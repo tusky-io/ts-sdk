@@ -2,20 +2,42 @@
   "name": "@akord/carmella-sdk",
   "version": "0.22.0-dev.9",
   "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
-  "main": "lib/bundle.js",
-  "types": "lib/index.d.ts",
+  "main": "./lib/web/index.js",
+  "module": "./lib/web/index.esm.js",
+  "types": "./lib/web/types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/web/index.js",
+      "import": "./lib/web/index.esm.js",
+      "default": "./lib/web/cjs/index.js",
+      "types": "./lib/web/types/index.d.ts"
+    },
+    "./node": {
+      "require": "./lib/node/index.js",
+      "import": "./lib/node/index.esm.js",
+      "default": "./lib/node/cjs/index.js",
+      "types": "./lib/node/types/index.d.ts"
+    },
+    "./web": {
+      "require": "./lib/web/index.js",
+      "import": "./lib/web/index.esm.js",
+      "default": "./lib/web/cjs/index.js",
+      "types": "./lib/web/types/index.d.ts"
+    }
+  },
   "repository": "git@github.com:Akord-com/carmella-sdk.git",
   "scripts": {
     "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
-    "build:dev": "rm -r lib || true && tsc -p .",
-    "build": "webpack --mode production",
+    "test:web": "karma start karma.conf.js",
+    "build": "webpack --config webpack.config.js",
     "set:registry": "bash ./registry.sh",
     "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1"
   },
   "files": [
     "lib/**/*.js",
     "lib/**/*.d.ts",
-    "lib/index.d.ts"
+    "lib/web/types/index.d.ts",
+    "lib/node/types/index.d.ts"
   ],
   "keywords": [
     "akord",
@@ -45,7 +67,6 @@
     "buffer": "^6.0.3",
     "cross-fetch": "^4.0.0",
     "ethereum-cryptography": "^1.2.0",
-    "form-data": "^4.0.0",
     "jssha": "^3.3.1",
     "libsodium-wrappers": "^0.7.15",
     "lodash": "^4.17.21",
@@ -67,7 +88,7 @@
     "@semantic-release/github": "^10.1.1",
     "@semantic-release/npm": "^12.0.1",
     "@semantic-release/release-notes-generator": "^14.0.1",
-    "@types/jest": "^29.5.5",
+    "@types/jest": "^29.5.13",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/libsodium-wrappers": "^0.7.14",
     "@types/lodash": "^4.14.202",
@@ -79,23 +100,29 @@
     "copy-webpack-plugin": "^12.0.2",
     "dotenv": "^16.0.2",
     "express": "^4.19.2",
+    "fork-ts-checker-webpack-plugin": "^9.0.2",
     "google-auth-library": "^9.12.0",
-    "jest": "^28.1.1",
+    "jasmine-core": "^5.3.0",
+    "jest": "^29.2.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
+    "karma": "^6.4.4",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-jasmine": "^5.1.0",
+    "karma-webpack": "^5.0.1",
     "node-polyfill-webpack-plugin": "^4.0.0",
     "pngjs": "^7.0.0",
     "readline-sync": "^1.4.10",
-    "ts-jest": "^28.0.5",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.0.4",
+    "terser-webpack-plugin": "^5.3.10",
+    "ts-jest": "^29.2.0",
+    "ts-loader": "9.3.1",
+    "ts-patch": "^3.2.1",
+    "tsconfig-paths-webpack-plugin": "^4.1.0",
+    "typescript": "5.1.6",
+    "typescript-transform-paths": "^3.5.1",
     "webpack": "^5.94.0",
     "webpack-bundle-analyzer": "^4.10.2",
-    "webpack-cli": "^5.1.4"
-  },
-  "browser": {
-    "crypto": false,
-    "fs": false,
-    "path": false
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
   }
 }

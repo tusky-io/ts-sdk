@@ -11,11 +11,8 @@ import { User, UserPublicInfo } from "../types/user";
 import { EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
-import { Logger } from "../logger";
-import FormData from "form-data";
-import { Buffer } from "buffer";
+import { logger } from "../logger";
 import { httpClient } from "./http";
-import { FileLike } from "../types/file";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession } from "../types/payment";
 import { GenerateJWTResponsePayload } from "../types/auth";
@@ -64,7 +61,6 @@ export class ApiClient {
   private _expiresAt: number;
 
   // file specific
-  private _file: FileLike;
   private _numberOfChunks: number;
 
   // user specific
@@ -110,7 +106,6 @@ export class ApiClient {
     clone._resourceId = this._resourceId;
     clone._vaultId = this._vaultId;
     clone._numberOfChunks = this._numberOfChunks;
-    clone._file = this._file;
     clone._public = this._public;
     clone._signature = this._signature;
     clone._digest = this._digest;
@@ -273,11 +268,6 @@ export class ApiClient {
 
   address(address: string): ApiClient {
     this._address = address;
-    return this;
-  }
-
-  file(file: any): ApiClient {
-    this._file = file;
     return this;
   }
 
@@ -587,13 +577,14 @@ export class ApiClient {
     if (this._data) {
       config.data = this._data;
     }
-    Logger.log(`Request ${config.method}: ` + config.url);
+    logger.info(`Request ${config.method}: ` + config.url);
 
     return await retry(async () => {
       try {
         const response = await this._httpClient(config);
         return response.data;
       } catch (error) {
+        logger.debug(config);
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
     });
@@ -604,90 +595,6 @@ export class ApiClient {
     url += "?" + queryParams.toString();
     return url;
   };
-
-  /**
-  *
-  * @requires:
-  * - vaultId()
-  * - file()
-  * @uses:
-  * - parentId()
-  * - autoExecute()
-  * @returns {Promise<File>}
-  */
-  async createFile(): Promise<File> {
-    if (!this._vaultId) {
-      throw new BadRequest(
-        "Missing vault id parameter. Use ApiClient#vaultId() to add it"
-      );
-    }
-    if (!this._file) {
-      throw new BadRequest(
-        "Missing file input. Use ApiClient#file() to add it"
-      );
-    }
-
-    const me = this;
-    let headers = {
-      "Content-Type": "multipart/form-data",
-      ...(await Auth.getAuthorizationHeader())
-    } as Record<string, string>;
-
-    const form = new FormData();
-
-    form.append("vaultId", this._vaultId);
-    form.append("parentId", this._parentId);
-    form.append("name", this._file.name);
-
-    try {
-      const buffer = await this._file.arrayBuffer()
-      // const blob = new Blob([buffer], { type: 'application/octet-stream' });
-      form.append("file", Buffer.from(buffer), { filename: this._file.name, contentType: this._file.type });
-    } catch (e) {
-      form.append("file", this._file, {
-        filename: "file",
-        contentType: "application/octet-stream",
-      });
-    }
-
-    const config = {
-      method: "post",
-      url: `${this._apiUrl}/files?${new URLSearchParams(
-        this._queryParams
-      ).toString()}`,
-      data: form,
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-      onUploadProgress(progressEvent) {
-        if (me._progressHook) {
-          let percentageProgress;
-          let bytesProgress;
-          if (me._totalBytes) {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / me._totalBytes) * 100
-            );
-          } else {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / progressEvent.total) * 100
-            );
-          }
-          me._progressHook(percentageProgress, bytesProgress, me._progressId);
-        }
-      },
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    try {
-      const response = await this._httpClient(config);
-      return response.data;
-    } catch (error) {
-      Logger.error(error)
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
-  }
 
   /**
    *
@@ -1092,11 +999,11 @@ export class ApiClient {
 
     const url = `${this._apiUrl}/files/${this._resourceId}/data`;
 
-    Logger.log(`Request ${config.method}: ` + url);
+    logger.info(`Request ${config.method}: ` + url);
 
     try {
       const response = await fetch(url, config);
-      return { resourceUrl: this._resourceId, response: response };
+      return response;
     } catch (error) {
       throwError(error.response?.status, error.response?.data?.msg, error);
     }
@@ -1130,7 +1037,7 @@ export async function retry<T>(
     } catch (error) {
       if (retryableErrors.some((type) => error instanceof type)) {
         attempt++;
-        Logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
+        logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
         if (attempt >= retries) {
           throw error;
         }

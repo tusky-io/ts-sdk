@@ -2,7 +2,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import EnokiClient, { ENOKI_PUBLIC_API_KEY } from './enoki';
 import { AuthProvider, OAuthConfig } from '../types/auth';
 import { BadRequest } from '../errors/bad-request';
-import { Logger } from '../logger';
+import { logger } from '../logger';
 import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
 import { DEFAULT_STORAGE, JWTClient } from './jwt';
@@ -74,7 +74,7 @@ class OAuth {
     const code = urlParams.get('code');
 
     if (code) {
-      Logger.log('Authorization Code:' + code);
+      logger.info('Authorization Code:' + code);
       // exchange the authorization code for tokens
       await this.exchangeCodeForTokens(code);
 
@@ -88,7 +88,7 @@ class OAuth {
       this.jwtClient.setAddress(address);
       return { address };
     } else {
-      Logger.warn('Authorization code not found.');
+      logger.warn('Authorization code not found.');
     }
   }
 
@@ -97,7 +97,7 @@ class OAuth {
       if (!this.redirectUri) {
         throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
       }
-      const { idToken, accessToken, refreshToken } = await new AkordApi({ debug: true, logToFile: true, env: this.env }).generateJWT({
+      const { idToken, accessToken, refreshToken } = await new AkordApi({ env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "code",
         redirectUri: this.redirectUri,
@@ -108,7 +108,7 @@ class OAuth {
       this.jwtClient.setRefreshToken(refreshToken);
       this.jwtClient.setIdToken(idToken);
     } catch (error) {
-      Logger.error(error);
+      logger.error(error);
     }
   }
 
@@ -148,7 +148,7 @@ class OAuth {
         throw new Unauthorized("Session expired. Please log in again.");
       }
 
-      const { idToken, accessToken } = await new AkordApi({ debug: true, logToFile: true }).generateJWT({
+      const { idToken, accessToken } = await new AkordApi({ env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "refreshToken",
         refreshToken: refreshToken
@@ -158,7 +158,7 @@ class OAuth {
       this.jwtClient.setIdToken(idToken);
 
     } catch (error) {
-      Logger.error(error);
+      logger.error(error);
       throw new Unauthorized("Failed to refresh tokens.");
     }
   };

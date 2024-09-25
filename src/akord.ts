@@ -1,13 +1,14 @@
 import { Api } from "./api/api";
 import { AkordApi } from "./api/akord-api";
-import { ClientConfig, LoggerConfig } from "./config";
+import { ApiConfig, ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
-import { Logger } from "./logger";
+import { ConsoleLogger, logger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
 import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
 import { FileModule } from "./core/file";
+import { ZipModule } from "./core/zip";
 import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
@@ -18,6 +19,8 @@ import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
+import { AkordWallet } from "./crypto";
+import { Conflict } from "./errors/conflict";
 
 export class Akord {
   public api: Api;
@@ -25,7 +28,6 @@ export class Akord {
   private _signer: Signer;
   private _encrypter: Encrypter;
   private _env: Env;
-  private _userAgent: string;
 
   get me(): MeModule {
     return new MeModule(this.getConfig());
@@ -41,6 +43,9 @@ export class Akord {
   }
   get file(): FileModule {
     return new FileModule(this.getConfig());
+  }
+  get zip(): ZipModule {
+    return new ZipModule(this.getConfig());
   }
   get trash(): TrashModule {
     return new TrashModule(this.getConfig());
@@ -101,8 +106,8 @@ export class Akord {
   }
 
   withLogger(config: LoggerConfig): this {
-    Logger.debug = config?.debug;
-    Logger.logToFile = config?.logToFile;
+    const logger = config.logger ? config.logger : new ConsoleLogger(config);
+    setLogger(logger);
     return this;
   }
 
@@ -111,19 +116,42 @@ export class Akord {
     return this;
   }
 
-  withEncrypter(encrypter: Encrypter): this {
-    this._encrypter = encrypter;
+  async withEncrypter(config: EncrypterConfig): Promise<this> {
+    if (config.encrypter) {
+      this._encrypter = config.encrypter;
+    } else if (config.password) {
+      const user = await this.me.get();
+      if (!user.encPrivateKey) {
+        // generate new user encryption content
+        const userWallet = await AkordWallet.create(config.password, config.keystore);
+        const userKeyPair = userWallet.encryptionKeyPair;
+        await this.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
+        this._encrypter = new Encrypter({ keypair: userKeyPair });
+      } else {
+        // retrieve and decrypt existing user encryption content
+        const userWallet = await AkordWallet.importFromEncBackupPhrase(config.password, user.encPrivateKey, config.keystore);
+        this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+      }
+    } else if (config.keystore) {
+      const user = await this.me.get();
+      if (!user.encPrivateKey) {
+        throw new Conflict("The user needs to configure their encryption password/backup phrase.");
+      }
+      try {
+        const userWallet = await AkordWallet.importFromKeystore(user.encPrivateKey as string);
+        this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+      } catch (error) {
+        logger.error(error);
+        throw new Conflict("The user needs to provide the password again.");
+      }
+    }
     return this;
   }
 
-  env(env: Env): this {
-    this._env = env;
+  withApi(config: ApiConfig): this {
+    this.api = config.api ? config.api : new AkordApi(config);
+    this._env = config.env;
     Auth.setEnv(this._env);
-    return this;
-  }
-
-  userAgent(userAgent: string): this {
-    this._userAgent = userAgent;
     return this;
   }
 
@@ -132,7 +160,6 @@ export class Akord {
       api: this.api,
       signer: this._signer,
       encrypter: this._encrypter,
-      userAgent: this._userAgent
     }
   }
 
@@ -148,12 +175,9 @@ export class Akord {
     this._encrypter = config.encrypter;
     this._env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
-    this._userAgent = config.userAgent;
     Auth.configure(config);
     this.setAddress(Auth.getAddress());
     Plugins.register(config?.plugins, this._env);
-    Logger.debug = config?.debug;
-    Logger.logToFile = config?.logToFile;
     CacheBusters.cache = config?.cache;
   }
 }

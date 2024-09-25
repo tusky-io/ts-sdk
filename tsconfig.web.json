@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "lib": ["ES2020"],
+    "target": "ES2015",
+    "module": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "moduleResolution": "node",
-    "outDir": "./lib/node/types",
+    "outDir": "./lib/web/types",
     "baseUrl": "src",
     "strict": false,
     "esModuleInterop": true,
@@ -14,11 +14,11 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "inlineSources": true,
+    "importHelpers": true,
+    "noEmitHelpers": true,
     "experimentalDecorators": true,
-    "types": ["jest", "node"],
     "paths": {
-      "@env/types/*": ["types/node/*"],
+      "@env/types/*": ["types/web/*"],
     },
     "plugins": [
       { "transform": "typescript-transform-paths" },

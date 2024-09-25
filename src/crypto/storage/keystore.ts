@@ -1,5 +1,6 @@
 import { BrowserLevel } from "@akord/browser-level"
 import { DatabaseOptions, MemoryLevel } from "memory-level"
+import { logger } from "../../logger";
 
 export default class Keystore {
 
@@ -54,7 +55,7 @@ export default class Keystore {
     try {
       return await this.db.get(keyName, Keystore.DEFAULT_ENCODING_OPTIONS);
     } catch (err) {
-      console.log(err)
+      logger.error(err)
     }
   }
 

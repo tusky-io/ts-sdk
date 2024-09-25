@@ -5,6 +5,8 @@ import { mockEnokiFlow } from "./auth";
 import EnokiSigner from "./enoki/signer";
 import { status } from "../constants";
 import { server } from "./server";
+import { createWriteStream } from "fs";
+import { PNG } from "pngjs";
 import { DEFAULT_STORAGE } from "../auth/jwt";
 
 export const TESTING_ENV = "testnet";
@@ -14,16 +16,17 @@ export async function initInstance(): Promise<Akord> {
     console.log("--- API key flow");
     return Akord
       .withApiKey({ apiKey: process.env.API_KEY })
-      .withLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any);
+      .withLogger({ logLevel: "debug", logToFile: true })
+      .withApi({ env: process.env.ENV as any })
   } else {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
-    const akord = Akord
-      .withOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" })
-      .withLogger({ debug: true, logToFile: true })
+    const akord =  Akord
+    .withOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" })
+    .withLogger({ logLevel: "debug", logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
-      .env(process.env.ENV as any);
+      .withApi({ env: process.env.ENV as any })
+
     DEFAULT_STORAGE.setItem(`akord_testnet_access_token`, tokens.accessToken);
     DEFAULT_STORAGE.setItem(`akord_testnet_id_token`, tokens.idToken);
     if (tokens.refreshToken) {
@@ -45,7 +48,7 @@ export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
     server.close();
   }
   if (akord && vaultId) {
-    await akord.vault.delete(vaultId);
+    await akord.vault.deletePermanently(vaultId);
   }
 }
 
@@ -78,5 +81,39 @@ export const folderCreate = async (akord: Akord, vaultId: string, parentId?: str
   return id;
 }
 
+export const generateAndSavePixelFile = async (fileSizeMB: number, filePath: string) => {
+  const totalBytes = fileSizeMB * 1024;
+  const totalPixels = totalBytes / 4; // each pixel is 4 bytes (RGBA)
+  const imageSize = Math.sqrt(totalPixels);
+  let buffer = new Uint8Array(totalBytes);
+
+  // fill the buffer with random pixel data
+  for (let i = 0; i < totalBytes; i++) {
+    buffer[i] = Math.floor(Math.random() * 256);
+  }
+
+  // create a PNG object
+  const png = new PNG({
+    width: imageSize,
+    height: imageSize
+  });
+
+  // copy buffer data into the PNG data
+  png.data = Buffer.from(buffer);
+
+  // pack & save the PNG buffer
+  await new Promise<void>((resolve, reject) => {
+    const writeStream = createWriteStream(filePath);
+    png.pack().pipe(writeStream)
+      .on('finish', () => {
+        resolve();
+      })
+      .on('error', (err) => {
+        reject(err);
+      });
+  });
+}
+
 export const testDataPath = "./src/__tests__/data/";
+export const testDataGeneratedPath = "./src/__tests__/data/generated/";
 export const testDataOutPath = "./src/__tests__/data/out";

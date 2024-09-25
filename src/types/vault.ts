@@ -2,7 +2,7 @@ import { EncryptedVaultKeyPair, Membership } from "./membership";
 import { Folder } from "./folder";
 import { File } from "./file-version";
 import { arrayToString, base64ToJson, Encryptable, encrypted } from "../crypto";
-import { decryptWithPrivateKey } from "../crypto-lib";
+import { decryptWithPrivateKey } from "../crypto/lib";
 import Encrypter, { Ed25519EncryptedPayload } from "../encrypter";
 
 export class Vault extends Encryptable {
