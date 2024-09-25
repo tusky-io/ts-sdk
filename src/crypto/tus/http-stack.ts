@@ -49,7 +49,8 @@ export default class EncryptableHttpStack {
       if (method === 'PATCH') {
         uploadId = url.split('/').pop();
       }
-  
+      
+
       const originalSend = request.send.bind(request);
       request.send = async (body: any) => {
   
@@ -59,7 +60,9 @@ export default class EncryptableHttpStack {
         // encrypt the body
         const bodyUint8Array = await tusFileToUint8Array(body);
         const encryptedBody = await encrypt(bodyUint8Array, aesKey, false) as Uint8Array;
-        request.setHeader(CONTENT_LENGTH_HEADER, encryptedBody.byteLength.toString());
+        if (!request.getUnderlyingObject()) {
+          request.setHeader(CONTENT_LENGTH_HEADER, encryptedBody.byteLength.toString());
+        }
         
         // encrypt the filename
         const filename = this.getMetadata(request, UPLOAD_METADATA_FILENAME_KEY) || 'unnamed';
@@ -83,6 +86,17 @@ export default class EncryptableHttpStack {
           const currentRequestChunk = Math.floor(parseInt(originalRequestOffset) / CHUNK_SIZE_IN_BYTES);
           const encryptedRequestOffset = parseInt(originalRequestOffset) - (currentRequestChunk * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES));
           request.setHeader(UPLOAD_OFFSET_HEADER, encryptedRequestOffset.toString());
+        }
+
+        // reinitialize the xhr
+        console.log("reinitializing xhr");
+        if ((request as any)._xhr) {
+          (request as any)._xhr.abort();
+          (request as any)._xhr = new XMLHttpRequest();
+          (request as any)._xhr.open(method, url, true);
+          for (const header of (request as any)._headers) {
+            (request as any)._xhr.setRequestHeader(header.name, header.value);
+          }
         }
   
         // send the request
