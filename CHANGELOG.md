@@ -1,3 +1,10 @@
+# [0.22.0-dev.13](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.12...v0.22.0-dev.13) (2024-09-25)
+
+
+### Features
+
+* reinitialize xhr ([772eee1](https://github.com/Akord-com/carmella-sdk/commit/772eee1bbacf4438074f12af9dee7a1358756a0c))
+
 # [0.22.0-dev.12](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.11...v0.22.0-dev.12) (2024-09-25)
 
 
