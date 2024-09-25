@@ -22,9 +22,9 @@ abstract class Api {
 
   abstract generateJWT(payload: GenerateJWTRequestPayload): Promise<GenerateJWTResponsePayload>
 
-  abstract createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<string>
+  abstract createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<{ nonce: string }>
 
-  abstract verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<string>
+  abstract verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<GenerateJWTResponsePayload>
 
   abstract getMe(): Promise<User>
 

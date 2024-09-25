@@ -42,7 +42,7 @@ function App() {
 
   const handleSignInWithWallet = async () => {
     const akord = Akord
-      .withWallet({ walletSignFnClient: signPersonalMessage })
+      .withWallet({ walletSignFnClient: signPersonalMessage, walletAccount: account })
       .withLogger({ debug: true, logToFile: true })
       .env(process.env.ENV as any);
 
@@ -109,7 +109,7 @@ function App() {
       const { id } = await akord.vault.create(vaultName, { public: false });
       alert("Uploading file to vault: " + id)
       console.log(file)
-      const { id: fileId } = await akord.file.upload(id, file)
+      const fileId = await akord.file.upload(id, file)
       alert("Uploaded file: " + fileId)
       alert("Downloading file: " + fileId)
       const fileRes = await akord.file.download(fileId);

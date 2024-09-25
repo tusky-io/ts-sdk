@@ -673,12 +673,12 @@ export class ApiClient {
   }
 
   /**
- *
- * @requires:
- * - address()
- * @returns {Promise<string>}
- */
-  async createAuthChallenge(): Promise<string> {
+   *
+   * @requires:
+   * - address()
+   * @returns {Promise<string>}
+   */
+  async createAuthChallenge(): Promise<{ nonce: string }> {
     if (!this._address) {
       throw new BadRequest(
         "Missing address input. Use ApiClient#address() to add it"
@@ -693,12 +693,19 @@ export class ApiClient {
   }
 
   /**
-*
-* @requires:
-* - signature()
-* @returns {Promise<string>}
-*/
-  async verifyAuthChallenge(): Promise<string> {
+   *
+   * @requires:
+   * - address()
+   * - signature()
+   * @returns {Promise<string>}
+   */
+  async verifyAuthChallenge(): Promise<GenerateJWTResponsePayload> {
+    if (!this._address) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#address() to add it"
+      );
+    }
+
     if (!this._signature) {
       throw new BadRequest(
         "Missing signature input. Use ApiClient#signature() to add it"
@@ -706,6 +713,7 @@ export class ApiClient {
     }
 
     this.data({
+      address: this._address,
       signature: this._signature
     });
 

@@ -7,6 +7,7 @@ import { status } from "../constants";
 import { server } from "./server";
 import { createWriteStream } from "fs";
 import { PNG } from "pngjs";
+import { DEFAULT_STORAGE } from "../auth/jwt";
 
 export const TESTING_ENV = "testnet";
 
@@ -19,12 +20,19 @@ export async function initInstance(): Promise<Akord> {
       .withApi({ env: process.env.ENV as any })
   } else {
     console.log("--- mock Enoki flow");
-    const { jwt, address, keyPair } = await mockEnokiFlow();
-    return Akord
-      .withAuthTokenProvider({ authTokenProvider: () => jwt })
-      .withLogger({ logLevel: "debug", logToFile: true })
+    const { tokens, address, keyPair } = await mockEnokiFlow();
+    const akord =  Akord
+    .withOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" })
+    .withLogger({ logLevel: "debug", logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
       .withApi({ env: process.env.ENV as any })
+
+    DEFAULT_STORAGE.setItem(`akord_testnet_access_token`, tokens.accessToken);
+    DEFAULT_STORAGE.setItem(`akord_testnet_id_token`, tokens.idToken);
+    if (tokens.refreshToken) {
+      DEFAULT_STORAGE.setItem(`akord_testnet_refresh_token`, tokens.refreshToken);
+    }
+    return akord;
   }
 }
 

@@ -1,6 +1,6 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
-import { Logger } from "../logger";
+import { logger } from "../logger";
 import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Conflict } from "../errors/conflict";
 import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
@@ -18,6 +18,11 @@ export type SignPersonalMessageClient = (
     onError: (error: Error) => void;
   }
 ) => void;
+
+export type WalletAccount = {
+  address: string,
+  publicKey: Uint8Array
+}
 
 export class Auth {
   private static env: Env;
@@ -37,6 +42,7 @@ export class Auth {
   // Wallet-based auth
   private static walletType: WalletType;
   private static walletSignFnClient: SignPersonalMessageClient | null;
+  private static walletAccount: WalletAccount | null;
   private static walletSigner: Ed25519Keypair | null;
 
   // API key auth
@@ -53,6 +59,7 @@ export class Auth {
     // walet-based auth
     this.walletType = options.walletType;
     this.walletSignFnClient = options.walletSignFnClient;
+    this.walletAccount = options.walletAccount;
     this.walletSigner = options.walletSigner;
     // Oauth
     this.authProvider = options.authProvider;
@@ -70,7 +77,19 @@ export class Auth {
   public static async signIn(): Promise<{ address?: string }> {
     switch (this.authType) {
       case "Wallet": {
-        const message = new TextEncoder().encode("hello");
+        let address: string;
+        if (this.walletSignFnClient && this.walletAccount) {
+          address = this.walletAccount.address;
+        } else if (this.walletSigner) {
+          address = this.walletSigner.toSuiAddress();
+        } else {
+          throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
+        }
+        const api = new AkordApi({ debug: true, logToFile: true, env: this.env });
+        const { nonce } = await api.createAuthChallenge({ address });
+
+        const message = new TextEncoder().encode("akord:login:" + nonce);
+
         let signature: string;
         if (this.walletSignFnClient) {
           const res = await new Promise<string>((resolve, reject) => {
@@ -80,11 +99,11 @@ export class Auth {
               },
               {
                 onSuccess: (data: { signature: string }) => {
-                  Logger.info("Message signed on client: " + data.signature);
+                  logger.info("Message signed on client: " + data.signature);
                   resolve(data.signature);
                 },
                 onError: (error: Error) => {
-                  Logger.info("Error signing on client: " + error);
+                  logger.info("Error signing on client: " + error);
                   reject(error);
                 },
               }
@@ -95,13 +114,15 @@ export class Auth {
           const { signature: res } = await this.walletSigner.signPersonalMessage(message);
           signature = res;
         } else {
-          throw new Conflict("Missing wallet signing function for Wallet based auth.");
+          throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
         }
-        const publicKey = await verifyPersonalMessageSignature(message, signature);
-        const address = publicKey.toSuiAddress();
-        const jwt = await new AkordApi({ debug: true, logToFile: true, env: this.env }).verifyAuthChallenge({ signature });
+        // const publicKey = await verifyPersonalMessageSignature(message, signature);
+        // const address = publicKey.toSuiAddress();
+
+        const { idToken } = await api.verifyAuthChallenge({ signature, address });
+
         this.jwtClient.setAddress(address);
-        this.jwtClient.setIdToken(jwt);
+        this.jwtClient.setIdToken(idToken);
         return { address };
       }
       case "OAuth": {
@@ -122,7 +143,7 @@ export class Auth {
           return { address };
         } else {
           // step 1: if no code in the URL, initiate the OAuth flow
-          Logger.info('No authorization code found, redirecting to OAuth provider...');
+          logger.info('No authorization code found, redirecting to OAuth provider...');
           await aOuthClient.initOAuthFlow();
           return {};
         }
@@ -176,15 +197,15 @@ export class Auth {
           storage: this.storage
         });
         if (!idToken) {
-          Logger.log('Id token not found. Trying to use refresh token...');
+          logger.info('Id token not found. Trying to use refresh token...');
           await oauthClient.refreshTokens();
-          Logger.log('Tokens refreshed successfully.');
+          logger.info('Tokens refreshed successfully.');
           idToken = this.jwtClient.getIdToken();
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
-          Logger.log('Token is expired or about to expire. Refreshing tokens...');
+          logger.info('Token is expired or about to expire. Refreshing tokens...');
           await oauthClient.refreshTokens();
-          Logger.info('Tokens refreshed successfully.');
+          logger.info('Tokens refreshed successfully.');
           idToken = this.jwtClient.getIdToken();
         }
         return {
@@ -214,7 +235,7 @@ export class Auth {
           }
           throw new Unauthorized("Please add authTokenProvider into config.");
         } catch (e) {
-          Logger.error(e)
+          logger.error(e)
           throw new Unauthorized("Invalid authorization.");
         }
       }
