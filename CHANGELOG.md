@@ -1,3 +1,35 @@
+# [0.22.0-dev.10](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.9...v0.22.0-dev.10) (2024-09-25)
+
+
+### Bug Fixes
+
+* default auth storage ([6f704b3](https://github.com/Akord-com/carmella-sdk/commit/6f704b3edc63a6ff2c8e4ef25f484a4f280827a1))
+* logger import ([f1d6dcd](https://github.com/Akord-com/carmella-sdk/commit/f1d6dcd46de7bf2b94fe17f4b830a1f72fc68810))
+* logger usage ([4ed0c3e](https://github.com/Akord-com/carmella-sdk/commit/4ed0c3ebd4d876807cf97db695435d6b15369ae5))
+* tests imports ([9411a6e](https://github.com/Akord-com/carmella-sdk/commit/9411a6ea3a98100a789fa0841e0910944917158d))
+* use logLevel in config ([d9fc1cd](https://github.com/Akord-com/carmella-sdk/commit/d9fc1cd9aabcec460eda4de50e2cdaa02d1294d0))
+
+
+### Features
+
+* add AES file encryption ([0639ddc](https://github.com/Akord-com/carmella-sdk/commit/0639ddc92d0a49312ce626a5d22cf86e09907632))
+* add decrypt stream func ([8e22e2a](https://github.com/Akord-com/carmella-sdk/commit/8e22e2a9698b9ce429e070b83f4119d915a91d0a))
+* add proper log levels ([0dc2163](https://github.com/Akord-com/carmella-sdk/commit/0dc216357e470a5bf9a71e50f7dbc40c752ac534))
+* add tus encryptable http stack ([d28a02e](https://github.com/Akord-com/carmella-sdk/commit/d28a02e2ba6b795396d286d2c4eae9682cc2da77))
+* add zip module ([1bb9aeb](https://github.com/Akord-com/carmella-sdk/commit/1bb9aebbd745a2c0f579cfb0d234b468540c4614))
+* move stream to typescript ([e6e87eb](https://github.com/Akord-com/carmella-sdk/commit/e6e87ebe402b2f17d6afeb5f4e52c32e40eba225))
+* move whole file encryption process to onBeforeRequest ([4dff027](https://github.com/Akord-com/carmella-sdk/commit/4dff027ee5621e9f5bcebb52c92f4b9e696bf220))
+* save encryptedAesKey and use it to decrypt file ([665a1e4](https://github.com/Akord-com/carmella-sdk/commit/665a1e4b87a128eb2aef76b59260da0becc63a1f))
+* save JWT from wallet-based auth, retrieve address from session & refactor JWT client ([11d1c72](https://github.com/Akord-com/carmella-sdk/commit/11d1c72f1b9288de4bed25fb61206e70afd17c1d))
+* use keystore & start cleanup crypto ([a5f63a5](https://github.com/Akord-com/carmella-sdk/commit/a5f63a501131b58d80889d2e25de0ecdd4b930ad))
+* use webpack 'browser' for browser specific code ([abd3bba](https://github.com/Akord-com/carmella-sdk/commit/abd3bbaa4733bd65f8237e154b0a555cacbd13bf))
+* use with naming convention for akord builder & simplify encrypter setup ([a6bb341](https://github.com/Akord-com/carmella-sdk/commit/a6bb341cf7134aa741c29283d4d517e3d34f72f0))
+
+
+### Performance Improvements
+
+* separate bundles for web & node; separate bundles for cjs & esm ([ac959fd](https://github.com/Akord-com/carmella-sdk/commit/ac959fd388fad85cb39f75376084e4daad1aaf80))
+
 # [0.22.0-dev.9](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.8...v0.22.0-dev.9) (2024-09-25)
 
 
