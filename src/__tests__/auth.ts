@@ -4,6 +4,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import EnokiClient from "./enoki/client";
 import { getAuthCode } from './server';
 import { keyInSelect } from 'readline-sync';
+import { GenerateJWTResponsePayload } from "../types/auth";
 
 const REDIRECT_URI = 'http://localhost:3000/auth';
 
@@ -51,7 +52,7 @@ export async function getAuthorizationCode(nonce: string, authProvider = default
     response_type: "code",
     scope: "openid profile",
     access_type: "offline",
-    prompt: "consent"
+    // prompt: "consent"
   });
 
   const oauthUrl = `${AuthProvider[authProvider].OAUTH_URL}?${params}`;
@@ -68,7 +69,7 @@ export async function getAuthorizationCode(nonce: string, authProvider = default
   return authorizationCode;
 }
 
-export async function getIdTokenWithAuthorizationCode(code: string, authProvider = defaultAuthProvider) {
+export async function getTokensWithAuthorizationCode(code: string, authProvider = defaultAuthProvider): Promise<GenerateJWTResponsePayload> {
   if (!AuthProvider[authProvider].CLIENT_SECRET) {
     throw new Error(`Missing ${authProvider} client secret, please configure it in .env file.`);
   }
@@ -89,9 +90,14 @@ export async function getIdTokenWithAuthorizationCode(code: string, authProvider
     const tokens = tokenResponse.data;
     console.log(tokens)
     console.log(`JWT: ${tokens.id_token}`);
-    return tokens.id_token
+    return {
+      accessToken: tokens.access_token,
+      idToken: tokens.id_token,
+      refreshToken: tokens.refresh_token
+    }
   } catch (error) {
     console.log(error)
+    throw new Error(error);
   }
 }
 
@@ -122,7 +128,7 @@ export async function getIdTokenWithImplicitFlow(nonce: string, authProvider = d
   return authorizationCode;
 }
 
-export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise<{ jwt: string, keyPair: Ed25519Keypair, address: string }> => {
+export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise<{ tokens: GenerateJWTResponsePayload, keyPair: Ed25519Keypair, address: string }> => {
   // generate ephemeral key pair
   const ephemeralKeyPair = new Ed25519Keypair();
 
@@ -134,6 +140,6 @@ export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise
 
   const authorizationCode = await getAuthorizationCode(createZkLoginResponse.data.nonce, authProvider);
 
-  const idToken = await getIdTokenWithAuthorizationCode(authorizationCode, authProvider);
-  return { jwt: idToken, address: ephemeralKeyPair.toSuiAddress(), keyPair: ephemeralKeyPair };
+  const tokens = await getTokensWithAuthorizationCode(authorizationCode, authProvider);
+  return { tokens, address: ephemeralKeyPair.toSuiAddress(), keyPair: ephemeralKeyPair };
 };

@@ -45,7 +45,7 @@ export default class AkordApi extends Api {
       .generateJWT();
   };
 
-  public async createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<string> {
+  public async createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<{ nonce: string }> {
     return new ApiClient()
       .env(this.config)
       .address(payload.address)
@@ -53,9 +53,10 @@ export default class AkordApi extends Api {
       .createAuthChallenge();
   };
 
-  public async verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<string> {
+  public async verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<GenerateJWTResponsePayload> {
     return new ApiClient()
       .env(this.config)
+      .address(payload.address)
       .signature(payload.signature)
       .publicRoute(true)
       .verifyAuthChallenge();
