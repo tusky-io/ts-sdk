@@ -49,7 +49,11 @@ function App() {
     await akord.signIn();
     console.log("ADDRESS: " + akord.address);
 
+    console.log("setting encryption context from password");
     await handleEncryptionContext(akord);
+
+    console.log("setting encryption context from keystore");
+    await akord.withEncrypter({ keystore: true });
 
     setAkord(akord);
   };
@@ -78,7 +82,6 @@ function App() {
   };
 
   const handleEncryptionContext = async (akord: Akord) => {
-    const user = await akord.me.get();
     // prompt the user for a password
     const password = window.prompt("Please enter your password:");
     if (!password) {
