@@ -1,3 +1,10 @@
+# [0.22.0-dev.12](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.11...v0.22.0-dev.12) (2024-09-25)
+
+
+### Features
+
+* start types cleanup ([e7dccef](https://github.com/Akord-com/carmella-sdk/commit/e7dccefe5aace63b3d1aed551ab8f94ef60b4d0d))
+
 # [0.22.0-dev.11](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.10...v0.22.0-dev.11) (2024-09-25)
 
 
