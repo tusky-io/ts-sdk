@@ -94,8 +94,8 @@ export default class EncryptableHttpStack {
           (request as any)._xhr.abort();
           (request as any)._xhr = new XMLHttpRequest();
           (request as any)._xhr.open(method, url, true);
-          for (const header of (request as any)._headers) {
-            (request as any)._xhr.setRequestHeader(header.name, header.value);
+          for (const headerName of Object.keys((request as any)._headers)) {
+            (request as any)._xhr.setRequestHeader(headerName, (request as any)._headers[headerName]);
           }
         }
   
