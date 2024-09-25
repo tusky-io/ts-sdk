@@ -49,7 +49,7 @@ export default class EnokiClient {
       }
     );
     if (!response.ok) {
-      Logger.error(response);
+      logger.error(response);
       throw new Unauthorized("Invalid authorization.");
     }
     return (await response.json()).data;
@@ -72,7 +72,7 @@ export default class EnokiClient {
       }
     );
     if (!response.ok) {
-      Logger.error(response);
+      logger.error(response);
       throw new Unauthorized("Invalid authorization.");
     }
     return (await response.json()).data;

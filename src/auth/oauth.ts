@@ -88,7 +88,7 @@ class OAuth {
       this.jwtClient.setAddress(address);
       return { address };
     } else {
-      Logger.warn('Authorization code not found.');
+      logger.warn('Authorization code not found.');
     }
   }
 
@@ -158,7 +158,7 @@ class OAuth {
       this.jwtClient.setIdToken(idToken);
 
     } catch (error) {
-      Logger.error(error);
+      logger.error(error);
       throw new Unauthorized("Failed to refresh tokens.");
     }
   };
