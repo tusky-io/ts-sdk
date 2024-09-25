@@ -1,3 +1,10 @@
+# [0.22.0-dev.9](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.8...v0.22.0-dev.9) (2024-09-25)
+
+
+### Features
+
+* use nonce from create challenge for authentication ([fb63e0d](https://github.com/Akord-com/carmella-sdk/commit/fb63e0df93fe6954cc71d0287f26541422ed62a8))
+
 # [0.22.0-dev.8](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.7...v0.22.0-dev.8) (2024-09-24)
 
 
