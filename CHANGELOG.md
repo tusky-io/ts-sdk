@@ -1,3 +1,10 @@
+# [0.22.0-dev.17](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.16...v0.22.0-dev.17) (2024-09-26)
+
+
+### Bug Fixes
+
+* store chunk size corrected by encryption bytes ([04ea8a9](https://github.com/Akord-com/carmella-sdk/commit/04ea8a9b2dc9b4dab103670198ec8d9018afa18c))
+
 # [0.22.0-dev.16](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.15...v0.22.0-dev.16) (2024-09-26)
 
 
