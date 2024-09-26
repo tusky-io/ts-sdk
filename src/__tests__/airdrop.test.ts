@@ -1,5 +1,9 @@
 // TODO: add member flow
 
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { Akord } from "../akord";
+import { cleanup, initInstance, setupVault } from "./common";
+
 // import { NotEnoughStorage } from "../errors/not-enough-storage";
 // import { Akord } from "../index";
 // import { cleanup, initInstance, setupVault, testDataPath } from './common';
@@ -10,48 +14,57 @@
 // import { BatchUploadItem } from "../core/batch";
 // import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
-// let akord: Akord;
+let akord: Akord;
 
-// jest.setTimeout(3000000);
+jest.setTimeout(3000000);
 
-// describe("Testing airdrop actions", () => {
-//   let vaultId: string;
-//   let airdropee: Ed25519Keypair;
-//   let airdropeeWallet: AkordWallet;
+describe("Testing airdrop actions", () => {
+  let vaultId: string;
+  let airdropee: Ed25519Keypair;
 
-//   beforeEach(async () => {
-//     akord = await initInstance();
-//   });
+  beforeEach(async () => {
+    akord = await initInstance();
+  });
 
-//   beforeAll(async () => {
-//     vaultId = await setupVault();
-//   });
+  beforeAll(async () => {
+    // set up private vault
+    vaultId = await setupVault(false);
+  });
 
-//   afterAll(async () => {
-//     await cleanup(akord, vaultId);
-//   });
+  afterAll(async () => {
+    await cleanup(akord, vaultId);
+  });
 
-//   describe("Airdrop access tests", () => {
-//     it("should airdrop to Akord wallets", async () => {
+  describe("Airdrop access tests", () => {
+    it("should airdrop access", async () => {
 
-//       // generate Sui key pair for identity
-//       const suiKeyPair = new Ed25519Keypair();
+      // // generate Sui key pair for identity
+      // const suiKeyPair = new Ed25519Keypair();
 
-//       const address = suiKeyPair.toSuiAddress();
+      // const address = suiKeyPair.toSuiAddress();
 
-//       // generate wallet for encryption
-//       const wallet = await AkordWallet.create(password);
+      // generate wallet for encryption
+      // const wallet = await AkordWallet.create(password);
 
-//       const role = "CONTRIBUTOR";
-//       const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
+      const role = "CONTRIBUTOR";
+      const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
 
-//       const membership = await akord.membership.airdrop(vaultId, address, { expiresAt: expiresAt, role, publicKey: wallet.publicKey() });
-//       expect(membership.id).toBeTruthy();
-//       expect(membership.address).toEqual(address);
-//       expect(membership.role).toEqual(role);
-//       expect(membership.expiresAt).toEqual(expiresAt);
-//     });
-//   });
+      const { keypair, password } = await akord.vault.airdropAccess(vaultId, { expiresAt: expiresAt, role });
+      expect(keypair).toBeTruthy();
+      expect(password).toBeTruthy();
+
+      const memberAkord = await Akord
+        .withWallet({ walletSigner: keypair })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: password });
+
+      const vault = await memberAkord.vault.get(vaultId);
+      expect(vault).toBeTruthy();
+      expect(vault.name).toBeTruthy();
+    });
+  });
+});
 
 //   describe("Airdropee upload tests", () => {
 //     const storageAllowance = 1;

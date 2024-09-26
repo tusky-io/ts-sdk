@@ -4,7 +4,6 @@ import { CreateVaultTxPayload, CreateFolderTxPayload, UpdateVaultTxPayload, Upda
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserMutable, UserPublicInfo } from "../types/user";
-import { EncryptionMetadata } from "../crypto/types";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";

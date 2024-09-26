@@ -27,7 +27,7 @@ export class ApiClient {
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
   private _trashUri: string = "trash";
-  private _membershipUri: string = "memberships";
+  private _membershipUri: string = "members";
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
@@ -59,6 +59,8 @@ export class ApiClient {
   private _address: string;
   private _role: string;
   private _expiresAt: number;
+  private _allowedStorage: number;
+  private _contextPath: string;
 
   // file specific
   private _numberOfChunks: number;
@@ -115,6 +117,8 @@ export class ApiClient {
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
+    clone._allowedStorage = this._allowedStorage;
+    clone._contextPath = this._contextPath;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
@@ -218,6 +222,16 @@ export class ApiClient {
 
   expiresAt(expiresAt: number): ApiClient {
     this._expiresAt = expiresAt;
+    return this;
+  }
+
+  allowedStorage(allowedStorage: number): ApiClient {
+    this._allowedStorage = allowedStorage;
+    return this;
+  }
+
+  contextPath(contextPath: string): ApiClient {
+    this._contextPath = contextPath;
     return this;
   }
 
@@ -886,14 +900,24 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - vaultId()
    * - address()
    * - role()
    * @uses:
    * - expiresAt()
+   * - keys()
+   * - encPrivateKey()
+   * - allowedStorage()
+   * - contextPath()
    * - autoExecute()
    * @returns {Promise<Membership>}
    */
   async createMembership(): Promise<Membership> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#vaultId() to add it"
+      );
+    }
     if (!this._address) {
       throw new BadRequest(
         "Missing address input. Use ApiClient#address() to add it"
@@ -909,10 +933,15 @@ export class ApiClient {
       address: this._address,
       role: this._role,
       expiresAt: this._expiresAt,
+      name: this._address,
+      keys: this._address,
+      encPrivateKey: this._encPrivateKey,
+      allowedStorage: this._allowedStorage,
+      contextPath: this._contextPath,
       autoExecute: this._autoExecute
     });
 
-    return this.post(`${this._apiUrl}/${this._membershipUri}`);
+    return this.post(`${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`);
   }
 
   /**
@@ -923,6 +952,7 @@ export class ApiClient {
   * - role()
   * - expiresAt()
   * - status()
+  * - keys()
   * - autoExecute()
   * @returns {Promise<Membership>}
   */
@@ -936,6 +966,7 @@ export class ApiClient {
       role: this._role,
       expiresAt: this._expiresAt,
       status: this._status,
+      keys: this._keys,
       autoExecute: this._autoExecute
     });
     return this.patch(`${this._apiUrl}/${this._membershipUri}/${this._resourceId}`);

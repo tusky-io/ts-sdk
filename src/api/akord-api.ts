@@ -1,14 +1,13 @@
 import { ClientConfig } from "../config";
 import { Api } from "./api";
-import { apiConfig, ApiConfig } from "./config";
+import { apiConfig } from "./config";
 import { ApiClient } from "./api-client";
 import { Membership } from "../types/membership";
 import { Vault } from "../types/vault";
-import { CreateFileTxPayload, CreateFolderTxPayload, CreateMembershipTxPayload, CreateVaultTxPayload, Transaction, UpdateFileTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, UpdateVaultTxPayload } from "../types/transaction";
+import { CreateFolderTxPayload, CreateMembershipTxPayload, CreateVaultTxPayload, Transaction, UpdateFileTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, UpdateVaultTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserMutable, UserPublicInfo } from "../types/user";
-import { EncryptionMetadata } from "../crypto/types";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
@@ -155,9 +154,14 @@ export default class AkordApi extends Api {
   public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
+      .vaultId(tx.vaultId)
       .address(tx.address)
       .role(tx.role)
       .expiresAt(tx.expiresAt)
+      .keys(tx.keys)
+      .encPrivateKey(tx.encPrivateKey)
+      .allowedStorage(tx.allowedStorage)
+      .contextPath(tx.contextPath)
       .autoExecute(this.autoExecute)
       .createMembership();
   };
@@ -169,6 +173,7 @@ export default class AkordApi extends Api {
       .role(tx.role)
       .status(tx.status)
       .expiresAt(tx.expiresAt)
+      .keys(tx.keys as any)
       .autoExecute(this.autoExecute)
       .updateMembership();
   };
