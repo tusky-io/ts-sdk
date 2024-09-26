@@ -468,7 +468,7 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: A
 //   return arrayToString(decryptedDataArray)
 // }
 
-async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoKey, chunkSize: number, iv?: string[]): Promise<any> {
+async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoKey, chunkSize: number): Promise<any> {
   if (stream === null) return null
   try {
     const slicesStream = transformStream(stream, new StreamSlicer(chunkSize));

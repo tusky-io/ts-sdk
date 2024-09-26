@@ -345,7 +345,7 @@ class FileModule {
       const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
       const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
 
-      stream = await decryptStream(file as ReadableStream, aesKey, CHUNK_SIZE_IN_BYTES);
+      stream = await decryptStream(file as ReadableStream, aesKey, fileMetadata.chunkSize);
     }
     if (options.responseType === 'arraybuffer') {
       return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);

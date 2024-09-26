@@ -79,7 +79,7 @@ export default class EncryptableHttpStack {
           request.setHeader(UPLOAD_LENGTH_HEADER, uploadLength.toString());
         
           this.putMetadata(request, UPLOAD_METADATA_NUMBER_OF_CHUNKS_KEY, stringToBase64(numberOfChunks.toString()));
-          this.putMetadata(request, UPLOAD_METADATA_CHUNK_SIZE_KEY, stringToBase64(CHUNK_SIZE_IN_BYTES.toString()));
+          this.putMetadata(request, UPLOAD_METADATA_CHUNK_SIZE_KEY, stringToBase64(ENCRYPTED_CHUNK_SIZE_IN_BYTES.toString()));
           this.putMetadata(request, UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY, stringToBase64(encryptedAesKey));
         }
         // override request upload-offset to account for encryption bytes
