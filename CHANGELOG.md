@@ -1,3 +1,10 @@
+# [0.22.0-dev.16](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.15...v0.22.0-dev.16) (2024-09-26)
+
+
+### Bug Fixes
+
+* encrypted multi-chunk upload ([4c9ee06](https://github.com/Akord-com/carmella-sdk/commit/4c9ee06e90756659b9235d44e8b2ccfe41aeb9c5))
+
 # [0.22.0-dev.15](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.14...v0.22.0-dev.15) (2024-09-25)
 
 
