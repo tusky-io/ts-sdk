@@ -1,3 +1,10 @@
+# [0.22.0-dev.18](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.17...v0.22.0-dev.18) (2024-09-26)
+
+
+### Features
+
+* clear keystore on sign out ([2fbf77b](https://github.com/Akord-com/carmella-sdk/commit/2fbf77bc6567f7e50c6e39aa3db0e9120684b370))
+
 # [0.22.0-dev.17](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.16...v0.22.0-dev.17) (2024-09-26)
 
 
