@@ -90,6 +90,7 @@ export class Akord {
 
   signOut(): this {
     Auth.signOut();
+    AkordWallet.clear();
     this.setAddress(undefined);
     return this;
   }
