@@ -30,6 +30,7 @@
     "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
     "test:web": "karma start karma.conf.js",
     "build": "webpack --config webpack.config.js",
+    "analyze": "STATS=server npm run build",
     "set:registry": "bash ./registry.sh",
     "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1"
   },
