@@ -1,7 +1,7 @@
 
 import { tusFileToUint8Array } from "@env/types/file";
 import { base64ToArray, base64ToString, jsonToBase64, stringToBase64 } from "../";
-import { CHUNK_SIZE_IN_BYTES } from "../../core/file";
+import { CHUNK_SIZE_IN_BYTES, ENCRYPTED_CHUNK_SIZE_IN_BYTES } from "../../core/file";
 import { Vault } from "../../types";
 import { AUTH_TAG_LENGTH_IN_BYTES, encrypt, encryptWithPublicKey, exportKeyToBase64, generateKey, IV_LENGTH_IN_BYTES } from "../lib";
 import * as tus from 'tus-js-client'
@@ -71,25 +71,26 @@ export default class EncryptableHttpStack {
         this.putMetadata(request, UPLOAD_METADATA_FILENAME_KEY, stringToBase64(encryptedFileNameB64));
   
         // set the upload length
-        const originalUploadLength = parseInt(request.getHeader(UPLOAD_LENGTH_HEADER) as string);
-        const numberOfChunks = Math.ceil(originalUploadLength / CHUNK_SIZE_IN_BYTES);
-        const uploadLength = originalUploadLength + numberOfChunks * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES);
-        request.setHeader(UPLOAD_LENGTH_HEADER, uploadLength.toString());
+        const uploadLengthHeader = request.getHeader(UPLOAD_LENGTH_HEADER);
+        if (uploadLengthHeader) {
+          const originalUploadLength = parseInt(uploadLengthHeader);
+          const numberOfChunks = Math.ceil(originalUploadLength / CHUNK_SIZE_IN_BYTES);
+          const uploadLength = originalUploadLength + numberOfChunks * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES);
+          request.setHeader(UPLOAD_LENGTH_HEADER, uploadLength.toString());
         
-        this.putMetadata(request, UPLOAD_METADATA_NUMBER_OF_CHUNKS_KEY, stringToBase64(numberOfChunks.toString()));
-        this.putMetadata(request, UPLOAD_METADATA_CHUNK_SIZE_KEY, stringToBase64(CHUNK_SIZE_IN_BYTES.toString()));
-        this.putMetadata(request, UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY, stringToBase64(encryptedAesKey));
-    
+          this.putMetadata(request, UPLOAD_METADATA_NUMBER_OF_CHUNKS_KEY, stringToBase64(numberOfChunks.toString()));
+          this.putMetadata(request, UPLOAD_METADATA_CHUNK_SIZE_KEY, stringToBase64(CHUNK_SIZE_IN_BYTES.toString()));
+          this.putMetadata(request, UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY, stringToBase64(encryptedAesKey));
+        }
         // override request upload-offset to account for encryption bytes
         const originalRequestOffset = request.getHeader(UPLOAD_OFFSET_HEADER) as string;
         if (originalRequestOffset) {
-          const currentRequestChunk = Math.floor(parseInt(originalRequestOffset) / CHUNK_SIZE_IN_BYTES);
-          const encryptedRequestOffset = parseInt(originalRequestOffset) - (currentRequestChunk * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES));
+          const currentRequestChunk = Math.ceil(parseInt(originalRequestOffset) / CHUNK_SIZE_IN_BYTES);
+          const encryptedRequestOffset = parseInt(originalRequestOffset) + (currentRequestChunk * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES));
           request.setHeader(UPLOAD_OFFSET_HEADER, encryptedRequestOffset.toString());
         }
 
         // reinitialize the xhr
-        console.log("reinitializing xhr");
         if ((request as any)._xhr) {
           (request as any)._xhr.abort();
           (request as any)._xhr = new XMLHttpRequest();
@@ -110,7 +111,7 @@ export default class EncryptableHttpStack {
   
         // override response upload-offset to allow reading from proper place in source file
         const originalResponseOffset = parseInt(response.getHeader(UPLOAD_OFFSET_HEADER) as string);
-        const currentResponseChunk = Math.ceil(originalResponseOffset / CHUNK_SIZE_IN_BYTES);
+        const currentResponseChunk = Math.ceil(originalResponseOffset / ENCRYPTED_CHUNK_SIZE_IN_BYTES);
         const encryptedResponseOffset = originalResponseOffset - (currentResponseChunk * (AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES));
         
         const originalGetHeader = response.getHeader.bind(response);

@@ -14,7 +14,7 @@ import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
 import { AsymEncryptedPayload } from "../crypto/types";
 import { arrayToString, base64ToJson} from "../crypto";
-import { decryptStream, decryptWithPrivateKey, importKeyFromBase64 } from "../crypto/lib";
+import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, decryptWithPrivateKey, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
@@ -25,6 +25,7 @@ export const DEFAULT_FILE_NAME = "unnamed";
 
 export const BYTES_IN_MB = 1000000;
 export const CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
+export const ENCRYPTED_CHUNK_SIZE_IN_BYTES = CHUNK_SIZE_IN_BYTES + AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES;
 
 export const UPLOADER_SERVER_MAX_CONNECTIONS_PER_CLIENT = 20;
 export const EMPTY_FILE_ERROR_MESSAGE = "Cannot upload an empty file";
