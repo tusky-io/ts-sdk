@@ -82,7 +82,7 @@ export const folderCreate = async (akord: Akord, vaultId: string, parentId?: str
 }
 
 export const generateAndSavePixelFile = async (fileSizeMB: number, filePath: string) => {
-  const totalBytes = fileSizeMB * 1024;
+  const totalBytes = fileSizeMB * 1024 * 1024;
   const totalPixels = totalBytes / 4; // each pixel is 4 bytes (RGBA)
   const imageSize = Math.sqrt(totalPixels);
   let buffer = new Uint8Array(totalBytes);

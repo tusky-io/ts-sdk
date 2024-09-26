@@ -1,6 +1,8 @@
 const path = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const WebpackBundleAnalyzer = require("webpack-bundle-analyzer")
+    .BundleAnalyzerPlugin;
 const nodeExternals = require('webpack-node-externals');
 
 const commonNodeConfig = {
@@ -114,6 +116,22 @@ const commonWebConfig = {
       extractComments: false,
     })],
   },
+  plugins: [
+    new WebpackBundleAnalyzer({
+        analyzerMode: process.env.STATS || 'disabled',
+    }),
+    // new ProvidePlugin({
+    //     Buffer: ['buffer', 'Buffer'],
+    // }),
+    // new NodePolyfillPlugin({
+    //     excludeAliases: ['console']
+    // }),
+    // new CopyWebpackPlugin({
+    //     patterns: [
+    //         { from: 'static' }
+    //     ]
+    // })
+]
 };
 
 const cjsWebConfig = {
