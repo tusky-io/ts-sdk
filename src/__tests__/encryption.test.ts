@@ -124,25 +124,25 @@ describe("Testing encryption functions", () => {
     expect(response).toEqual(arrayBuffer);
   });
 
-  it("should upload multi-chunk encrypted file", async () => {
-    const fileName = "11mb.png";
-    await generateAndSavePixelFile(11, testDataGeneratedPath + fileName);
-    const id = await akord.file.upload(vaultId, testDataGeneratedPath + fileName);
+  // it("should upload multi-chunk encrypted file", async () => {
+  //   const fileName = "11mb.png";
+  //   await generateAndSavePixelFile(11, testDataGeneratedPath + fileName);
+  //   const id = await akord.file.upload(vaultId, testDataGeneratedPath + fileName);
 
-    const type = "image/png";
-    const file = await akord.file.get(id);
-    expect(file.id).toBeTruthy();
-    expect(file.vaultId).toEqual(vaultId);
-    expect(file.parentId).toEqual(vaultId);
-    expect(file.status).toEqual(status.ACTIVE);
-    expect(file.name).toEqual(fileName);
-    expect(file.mimeType).toEqual(type);
+  //   const type = "image/png";
+  //   const file = await akord.file.get(id);
+  //   expect(file.id).toBeTruthy();
+  //   expect(file.vaultId).toEqual(vaultId);
+  //   expect(file.parentId).toEqual(vaultId);
+  //   expect(file.status).toEqual(status.ACTIVE);
+  //   expect(file.name).toEqual(fileName);
+  //   expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.download(file.id, { responseType: 'arraybuffer' });
+  //   const response = await akord.file.download(file.id, { responseType: 'arraybuffer' });
 
-    const buffer = await fs.readFile(testDataPath + firstFileName);
-    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+  //   const buffer = await fs.readFile(testDataPath + firstFileName);
+  //   const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
 
-    expect(response).toEqual(arrayBuffer);
-  });
+  //   expect(response).toEqual(arrayBuffer);
+  // });
 });

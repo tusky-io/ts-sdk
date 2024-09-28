@@ -85,7 +85,7 @@ class AkordWallet implements Wallet {
     const backupPhrase = bip39.generateMnemonic();
     let encBackupPhrase: string;
     if (password) {
-      encBackupPhrase = await encryptWithPassword(password, backupPhrase, keystore);
+      encBackupPhrase = await encryptWithPassword(password, backupPhrase as any, keystore);
     }
     const akordWallet = new AkordWallet(backupPhrase, encBackupPhrase);
     await akordWallet.deriveKeys();
@@ -110,9 +110,9 @@ class AkordWallet implements Wallet {
       )
 
     const backupPhrase = await decryptWithPassword(password, encBackupPhrase, keystore)
-    if (!this.isValidMnemonic(backupPhrase))
+    if (!this.isValidMnemonic(backupPhrase as any))
       throw new Error('Akord Wallet error: Invalid backup phrase.')
-    const akordWallet = new AkordWallet(backupPhrase, encBackupPhrase)
+    const akordWallet = new AkordWallet(backupPhrase as any, encBackupPhrase)
     await akordWallet.deriveKeys()
     return akordWallet
   }
@@ -181,7 +181,7 @@ class AkordWallet implements Wallet {
   static async recover(newPassword: string, backupPhrase: string): Promise<AkordWallet> {
     if (!this.isValidMnemonic(backupPhrase))
       throw new Error('Akord Wallet error: Invalid backup phrase.')
-    const encBackupPhrase = await encryptWithPassword(newPassword, backupPhrase)
+    const encBackupPhrase = await encryptWithPassword(newPassword, backupPhrase as any)
     const akordWallet = new AkordWallet(backupPhrase, encBackupPhrase)
     await akordWallet.deriveKeys()
     return akordWallet
@@ -190,14 +190,14 @@ class AkordWallet implements Wallet {
   static async changePassword(oldPassword: string, newPassword: string, encBackupPhrase: string, keystore?: boolean): Promise<AkordWallet> {
     // decrypt backup phrase with the old password
     const backupPhrase = await decryptWithPassword(oldPassword, encBackupPhrase, keystore)
-    if (!this.isValidMnemonic(backupPhrase))
+    if (!this.isValidMnemonic(backupPhrase as any))
       throw new Error('Akord Wallet error: Invalid backup phrase.')
     // encrypt backup phrase with the new password
     const newEncBackupPhrase = await encryptWithPassword(
       newPassword,
       backupPhrase
     )
-    const akordWallet = new AkordWallet(backupPhrase, newEncBackupPhrase)
+    const akordWallet = new AkordWallet(backupPhrase as any, newEncBackupPhrase)
     await akordWallet.deriveKeys()
     return akordWallet
   }
@@ -365,10 +365,10 @@ class AkordWallet implements Wallet {
  * - derive the encryption key from password and salt
  * - encrypt plaintext with the derived key
  * @param {string} password
- * @param {string} plaintext utf-8 string plaintext
+ * @param {string} plaintext plaintext array
  * @returns {Promise.<string>} Promise of string represents stringified payload
  */
-async function encryptWithPassword(password: string, plaintext: string, keystore?: boolean): Promise<string> {
+async function encryptWithPassword(password: string, plaintext: Uint8Array, keystore?: boolean): Promise<string> {
   try {
     const salt = crypto.getRandomValues(
       new Uint8Array(SALT_LENGTH)
@@ -381,7 +381,7 @@ async function encryptWithPassword(password: string, plaintext: string, keystore
     }
 
     const encryptedPayload = await encrypt(
-      stringToArray(plaintext),
+      plaintext,
       derivedKey
     )
 
@@ -391,7 +391,7 @@ async function encryptWithPassword(password: string, plaintext: string, keystore
     }
     return jsonToBase64(payload)
   } catch (err) {
-    throw new Error('Akord Wallet error: encrypt with password: ' + err)
+    throw new Error('Encrypt with password: ' + err)
   }
 }
 
@@ -404,7 +404,7 @@ async function encryptWithPassword(password: string, plaintext: string, keystore
  * @param {string} strPayload stringified payload
  * @returns {Promise.<string>} Promise of string represents utf-8 plaintext
  */
-async function decryptWithPassword(password: string, strPayload: string, keystore?: boolean): Promise<string> {
+async function decryptWithPassword(password: string, strPayload: string, keystore?: boolean): Promise<Uint8Array> {
   try {
     const parsedPayload = base64ToJson(strPayload) as any
 
@@ -419,9 +419,9 @@ async function decryptWithPassword(password: string, strPayload: string, keystor
     }
 
     const plaintext = await decrypt(encryptedPayload, derivedKey)
-    return arrayToString(plaintext)
+    return new Uint8Array(plaintext);
   } catch (err) {
-    throw new Error('Akord Wallet error: decrypt with password: ' + err)
+    throw new Error('Decrypt with password: ' + err)
   }
 }
 

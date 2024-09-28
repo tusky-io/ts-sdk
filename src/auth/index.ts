@@ -3,7 +3,7 @@ import { Unauthorized } from "../errors/unauthorized";
 import { logger } from "../logger";
 import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Conflict } from "../errors/conflict";
-import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { OAuth } from "./oauth";
 import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 import AkordApi from "../api/akord-api";
