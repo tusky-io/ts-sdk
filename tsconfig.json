@@ -19,6 +19,7 @@
     "types": ["jest", "node"],
     "paths": {
       "@env/types/*": ["types/node/*"],
+      "@env/core/*": ["core/node/*"]
     },
     "plugins": [
       { "transform": "typescript-transform-paths" },

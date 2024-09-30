@@ -7,7 +7,7 @@ import { FolderModule } from "./core/folder";
 import { MembershipModule } from "./core/membership";
 import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
-import { FileModule } from "./core/file";
+import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
 import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";

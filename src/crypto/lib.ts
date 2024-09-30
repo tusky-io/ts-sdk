@@ -35,7 +35,6 @@ const KEY_DERIVATION_ITERATION_COUNT = 150000
 
 export const AUTH_TAG_LENGTH_IN_BYTES = 16;
 export const IV_LENGTH_IN_BYTES = 12;
-export const PROXY_DOWNLOAD_URL = '/api/proxy/download'
 
 /**
  * Export CryptoKey object to base64 encoded string
