@@ -1,3 +1,16 @@
+# [0.22.0-dev.19](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.18...v0.22.0-dev.19) (2024-10-01)
+
+
+### Bug Fixes
+
+* sui keypair import ([525a736](https://github.com/Akord-com/carmella-sdk/commit/525a7360a8f50dbb07af7c723e6ac21054033443))
+* sui keypair import ([43819ac](https://github.com/Akord-com/carmella-sdk/commit/43819ac9742a702955c52b96f48bad708be99954))
+
+
+### Features
+
+* add airdrop access + move member management into the vault module ([2357877](https://github.com/Akord-com/carmella-sdk/commit/23578770aa4834843590f9d6b33a6415377acf72))
+
 # [0.22.0-dev.18](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.17...v0.22.0-dev.18) (2024-09-26)
 
 
