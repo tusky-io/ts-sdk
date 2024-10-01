@@ -58,11 +58,16 @@ export interface CreateMembershipTxPayload {
   role: string,
   status?: string,
   expiresAt?: number,
+  keys?: EncryptedVaultKeyPair[],
+  encPrivateKey?: string,
+  allowedStorage?: number,
+  contextPath?: string
 }
 
 export interface UpdateMembershipTxPayload {
   id: string,
   role?: string,
   status?: string,
-  expiresAt?: number
+  expiresAt?: number,
+  keys?: Map<string, EncryptedVaultKeyPair[]>
 }

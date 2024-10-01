@@ -4,7 +4,6 @@ import { ApiConfig, ClientConfig, EncrypterConfig, LoggerConfig } from "./config
 import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
 import { ConsoleLogger, logger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
-import { MembershipModule } from "./core/membership";
 import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
 import { FileModule } from "./core/file";
@@ -34,9 +33,6 @@ export class Akord {
   }
   get folder(): FolderModule {
     return new FolderModule(this.getConfig());
-  }
-  get membership(): MembershipModule {
-    return new MembershipModule(this.getConfig());
   }
   get vault(): VaultModule {
     return new VaultModule(this.getConfig());

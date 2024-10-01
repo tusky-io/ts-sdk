@@ -68,6 +68,7 @@ export type MembershipAirdropOptions = {
   name?: string
   expiresAt?: number // expiration date
   allowedStorage?: number // allowed storage
-  publicKey?: string //  member public key for encryption
-  role?: string //  member role
+  contextPath?: string // folder id, file id, if not provided defaults to vault id
+  role?: string //  member role,
+  password?: string // password to protect member encryption keys, if not provided a random password will be generated
 }

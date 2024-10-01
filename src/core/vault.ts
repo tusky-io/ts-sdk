@@ -1,4 +1,4 @@
-import { status } from "../constants";
+import { membershipStatus, role, status } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
@@ -6,8 +6,11 @@ import { paginate, processListItems } from "./common";
 import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
-import { arrayToBase64 } from "../crypto";
+import { AkordWallet, arrayToBase64 } from "../crypto";
 import { generateKeyPair } from "../crypto/lib";
+import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "types";
+import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
+import Encrypter from "encrypter";
 
 class VaultModule {
   protected service: VaultService;
@@ -115,7 +118,7 @@ class VaultModule {
     }
 
     await this.service.setName(name);
-    if(createOptions.description) {
+    if (createOptions.description) {
       await this.service.setDescription(createOptions.description);
     }
 
@@ -172,7 +175,114 @@ class VaultModule {
   public async deletePermanently(id: string): Promise<void> {
     return this.service.api.deleteVault(id);
   }
+
+  /**
+   * Airdrop access to the vault directly through public keys
+   * @param  {string} vaultId
+   * @param  {MembershipAirdropOptions} options airdrop options
+   * @returns Promise with new membership
+   */
+  public async airdropAccess(vaultId: string, options: MembershipAirdropOptions = {
+    role: role.CONTRIBUTOR
+  }): Promise<{ keypair: Ed25519Keypair, password: string }> {
+    await this.service.setVaultContext(vaultId);
+
+    const memberService = new MembershipService(this.service);
+    memberService.setVaultId(this.service.vaultId);
+
+    // generate member identity key pair for authentication
+    const memberKeyPair = new Ed25519Keypair();
+
+    let keys: EncryptedVaultKeyPair[];
+    let userEncPrivateKey: string;
+    let password: string;
+    if (!this.service.isPublic) {
+      password = options.password ? options.password : generateRandomPassword(16);
+      const userWallet = await AkordWallet.create(password, false);
+      const userKeyPair = userWallet.encryptionKeyPair;
+      userEncPrivateKey = userWallet?.encBackupPhrase;
+      memberService.encrypter = new Encrypter({ keypair: userKeyPair });
+      keys = await memberService.prepareMemberKeys(userWallet.publicKey());
+    }
+
+    const { membership } = await this.service.api.createMembership({
+      vaultId: vaultId,
+      address: memberKeyPair.toSuiAddress(),
+      allowedStorage: options.allowedStorage,
+      contextPath: options.contextPath,
+      expiresAt: options.expiresAt,
+      role: options.role || role.CONTRIBUTOR,
+      keys: keys,
+      encPrivateKey: userEncPrivateKey
+    });
+
+    return {
+      keypair: memberKeyPair,
+      password: password
+    }
+  }
+
+
+  /**
+   * Revoke member access
+   * If private vault, vault keys will be rotated & distributed to all valid members
+   * @param  {string} id membership id
+   * @returns Promise with the updated membership
+   */
+  public async revokeAccess(id: string): Promise<Membership> {
+    const memberService = new MembershipService(this.service);
+    await memberService.setVaultContextFromMembershipId(id);
+
+    let keys: Map<string, EncryptedVaultKeyPair[]>;
+    if (!this.service.isPublic) {
+      const memberships = await (<any>memberService).listAll({ vaultId: this.service.vaultId, shouldDecrypt: false });
+
+      const activeMembers = memberships.filter((member: Membership) =>
+        member.id !== this.service.objectId
+        && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
+
+      // rotate keys for all active members
+      const memberPublicKeys = new Map<string, string>();
+      await Promise.all(activeMembers.map(async (member: Membership) => {
+        const { publicKey } = await this.service.api.getUserPublicData(member.email);
+        memberPublicKeys.set(member.id, publicKey);
+      }));
+      const { memberKeys } = await memberService.rotateMemberKeys(memberPublicKeys);
+      keys = memberKeys;
+    }
+
+    const { membership } = await this.service.api.updateMembership({
+      id: id,
+      status: membershipStatus.REVOKED,
+      keys: keys
+    });
+    return new Membership(membership);
+  }
+
+  /**
+   * @param  {string} id membership id
+   * @param  {RoleType} role VIEWER/CONTRIBUTOR/OWNER
+   * @returns Promise with corresponding transaction id
+   */
+  public async changeAccess(id: string, role: RoleType): Promise<Membership> {
+    const { membership } = await this.service.api.updateMembership({
+      id: id,
+      role: role
+    });
+    return new Membership(membership);
+  }
+
+
 };
+
+function generateRandomPassword(length: number) {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
+  const password = Array.from(crypto.getRandomValues(new Uint8Array(length)))
+    .map(value => charset[value % charset.length])
+    .join('');
+
+  return password;
+}
 
 export {
   VaultModule
