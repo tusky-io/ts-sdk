@@ -1,3 +1,10 @@
+# [0.22.0-dev.20](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.19...v0.22.0-dev.20) (2024-10-01)
+
+
+### Features
+
+* separate file download implementation per env ([d0918a4](https://github.com/Akord-com/carmella-sdk/commit/d0918a486255bb89a3eb1b637888b33f97b42504))
+
 # [0.22.0-dev.19](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.18...v0.22.0-dev.19) (2024-10-01)
 
 
