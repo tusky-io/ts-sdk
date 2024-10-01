@@ -118,7 +118,7 @@ describe("Testing encryption functions", () => {
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.download(file.id, { responseType: 'arraybuffer' });
+    const response = await akord.file.arrayBuffer(file.id);
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
@@ -138,7 +138,7 @@ describe("Testing encryption functions", () => {
     expect(file.name).toEqual(fileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.download(file.id, { responseType: 'arraybuffer' });
+    const response = await akord.file.arrayBuffer(file.id);
 
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
