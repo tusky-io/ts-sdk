@@ -7,7 +7,6 @@ import { actions, objects } from "../constants";
 import { ObjectType } from "../types/object";
 import { BadRequest } from "../errors/bad-request";
 import { File, FileUploadOptions, Folder } from "../types";
-import lodash from "lodash";
 import { FileService } from "./service/file";
 import { FolderService } from "./service/folder";
 

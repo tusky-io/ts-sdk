@@ -8,9 +8,9 @@ import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
 import { AkordWallet, arrayToBase64 } from "../crypto";
 import { generateKeyPair } from "../crypto/lib";
-import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "types";
+import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import Encrypter from "encrypter";
+import Encrypter from "../encrypter";
 
 class VaultModule {
   protected service: VaultService;
