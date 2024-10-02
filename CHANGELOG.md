@@ -1,3 +1,10 @@
+# [0.22.0-dev.23](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.22...v0.22.0-dev.23) (2024-10-02)
+
+
+### Bug Fixes
+
+* import typo ([6441721](https://github.com/Akord-com/carmella-sdk/commit/644172127bb61eff0f473a7ccc0608a5df2287df))
+
 # [0.22.0-dev.22](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.21...v0.22.0-dev.22) (2024-10-02)
 
 
