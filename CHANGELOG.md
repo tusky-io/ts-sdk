@@ -1,3 +1,17 @@
+# [0.22.0-dev.22](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.21...v0.22.0-dev.22) (2024-10-02)
+
+
+### Bug Fixes
+
+* encPrivateKeyBackup field ([aab3911](https://github.com/Akord-com/carmella-sdk/commit/aab391168599a80be9d3f24f27fd7bcd0587fcdb))
+
+
+### Features
+
+* account recovery draft ([988a1b0](https://github.com/Akord-com/carmella-sdk/commit/988a1b0ae9a5e197e4c88c2594ed534d007071dd))
+* set user specific session & password key paths to enable multi user usage ([085a487](https://github.com/Akord-com/carmella-sdk/commit/085a487817167906855867f9b730692fc7542c35))
+* use session key to encrypt user password key, store session key in indexedDB & encrypted password key in session storage ([3d29b42](https://github.com/Akord-com/carmella-sdk/commit/3d29b42a0022177a819df0385d1c2a6a5b250b86))
+
 # [0.22.0-dev.21](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.20...v0.22.0-dev.21) (2024-10-02)
 
 
