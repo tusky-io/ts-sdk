@@ -21,8 +21,7 @@ export class User {
     this.picture = json.picture
     this.termsAccepted = json.termsAccepted
     this.encPrivateKey = json.encPrivateKey
-    // this.encPrivateKeyBackup = json.encPrivateKeyBackup
-    this.encPrivateKeyBackup = json.name
+    this.encPrivateKeyBackup = json.encPrivateKeyBackup
     this.storage = new Storage(json.storage)
   }
 }

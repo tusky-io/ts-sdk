@@ -376,12 +376,11 @@ export class ApiClient {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
-      // name: this._name,
+      name: this._name,
       picture: this._picture,
       termsAccepted: this._termsAccepted,
       encPrivateKey: this._encPrivateKey,
-      // encPrivateKeyBackup: this._encPrivateKeyBackup
-      name: this._encPrivateKeyBackup
+      encPrivateKeyBackup: this._encPrivateKeyBackup
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
