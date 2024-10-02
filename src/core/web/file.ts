@@ -14,9 +14,7 @@ class WebFileModule extends FileModule {
 
     constructor(config?: ServiceConfig) {
         super(config);
-        
-        //@ts-ignore: tsconfig is defaulting to node. This file is only bundled for the browser.
-        this.decryptionWorker = new Worker(new URL('./worker.js', import.meta.url));
+        this.registerDecryptionWorker();
     }
 
     public async previewUrl(id: string, options: FileDownloadOptions): Promise<string> {
@@ -46,6 +44,19 @@ class WebFileModule extends FileModule {
         const file = await super.get(id, options);
         this.sessionFile = file;
         return file;
+    }
+
+    private registerDecryptionWorker() {
+        if (typeof window !== 'undefined' && 'Worker' in window) {
+            try {
+                //@ts-ignore: tsconfig is defaulting to node. This file is only bundled for the browser.
+                this.decryptionWorker = new Worker(new URL('./worker.js', import.meta.url));
+            } catch (error) {
+                console.warn('Failed to create Web Worker:', error);
+            }
+        } else {
+            this.decryptionWorker = null;
+        }
     }
 
     private saveAs(url: string, filename: string) {
@@ -122,7 +133,7 @@ class WebFileModule extends FileModule {
     }
 
     private hasDecryptionWebWorker(): boolean {
-        return this.decryptionWorker && !!navigator.serviceWorker?.controller
+        return !!this.decryptionWorker && !!navigator.serviceWorker?.controller
     }
 }
 
