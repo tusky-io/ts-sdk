@@ -3,7 +3,7 @@ import { File } from "../../types";
 import { FileModule } from "../file";
 import { logger } from "../../logger";
 import { GetOptions } from "../../types/query-options";
-import { ServiceConfig } from "core/service/service";
+import { ServiceConfig } from "../service/service";
 
 export const PROXY_DOWNLOAD_URL = '/api/proxy/download'
 
