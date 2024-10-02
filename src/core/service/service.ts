@@ -4,7 +4,7 @@ import { actions } from '../../constants';
 import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
 import { Signer } from "../../signer";
-import { EncryptedVaultKeyPair, VaultKeyPair } from "../../types";
+import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
 import { encryptWithPublicKey } from "../../crypto/lib";
 import Encrypter from "../../encrypter";
 
@@ -30,6 +30,9 @@ class Service {
 
   userAgent: string // client name
 
+  storage: Storage // user session storage
+  env: Env
+
   constructor(config: ServiceConfig) {
     this.signer = config.signer;
     this.api = config.api;
@@ -45,6 +48,8 @@ class Service {
     this.object = config.object;
     this.groupRef = config.groupRef;
     this.userAgent = config.userAgent;
+    this.storage = config.storage;
+    this.env = config.env;
   }
 
   setKeys(keys: EncryptedVaultKeyPair[]) {
@@ -133,7 +138,9 @@ export type ServiceConfig = {
   actionRef?: string,
   groupRef?: string,
   contentType?: string,
-  userAgent?: string
+  userAgent?: string,
+  storage?: Storage,
+  env?: Env
 }
 
 export type VaultOptions = {

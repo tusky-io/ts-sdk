@@ -1,13 +1,16 @@
-import { Service, ServiceConfig } from "./service/service";
+import { Service } from "./service/service";
 import { User, UserMutable } from "../types/user";
 import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
+import { ClientConfig } from "../config";
 
 class MeModule {
   protected service: Service;
+  private userEncryption: UserEncryption;
 
-  constructor(config?: ServiceConfig) {
+  constructor(config?: ClientConfig) {
     this.service = new Service(config);
+    this.userEncryption = new UserEncryption(config);
   }
 
   /**
@@ -33,8 +36,8 @@ class MeModule {
     if (me.encPrivateKey) {
       throw new BadRequest("User encryption context is already setup");
     }
-    const userEncryption = new UserEncryption({ encPrivateKey: me.encPrivateKey });
-    const { encPrivateKey } = await userEncryption.setupPassword(password, true);
+    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
+    const { encPrivateKey } = await this.userEncryption.setupPassword(password, true);
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }
 
@@ -48,8 +51,8 @@ class MeModule {
     if (!me.encPrivateKey) {
       throw new BadRequest("Missing user encryption context, setup the user password first.");
     }
-    const userEncryption = new UserEncryption({ encPrivateKey: me.encPrivateKey });
-    const { encPrivateKey } = await userEncryption.changePassword(oldPassword, newPassword, true);
+    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
+    const { encPrivateKey } = await this.userEncryption.changePassword(oldPassword, newPassword, true);
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }
 
@@ -62,8 +65,8 @@ class MeModule {
     if (!me.encPrivateKey) {
       throw new BadRequest("Missing user encryption context, setup the user password first.");
     }
-    const userEncryption = new UserEncryption({ encPrivateKey: me.encPrivateKey });
-    const { backupPhrase, encPrivateKeyBackup } = await userEncryption.backupPassword(password);
+    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
+    const { backupPhrase, encPrivateKeyBackup } = await this.userEncryption.backupPassword(password);
     await this.service.api.updateMe({ encPrivateKeyBackup: encPrivateKeyBackup });
     return { backupPhrase };
   }
@@ -78,8 +81,8 @@ class MeModule {
     if (!me.encPrivateKeyBackup) {
       throw new BadRequest("Missing user backup.");
     }
-    const userEncryption = new UserEncryption({ encPrivateKeyBackup: me.encPrivateKeyBackup });
-    const { encPrivateKey } = await userEncryption.resetPassword(backupPhrase, newPassword);
+    this.userEncryption.setEncryptedPrivateKeyBackup(me.encPrivateKeyBackup);
+    const { encPrivateKey } = await this.userEncryption.resetPassword(backupPhrase, newPassword);
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }
 }
