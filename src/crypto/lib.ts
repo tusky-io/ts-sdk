@@ -252,7 +252,7 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
         name: SYMMETRIC_KEY_ALGORITHM,
         length: SYMMETRIC_KEY_LENGTH,
       },
-      false,
+      true,
       ['encrypt', 'decrypt'],
     )
   } catch (error) {

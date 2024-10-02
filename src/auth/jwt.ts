@@ -22,9 +22,9 @@ class JWTClient {
   constructor(config?: { storage?: Storage, env?: Env }) {
     this.storage = config?.storage || DEFAULT_STORAGE;
     this.env = config?.env || "testnet";
-    this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_access_token`;
-    this.STORAGE_PATH_ID_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_id_token`;
-    this.STORAGE_PATH_REFRESH_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_refresh_token`;
+    this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_${this.env}_access_token`;
+    this.STORAGE_PATH_ID_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_${this.env}_id_token`;
+    this.STORAGE_PATH_REFRESH_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_${this.env}_refresh_token`;
     this.STORAGE_PATH_ADDRESS = `${STORAGE_PATH_PREFIX}_${this.env}_address`;
   }
 
@@ -82,6 +82,11 @@ class JWTClient {
       this.address = this.storage.getItem(this.STORAGE_PATH_ADDRESS);
     }
     return this.address;
+  }
+
+  getUserId() {
+    const idToken = this.getIdToken();
+    return idToken ? decode(idToken).sub : "";
   }
 
   clearTokens() {

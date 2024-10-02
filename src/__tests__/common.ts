@@ -8,6 +8,7 @@ import { server } from "./server";
 import { createWriteStream } from "fs";
 import { PNG } from "pngjs";
 import { DEFAULT_STORAGE } from "../auth/jwt";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 export const TESTING_ENV = "testnet";
 
@@ -18,12 +19,12 @@ export async function initInstance(): Promise<Akord> {
       .withApiKey({ apiKey: process.env.API_KEY })
       .withLogger({ logLevel: "debug", logToFile: true })
       .withApi({ env: process.env.ENV as any })
-  } else {
+  } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
-    const akord =  Akord
-    .withOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" })
-    .withLogger({ logLevel: "debug", logToFile: true })
+    const akord = Akord
+      .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
+      .withLogger({ logLevel: "debug", logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
       .withApi({ env: process.env.ENV as any })
 
@@ -33,11 +34,23 @@ export async function initInstance(): Promise<Akord> {
       DEFAULT_STORAGE.setItem(`akord_testnet_refresh_token`, tokens.refreshToken);
     }
     return akord;
+  } else {
+    const keypair = new Ed25519Keypair();
+    const akord = Akord
+      .withWallet({ walletSigner: keypair })
+      .withLogger({ logLevel: "debug", logToFile: true })
+      .withApi({ env: process.env.ENV as any })
+    await akord.signIn();
+    return akord;
   }
 }
 
 export async function setupVault(isPublic = false): Promise<string> {
   const akord = await initInstance();
+  if (!isPublic) {
+    const password = faker.random.word();
+    await akord.me.setupPassword(password);
+  }
   const vault = await vaultCreate(akord, isPublic);
   return vault.id;
 }

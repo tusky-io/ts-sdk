@@ -69,7 +69,8 @@ export class ApiClient {
   private _picture: string;
   private _termsAccepted: boolean;
   private _trashExpiration: number;
-  private _encPrivateKey: string
+  private _encPrivateKey: string;
+  private _encPrivateKeyBackup: string;
 
   private _autoExecute: boolean
 
@@ -123,6 +124,7 @@ export class ApiClient {
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
     clone._encPrivateKey = this._encPrivateKey;
+    clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
 
     clone._authProvider = this._authProvider;
     clone._redirectUri = this._redirectUri;
@@ -255,6 +257,11 @@ export class ApiClient {
     return this;
   }
 
+  encPrivateKeyBackup(encPrivateKeyBackup: string): ApiClient {
+    this._encPrivateKeyBackup = encPrivateKeyBackup;
+    return this;
+  }
+
   authProvider(authProvider: string): ApiClient {
     this._authProvider = authProvider;
     return this;
@@ -361,17 +368,19 @@ export class ApiClient {
    * - picture()
    * - termsAccepted()
    * - encPrivateKey()
+   * - encPrivateKeyBackup()
    * @returns {Promise<User>}
    */
   async updateMe(): Promise<User> {
-    if (!this._name && !this._picture && !this._termsAccepted && !this._encPrivateKey) {
+    if (!this._name && !this._picture && !this._termsAccepted && !this._encPrivateKey && !this._encPrivateKeyBackup) {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
       name: this._name,
       picture: this._picture,
       termsAccepted: this._termsAccepted,
-      encPrivateKey: this._encPrivateKey
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);

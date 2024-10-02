@@ -254,6 +254,7 @@ export default class AkordApi extends Api {
       .picture(input.picture)
       .termsAccepted(input.termsAccepted)
       .encPrivateKey(input.encPrivateKey)
+      .encPrivateKeyBackup(input.encPrivateKeyBackup)
       .updateMe();
   };
 

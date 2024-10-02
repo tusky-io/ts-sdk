@@ -10,6 +10,7 @@ export class User {
   termsAccepted?: boolean
   storage: Storage
   encPrivateKey?: string;
+  encPrivateKeyBackup?: string;
 
   constructor(json: any) {
     this.address = json.address
@@ -20,6 +21,7 @@ export class User {
     this.picture = json.picture
     this.termsAccepted = json.termsAccepted
     this.encPrivateKey = json.encPrivateKey
+    this.encPrivateKeyBackup = json.encPrivateKeyBackup
     this.storage = new Storage(json.storage)
   }
 }
@@ -28,7 +30,8 @@ export type UserMutable = {
   name?: string,
   picture?: string,
   termsAccepted?: boolean // by setting it to true, the user accepts following terms: https://akord.com/terms-of-service-consumer
-  encPrivateKey?: string // encrypted user private key
+  encPrivateKey?: string // encrypted user private key using user password
+  encPrivateKeyBackup?: string // encrypted user private key using user backup phrase
 }
 
 export type UserPublicInfo = {
