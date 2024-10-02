@@ -1,3 +1,10 @@
+# [0.22.0-dev.24](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.23...v0.22.0-dev.24) (2024-10-02)
+
+
+### Bug Fixes
+
+* try-catch worker registration ([3141d43](https://github.com/Akord-com/carmella-sdk/commit/3141d43806bf0b2846ea8a6d4c2d08563bceac4d))
+
 # [0.22.0-dev.23](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.22...v0.22.0-dev.23) (2024-10-02)
 
 
