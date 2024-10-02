@@ -85,6 +85,7 @@ const commonWebConfig = {
     plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.web.json" })],
     alias: {
       '@env/types': path.resolve(__dirname, 'src/types/web'),
+      '@env/core': path.resolve(__dirname, 'src/core/web'),
     }
   },
   module: {

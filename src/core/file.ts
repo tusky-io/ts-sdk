@@ -7,8 +7,6 @@ import { File, FileDownloadOptions, FileUploadOptions } from "../types";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
-import { isServer } from '../util/platform';
-import { importDynamic } from '../util/import';
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
@@ -57,25 +55,6 @@ class FileModule {
   constructor(config?: ServiceConfig) {
     this.service = new FileService(config);
   }
-
-  // public async create(
-  //   file: FileLike,
-  //   options: FileUploadOptions
-  // ): Promise<FileUploadResult> {
-  //   options.public = this.service.isPublic;
-  //   const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE_IN_BYTES;
-  //   if (chunkSize < MINIMAL_CHUNK_SIZE_IN_BYTES) {
-  //     throw new BadRequest("Chunk size can not be smaller than: " + MINIMAL_CHUNK_SIZE_IN_BYTES / BYTES_IN_MB)
-  //   }
-  //   if (file.size > chunkSize) {
-  //     options.chunkSize = chunkSize;
-  //     const tags = this.getFileTags(file, options);
-  //     return await this.uploadChunked(file, tags, options);
-  //   } else {
-  //     const tags = this.getFileTags(file, options);
-  //     return await this.uploadInternal(file, tags, options);
-  //   }
-  // }
 
   /**
    * Generate preconfigured Tus uploader
@@ -321,7 +300,7 @@ class FileModule {
     return this.service.api.deleteFile(id);
   }
 
-  public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
+  public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
     const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));
@@ -331,12 +310,24 @@ class FileModule {
     if (fileMetadata.__public__) {
       stream = file as ReadableStream<Uint8Array>;
     } else {
+      const aesKey = await this.aesKey(id);
+      stream = await decryptStream(file as ReadableStream, aesKey, fileMetadata.chunkSize);
+    }
+    return stream;
+  }
+
+  public async arrayBuffer(id: string): Promise<ArrayBuffer> {
+    const stream = await this.stream(id);
+    return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
+  }
+
+  protected async aesKey(id: string): Promise<CryptoKey> {
+      const fileMetadata = await this.get(id);
       const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as AsymEncryptedPayload;
 
       if (!fileMetadata.encryptedAesKey) {
         throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
       }
-
       // decrypt vault's private key
       const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedAesKey.publicKey).encPrivateKey;
       const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
@@ -344,36 +335,7 @@ class FileModule {
       // decrypt AES key with vault's private key
       const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
       const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
-
-      stream = await decryptStream(file as ReadableStream, aesKey, fileMetadata.chunkSize);
-    }
-    if (options.responseType === 'arraybuffer') {
-      return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
-    }
-    return stream;
-  }
-
-  private async saveFile(path: string, type: string, stream: ReadableStream, skipSave: boolean = false): Promise<string> {
-    if (isServer()) {
-      const fs = importDynamic("fs");
-      const Readable = importDynamic("stream").Readable;
-      return new Promise((resolve, reject) =>
-        Readable.from(stream).pipe(fs.createWriteStream(path))
-          .on('error', error => reject(error))
-          .on('finish', () => resolve(path))
-      );
-    } else {
-      const buffer = await StreamConverter.toArrayBuffer(stream)
-      const blob = new Blob([buffer], { type: type });
-      const url = window.URL.createObjectURL(blob);
-      if (!skipSave) {
-        const a = document.createElement("a");
-        a.download = path;
-        a.href = url
-        a.click();
-      }
-      return url;
-    }
+      return aesKey;
   }
 }
 
@@ -405,17 +367,6 @@ export type FileLocationOptions = {
 
 export type FileGetOptions = FileDownloadOptions & {
   responseType?: 'arraybuffer' | 'stream',
-}
-
-export type FileChunkedGetOptions = {
-  responseType?: 'arraybuffer' | 'stream',
-  chunkSize?: number
-}
-
-export type FileVersionData = {
-  [K in keyof File]?: File[K]
-} & {
-  data: ReadableStream<Uint8Array> | ArrayBuffer
 }
 
 export {

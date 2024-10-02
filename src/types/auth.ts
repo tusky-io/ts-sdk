@@ -1,5 +1,5 @@
 import { SignPersonalMessageClient, WalletAccount } from "../auth"
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519"
 import { Env } from "../types/env";
 
 export type AuthType = "OAuth" | "Wallet" | "ApiKey" | "AuthTokenProvider";

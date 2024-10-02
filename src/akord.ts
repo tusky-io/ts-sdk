@@ -6,7 +6,7 @@ import { ConsoleLogger, logger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
-import { FileModule } from "./core/file";
+import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
 import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
@@ -86,6 +86,7 @@ export class Akord {
 
   signOut(): this {
     Auth.signOut();
+    AkordWallet.clear();
     this.setAddress(undefined);
     return this;
   }
