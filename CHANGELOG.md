@@ -1,3 +1,10 @@
+# [0.22.0-dev.21](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.20...v0.22.0-dev.21) (2024-10-02)
+
+
+### Performance Improvements
+
+* remove lodash ([4bf8f67](https://github.com/Akord-com/carmella-sdk/commit/4bf8f679b07569240b6f2a91b3af003deed04bf9))
+
 # [0.22.0-dev.20](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.19...v0.22.0-dev.20) (2024-10-01)
 
 
