@@ -1,6 +1,7 @@
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Akord } from "../akord";
 import { cleanup, initInstance, setupVault } from "./common";
+import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 
 let akord: Akord;
 
@@ -27,12 +28,12 @@ describe("Testing airdrop actions", () => {
       const role = "CONTRIBUTOR";
       const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
 
-      const { keypair, password } = await akord.vault.airdropAccess(vaultId, { expiresAt: expiresAt, role });
-      expect(keypair).toBeTruthy();
+      const { identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { expiresAt: expiresAt, role });
+      expect(identityPrivateKey).toBeTruthy();
       expect(password).toBeTruthy();
 
       const memberAkord = await Akord
-        .withWallet({ walletSigner: keypair })
+        .withWallet({ walletSigner: Ed25519Keypair.fromSecretKey(decodeSuiPrivateKey(identityPrivateKey).secretKey) })
         .signIn();
 
       await memberAkord.withEncrypter({ password: password });
