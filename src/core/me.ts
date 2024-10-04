@@ -36,7 +36,6 @@ class MeModule {
     if (me.encPrivateKey) {
       throw new BadRequest("User encryption context is already setup");
     }
-    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
     const { encPrivateKey } = await this.userEncryption.setupPassword(password, true);
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }

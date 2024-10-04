@@ -1,12 +1,11 @@
 import { Api } from "../../api/api";
-import { jsonToBase64, base64ToArray } from "../../crypto";
+import { jsonToBase64, base64ToArray, encryptWithPublicKey } from "../../crypto";
 import { actions } from '../../constants';
 import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
 import { Signer } from "../../signer";
 import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
-import { encryptWithPublicKey } from "../../crypto/lib";
-import Encrypter from "../../encrypter";
+import { Encrypter } from "../../crypto/encrypter";
 
 export const STATE_CONTENT_TYPE = "application/json";
 

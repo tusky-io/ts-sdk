@@ -10,13 +10,13 @@ import { paginate, processListItems } from "./common";
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
-import { AsymEncryptedPayload } from "../crypto/types";
-import { arrayToString, base64ToJson} from "../crypto";
+import { arrayToString, base64ToJson } from "../crypto";
 import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, decryptWithPrivateKey, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
-import EncryptableHttpStack from "../crypto/tus/http-stack";
+import { EncryptableHttpStack } from "../crypto/tus/http-stack";
+import { X25519EncryptedPayload } from "../crypto/types";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -305,7 +305,7 @@ class FileModule {
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));
     this.service.setIsPublic(false);
-    
+
     let stream: ReadableStream<Uint8Array>;
     if (fileMetadata.__public__) {
       stream = file as ReadableStream<Uint8Array>;
@@ -322,20 +322,20 @@ class FileModule {
   }
 
   protected async aesKey(id: string): Promise<CryptoKey> {
-      const fileMetadata = await this.get(id);
-      const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as AsymEncryptedPayload;
+    const fileMetadata = await this.get(id);
+    const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as X25519EncryptedPayload;
 
-      if (!fileMetadata.encryptedAesKey) {
-        throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
-      }
-      // decrypt vault's private key
-      const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedAesKey.publicKey).encPrivateKey;
-      const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
+    if (!fileMetadata.encryptedAesKey) {
+      throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
+    }
+    // decrypt vault's private key
+    const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedAesKey.publicKey).encPrivateKey;
+    const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
 
-      // decrypt AES key with vault's private key
-      const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
-      const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
-      return aesKey;
+    // decrypt AES key with vault's private key
+    const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
+    const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
+    return aesKey;
   }
 }
 

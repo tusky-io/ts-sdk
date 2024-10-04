@@ -221,6 +221,12 @@ export class UserEncryption {
       throw new IncorrectEncryptionKey(new Error("Decrypting data failed."));
     }
   }
+
+  async clear() {
+    const keystore = await Keystore.instance()
+    await keystore.delete(this.sessionKeyPath);
+    await keystore.delete(this.encryptedPasswordKeyPath);
+  }
 }
 
 // generate non-extractable session key

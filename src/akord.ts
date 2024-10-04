@@ -15,18 +15,20 @@ import { Env } from "./types/env";
 import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
-import { Encrypter } from "./encrypter";
+import { Encrypter } from "./crypto/encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
-import { AkordWallet } from "./crypto";
 import { Conflict } from "./errors/conflict";
+import { UserEncryption } from "crypto/user-encryption";
 
 export class Akord {
   public api: Api;
   public address: string;
   private _signer: Signer;
   private _encrypter: Encrypter;
+  private _userEncryption: UserEncryption;
   private _env: Env;
+  private _storage: Storage;
 
   get me(): MeModule {
     return new MeModule(this.getConfig());
@@ -84,9 +86,9 @@ export class Akord {
     return this;
   }
 
-  signOut(): this {
+  async signOut(): Promise<this> {
+    await this._userEncryption.clear();
     Auth.signOut();
-    AkordWallet.clear();
     this.setAddress(undefined);
     return this;
   }
@@ -120,14 +122,14 @@ export class Akord {
       const user = await this.me.get();
       if (!user.encPrivateKey) {
         logger.info("Generate new user encryption context");
-        const userWallet = await AkordWallet.create(config.password, config.keystore);
-        const userKeyPair = userWallet.encryptionKeyPair;
-        await this.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
-        this._encrypter = new Encrypter({ keypair: userKeyPair });
+        const { encPrivateKey, keyPair } = await this._userEncryption.setupPassword(config.password, config.keystore);
+        await this.me.update({ encPrivateKey: encPrivateKey });
+        this._encrypter = new Encrypter({ keypair: keyPair });
       } else {
         logger.info("Retrieve and decrypt existing user encryption content with password");
-        const userWallet = await AkordWallet.importFromEncBackupPhrase(config.password, user.encPrivateKey, config.keystore);
-        this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+        this._userEncryption.setEncryptedPrivateKey(user.encPrivateKey);
+        const { keyPair } = await this._userEncryption.importFromPassword(config.password, config.keystore);
+        this._encrypter = new Encrypter({ keypair: keyPair });
       }
     } else if (config.keystore) {
       const user = await this.me.get();
@@ -136,8 +138,9 @@ export class Akord {
       }
       try {
         logger.info("Retrieve and decrypt existing user encryption content from keystore");
-        const userWallet = await AkordWallet.importFromKeystore(user.encPrivateKey as string);
-        this._encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
+        this._userEncryption.setEncryptedPrivateKey(user.encPrivateKey);
+        const { keyPair } = await this._userEncryption.importFromKeystore();
+        this._encrypter = new Encrypter({ keypair: keyPair });
       } catch (error) {
         logger.error(error);
         throw new Conflict("The user needs to provide the password again.");
@@ -158,6 +161,8 @@ export class Akord {
       api: this.api,
       signer: this._signer,
       encrypter: this._encrypter,
+      env: this._env,
+      storage: this._storage,
     }
   }
 
@@ -173,6 +178,7 @@ export class Akord {
     this._encrypter = config.encrypter;
     this._env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
+    this._userEncryption = new UserEncryption(this.getConfig());
     Auth.configure(config);
     this.setAddress(Auth.getAddress());
     Plugins.register(config?.plugins, this._env);

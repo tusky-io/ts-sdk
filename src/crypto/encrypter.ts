@@ -1,12 +1,13 @@
-import { decryptWithPrivateKey, encryptWithPublicKey } from './crypto/lib';
-import { KeyPair } from 'libsodium-wrappers';
-import { base64ToJson, jsonToBase64 } from './crypto';
+import { decryptWithPrivateKey, encryptWithPublicKey } from './lib';
+import { base64ToJson, jsonToBase64 } from './encoding';
+import { X25519KeyPair } from './keypair';
+import { X25519EncryptedPayload } from './types';
 
 export default class Encrypter {
 
-  keypair: KeyPair;
+  keypair: X25519KeyPair;
 
-  constructor(config: { keypair?: KeyPair }) {
+  constructor(config: { keypair?: X25519KeyPair }) {
     this.keypair = config.keypair
     if (!this.keypair) {
       throw new Error("Missing keypair configuration. Please provide Enoki key pair or inject the wallet.");
@@ -19,15 +20,8 @@ export default class Encrypter {
   }
 
   async decrypt(data: string): Promise<Uint8Array> {
-    return decryptWithPrivateKey(this.keypair.privateKey, base64ToJson(data) as Ed25519EncryptedPayload);
+    return decryptWithPrivateKey(this.keypair.getPrivateKey(), base64ToJson(data) as X25519EncryptedPayload);
   }
-}
-
-export type Ed25519EncryptedPayload = {
-  ciphertext: string,
-  nonce: string,
-  ephemPublicKey: string,
-  publicKey: string,
 }
 
 export {

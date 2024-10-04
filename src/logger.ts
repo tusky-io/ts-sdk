@@ -74,6 +74,7 @@ export class ConsoleLogger implements Logger {
   error(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.ERROR)) {
       console.error(`[ERROR] ${message}`, ...params);
+      console.error(message);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }

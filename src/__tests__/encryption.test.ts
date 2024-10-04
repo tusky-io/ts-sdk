@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { Akord, AkordWallet } from '../';
+import { Akord } from '../';
 import { cleanup, generateAndSavePixelFile, testDataGeneratedPath, testDataPath } from './common';
 import { promises as fs } from 'fs';
 import { firstFileName } from './data/content';
@@ -73,9 +73,7 @@ describe("Testing encryption functions", () => {
 
     password = faker.random.word();
 
-    const userWallet = await AkordWallet.create(password);
-
-    await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
+    await akord.me.setupPassword(password);
   });
 
   it("should set user encryption context from password & persist encryption session with keystore", async () => {

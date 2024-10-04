@@ -17,10 +17,11 @@ import {
 } from './encoding'
 
 import jsSHA from 'jssha';
-import { AsymEncryptedPayload, EncryptedData } from './types';
+import { AESEncryptedPayload, X25519EncryptedPayload } from './types';
 import { logger } from '../logger';
 import { DecryptStreamController, StreamSlicer, transformStream } from './stream';
 import { ReadableStream } from "web-streams-polyfill/ponyfill";
+import { IncorrectEncryptionKey } from 'errors/incorrect-encryption-key';
 
 const HASH_ALGORITHM = 'SHA-256'
 
@@ -46,7 +47,8 @@ async function exportKeyToBase64(key: CryptoKey): Promise<string> {
     const rawKeyBuffer = await crypto.subtle.exportKey('raw', key)
     return arrayToBase64(rawKeyBuffer)
   } catch (error) {
-    throw new Error("Web Crypto key export error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Web Crypto key export error."));
   }
 }
 
@@ -69,7 +71,8 @@ async function importKeyFromBase64(keyBase64: string): Promise<CryptoKey> {
     )
     return key
   } catch (error) {
-    throw new Error("Web Crypto key import error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Web Crypto key import error."));
   }
 }
 
@@ -93,7 +96,8 @@ async function importKeyFromSeed(seed: Uint8Array): Promise<CryptoKey> {
     )
     return key
   } catch (error) {
-    throw new Error("Web Crypto key import error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Web Crypto key import error."));
   }
 }
 
@@ -178,7 +182,8 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey, encode: boolean = 
     combinedArray.set(new Uint8Array(ciphertextArray), iv.length);
     return combinedArray;
   } catch (error) {
-    throw new Error("Web Crypto encryption error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Web Crypto encryption error."));
   }
 }
 
@@ -189,9 +194,9 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey, encode: boolean = 
  * @param {CryptoKey} key
  * @returns {Promise.<ArrayBuffer>} Promise of ArrayBuffer represents the plaintext
  */
-async function decrypt(encryptedPayload: string | EncryptedData, key: CryptoKey): Promise<ArrayBuffer> {
+async function decrypt(encryptedPayload: string | AESEncryptedPayload, key: CryptoKey): Promise<ArrayBuffer> {
   try {
-    const payload = (<EncryptedData>encryptedPayload)?.ciphertext ? encryptedPayload as EncryptedData : decodePayload(encryptedPayload as string);
+    const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext ? encryptedPayload as AESEncryptedPayload : decodePayload(encryptedPayload as string);
     const plaintext = await crypto.subtle.decrypt(
       {
         name: SYMMETRIC_KEY_ALGORITHM,
@@ -202,7 +207,8 @@ async function decrypt(encryptedPayload: string | EncryptedData, key: CryptoKey)
     )
     return plaintext
   } catch (error) {
-    throw new Error("Web Crypto decryption error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Web Crypto decryption error."));
   }
 }
 
@@ -214,7 +220,7 @@ function encodePayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Arra
   return jsonToBase64(encryptedPayload)
 }
 
-function decodePayload(payload: string): EncryptedData {
+function decodePayload(payload: string): AESEncryptedPayload {
   const parsedPayload = base64ToJson(payload) as any;
   const decodedPayload = {
     ciphertext: base64ToArray(parsedPayload.ciphertext),
@@ -256,7 +262,8 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
       ['encrypt', 'decrypt'],
     )
   } catch (error) {
-    throw new Error("Web Crypto key derivation error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Web Crypto key derivation error."));
   }
 }
 
@@ -277,7 +284,8 @@ async function generateKey(): Promise<CryptoKey> {
     )
     return key
   } catch (error) {
-    throw new Error("Web Crypto key generation error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Web Crypto key generation error."));
   }
 }
 
@@ -293,16 +301,9 @@ async function generateKeyPair(): Promise<KeyPair> {
 
     return keyPair
   } catch (error) {
-    throw new Error("Sodium box key pair generation error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Sodium box key pair generation error."));
   }
-}
-
-async function deriveAddress(publicKey: Uint8Array) {
-  const sha512Digest = await crypto.subtle.digest(
-    "SHA-512",
-    publicKey,
-  );
-  return arrayToBase64(sha512Digest);
 }
 
 /**
@@ -311,7 +312,7 @@ async function deriveAddress(publicKey: Uint8Array) {
  * @param {Uint8Array} plaintext raw plaintext byte array
  * @returns {Promise.<string>} Promise of base64 string represents the encrypted payload
  */
-async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | Uint8Array): Promise<AsymEncryptedPayload> {
+async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | Uint8Array): Promise<X25519EncryptedPayload> {
   try {
     await ready;
     const ephemeralKeyPair = crypto_box_keypair();
@@ -333,8 +334,8 @@ async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | U
   } catch (error) {
     logger.debug(publicKey);
     logger.debug(plaintext);
-    logger.debug(error);
-    throw new Error("Sodium encryption error: " + error);
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Sodium encryption error."));
   }
 }
 
@@ -344,7 +345,7 @@ async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | U
  * @param {string} encryptedPayload base64 string represents the encrypted payload
  * @returns {Promise.<Uint8Array>} Promise of raw plaintext byte array
  */
-async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: AsymEncryptedPayload): Promise<Uint8Array> {
+async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: X25519EncryptedPayload): Promise<Uint8Array> {
   try {
     await ready;
     const plaintext = crypto_box_open_easy(
@@ -356,8 +357,8 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: A
     return plaintext
   } catch (error) {
     logger.debug(encryptedPayload);
-    logger.debug(error);
-    throw new Error("Sodium decryption error: " + error)
+    logger.error(error);
+    throw new IncorrectEncryptionKey(new Error("Sodium decryption error."));
   }
 }
 
@@ -478,72 +479,10 @@ async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoK
   return null;
 }
 
-/**
- * Derive two passwords from input password
- * @param {string} password
- * @returns {Promise.<{string, string}>} Promise of derived passwords
- */
-async function derivePasswords(password: string): Promise<{ authPassword: string, walletPassword: string }> {
-  try {
-    const passwordHashBuffer = await crypto.subtle.digest(
-      "SHA-512",
-      stringToArray(password),
-    )
-    const authPasswordBuffer = passwordHashBuffer.slice(0, 32)
-    const walletPasswordBuffer = passwordHashBuffer.slice(32, 64)
-    const authPassword = arrayToBase64(authPasswordBuffer)
-    const walletPassword = arrayToBase64(walletPasswordBuffer)
-    return { authPassword, walletPassword }
-  } catch (err) {
-    throw new Error("Password derivation error: " + err)
-  }
-}
-
-const importRSAPublicKey = async (publicKey: string): Promise<CryptoKey> => {
-  if (publicKey) {
-    return await crypto.subtle.importKey(
-      "jwk",
-      {
-        kty: 'RSA',
-        e: ASYMMETRIC_PUBLIC_EXPONENT,
-        n: publicKey,
-        alg: 'RSA-OAEP-256',
-        ext: true
-      },
-      {
-        name: ASYMMETRIC_KEY_ALGORITHM,
-        hash: {
-          name: HASH_ALGORITHM
-        },
-      },
-      false,
-      ['encrypt']
-    );
-  } else {
-    return null
-  }
-}
-
-const importRSACryptoKey = async (jwk: JsonWebKey): Promise<CryptoKey> => {
-  return await crypto.subtle.importKey(
-    "jwk",
-    jwk,
-    {
-      name: ASYMMETRIC_KEY_ALGORITHM,
-      hash: {
-        name: HASH_ALGORITHM
-      },
-    },
-    false,
-    ["decrypt"]
-  );
-}
-
 export {
   exportKeyToBase64,
   importKeyFromBase64,
   importKeyFromSeed,
-  importRSAPublicKey,
   digest,
   digestRaw,
   initDigest,
@@ -557,8 +496,5 @@ export {
   generateKeyPair,
   encryptWithPublicKey,
   decryptWithPrivateKey,
-  derivePasswords,
-  deriveAddress,
-  importRSACryptoKey,
   decryptStream
 }
