@@ -2,6 +2,7 @@ import { decryptWithPrivateKey, encryptWithPublicKey } from './lib';
 import { base64ToJson, jsonToBase64 } from './encoding';
 import { X25519KeyPair } from './keypair';
 import { X25519EncryptedPayload } from './types';
+import { IncorrectEncryptionKey } from 'errors/incorrect-encryption-key';
 
 export default class Encrypter {
 
@@ -10,7 +11,7 @@ export default class Encrypter {
   constructor(config: { keypair?: X25519KeyPair }) {
     this.keypair = config.keypair
     if (!this.keypair) {
-      throw new Error("Missing keypair configuration. Please provide Enoki key pair or inject the wallet.");
+      throw new IncorrectEncryptionKey(new Error("Missing keypair configuration. Please provide X25519 key pair."));
     }
   }
 
