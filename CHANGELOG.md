@@ -1,3 +1,10 @@
+# [0.22.0-dev.25](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.24...v0.22.0-dev.25) (2024-10-04)
+
+
+### Features
+
+* use akrd.io ([46e7058](https://github.com/Akord-com/carmella-sdk/commit/46e7058fe08ac383002c35231f7b927d4589e90e))
+
 # [0.22.0-dev.24](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.23...v0.22.0-dev.24) (2024-10-02)
 
 
