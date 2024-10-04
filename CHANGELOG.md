@@ -1,3 +1,10 @@
+# [0.22.0-dev.26](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.25...v0.22.0-dev.26) (2024-10-04)
+
+
+### Bug Fixes
+
+* remove worker from bundle ([7a4ebbf](https://github.com/Akord-com/carmella-sdk/commit/7a4ebbf796c8c801260c486658c4d8b86940448d))
+
 # [0.22.0-dev.25](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.24...v0.22.0-dev.25) (2024-10-04)
 
 
