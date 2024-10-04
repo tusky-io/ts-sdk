@@ -1,7 +1,7 @@
-aws_account_id="014401813129"
+aws_account_id="586794483534"
 aws_region="eu-central-1"
 domain_name="akord"
-repository_name="carmella"
+repository_name="akord"
 
 # Step 1: Configure CodeArtifact
 echo "Configuring AWS CLI with CodeArtifact..."
