@@ -16,6 +16,7 @@ import { httpClient } from "./http";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession } from "../types/payment";
 import { GenerateJWTResponsePayload } from "../types/auth";
+import { InternalError } from "../errors/internal-error";
 
 export class ApiClient {
   private _apiUrl: string;
@@ -1087,5 +1088,5 @@ export async function retry<T>(
       }
     }
   }
-  throw new Error("Retry attempts exceeded");
+  throw new InternalError("Retry attempts exceeded");
 }

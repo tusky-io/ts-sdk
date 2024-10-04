@@ -2,7 +2,7 @@ require("dotenv").config();
 import axios from 'axios';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import EnokiClient from "./enoki/client";
-import { getAuthCode } from './server';
+import { startServer } from "./server";
 import { keyInSelect } from 'readline-sync';
 import { GenerateJWTResponsePayload } from "../types/auth";
 
@@ -61,6 +61,7 @@ export async function getAuthorizationCode(nonce: string, authProvider = default
   console.log(oauthUrl);
 
   // Wait for the authorization code to be captured by the local server
+  const { getAuthCode } = startServer();
   let authorizationCode;
   while (!authorizationCode) {
     authorizationCode = getAuthCode();
@@ -120,6 +121,7 @@ export async function getIdTokenWithImplicitFlow(nonce: string, authProvider = d
   console.log(oauthUrl);
 
   // Wait for the authorization code to be captured by the local server
+  const { getAuthCode } = startServer();
   let authorizationCode;
   while (!authorizationCode) {
     authorizationCode = getAuthCode();

@@ -15,7 +15,7 @@ export const UPLOAD_METADATA_NUMBER_OF_CHUNKS_KEY = "numberOfChunks";
 export const UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY = "encryptedAesKey";
 export const UPLOAD_METADATA_FILENAME_KEY = "filename";
 
-export default class EncryptableHttpStack {
+export class EncryptableHttpStack {
     private defaultStack: tus.HttpStack;
     private vault: Vault;
     private uploadAes: Map<string, { aesKey: CryptoKey, encryptedAesKey: string }> = new Map();

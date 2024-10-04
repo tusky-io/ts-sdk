@@ -2,9 +2,9 @@ require("dotenv").config();
 import { Akord } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
-import EnokiSigner from "./enoki/signer";
+import { EnokiSigner } from "./enoki/signer";
 import { status } from "../constants";
-import { server } from "./server";
+import { stopServer } from "./server";
 import { createWriteStream } from "fs";
 import { PNG } from "pngjs";
 import { DEFAULT_STORAGE } from "../auth/jwt";
@@ -12,17 +12,18 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 export const TESTING_ENV = "testnet";
 
-export async function initInstance(): Promise<Akord> {
+export async function initInstance(isPublic = true): Promise<Akord> {
+  let akord: Akord;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
-    return Akord
+    akord = Akord
       .withApiKey({ apiKey: process.env.API_KEY })
       .withLogger({ logLevel: "debug", logToFile: true })
       .withApi({ env: process.env.ENV as any })
   } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
-    const akord = Akord
+    akord = Akord
       .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
       .withLogger({ logLevel: "debug", logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
@@ -33,33 +34,31 @@ export async function initInstance(): Promise<Akord> {
     if (tokens.refreshToken) {
       DEFAULT_STORAGE.setItem(`akord_testnet_refresh_token`, tokens.refreshToken);
     }
-    return akord;
   } else {
     const keypair = new Ed25519Keypair();
-    const akord = Akord
+    akord = Akord
       .withWallet({ walletSigner: keypair })
       .withLogger({ logLevel: "debug", logToFile: true })
       .withApi({ env: process.env.ENV as any })
     await akord.signIn();
-    return akord;
   }
-}
-
-export async function setupVault(isPublic = false): Promise<string> {
-  const akord = await initInstance();
   if (!isPublic) {
     const password = faker.random.word();
     await akord.me.setupPassword(password);
+    await akord.withEncrypter({ password: password, keystore: true });
   }
+  return akord;
+}
+
+export async function setupVault(isPublic = false): Promise<string> {
+  const akord = await initInstance(isPublic);
   const vault = await vaultCreate(akord, isPublic);
   return vault.id;
 }
 
 export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
-  if (server) {
-    server.close();
-  }
+  stopServer();
   if (akord && vaultId) {
     await akord.vault.deletePermanently(vaultId);
   }

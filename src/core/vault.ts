@@ -6,11 +6,11 @@ import { paginate, processListItems } from "./common";
 import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
-import { AkordWallet, arrayToBase64 } from "../crypto";
-import { generateKeyPair } from "../crypto/lib";
+import { arrayToBase64, generateKeyPair } from "../crypto";
 import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { Encrypter } from "../encrypter";
+import { Encrypter } from "../crypto/encrypter";
+import { UserEncryption } from "../crypto/user-encryption";
 
 class VaultModule {
   protected service: VaultService;
@@ -184,7 +184,7 @@ class VaultModule {
    */
   public async airdropAccess(vaultId: string, options: MembershipAirdropOptions = {
     role: role.CONTRIBUTOR
-  }): Promise<{ keypair: Ed25519Keypair, password: string }> {
+  }): Promise<{ identityPrivateKey: string, password: string, membership: Membership }> {
     await this.service.setVaultContext(vaultId);
 
     const memberService = new MembershipService(this.service);
@@ -198,14 +198,13 @@ class VaultModule {
     let password: string;
     if (!this.service.isPublic) {
       password = options.password ? options.password : generateRandomPassword(16);
-      const userWallet = await AkordWallet.create(password, false);
-      const userKeyPair = userWallet.encryptionKeyPair;
-      userEncPrivateKey = userWallet?.encBackupPhrase;
-      memberService.encrypter = new Encrypter({ keypair: userKeyPair });
-      keys = await memberService.prepareMemberKeys(userWallet.publicKey());
+      const { encPrivateKey, keyPair } = await new UserEncryption().setupPassword(password, false);
+      userEncPrivateKey = encPrivateKey;
+      memberService.encrypter = new Encrypter({ keypair: keyPair });
+      keys = await memberService.prepareMemberKeys(keyPair.getPublicKeyHex());
     }
 
-    const { membership } = await this.service.api.createMembership({
+    const membership = await this.service.api.createMembership({
       vaultId: vaultId,
       address: memberKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
@@ -217,8 +216,9 @@ class VaultModule {
     });
 
     return {
-      keypair: memberKeyPair,
-      password: password
+      identityPrivateKey: memberKeyPair.getSecretKey(),
+      password: password,
+      membership: membership
     }
   }
 
@@ -251,7 +251,7 @@ class VaultModule {
       keys = memberKeys;
     }
 
-    const { membership } = await this.service.api.updateMembership({
+    const membership = await this.service.api.updateMembership({
       id: id,
       status: membershipStatus.REVOKED,
       keys: keys
@@ -265,7 +265,7 @@ class VaultModule {
    * @returns Promise with corresponding transaction id
    */
   public async changeAccess(id: string, role: RoleType): Promise<Membership> {
-    const { membership } = await this.service.api.updateMembership({
+    const membership = await this.service.api.updateMembership({
       id: id,
       role: role
     });

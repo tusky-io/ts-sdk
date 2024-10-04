@@ -1,4 +1,4 @@
-import { toByteArray, fromByteArray } from 'base64-js'
+import { toByteArray, fromByteArray } from "base64-js";
 
 /**
  * Decode base64 string from an array

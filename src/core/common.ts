@@ -1,8 +1,6 @@
 import { ListOptions } from "../types/query-options";
-import { AsymEncryptedPayload, EncryptedPayload, EncryptionMetadata } from "../crypto/types";
 import PQueue from "@esm2cjs/p-queue";
 import { InternalError } from "../errors/internal-error";
-import { base64ToArray, base64ToJson } from "../crypto";
 
 const DECRYPTION_CONCURRENCY = 1;
 
@@ -30,19 +28,4 @@ export const paginate = async <T>(apiCall: any, listOptions: ListOptions & { vau
     }
   } while (token);
   return results;
-}
-
-export const getEncryptedPayload = (data: ArrayBuffer | string, metadata: EncryptionMetadata)
-  : EncryptedPayload => {
-  const { encryptedKey, iv } = metadata;
-  if (encryptedKey && iv) {
-    return {
-      encryptedKey: base64ToJson(encryptedKey) as AsymEncryptedPayload,
-      encryptedData: {
-        iv: base64ToArray(iv),
-        ciphertext: data as ArrayBuffer
-      }
-    }
-  }
-  return null;
 }

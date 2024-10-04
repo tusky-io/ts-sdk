@@ -1,4 +1,5 @@
 import { x25519 } from '@noble/curves/ed25519';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 // Encryption key pair
 export class X25519KeyPair {
@@ -21,5 +22,18 @@ export class X25519KeyPair {
 
   getPublicKey(): Uint8Array {
     return this.publicKey;
+  }
+
+  getPrivateKeyHex(): string {
+    return bytesToHex(this.privateKey);
+  }
+
+  getPublicKeyHex(): string {
+    return bytesToHex(this.publicKey);
+  }
+
+  static fromPrivateKeyHex(hexPrivateKey: string): X25519KeyPair {
+    const privateKey = hexToBytes(hexPrivateKey);
+    return new X25519KeyPair(privateKey);
   }
 }
