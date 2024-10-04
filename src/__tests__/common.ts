@@ -2,7 +2,7 @@ require("dotenv").config();
 import { Akord } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
-import EnokiSigner from "./enoki/signer";
+import { EnokiSigner } from "./enoki/signer";
 import { status } from "../constants";
 import { server } from "./server";
 import { createWriteStream } from "fs";
