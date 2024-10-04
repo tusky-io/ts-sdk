@@ -15,9 +15,9 @@ describe("Testing folder functions", () => {
   let subFolderId: string;
 
   beforeAll(async () => {
-    akord = await initInstance();
+    akord = await initInstance(false);
 
-    const vault = await vaultCreate(akord, true);
+    const vault = await vaultCreate(akord, false);
     vaultId = vault.id;
   });
 
