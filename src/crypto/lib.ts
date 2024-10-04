@@ -21,7 +21,7 @@ import { AESEncryptedPayload, X25519EncryptedPayload } from './types';
 import { logger } from '../logger';
 import { DecryptStreamController, StreamSlicer, transformStream } from './stream';
 import { ReadableStream } from "web-streams-polyfill/ponyfill";
-import { IncorrectEncryptionKey } from 'errors/incorrect-encryption-key';
+import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
 
 const HASH_ALGORITHM = 'SHA-256'
 
