@@ -10,7 +10,7 @@ import { arrayToBase64, generateKeyPair } from "../crypto";
 import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Encrypter } from "../crypto/encrypter";
-import { UserEncryption } from "crypto/user-encryption";
+import { UserEncryption } from "../crypto/user-encryption";
 
 class VaultModule {
   protected service: VaultService;

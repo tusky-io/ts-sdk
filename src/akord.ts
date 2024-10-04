@@ -19,7 +19,7 @@ import { Encrypter } from "./crypto/encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
-import { UserEncryption } from "crypto/user-encryption";
+import { UserEncryption } from "./crypto/user-encryption";
 
 export class Akord {
   public api: Api;

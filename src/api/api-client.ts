@@ -16,7 +16,7 @@ import { httpClient } from "./http";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession } from "../types/payment";
 import { GenerateJWTResponsePayload } from "../types/auth";
-import { InternalError } from "errors/internal-error";
+import { InternalError } from "../errors/internal-error";
 
 export class ApiClient {
   private _apiUrl: string;
