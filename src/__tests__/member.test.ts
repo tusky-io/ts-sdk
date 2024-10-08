@@ -1,7 +1,6 @@
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Akord } from "../akord";
 import { cleanup, initInstance, setupVault, vaultCreate } from "./common";
-import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
+import faker from '@faker-js/faker';
 
 let akord: Akord;
 
@@ -9,6 +8,9 @@ jest.setTimeout(3000000);
 
 describe("Testing airdrop actions", () => {
   let vaultId: string;
+  let airdropeeAddress: string;
+  let airdropeeIdentityPrivateKey: string;
+  let airdropeePassword: string;
 
   beforeAll(async () => {
     // set up private vault
@@ -27,7 +29,7 @@ describe("Testing airdrop actions", () => {
       expect(members[0]).toBeTruthy();
     });
 
-    it("should airdrop access", async () => {
+    it("should airdrop access with an expiration date", async () => {
       const role = "contributor";
       const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
 
@@ -37,29 +39,48 @@ describe("Testing airdrop actions", () => {
 
       expect(membership).toBeTruthy();
       expect(membership.id).toBeTruthy();
+      expect(membership.memberAddress).toBeTruthy();
       expect(membership.role).toEqual(role);
       expect(membership.expiresAt).toEqual(expiresAt.toString());
+    });
 
+    it("should airdrop access with user specified password and no expiration date", async () => {
+      const role = "viewer";
+
+      const password = faker.random.word();
+
+      const { identityPrivateKey, membership } = await akord.vault.airdropAccess(vaultId, { password, role });
+      expect(identityPrivateKey).toBeTruthy();
+
+      expect(membership).toBeTruthy();
+      expect(membership.id).toBeTruthy();
+      expect(membership.memberAddress).toBeTruthy();
+      expect(membership.role).toEqual(role);
+      expect(membership.expiresAt).toBeFalsy();
+      airdropeeAddress = membership.memberAddress;
+      airdropeeIdentityPrivateKey = identityPrivateKey;
+      airdropeePassword = password;
+    });
+
+    it("should get vault by airdropee", async () => {
       const memberAkord = await Akord
-        .withWallet({ walletSigner: Ed25519Keypair.fromSecretKey(decodeSuiPrivateKey(identityPrivateKey).secretKey) })
-        .signIn();
+      .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+      .signIn();
 
-      await memberAkord.withEncrypter({ password: password, keystore: true });
+      expect(memberAkord.address).toEqual(airdropeeAddress);
+
+      await memberAkord.withEncrypter({ password: airdropeePassword, keystore: true });
 
       const vault = await memberAkord.vault.get(vaultId);
       expect(vault).toBeTruthy();
       expect(vault.name).toBeTruthy();
     });
 
-    it("should list two members of the vault", async () => {
+    it("should list all members of the vault", async () => {
       const members = await akord.vault.members(vaultId);
 
       expect(members).toBeTruthy();
-      expect(members.length).toEqual(2);
-      expect(members[0]).toBeTruthy();
-      expect(members[0].memberAddress).toBeTruthy();
-      expect(members[1]).toBeTruthy();
-      expect(members[1].memberAddress).toBeTruthy();
+      expect(members.length).toEqual(3);
     });
 
     // it("should change access", async () => {

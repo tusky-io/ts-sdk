@@ -8,6 +8,7 @@ import AkordApi from "../api/akord-api";
 import { Env } from "../types/env";
 import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
+import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
@@ -58,7 +59,7 @@ export class Auth {
     this.walletType = options.walletType;
     this.walletSignFnClient = options.walletSignFnClient;
     this.walletAccount = options.walletAccount;
-    this.walletSigner = options.walletSigner;
+    this.walletSigner = options.walletSigner || options.walletPrivateKey && Ed25519Keypair.fromSecretKey(decodeSuiPrivateKey(options.walletPrivateKey).secretKey);
     // Oauth
     this.authProvider = options.authProvider;
     this.clientId = options.clientId;
