@@ -23,7 +23,7 @@ export class Membership extends Encryptable {
   updatedAt: string;
   expiresAt: string;
   status: StatusType;
-  address: string;
+  memberAddress: string;
   role: RoleType;
   data?: string[];
   encPublicSigningKey: string;
@@ -39,7 +39,7 @@ export class Membership extends Encryptable {
     super(keys);
     this.id = membershipProto.id;
     this.owner = membershipProto.owner;
-    this.address = membershipProto.address;
+    this.memberAddress = membershipProto.memberAddress;
     this.createdAt = membershipProto.createdAt;
     this.updatedAt = membershipProto.updatedAt;
     this.expiresAt = membershipProto.expiresAt;
@@ -49,7 +49,7 @@ export class Membership extends Encryptable {
     this.email = membershipProto.email;
     this.vaultId = membershipProto.vaultId;
     this.keys = membershipProto.keys;
-    this.memberDetails = membershipProto.memberDetails;
+    this.memberDetails = membershipProto.memberDetails ? new User(membershipProto.memberDetails) : undefined;
     this.__public__ = membershipProto.__public__;
   }
 }
@@ -69,6 +69,6 @@ export type MembershipAirdropOptions = {
   expiresAt?: number // expiration date
   allowedStorage?: number // allowed storage
   contextPath?: string // folder id, file id, if not provided defaults to vault id
-  role?: string //  member role,
+  role?: RoleType //  member role,
   password?: string // password to protect member encryption keys, if not provided a random password will be generated
 }

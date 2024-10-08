@@ -943,8 +943,8 @@ export class ApiClient {
       address: this._address,
       role: this._role,
       expiresAt: this._expiresAt,
-      name: this._address,
-      keys: this._address,
+      name: this._name,
+      keys: this._keys,
       encPrivateKey: this._encPrivateKey,
       allowedStorage: this._allowedStorage,
       contextPath: this._contextPath,
@@ -979,7 +979,7 @@ export class ApiClient {
       keys: this._keys,
       autoExecute: this._autoExecute
     });
-    return this.patch(`${this._apiUrl}/${this._membershipUri}/${this._resourceId}`);
+    return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}/${this._resourceId}`);
   }
 
   /**

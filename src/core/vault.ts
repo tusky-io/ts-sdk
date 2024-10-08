@@ -200,8 +200,7 @@ class VaultModule {
       password = options.password ? options.password : generateRandomPassword(16);
       const { encPrivateKey, keyPair } = await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
-      memberService.encrypter = new Encrypter({ keypair: keyPair });
-      keys = await memberService.prepareMemberKeys(keyPair.getPublicKeyHex());
+      keys = await memberService.prepareMemberKeys(arrayToBase64(keyPair.publicKey));
     }
 
     const membership = await this.service.api.createMembership({
@@ -218,7 +217,7 @@ class VaultModule {
     return {
       identityPrivateKey: memberKeyPair.getSecretKey(),
       password: password,
-      membership: membership
+      membership: new Membership(membership)
     }
   }
 
@@ -273,6 +272,15 @@ class VaultModule {
   }
 
 
+  /**
+  * Retrieve all vault members
+  * @param  {string} vaultId
+  * @returns Promise with members array
+  */
+  public async members(vaultId: string): Promise<Array<Membership>> {
+    const memberships = await this.service.api.getMembers(vaultId) as any;
+    return memberships.items?.map((member: Membership) => new Membership(member));
+  }
 };
 
 function generateRandomPassword(length: number) {
