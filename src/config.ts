@@ -6,6 +6,7 @@ import { Encrypter } from "./crypto/encrypter"
 import { Logger, LogLevel } from "./logger"
 import AkordApi from "./api/akord-api"
 import { AuthTokenProvider, AuthType } from "./types/auth"
+import { Auth } from "./auth"
 
 export interface ClientConfig {
   env?: Env
@@ -37,7 +38,9 @@ export interface EncrypterConfig {
 }
 
 export interface ApiConfig {
-  api?: AkordApi
+  api?: Api
   env?: Env
-  userAgent?: string
+  userAgent?: string,
+  autoExecute?: boolean,
+  auth?: Auth
 }

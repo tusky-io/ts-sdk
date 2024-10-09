@@ -24,32 +24,30 @@ export type WalletAccount = {
 }
 
 export class Auth {
-  private static env: Env;
+  private env: Env;
 
-  public static authTokenProvider: AuthTokenProvider;
+  public authTokenProvider: AuthTokenProvider;
 
-  private static authType: AuthType;
+  private authType: AuthType;
 
-  private static jwtClient: JWTClient;
+  private jwtClient: JWTClient;
 
   // OAuth
-  private static authProvider: AuthProvider;
-  private static clientId: string;
-  private static redirectUri: string; // OAuth callback url
-  private static storage: Storage; // tokens storage
+  private authProvider: AuthProvider;
+  private clientId: string;
+  private redirectUri: string; // OAuth callback url
+  private storage: Storage; // tokens storage
 
   // Wallet-based auth
-  private static walletType: WalletType;
-  private static walletSignFnClient: SignPersonalMessageClient | null;
-  private static walletAccount: WalletAccount | null;
-  private static walletSigner: Ed25519Keypair | null;
+  private walletType: WalletType;
+  private walletSignFnClient: SignPersonalMessageClient | null;
+  private walletAccount: WalletAccount | null;
+  private walletSigner: Ed25519Keypair | null;
 
   // API key auth
-  private static apiKey: string
+  private apiKey: string
 
-  private constructor() { }
-
-  public static configure(options: AuthOptions = { authType: "OAuth" }) {
+  constructor(options: AuthOptions = { authType: "OAuth" }) {
     // reset previous configuration
     this.authType = options.authType;
     this.apiKey = options.apiKey;
@@ -68,12 +66,12 @@ export class Auth {
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
-  public static setEnv(env: Env) {
+  public setEnv(env: Env) {
     this.env = env;
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
-  public static async signIn(): Promise<{ address?: string }> {
+  public async signIn(): Promise<{ address?: string }> {
     switch (this.authType) {
       case "Wallet": {
         let address: string;
@@ -152,12 +150,12 @@ export class Auth {
     }
   }
 
-  public static signOut(): void {
+  public signOut(): void {
     // clear auth tokens from the storage
     this.jwtClient.clearTokens();
   }
 
-  public static async initOAuthFlow(): Promise<void> {
+  public async initOAuthFlow(): Promise<void> {
     const aOuthClient = new OAuth({
       clientId: this.clientId,
       redirectUri: this.redirectUri,
@@ -167,7 +165,7 @@ export class Auth {
     await aOuthClient.initOAuthFlow();
   }
 
-  public static async handleOAuthCallback(): Promise<{ address: string }> {
+  public async handleOAuthCallback(): Promise<{ address: string }> {
     const aOuthClient = new OAuth({
       clientId: this.clientId,
       redirectUri: this.redirectUri,
@@ -177,7 +175,7 @@ export class Auth {
     return aOuthClient.handleOAuthCallback();
   }
 
-  public static async getAuthorizationHeader(): Promise<AxiosRequestHeaders> {
+  public async getAuthorizationHeader(): Promise<AxiosRequestHeaders> {
     switch (this.authType) {
       case "ApiKey": {
         if (this.apiKey) {
@@ -243,7 +241,7 @@ export class Auth {
     }
   }
 
-  public static getAddress(): string {
+  public getAddress(): string {
     switch (this.authType) {
       case "OAuth":
       case "Wallet": {

@@ -22,6 +22,8 @@ export class ApiClient {
   private _apiUrl: string;
   private _cdnUrl: string;
 
+  private _auth: Auth;
+
   // API endpoints
   private _meUri: string = "me";
   private _vaultUri: string = "vaults";
@@ -107,6 +109,7 @@ export class ApiClient {
     const clone = new ApiClient();
     clone._apiUrl = this._apiUrl;
     clone._cdnUrl = this._cdnUrl;
+    clone._auth = this._auth;
     clone._resourceId = this._resourceId;
     clone._vaultId = this._vaultId;
     clone._numberOfChunks = this._numberOfChunks;
@@ -155,6 +158,11 @@ export class ApiClient {
   }): ApiClient {
     this._apiUrl = config.apiUrl;
     this._cdnUrl = config.cdnUrl
+    return this;
+  }
+
+  auth(auth: Auth): ApiClient {
+    this._auth = auth;
     return this;
   }
 
@@ -595,7 +603,7 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
-        ...(!this._publicRoute ? (await Auth.getAuthorizationHeader()) : {})
+        ...(!this._publicRoute ? (await this._auth.getAuthorizationHeader()) : {})
       },
     } as AxiosRequestConfig;
     if (this._data) {
@@ -1037,7 +1045,7 @@ export class ApiClient {
     } as RequestInit;
 
     if (!this._public) {
-      config.headers = (await Auth.getAuthorizationHeader()) as any
+      config.headers = (await this._auth.getAuthorizationHeader()) as any
     }
 
     const url = `${this._apiUrl}/files/${this._resourceId}/data`;
