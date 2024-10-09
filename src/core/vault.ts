@@ -232,28 +232,30 @@ class VaultModule {
     const memberService = new MembershipService(this.service);
     await memberService.setVaultContextFromMembershipId(id);
 
-    let keys: Map<string, EncryptedVaultKeyPair[]>;
-    if (!this.service.isPublic) {
-      const memberships = await (<any>memberService).listAll({ vaultId: this.service.vaultId, shouldDecrypt: false });
+    // TODO: rotate member keys
+    // let keys: Map<string, EncryptedVaultKeyPair[]>;
+    // if (!this.service.isPublic) {
+    //   const memberships = await this.members(this.service.vaultId);
 
-      const activeMembers = memberships.filter((member: Membership) =>
-        member.id !== this.service.objectId
-        && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
+    //   const activeMembers = memberships.filter((member: Membership) =>
+    //     member.id !== id // filter out the member being revoked
+    //     && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
 
-      // rotate keys for all active members
-      const memberPublicKeys = new Map<string, string>();
-      await Promise.all(activeMembers.map(async (member: Membership) => {
-        const { publicKey } = await this.service.api.getUserPublicData(member.email);
-        memberPublicKeys.set(member.id, publicKey);
-      }));
-      const { memberKeys } = await memberService.rotateMemberKeys(memberPublicKeys);
-      keys = memberKeys;
-    }
+    //     console.log(activeMembers)
+    //   // rotate keys for all active members
+    //   const memberPublicKeys = new Map<string, string>();
+    //   await Promise.all(activeMembers.map(async (member: Membership) => {
+    //     const { publicKey } = await this.service.api.getUserPublicData(member.email);
+    //     memberPublicKeys.set(member.id, publicKey);
+    //   }));
+    //   const { memberKeys } = await memberService.rotateMemberKeys(memberPublicKeys);
+    //   keys = memberKeys;
+    // }
 
     const membership = await this.service.api.updateMembership({
       id: id,
       status: membershipStatus.REVOKED,
-      keys: keys
+      // keys: keys
     });
     return new Membership(membership);
   }

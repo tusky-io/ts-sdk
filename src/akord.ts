@@ -179,6 +179,7 @@ export class Akord {
     this._env = config.env || 'testnet';
     this.api = config.api ? config.api : new AkordApi(config);
     this._userEncryption = new UserEncryption(this.getConfig());
+    console.log("CONFIGUREING THE AUTH")
     Auth.configure(config);
     this.setAddress(Auth.getAddress());
     Plugins.register(config?.plugins, this._env);

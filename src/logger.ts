@@ -65,6 +65,7 @@ export class ConsoleLogger implements Logger {
   warn(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.WARN)) {
       console.warn(`[WARN] ${message}`, ...params);
+      console.debug(message);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -74,7 +75,7 @@ export class ConsoleLogger implements Logger {
   error(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.ERROR)) {
       console.error(`[ERROR] ${message}`, ...params);
-      console.error(message);
+      console.debug(message);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -84,6 +85,7 @@ export class ConsoleLogger implements Logger {
   debug(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.DEBUG)) {
       console.debug(`[DEBUG] ${message}`, ...params);
+      console.debug(message);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }

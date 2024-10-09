@@ -21,6 +21,7 @@ export interface WalletConfig {
   walletSignFnClient?: SignPersonalMessageClient
   walletAccount?: WalletAccount | null
   walletSigner?: Ed25519Keypair
+  walletPrivateKey?: string // private key in hex format
 }
 
 export interface ApiKeyConfig {
