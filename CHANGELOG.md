@@ -1,3 +1,11 @@
+# [0.22.0-dev.29](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.28...v0.22.0-dev.29) (2024-10-09)
+
+
+### Features
+
+* add change & revoke member access ([05e25cd](https://github.com/Akord-com/carmella-sdk/commit/05e25cd82ce3b4d3a0f6d9a2d91a680138a1cad5))
+* enable auth wallet config from private key ([5ed17bc](https://github.com/Akord-com/carmella-sdk/commit/5ed17bc98aa479e85ec5cb84898206e304152a33))
+
 # [0.22.0-dev.28](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.27...v0.22.0-dev.28) (2024-10-09)
 
 
