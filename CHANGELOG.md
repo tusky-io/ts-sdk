@@ -1,3 +1,10 @@
+# [0.22.0-dev.28](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.27...v0.22.0-dev.28) (2024-10-09)
+
+
+### Bug Fixes
+
+* vault members flow ([317e59c](https://github.com/Akord-com/carmella-sdk/commit/317e59c62e20e955646cb55ee26bf83d3219c1f6))
+
 # [0.22.0-dev.27](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.26...v0.22.0-dev.27) (2024-10-04)
 
 
