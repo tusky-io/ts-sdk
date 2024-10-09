@@ -499,7 +499,7 @@ export class ApiClient {
    */
   async getMembership(): Promise<Membership> {
     return this.get(
-      `${this._apiUrl}/${this._membershipUri}/${this._resourceId}`
+      `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`
     );
   }
 
@@ -602,6 +602,7 @@ export class ApiClient {
       config.data = this._data;
     }
     logger.info(`Request ${config.method}: ` + config.url);
+    logger.debug(config);
 
     return await retry(async () => {
       try {
@@ -609,6 +610,7 @@ export class ApiClient {
         return response.data;
       } catch (error) {
         logger.debug(config);
+        logger.debug(error);
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
     });
@@ -979,7 +981,7 @@ export class ApiClient {
       keys: this._keys,
       autoExecute: this._autoExecute
     });
-    return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}/${this._resourceId}`);
+    return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`);
   }
 
   /**
