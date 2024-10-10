@@ -1,5 +1,5 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import EnokiClient, { ENOKI_PUBLIC_API_KEY } from './enoki';
+import { EnokiClient } from './enoki';
 import { AuthProvider, OAuthConfig } from '../types/auth';
 import { BadRequest } from '../errors/bad-request';
 import { logger } from '../logger';
@@ -10,33 +10,41 @@ import { Env } from '../types/env';
 import { retry } from '../api/api-client';
 import { throwError } from '../errors/error-factory';
 
-export const AuthProviderConfig = {
-  "Google": {
-    "CLIENT_ID": "52977920067-5hf88uveake073ent9s5snn0d8kfrf0t.apps.googleusercontent.com",
-    "AUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
-    "SCOPES": "openid email profile",
-  },
-  "Facebook": {
-    "CLIENT_ID": "1030800888399080",
-    "AUTH_URL": "https://www.facebook.com/v11.0/dialog/oauth",
-    "SCOPES": "email public_profile",
-  },
-  "Twitch": {
-    "CLIENT_ID": "g924m6acqg8w9gw9hxstdl5q2uugup",
-    "AUTH_URL": "https://id.twitch.tv/oauth2/authorize",
-    "SCOPES": "openid user:read:email",
-  },
-  // TODO: configure Apple
-  // "Apple": {
-  //   "CLIENT_ID": "",
-  //   "AUTH_URL": "https://appleid.apple.com/auth/authorize",
-  // }
+interface AuthProviderConfig {
+  CLIENT_ID: string;
+  AUTH_URL: string;
+  SCOPES: string;
 }
+
+interface AuthProviderConfigType {
+  Google: AuthProviderConfig;
+  Facebook: AuthProviderConfig;
+  Twitch: AuthProviderConfig;
+}
+
+export const authProviderConfig = (env?: string): AuthProviderConfigType => {
+  return {
+    "Google": {
+      "CLIENT_ID": env === "mainnet" ? "426736059844-ut21sgi6j7fhai51hlk9nq1785198tcq.apps.googleusercontent.com" : "426736059844-2o0vvj882fvvris0kqpfuh1vi47js7he.apps.googleusercontent.com",
+      "AUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
+      "SCOPES": "openid email profile",
+    },
+    "Facebook": {
+      "CLIENT_ID": env === "mainnet" ? "1030800888399080" : "1030800888399080",
+      "AUTH_URL": "https://www.facebook.com/v11.0/dialog/oauth",
+      "SCOPES": "email public_profile",
+    },
+    "Twitch": {
+      "CLIENT_ID": env === "mainnet" ? "g924m6acqg8w9gw9hxstdl5q2uugup" : "1030800888399080",
+      "AUTH_URL": "https://id.twitch.tv/oauth2/authorize",
+      "SCOPES": "openid user:read:email",
+    }
+  }
+};
 
 class OAuth {
   private env: Env;
 
-  private clientId: string;
   private redirectUri: string;
   private authProvider: AuthProvider;
 
@@ -44,21 +52,23 @@ class OAuth {
   private enokiClient: EnokiClient;
 
   private storage: Storage;
+  private authProviderConfig: AuthProviderConfig;
 
   constructor(config: OAuthConfig) {
     if (!config.authProvider) {
       throw new BadRequest("Missing auth provider, please provide in the OAuth config.");
     }
-    if (!AuthProviderConfig[config.authProvider]) {
-      throw new BadRequest("Unsupported authProvider, valid providers: " + Object.keys(AuthProviderConfig).join(', '));
-    }
     this.env = config.env;
+    this.authProviderConfig = authProviderConfig(config.env)[config.authProvider];
+
+    if (!this.authProviderConfig) {
+      throw new BadRequest("Unsupported authProvider, valid providers: " + Object.keys(authProviderConfig(config.env)).join(', '));
+    }
     this.redirectUri = config.redirectUri;
     this.authProvider = config.authProvider;
-    this.clientId = config.clientId || AuthProviderConfig[this.authProvider].CLIENT_ID;
     this.storage = config.storage || DEFAULT_STORAGE;
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
-    this.enokiClient = new EnokiClient({ apiKey: ENOKI_PUBLIC_API_KEY });
+    this.enokiClient = new EnokiClient({ env: config.env });
   }
 
   // redirect to OAuth provider's authorization URL
@@ -129,15 +139,15 @@ class OAuth {
     }
     const params = new URLSearchParams({
       nonce: createZkLoginResponse.nonce,
-      client_id: AuthProviderConfig[this.authProvider].CLIENT_ID,
+      client_id: this.authProviderConfig.CLIENT_ID,
       redirect_uri: this.redirectUri,
       response_type: "code",
-      scope: AuthProviderConfig[this.authProvider].SCOPES,
+      scope: this.authProviderConfig.SCOPES,
       access_type: "offline",
       prompt: "consent"
     });
 
-    const oauthUrl = `${AuthProviderConfig[this.authProvider].AUTH_URL}?${params}`;
+    const oauthUrl = `${this.authProviderConfig.AUTH_URL}?${params}`;
     return oauthUrl;
   }
 

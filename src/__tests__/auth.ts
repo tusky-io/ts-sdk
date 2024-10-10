@@ -1,10 +1,11 @@
 require("dotenv").config();
 import axios from 'axios';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import EnokiClient from "./enoki/client";
 import { startServer } from "./server";
 import { keyInSelect } from 'readline-sync';
 import { GenerateJWTResponsePayload } from "../types/auth";
+import { EnokiClient } from '../auth/enoki';
+import { authProviderConfig } from '../auth/oauth';
 
 const REDIRECT_URI = 'http://localhost:3000/auth';
 
@@ -16,30 +17,17 @@ function getAuthProvider() {
 
 export const AuthProvider = {
   "Google": {
-    "CLIENT_ID": "52977920067-5hf88uveake073ent9s5snn0d8kfrf0t.apps.googleusercontent.com",
-    "CLIENT_SECRET": "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",
-    "OAUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
-    "TOKEN_ENDPOINT": "https://oauth2.googleapis.com/token"
+    ...authProviderConfig().Google,
+    "CLIENT_SECRET": process.env.GOOGLE_CLIENT_SECRET,
   },
   "Facebook": {
-    "CLIENT_ID": "1030800888399080",
+    ...authProviderConfig().Facebook,
     "CLIENT_SECRET": process.env.FACEBOOK_CLIENT_SECRET,
-    "OAUTH_URL": "https://www.facebook.com/v11.0/dialog/oauth",
-    "TOKEN_ENDPOINT": "https://graph.facebook.com/v11.0/oauth/access_token"
   },
   "Twitch": {
-    "CLIENT_ID": "g924m6acqg8w9gw9hxstdl5q2uugup",
+    ...authProviderConfig().Twitch,
     "CLIENT_SECRET": process.env.TWITCH_CLIENT_SECRET,
-    "OAUTH_URL": "https://id.twitch.tv/oauth2/authorize",
-    "TOKEN_ENDPOINT": "https://id.twitch.tv/oauth2/token"
-  },
-  // TODO: configure Apple
-  // "Apple": {
-  //   "CLIENT_ID": "",
-  //   "CLIENT_SECRET": "",
-  //   "OAUTH_URL": "https://appleid.apple.com/auth/authorize",
-  //   "TOKEN_ENDPOINT": "https://appleid.apple.com/auth/token"
-  // }
+  }
 }
 
 const defaultAuthProvider = 'Google';
@@ -138,9 +126,7 @@ export const mockEnokiFlow = async (authProvider = defaultAuthProvider): Promise
 
   const createZkLoginResponse = await enokiClient.createZkLoginNonce(ephemeralKeyPair);
 
-  // const idToken = await getIdTokenWithImplicitFlow(createZkLoginResponse.data.nonce, authProvider);
-
-  const authorizationCode = await getAuthorizationCode(createZkLoginResponse.data.nonce, authProvider);
+  const authorizationCode = await getAuthorizationCode(createZkLoginResponse.nonce, authProvider);
 
   const tokens = await getTokensWithAuthorizationCode(authorizationCode, authProvider);
   return { tokens, address: ephemeralKeyPair.toSuiAddress(), keyPair: ephemeralKeyPair };
