@@ -1,3 +1,11 @@
+# [0.22.0-dev.30](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.29...v0.22.0-dev.30) (2024-10-10)
+
+
+### Features
+
+* enable multi user SDK instances ([b49ae52](https://github.com/Akord-com/carmella-sdk/commit/b49ae52e845500654b2c33c24429d282708fa964))
+* support multi env auth ([d437cbc](https://github.com/Akord-com/carmella-sdk/commit/d437cbc17a6828b4fe8a4e6738b0b30c4ff653cb))
+
 # [0.22.0-dev.29](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.28...v0.22.0-dev.29) (2024-10-09)
 
 
