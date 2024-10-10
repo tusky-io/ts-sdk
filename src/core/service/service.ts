@@ -6,6 +6,7 @@ import { Object, ObjectType } from "../../types/object";
 import { Signer } from "../../signer";
 import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
 import { Encrypter } from "../../crypto/encrypter";
+import { Auth } from "../../auth";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
@@ -124,6 +125,7 @@ class Service {
 export type ServiceConfig = {
   decryptedKeys?: VaultKeyPair[];
   api?: Api,
+  auth?: Auth,
   signer?: Signer,
   encrypter?: Encrypter,
   keys?: Array<EncryptedVaultKeyPair>

@@ -1,4 +1,3 @@
-import { ClientConfig } from "../config";
 import { Api } from "./api";
 import { apiConfig } from "./config";
 import { ApiClient } from "./api-client";
@@ -15,6 +14,8 @@ import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
 import { CreateChallengeRequestPayload, GenerateJWTRequestPayload, GenerateJWTResponsePayload, VerifyChallengeRequestPayload } from "../types/auth";
+import { Auth } from "../auth";
+import { ApiConfig } from "../config";
 
 export const defaultFileUploadOptions = {
   public: false
@@ -24,17 +25,20 @@ const DEFAULT_LIMIT = 1000;
 
 export default class AkordApi extends Api {
 
+  protected auth: Auth;
 
-  constructor(config: ClientConfig) {
+  constructor(config: ApiConfig) {
     super();
     this.config = apiConfig(config.env);
     this.userAgent = config.userAgent;
     this.autoExecute = config.autoExecute;
+    this.auth = config.auth;
   }
 
   public async generateJWT(payload: GenerateJWTRequestPayload): Promise<GenerateJWTResponsePayload> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .authProvider(payload.authProvider)
       .grantType(payload.grantType)
       .authCode(payload.authCode)
@@ -64,6 +68,7 @@ export default class AkordApi extends Api {
   public async createFolder(tx: CreateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .vaultId(tx.vaultId)
       .parentId(tx.parentId)
       .name(tx.name)
@@ -74,6 +79,7 @@ export default class AkordApi extends Api {
   public async updateFolder(tx: UpdateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(tx.id)
       .name(tx.name)
       .parentId(tx.parentId)
@@ -85,6 +91,7 @@ export default class AkordApi extends Api {
   public async deleteFolder(id: string): Promise<void> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .autoExecute(this.autoExecute)
       .deleteFolder();
@@ -93,6 +100,7 @@ export default class AkordApi extends Api {
   public async updateFile(tx: UpdateFileTxPayload): Promise<File> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(tx.id)
       .name(tx.name)
       .parentId(tx.parentId)
@@ -104,6 +112,7 @@ export default class AkordApi extends Api {
   public async deleteFile(id: string): Promise<void> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .autoExecute(this.autoExecute)
       .deleteFile();
@@ -112,6 +121,7 @@ export default class AkordApi extends Api {
   public async createVault(tx: CreateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .public(tx.public)
       .name(tx.name)
       .description(tx.description)
@@ -123,6 +133,7 @@ export default class AkordApi extends Api {
   public async updateVault(tx: UpdateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(tx.id)
       .name(tx.name)
       .description(tx.description)
@@ -134,6 +145,7 @@ export default class AkordApi extends Api {
   public async deleteVault(id: string): Promise<void> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .autoExecute(this.autoExecute)
       .deleteVault();
@@ -142,18 +154,21 @@ export default class AkordApi extends Api {
   public async getTrash(): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .getTrash();
   }
 
   public async emptyTrash(): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .emptyTrash();
   }
 
   public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .vaultId(tx.vaultId)
       .address(tx.address)
       .role(tx.role)
@@ -169,6 +184,7 @@ export default class AkordApi extends Api {
   public async updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(tx.id)
       .role(tx.role)
       .status(tx.status)
@@ -181,6 +197,7 @@ export default class AkordApi extends Api {
   public async postTransaction(digest: string, signature: string): Promise<any> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .digest(digest)
       .signature(signature)
       .postTransaction();
@@ -189,6 +206,7 @@ export default class AkordApi extends Api {
   public async getMembers(vaultId: string): Promise<Array<Membership>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .vaultId(vaultId)
       .getMembers();
   };
@@ -196,6 +214,7 @@ export default class AkordApi extends Api {
   public async downloadFile(id: string, options: FileGetOptions = {}): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
     const response = await new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .public(options.public)
       // .progressHook(options.progressHook)
@@ -218,18 +237,21 @@ export default class AkordApi extends Api {
   public async getStorage(): Promise<Storage> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .getStorage();
   }
 
   public async getPaymentPlans(): Promise<PaymentPlan[]> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .getPaymentPlans();
   }
 
   public async createPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .data(options)
       .createPaymentSession();
   }
@@ -237,6 +259,7 @@ export default class AkordApi extends Api {
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .queryParams({ email })
       .getUserPublicData();
   };
@@ -244,12 +267,14 @@ export default class AkordApi extends Api {
   public async getMe(): Promise<User> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .getMe();
   };
 
   public async updateMe(input: UserMutable): Promise<User> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .name(input.name)
       .picture(input.picture)
       .termsAccepted(input.termsAccepted)
@@ -261,6 +286,7 @@ export default class AkordApi extends Api {
   public async getFile(id: string): Promise<File> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .getFile();
   };
@@ -268,6 +294,7 @@ export default class AkordApi extends Api {
   public async getFolder(id: string): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .getFolder();
   };
@@ -275,6 +302,7 @@ export default class AkordApi extends Api {
   public async getMembership(id: string): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .getMembership();
   };
@@ -282,6 +310,7 @@ export default class AkordApi extends Api {
   public async getVault(id: string, options?: VaultApiGetOptions): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(id)
       .queryParams({
         withNodes: options?.withNodes,
@@ -296,6 +325,7 @@ export default class AkordApi extends Api {
   public async getMemberships(options: ListOptions = {}): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .queryParams({
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken
@@ -306,6 +336,7 @@ export default class AkordApi extends Api {
   public async getVaults(options: ListOptions = {}): Promise<Paginated<Vault>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .queryParams({
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
@@ -317,6 +348,7 @@ export default class AkordApi extends Api {
   public async getFiles(options: ListApiOptions = {}): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .queryParams({
         vaultId: options.vaultId,
         parentId: options.parentId,
@@ -330,6 +362,7 @@ export default class AkordApi extends Api {
   public async getFolders(options: ListApiOptions = {}): Promise<Paginated<Folder>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .queryParams({
         vaultId: options.vaultId,
         parentId: options.parentId,
@@ -343,6 +376,7 @@ export default class AkordApi extends Api {
   public async getMembershipsByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .vaultId(vaultId)
       .queryParams({
         vaultId: vaultId,
@@ -356,6 +390,7 @@ export default class AkordApi extends Api {
   public async getTransactions(vaultId: string): Promise<Array<Transaction>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .vaultId(vaultId)
       .getTransactions();
   }
@@ -363,18 +398,21 @@ export default class AkordApi extends Api {
   public async getApiKeys(): Promise<Paginated<ApiKey>> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .getApiKeys();
   }
 
   public async generateApiKey(): Promise<ApiKey> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .generateApiKey();
   }
 
   public async revokeApiKey(key: string): Promise<ApiKey> {
     return new ApiClient()
       .env(this.config)
+      .auth(this.auth)
       .resourceId(key)
       .revokeApiKey();
   }

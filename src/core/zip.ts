@@ -9,9 +9,11 @@ import { ZipUploadOptions } from "types/zip";
 class ZipModule {
 
   protected service: Service;
+  protected auth: Auth;
 
   constructor(config?: ServiceConfig) {
     this.service = new Service(config);
+    this.auth = config.auth;
   }
 
   /**
@@ -87,7 +89,7 @@ class ZipModule {
       parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
       chunkSize: CHUNK_SIZE_IN_BYTES,
       headers: {
-        ...(await Auth.getAuthorizationHeader() as Record<string, string>),
+        ...(await this.auth.getAuthorizationHeader() as Record<string, string>),
       },
       removeFingerprintOnSuccess: true,
       onError: options.onError,

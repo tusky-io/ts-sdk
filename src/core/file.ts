@@ -52,8 +52,11 @@ class FileModule {
     parentId: undefined,
   };
 
+  protected auth: Auth;
+
   constructor(config?: ServiceConfig) {
     this.service = new FileService(config);
+    this.auth = config.auth;
   }
 
   /**
@@ -129,7 +132,7 @@ class FileModule {
       parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
       chunkSize: CHUNK_SIZE_IN_BYTES,
       headers: {
-        ...(await Auth.getAuthorizationHeader() as Record<string, string>),
+        ...(await this.auth.getAuthorizationHeader() as Record<string, string>),
       },
       httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault),
       removeFingerprintOnSuccess: true,
