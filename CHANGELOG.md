@@ -1,3 +1,10 @@
+# [0.22.0-dev.32](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.31...v0.22.0-dev.32) (2024-10-11)
+
+
+### Bug Fixes
+
+* airdrop access member name ([6b3732a](https://github.com/Akord-com/carmella-sdk/commit/6b3732af35bd6e4e3d8ffede4ea9d81abfa38aa7))
+
 # [0.22.0-dev.31](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.30...v0.22.0-dev.31) (2024-10-10)
 
 
