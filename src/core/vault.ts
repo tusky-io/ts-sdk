@@ -209,6 +209,7 @@ class VaultModule {
       allowedStorage: options.allowedStorage,
       contextPath: options.contextPath,
       expiresAt: options.expiresAt,
+      name: options.name,
       role: options.role || role.CONTRIBUTOR,
       keys: keys,
       encPrivateKey: userEncPrivateKey
