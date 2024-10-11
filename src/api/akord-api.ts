@@ -174,6 +174,7 @@ export default class AkordApi extends Api {
       .role(tx.role)
       .expiresAt(tx.expiresAt)
       .keys(tx.keys)
+      .name(tx.name)
       .encPrivateKey(tx.encPrivateKey)
       .allowedStorage(tx.allowedStorage)
       .contextPath(tx.contextPath)

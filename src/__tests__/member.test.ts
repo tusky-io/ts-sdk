@@ -49,6 +49,20 @@ describe("Testing airdrop actions", () => {
       isPublic ? expect(membership.keys).toBeFalsy() : expect(membership.keys).toBeTruthy();
     });
 
+    it("should airdrop access with link name identifier", async () => {
+      const name = faker.random.words(2);
+      const { identityPrivateKey, password, membership } = await akord.vault.airdropAccess(vaultId, { name });
+      expect(identityPrivateKey).toBeTruthy();
+      isPublic ? expect(password).toBeFalsy() : expect(password).toBeTruthy();
+
+      expect(membership).toBeTruthy();
+      expect(membership.id).toBeTruthy();
+      expect(membership.memberAddress).toBeTruthy();
+      expect(membership.memberDetails).toBeTruthy();
+      expect(membership.memberDetails.name).toEqual(name);
+      isPublic ? expect(membership.keys).toBeFalsy() : expect(membership.keys).toBeTruthy();
+    });
+
     it("should airdrop access with user specified password and no expiration date", async () => {
       const role = "contributor";
 
@@ -70,8 +84,8 @@ describe("Testing airdrop actions", () => {
 
     it("should get vault by airdropee", async () => {
       const memberAkord = await Akord
-      .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
-      .signIn();
+        .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+        .signIn();
 
       expect(memberAkord.address).toEqual(airdropeeAddress);
 
@@ -86,7 +100,7 @@ describe("Testing airdrop actions", () => {
       const members = await akord.vault.members(vaultId);
 
       expect(members).toBeTruthy();
-      expect(members.length).toEqual(3);
+      expect(members.length).toEqual(4);
     });
 
     it("should change access", async () => {
@@ -105,7 +119,7 @@ describe("Testing airdrop actions", () => {
       const members = await akord.vault.members(vaultId);
 
       expect(members).toBeTruthy();
-      expect(members.length).toEqual(3);
+      expect(members.length).toEqual(4);
       expect(members.map(member => member.status)).toContain("revoked");
     });
 
