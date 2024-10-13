@@ -1,3 +1,10 @@
+# [0.22.0-dev.34](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.33...v0.22.0-dev.34) (2024-10-13)
+
+
+### Features
+
+* use service worker for non encrypted data ([22b310e](https://github.com/Akord-com/carmella-sdk/commit/22b310e57712c12b3fd0d1b3b64ea22e2a2133b5))
+
 # [0.22.0-dev.33](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.32...v0.22.0-dev.33) (2024-10-13)
 
 
