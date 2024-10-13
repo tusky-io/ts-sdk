@@ -4,6 +4,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const WebpackBundleAnalyzer = require("webpack-bundle-analyzer")
     .BundleAnalyzerPlugin;
 const nodeExternals = require('webpack-node-externals');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const commonNodeConfig = {
   mode: 'production',
@@ -101,7 +102,7 @@ const commonWebConfig = {
             },
           }
         ],
-        exclude: /node_modules/,
+        exclude: [/node_modules/, /worker\.js$/],
       },
     ],
   },
@@ -162,4 +163,26 @@ const esmWebConfig = {
   },
 };
 
-module.exports = [cjsNodeConfig, esmNodeConfig, esmWebConfig, cjsWebConfig];
+const serviceWorkerWebConfig = {
+  mode: 'development',
+
+  entry: './src/core/web/worker.js',
+
+  output: {
+      filename: 'worker.min.js',
+      path: path.resolve(__dirname, 'lib/web/sw'),
+  },
+
+  plugins: [
+      new CopyWebpackPlugin({
+          patterns: [
+              {
+                  from: path.resolve(__dirname, './src/core/web/worker.js'),
+                  to: path.resolve(__dirname, 'lib/web/sw'),
+              },
+          ],
+      }),
+  ],
+};
+
+module.exports = [cjsWebConfig, esmWebConfig, serviceWorkerWebConfig, cjsNodeConfig, esmNodeConfig];

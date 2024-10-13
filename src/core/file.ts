@@ -314,7 +314,8 @@ class FileModule {
       stream = file as ReadableStream<Uint8Array>;
     } else {
       const aesKey = await this.aesKey(id);
-      stream = await decryptStream(file as ReadableStream, aesKey, fileMetadata.chunkSize);
+      const aesCryptoKey = await importKeyFromBase64(aesKey);
+      stream = await decryptStream(file as ReadableStream, aesCryptoKey, fileMetadata.chunkSize);
     }
     return stream;
   }
@@ -324,7 +325,7 @@ class FileModule {
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
   }
 
-  protected async aesKey(id: string): Promise<CryptoKey> {
+  protected async aesKey(id: string): Promise<string> {
     const fileMetadata = await this.get(id);
     const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as X25519EncryptedPayload;
 
@@ -337,7 +338,7 @@ class FileModule {
 
     // decrypt AES key with vault's private key
     const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
-    const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
+    const aesKey = arrayToString(decryptedKey);
     return aesKey;
   }
 }
