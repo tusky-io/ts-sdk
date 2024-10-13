@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2015",
     "module": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
     "moduleResolution": "node",
     "outDir": "./lib/web/types",
     "baseUrl": "src",

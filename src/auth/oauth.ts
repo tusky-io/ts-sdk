@@ -35,7 +35,7 @@ export const authProviderConfig = (env?: string): AuthProviderConfigType => {
       "SCOPES": "email public_profile",
     },
     "Twitch": {
-      "CLIENT_ID": env === "mainnet" ? "g924m6acqg8w9gw9hxstdl5q2uugup" : "1030800888399080",
+      "CLIENT_ID": env === "mainnet" ? "zjvek40acgbaade27yrwdsvsslx0e4" : "6h9wlqcwu01ve4al9qs04zeul7znj7",
       "AUTH_URL": "https://id.twitch.tv/oauth2/authorize",
       "SCOPES": "openid user:read:email",
     }

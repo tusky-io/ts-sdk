@@ -131,7 +131,8 @@ export class Auth {
           clientId: this.clientId,
           redirectUri: this.redirectUri,
           authProvider: this.authProvider,
-          storage: this.storage
+          storage: this.storage,
+          env: this.env
         });
 
         if (code) {
@@ -160,7 +161,8 @@ export class Auth {
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
-      storage: this.storage
+      storage: this.storage,
+      env: this.env
     });
     await aOuthClient.initOAuthFlow();
   }
@@ -170,7 +172,8 @@ export class Auth {
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
-      storage: this.storage
+      storage: this.storage,
+      env: this.env
     });
     return aOuthClient.handleOAuthCallback();
   }
@@ -191,7 +194,8 @@ export class Auth {
           clientId: this.clientId,
           redirectUri: this.redirectUri,
           authProvider: this.authProvider,
-          storage: this.storage
+          storage: this.storage,
+          env: this.env
         });
         if (!idToken) {
           logger.info('Id token not found. Trying to use refresh token...');
