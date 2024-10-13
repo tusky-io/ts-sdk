@@ -52,9 +52,6 @@ self.onmessage = (event) => {
     if (!file) {
       event.ports[0].postMessage({ error: 'cancelled' });
     } else {
-      if (file.progress === file.size) {
-        files.delete(event.data.id);
-      }
       event.ports[0].postMessage({ type: 'progress', progress: file.progress });
     }
   } else if (event.data.type === 'cancel') {

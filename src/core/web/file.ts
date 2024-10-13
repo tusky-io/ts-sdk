@@ -17,16 +17,15 @@ class WebFileModule extends FileModule {
     }
 
     public async previewUrl(id: string, options: FileDownloadOptions = {}): Promise<string> {
-        const fileMetadata = await this.get(id);
-        if (fileMetadata.__public__) {
-            return this.cdnPreviewUrl(id);
+        if (this.hasServiceWorkerInstalled()) {
+            return this.webWorkerStreamUrl(id, options);
         } else {
-            if (this.hasDecryptionWebWorker()) {
-                return this.webWorkerStreamUrl(id, options);
-            } else {
-                logger.warn("No decryption web worker found, downloading file into memory buffer.");
-                return this.inMemoryBufferUrl(id);
+            const fileMetadata = await this.get(id);
+            if (!fileMetadata.encryptedAesKey) {
+                return this.cdnPreviewUrl(id);
             }
+            logger.warn("No decryption web worker found, downloading file into memory buffer.");
+            return this.inMemoryBufferUrl(id);
         }
     }
 
@@ -47,6 +46,9 @@ class WebFileModule extends FileModule {
     private saveAs(url: string) {
         const a = document.createElement("a");
         a.href = url
+        if (!this.hasServiceWorkerInstalled() && this.sessionFile) {
+            a.download = this.sessionFile.name;
+        }
         document.body.appendChild(a);
         a.click();
     }
@@ -119,7 +121,7 @@ class WebFileModule extends FileModule {
         return proxyUrl;
     }
 
-    private hasDecryptionWebWorker(): boolean {
+    private hasServiceWorkerInstalled(): boolean {
         return !!navigator.serviceWorker?.controller
     }
 }
