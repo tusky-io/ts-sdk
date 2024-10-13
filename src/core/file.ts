@@ -325,8 +325,11 @@ class FileModule {
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
   }
 
-  protected async aesKey(id: string): Promise<string> {
+  protected async aesKey(id: string): Promise<string | null> {
     const fileMetadata = await this.get(id);
+    if (!fileMetadata.encryptedAesKey) {
+      return null;
+    }
     const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as X25519EncryptedPayload;
 
     if (!fileMetadata.encryptedAesKey) {
