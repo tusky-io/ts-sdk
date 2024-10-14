@@ -10,13 +10,14 @@ import { paginate, processListItems } from "./common";
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
-import { arrayToString, base64ToJson } from "../crypto";
-import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, decryptWithPrivateKey, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
+import { base64ToJson } from "../crypto";
+import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, decryptWithPrivateKey, importKeyFromArray, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { X25519EncryptedPayload } from "../crypto/types";
+import Encrypter from "crypto/encrypter";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -337,7 +338,7 @@ class FileModule {
 
     // decrypt AES key with vault's private key
     const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
-    const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
+    const aesKey = await importKeyFromArray(decryptedKey);
     return aesKey;
   }
 }

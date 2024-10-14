@@ -1,9 +1,9 @@
 import "reflect-metadata";
 import { EncryptedVaultKeyPair } from "../../types";
 import { Encrypter } from "../encrypter";
-import { X25519EncryptedPayload } from "../types";
+import { EncryptedPayload, X25519EncryptedPayload } from "../types";
 import { arrayToString, base64ToJson } from "../encoding";
-import { decryptWithPrivateKey } from "../lib";
+import { X25519KeyPair } from "../keypair";
 
 export abstract class Encryptable {
   constructor(keys: Array<EncryptedVaultKeyPair>) {
@@ -26,10 +26,15 @@ export abstract class Encryptable {
           if (!this[prop]) {
             return this[prop]
           }
-          const payload = base64ToJson(this[prop]) as X25519EncryptedPayload;
-          const vaultEncPrivateKey = this.__keys__.find((key) => key.publicKey === payload.publicKey).encPrivateKey;
+          const payload = base64ToJson(this[prop]) as EncryptedPayload;
+          console.log(this.__keys__)
+          console.log(payload)
+          const vaultEncPrivateKey = this.__keys__.find((key) => key.publicKey === payload.encryptedKey.publicKey).encPrivateKey;
           const privateKey = await encrypter.decrypt(vaultEncPrivateKey);
-          const decryptedArray = await decryptWithPrivateKey(privateKey, payload);
+          // init data encrypter from vault private key
+          const dataEncrypter = new Encrypter({ keypair: new X25519KeyPair(privateKey)});
+          const decryptedArray = await dataEncrypter.decryptHybrid(this[prop]);
+          // const decryptedArray = await decryptWithPrivateKey(privateKey, payload);
           const decrypted = arrayToString(decryptedArray);
           this[prop] = decrypted
           return decrypted

@@ -1,5 +1,5 @@
 import { arrayToBase64, base64ToArray, base64ToJson, jsonToBase64 } from './encoding';
-import { decrypt, deriveKey, encrypt, generateKeyPair } from './lib';
+import { decryptAes, deriveAesKey, encryptAes, generateKey, generateKeyPair, importKeyFromArray } from './lib';
 import Keystore from './storage/keystore';
 import * as bip39 from 'bip39';
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
@@ -7,6 +7,8 @@ import { logger } from '../logger';
 import { X25519KeyPair } from './keypair';
 import { DEFAULT_STORAGE, JWTClient } from '../auth/jwt';
 import { Env } from '../types';
+import BIP32Factory from 'bip32';
+import * as ecc from 'tiny-secp256k1';
 
 const SALT_LENGTH = 16;
 const SESSION_KEY_PATH = "session_key";
@@ -58,16 +60,16 @@ export class UserEncryption {
   public async backupPassword(password: string): Promise<{ backupPhrase: string, encPrivateKeyBackup: string }> {
     const privateKey = await this.decryptWithPassword(password, this.encPrivateKey);
 
+    // generate BIP-39 mnemonic
     const backupPhrase = bip39.generateMnemonic();
 
-    // TODO: derive master key from backup phrase here
-    this.encPrivateKeyBackup = await this.encryptWithPassword(backupPhrase, privateKey);
+    this.encPrivateKeyBackup = await this.encryptWithBackupPhrase(backupPhrase, privateKey);
     return { backupPhrase, encPrivateKeyBackup: this.encPrivateKeyBackup };
   }
 
   // reset the password by using the backup phrase
   public async resetPassword(backupPhrase: string, newPassword: string, keystore: boolean = false): Promise<{ encPrivateKey: string }> {
-    const privateKey = await this.decryptWithPassword(backupPhrase, this.encPrivateKeyBackup);
+    const privateKey = await this.decryptWithBackupPhrase(backupPhrase, this.encPrivateKeyBackup);
 
     this.encPrivateKey = await this.encryptWithPassword(newPassword, privateKey, keystore);
     return { encPrivateKey: this.encPrivateKey };
@@ -95,7 +97,7 @@ export class UserEncryption {
     const passwordKey = await decryptPasswordKey(sessionKey, new Uint8Array(encryptedPasswordKey), new Uint8Array(iv));
 
     const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any;
-    const privateKey = await decrypt(
+    const privateKey = await decryptAes(
       parsedEncPrivateKey.encryptedPayload,
       passwordKey
     )
@@ -141,29 +143,13 @@ export class UserEncryption {
     try {
       const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
 
-      const passwordKey = await deriveKey(password, salt);
+      const passwordKey = await deriveAesKey(password, salt);
 
       if (keystore) {
-        const sessionKey = await generateSessionKey();
-        const exportedPasswordKey = await crypto.subtle.exportKey("raw", passwordKey);
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encryptedPasswordKey = await crypto.subtle.encrypt(
-          {
-            name: "AES-GCM",
-            iv: iv,
-          },
-          sessionKey,
-          exportedPasswordKey
-        );
-        this.storage.setItem(this.encryptedPasswordKeyPath, JSON.stringify({
-          encryptedPasswordKey: Array.from(new Uint8Array(encryptedPasswordKey)),
-          iv: Array.from(iv)
-        }));
-        const keystore = await Keystore.instance();
-        await keystore.store(this.sessionKeyPath, sessionKey);
+        await this.saveSessionInKeystore(passwordKey);
       }
 
-      const encryptedPayload = await encrypt(plaintext, passwordKey);
+      const encryptedPayload = await encryptAes(plaintext, passwordKey);
 
       const payload = {
         encryptedPayload: encryptedPayload,
@@ -192,29 +178,54 @@ export class UserEncryption {
       const encryptedPayload = parsedPayload.encryptedPayload;
       const salt = base64ToArray(parsedPayload.salt);
 
-      const passwordKey = await deriveKey(password, salt);
+      const passwordKey = await deriveAesKey(password, salt);
 
       if (keystore) {
-        const sessionKey = await generateSessionKey();
-        const exportedPasswordKey = await crypto.subtle.exportKey("raw", passwordKey);
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encryptedPasswordKey = await crypto.subtle.encrypt(
-          {
-            name: "AES-GCM",
-            iv: iv,
-          },
-          sessionKey,
-          exportedPasswordKey
-        );
-        this.storage.setItem(this.encryptedPasswordKeyPath, JSON.stringify({
-          encryptedPasswordKey: Array.from(new Uint8Array(encryptedPasswordKey)),
-          iv: Array.from(iv)
-        }));
-        const keystore = await Keystore.instance();
-        await keystore.store(this.sessionKeyPath, sessionKey);
+        await this.saveSessionInKeystore(passwordKey);
       }
 
-      const plaintext = await decrypt(encryptedPayload, passwordKey);
+      const plaintext = await decryptAes(encryptedPayload, passwordKey);
+      return new Uint8Array(plaintext);
+    } catch (err) {
+      logger.error(err);
+      throw new IncorrectEncryptionKey(new Error("Decrypting data failed."));
+    }
+  }
+
+  /**
+  * Encryption with key derived from backup phrase
+  * - derive the encryption key from backup phrase
+  * - encrypt plaintext with the derived key
+  * @param {string} backupPhrase
+  * @param {string} plaintext plaintext array
+  * @returns {Promise.<string>} Promise of string represents stringified payload
+  */
+  private async encryptWithBackupPhrase(backupPhrase: string, plaintext: Uint8Array): Promise<string> {
+    try {
+      const aesKey = await deriveKeyFromMnemonic(backupPhrase);
+
+      const encryptedPayload = await encryptAes(plaintext, aesKey) as string;
+
+      return encryptedPayload;
+    } catch (err) {
+      logger.error(err);
+      throw new IncorrectEncryptionKey(new Error("Encrypting data failed."));
+    }
+  }
+
+  /**
+   * Decryption with key derived from backup phrase
+   * - derive the decryption key from backup phrase
+   * - decrypt the ciphertext with the derived key
+   * @param {string} backupPhrase
+   * @param {string} encryptedPayload stringified payload
+   * @returns {Promise.<Uint8Array>} Promise of string represents utf-8 plaintext
+   */
+  private async decryptWithBackupPhrase(backupPhrase: string, encryptedPayload: string): Promise<Uint8Array> {
+    try {
+      const aesKey = await deriveKeyFromMnemonic(backupPhrase);
+
+      const plaintext = await decryptAes(encryptedPayload, aesKey);
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);
@@ -227,15 +238,41 @@ export class UserEncryption {
     await keystore.delete(this.sessionKeyPath);
     await keystore.delete(this.encryptedPasswordKeyPath);
   }
+
+  private async saveSessionInKeystore(passwordKey: CryptoKey) {
+    const sessionKey = await generateKey();
+    const exportedPasswordKey = await crypto.subtle.exportKey("raw", passwordKey);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encryptedPasswordKey = await crypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv: iv,
+      },
+      sessionKey,
+      exportedPasswordKey
+    );
+    this.storage.setItem(this.encryptedPasswordKeyPath, JSON.stringify({
+      encryptedPasswordKey: Array.from(new Uint8Array(encryptedPasswordKey)),
+      iv: Array.from(iv)
+    }));
+    const keystore = await Keystore.instance();
+    await keystore.store(this.sessionKeyPath, sessionKey);
+  }
 }
 
-// generate non-extractable session key
-async function generateSessionKey() {
-  return crypto.subtle.generateKey(
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
+async function deriveKeyFromMnemonic(mnemonic: string): Promise<CryptoKey> {
+  // generate seed from the mnemonic
+  const seed: Buffer = await bip39.mnemonicToSeed(mnemonic);
+
+  // derive master key from the seed
+  const bip32 = BIP32Factory(ecc);
+  const root = bip32.fromSeed(seed);
+  // const child = root.derivePath("m/44'/0'/0'/0/0");
+
+  const masterKey = root.privateKey;
+
+  const aesKey = await importKeyFromArray(masterKey);
+  return aesKey;
 }
 
 async function decryptPasswordKey(sessionKey: CryptoKey, encryptedPasswordKey: Uint8Array, iv: Uint8Array) {
@@ -248,11 +285,5 @@ async function decryptPasswordKey(sessionKey: CryptoKey, encryptedPasswordKey: U
     encryptedPasswordKey
   );
 
-  return await crypto.subtle.importKey(
-    "raw",
-    decryptedKey,
-    { name: "AES-GCM", length: 256 },
-    true,
-    ["encrypt", "decrypt"]
-  );
+  return importKeyFromArray(new Uint8Array(decryptedKey));
 }

@@ -3,7 +3,7 @@ import { tusFileToUint8Array } from "@env/types/file";
 import { base64ToArray, base64ToString, jsonToBase64, stringToBase64 } from "../";
 import { CHUNK_SIZE_IN_BYTES, ENCRYPTED_CHUNK_SIZE_IN_BYTES } from "../../core/file";
 import { Vault } from "../../types";
-import { AUTH_TAG_LENGTH_IN_BYTES, encrypt, encryptWithPublicKey, exportKeyToBase64, generateKey, IV_LENGTH_IN_BYTES } from "../lib";
+import { AUTH_TAG_LENGTH_IN_BYTES, encryptAes, encryptWithPublicKey, exportKeyToBase64, generateKey, IV_LENGTH_IN_BYTES } from "../lib";
 import * as tus from 'tus-js-client'
 
 export const CONTENT_LENGTH_HEADER = "Content-Length";
@@ -59,7 +59,7 @@ export class EncryptableHttpStack {
   
         // encrypt the body
         const bodyUint8Array = await tusFileToUint8Array(body);
-        const encryptedBody = await encrypt(bodyUint8Array, aesKey, false) as Uint8Array;
+        const encryptedBody = await encryptAes(bodyUint8Array, aesKey, false) as Uint8Array;
         if (!request.getUnderlyingObject()) {
           request.setHeader(CONTENT_LENGTH_HEADER, encryptedBody.byteLength.toString());
         }
