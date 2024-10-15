@@ -1,3 +1,15 @@
+# [0.22.0-dev.35](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.34...v0.22.0-dev.35) (2024-10-15)
+
+
+### Bug Fixes
+
+* current session config ([7c7aceb](https://github.com/Akord-com/carmella-sdk/commit/7c7acebcc99a1e51f4b42fc3cd046ddd28fb2082))
+
+
+### Features
+
+* add guest flag to the user model ([60ce721](https://github.com/Akord-com/carmella-sdk/commit/60ce7215260a436161c27372c51a6021804001fd))
+
 # [0.22.0-dev.34](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.33...v0.22.0-dev.34) (2024-10-13)
 
 
