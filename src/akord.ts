@@ -81,7 +81,7 @@ export class Akord {
 
   async signIn(): Promise<this> {
     const { address } = await this._auth.signIn();
-    this.setAddress(address);
+    this.setCurrentSession(address);
     return this;
   }
 
@@ -99,7 +99,7 @@ export class Akord {
 
   async handleOAuthCallback(): Promise<this> {
     const { address } = await this._auth.handleOAuthCallback();
-    this.setAddress(address);
+    this.setCurrentSession(address);
     return this;
   }
 
@@ -170,6 +170,11 @@ export class Akord {
     this.address = address;
   }
 
+  private setCurrentSession(address?: string) {
+    this.setAddress(address || this._auth.getAddress());
+    this._userEncryption = new UserEncryption(this.getConfig());
+  }
+
   /**
    * @param  {ClientConfig} config
    */
@@ -179,8 +184,7 @@ export class Akord {
     this._env = config.env || 'testnet';
     this._auth = new Auth(config);
     this.api = config.api ? config.api : new AkordApi(this.getConfig());
-    this.setAddress(this._auth.getAddress());
-    this._userEncryption = new UserEncryption(this.getConfig());
+    this.setCurrentSession();
     Plugins.register(config?.plugins, this._env);
     CacheBusters.cache = config?.cache;
   }
