@@ -8,7 +8,7 @@ import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { User, UserPublicInfo } from "../types/user";
-import { EncryptedVaultKeyPair, File, Folder } from "../types";
+import { ContextPath, EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
 import { logger } from "../logger";
@@ -63,7 +63,7 @@ export class ApiClient {
   private _role: string;
   private _expiresAt: number;
   private _allowedStorage: number;
-  private _contextPath: string;
+  private _contextPath: ContextPath;
 
   // file specific
   private _numberOfChunks: number;
@@ -241,7 +241,7 @@ export class ApiClient {
     return this;
   }
 
-  contextPath(contextPath: string): ApiClient {
+  contextPath(contextPath: ContextPath): ApiClient {
     this._contextPath = contextPath;
     return this;
   }

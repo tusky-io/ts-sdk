@@ -1,4 +1,4 @@
-import { EncryptedVaultKeyPair } from "."
+import { ContextPath, EncryptedVaultKeyPair } from "."
 import { actions, objects } from "../constants"
 
 export interface Transaction {
@@ -62,7 +62,7 @@ export interface CreateMembershipTxPayload {
   keys?: EncryptedVaultKeyPair[],
   encPrivateKey?: string,
   allowedStorage?: number,
-  contextPath?: string
+  contextPath?: ContextPath
 }
 
 export interface UpdateMembershipTxPayload {

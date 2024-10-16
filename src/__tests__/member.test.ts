@@ -1,7 +1,8 @@
 import { Akord } from "../akord";
 import { Forbidden } from "../errors/forbidden";
-import { cleanup, initInstance, setupVault, vaultCreate } from "./common";
+import { cleanup, initInstance, setupVault, testDataPath, vaultCreate } from "./common";
 import faker from '@faker-js/faker';
+import { firstFileName, secondFileName } from "./data/content";
 
 let akord: Akord;
 
@@ -24,7 +25,7 @@ describe("Testing airdrop actions", () => {
     vaultId = vault.id;
   });
 
-  describe("Vault access control tests", () => {
+  describe("Sharing vault", () => {
     it("should only list owner for all members of the vault", async () => {
       const members = await akord.vault.members(vaultId);
 
@@ -134,6 +135,96 @@ describe("Testing airdrop actions", () => {
         const vault = await memberAkord.vault.get(vaultId);
         expect(vault).toBeTruthy();
         expect(vault.name).toBeTruthy();
+      }).rejects.toThrow(Forbidden);
+    });
+  });
+
+  describe("Sharing a part of a vault", () => {
+    let airdropeeIdentityPrivateKey: string;
+    let airdropeePassword: string;
+    let folderId: string;
+    let fileId: string;
+    let ownerFileId: string;
+
+    it("should create file & folder by the owner", async () => {
+      const { id } = await akord.folder.create(vaultId, "name");
+      folderId = id;
+
+      fileId = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    });
+
+    it("should share only file with a member", async () => {
+      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { contextPath: { file: [fileId] } });
+
+      airdropeeIdentityPrivateKey = identityPrivateKey;
+      airdropeePassword = password;
+
+      expect(membership).toBeTruthy();
+      expect(membership.contextPath).toBeTruthy();
+      expect(membership.contextPath.file).toBeTruthy();
+      expect(membership.contextPath.file).toContain(fileId);
+    });
+
+    it("should get the file metadata from the member account", async () => {
+      const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: airdropeePassword });
+
+      const file = await memberAkord.file.get(fileId);
+      expect(file).toBeTruthy();
+      expect(file.name).toBeTruthy();
+    });
+
+    it("should download the file from the member account", async () => {
+      const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: airdropeePassword });
+
+      const response = await akord.file.arrayBuffer(fileId);
+      expect(response).toBeTruthy();
+    });
+
+    it("should fail getting the folder from the member account", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+          .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+          .signIn();
+
+        await memberAkord.withEncrypter({ password: airdropeePassword });
+
+        await memberAkord.folder.get(folderId);
+      }).rejects.toThrow(Forbidden);
+    });
+
+    it("should upload another file by the owner", async () => {
+      ownerFileId = await akord.file.upload(vaultId, testDataPath + secondFileName);
+    });
+
+    it("should fail getting the owner's file metadata by the member", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+          .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+          .signIn();
+
+        await memberAkord.withEncrypter({ password: airdropeePassword });
+
+        await memberAkord.file.get(ownerFileId);
+      }).rejects.toThrow(Forbidden);
+    });
+
+    it("should fail downloading owner's file by the member", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+          .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+          .signIn();
+
+        await memberAkord.withEncrypter({ password: airdropeePassword });
+
+        await akord.file.arrayBuffer(ownerFileId);
       }).rejects.toThrow(Forbidden);
     });
   });
