@@ -76,6 +76,6 @@ export type MembershipAirdropOptions = {
 }
 
 export type ContextPath = {
-  parent?: string[] // folder ids to share within the vault
+  folder?: string[] // folder ids to share within the vault
   file?: string[] // file ids to share within the vault
 }
