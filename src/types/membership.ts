@@ -2,6 +2,7 @@ import { Encryptable } from "../crypto";
 import { User } from "./user";
 
 export type RoleType = "viewer" | "contributor" | "owner";
+export type MemberRoleType = "viewer" | "contributor";
 export type StatusType = "accepted" | "pending" | "revoked";
 
 export const activeStatus = ["accepted", "pending"] as StatusType[];
@@ -71,7 +72,7 @@ export type MembershipAirdropOptions = {
   expiresAt?: number // expiration date
   allowedStorage?: number // allowed storage
   contextPath?: ContextPath // folder ids, file ids, if not provided defaults to vault id
-  role?: RoleType //  member role,
+  role?: MemberRoleType //  member role, defaults to viewer
   password?: string // password to protect member encryption keys, if not provided a random password will be generated
 }
 
