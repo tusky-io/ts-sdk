@@ -1,5 +1,5 @@
 import { ReadableStream, TransformStream } from "web-streams-polyfill/ponyfill";
-import { IV_LENGTH_IN_BYTES } from './lib';
+import { decryptAes, IV_LENGTH_IN_BYTES } from './lib';
 import { logger } from '../logger';
 
 const MODE_DECRYPT = 'decrypt';
@@ -25,7 +25,7 @@ export class DecryptStreamController {
     const ciphertextBytes = chunk.slice(IV_LENGTH_IN_BYTES);
 
     try {
-      const cleartext = await getCleartext(this.key, ivBytes, ciphertextBytes);
+      const cleartext = await decryptAes({ iv: ivBytes, ciphertext: ciphertextBytes }, this.key);
       controller.enqueue(new Uint8Array(cleartext));
       if (this.file) {
         this.file.progress += cleartext.byteLength;
@@ -142,24 +142,4 @@ export function transformStream(
       }
     });
   }
-}
-
-async function getCleartext(key: CryptoKey, ivBytes: Uint8Array, bytes: Uint8Array): Promise<ArrayBuffer> {
-  try {
-    return await crypto.subtle.decrypt(
-      {
-        name: 'AES-GCM',
-        iv: ivBytes
-      },
-      key,
-      bytes,
-    );
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-function toByteArray(b64: string): Uint8Array {
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }

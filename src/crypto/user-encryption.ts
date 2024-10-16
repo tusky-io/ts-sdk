@@ -1,5 +1,5 @@
 import { arrayToBase64, base64ToArray, base64ToJson, jsonToBase64 } from './encoding';
-import { decryptAes, deriveAesKey, encryptAes, generateKey, generateKeyPair, importKeyFromArray } from './lib';
+import { decryptAes, deriveAesKey, encryptAes, exportKeyToArray, generateKey, generateKeyPair, importKeyFromArray } from './lib';
 import Keystore from './storage/keystore';
 import * as bip39 from 'bip39';
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
@@ -9,6 +9,7 @@ import { DEFAULT_STORAGE, JWTClient } from '../auth/jwt';
 import { Env } from '../types';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
+import { AESEncryptedPayload, X25519EncryptedPayload } from './types';
 
 const SALT_LENGTH = 16;
 const SESSION_KEY_PATH = "session_key";
@@ -92,11 +93,12 @@ export class UserEncryption {
       throw new IncorrectEncryptionKey(new Error("The user needs to provide the password again."));
     }
 
-    const { encryptedPasswordKey, iv } = JSON.parse(encryptedPasswordKeyPayload);
+    const { ciphertext, iv } = JSON.parse(encryptedPasswordKeyPayload) as AESEncryptedPayload;
 
-    const passwordKey = await decryptPasswordKey(sessionKey, new Uint8Array(encryptedPasswordKey), new Uint8Array(iv));
+    const decryptedKey = await decryptAes({ iv: new Uint8Array(iv), ciphertext: new Uint8Array(ciphertext as ArrayBufferLike) }, sessionKey);
+    const passwordKey = await importKeyFromArray(new Uint8Array(decryptedKey));
 
-    const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any;
+    const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any; // TODO: type here
     const privateKey = await decryptAes(
       parsedEncPrivateKey.encryptedPayload,
       passwordKey
@@ -241,20 +243,19 @@ export class UserEncryption {
 
   private async saveSessionInKeystore(passwordKey: CryptoKey) {
     const sessionKey = await generateKey();
-    const exportedPasswordKey = await crypto.subtle.exportKey("raw", passwordKey);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encryptedPasswordKey = await crypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv: iv,
-      },
-      sessionKey,
-      exportedPasswordKey
-    );
-    this.storage.setItem(this.encryptedPasswordKeyPath, JSON.stringify({
-      encryptedPasswordKey: Array.from(new Uint8Array(encryptedPasswordKey)),
-      iv: Array.from(iv)
-    }));
+    // const exportedPasswordKey = await crypto.subtle.exportKey("raw", passwordKey);
+    const exportedPasswordKey = await exportKeyToArray(passwordKey);
+    const encryptedPasswordKey = await encryptAes(exportedPasswordKey, sessionKey) as string;
+    // const iv = crypto.getRandomValues(new Uint8Array(12));
+    // const encryptedPasswordKey = await crypto.subtle.encrypt(
+    //   {
+    //     name: "AES-GCM",
+    //     iv: iv,
+    //   },
+    //   sessionKey,
+    //   exportedPasswordKey
+    // );
+    this.storage.setItem(this.encryptedPasswordKeyPath, encryptedPasswordKey);
     const keystore = await Keystore.instance();
     await keystore.store(this.sessionKeyPath, sessionKey);
   }
@@ -273,17 +274,4 @@ async function deriveKeyFromMnemonic(mnemonic: string): Promise<CryptoKey> {
 
   const aesKey = await importKeyFromArray(masterKey);
   return aesKey;
-}
-
-async function decryptPasswordKey(sessionKey: CryptoKey, encryptedPasswordKey: Uint8Array, iv: Uint8Array) {
-  const decryptedKey = await crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: iv,
-    },
-    sessionKey,
-    encryptedPasswordKey
-  );
-
-  return importKeyFromArray(new Uint8Array(decryptedKey));
 }

@@ -27,8 +27,6 @@ export abstract class Encryptable {
             return this[prop]
           }
           const payload = base64ToJson(this[prop]) as EncryptedPayload;
-          console.log(this.__keys__)
-          console.log(payload)
           const vaultEncPrivateKey = this.__keys__.find((key) => key.publicKey === payload.encryptedKey.publicKey).encPrivateKey;
           const privateKey = await encrypter.decrypt(vaultEncPrivateKey);
           // init data encrypter from vault private key
