@@ -156,29 +156,29 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should share file with a viewer member", async () => {
-      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { contextPath: { file: [fileId] } });
+      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { allowedPaths: { files: [fileId] } });
 
       viewerIdentityPrivateKey = identityPrivateKey;
       viewerPassword = password;
 
       expect(membership).toBeTruthy();
       expect(membership.role).toEqual("viewer");
-      expect(membership.contextPath).toBeTruthy();
-      expect(membership.contextPath.file).toBeTruthy();
-      expect(membership.contextPath.file).toContain(fileId);
+      expect(membership.allowedPaths).toBeTruthy();
+      expect(membership.allowedPaths.files).toBeTruthy();
+      expect(membership.allowedPaths.files).toContain(fileId);
     });
 
     it("should share file with a contributor member", async () => {
-      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { role: "contributor", contextPath: { file: [fileId] } });
+      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { files: [fileId] } });
 
       contributorIdentityPrivateKey = identityPrivateKey;
       contributorPassword = password;
 
       expect(membership).toBeTruthy();
       expect(membership.role).toEqual("contributor");
-      expect(membership.contextPath).toBeTruthy();
-      expect(membership.contextPath.file).toBeTruthy();
-      expect(membership.contextPath.file).toContain(fileId);
+      expect(membership.allowedPaths).toBeTruthy();
+      expect(membership.allowedPaths.files).toBeTruthy();
+      expect(membership.allowedPaths.files).toContain(fileId);
     });
 
     it("should get the file metadata by the viewer member", async () => {
@@ -290,6 +290,18 @@ describe("Testing airdrop actions", () => {
 
         await memberAkord.file.arrayBuffer(ownerFileId);
       }).rejects.toThrow(Forbidden);
+    });
+
+    it("should share folder with a contributor member", async () => {
+      const { id } = await akord.folder.create(vaultId, faker.random.word());
+
+      const { membership } = await akord.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { folders: [id] } });
+
+      expect(membership).toBeTruthy();
+      expect(membership.role).toEqual("contributor");
+      expect(membership.allowedPaths).toBeTruthy();
+      expect(membership.allowedPaths.folders).toBeTruthy();
+      expect(membership.allowedPaths.folders).toContain(id);
     });
   });
 });

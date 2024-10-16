@@ -209,7 +209,7 @@ class VaultModule {
       vaultId: vaultId,
       address: memberKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
-      contextPath: options.contextPath,
+      allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
       name: options.name,
       role: options.role || DEFAULT_AIRDROP_ACCESS_ROLE,

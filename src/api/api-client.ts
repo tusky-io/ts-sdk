@@ -8,7 +8,7 @@ import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { User, UserPublicInfo } from "../types/user";
-import { ContextPath, EncryptedVaultKeyPair, File, Folder } from "../types";
+import { AllowedPaths, EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
 import { logger } from "../logger";
@@ -63,7 +63,7 @@ export class ApiClient {
   private _role: string;
   private _expiresAt: number;
   private _allowedStorage: number;
-  private _contextPath: ContextPath;
+  private _allowedPaths: AllowedPaths;
 
   // file specific
   private _numberOfChunks: number;
@@ -123,7 +123,7 @@ export class ApiClient {
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
     clone._allowedStorage = this._allowedStorage;
-    clone._contextPath = this._contextPath;
+    clone._allowedPaths = this._allowedPaths;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
@@ -241,8 +241,8 @@ export class ApiClient {
     return this;
   }
 
-  contextPath(contextPath: ContextPath): ApiClient {
-    this._contextPath = contextPath;
+  allowedPaths(allowedPaths: AllowedPaths): ApiClient {
+    this._allowedPaths = allowedPaths;
     return this;
   }
 
@@ -928,7 +928,7 @@ export class ApiClient {
    * - keys()
    * - encPrivateKey()
    * - allowedStorage()
-   * - contextPath()
+   * - allowedPaths()
    * - autoExecute()
    * @returns {Promise<Membership>}
    */
@@ -957,7 +957,7 @@ export class ApiClient {
       keys: this._keys,
       encPrivateKey: this._encPrivateKey,
       allowedStorage: this._allowedStorage,
-      contextPath: this._contextPath,
+      allowedPaths: this._allowedPaths,
       autoExecute: this._autoExecute
     });
 

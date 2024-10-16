@@ -177,7 +177,7 @@ export default class AkordApi extends Api {
       .name(tx.name)
       .encPrivateKey(tx.encPrivateKey)
       .allowedStorage(tx.allowedStorage)
-      .contextPath(tx.contextPath)
+      .allowedPaths(tx.allowedPaths)
       .autoExecute(this.autoExecute)
       .createMembership();
   };
