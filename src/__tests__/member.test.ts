@@ -184,7 +184,7 @@ describe("Testing airdrop actions", () => {
 
       await memberAkord.withEncrypter({ password: airdropeePassword });
 
-      const response = await akord.file.arrayBuffer(fileId);
+      const response = await memberAkord.file.arrayBuffer(fileId);
       expect(response).toBeTruthy();
     });
 
@@ -224,7 +224,7 @@ describe("Testing airdrop actions", () => {
 
         await memberAkord.withEncrypter({ password: airdropeePassword });
 
-        await akord.file.arrayBuffer(ownerFileId);
+        await memberAkord.file.arrayBuffer(ownerFileId);
       }).rejects.toThrow(Forbidden);
     });
   });
