@@ -25,7 +25,7 @@ class FolderService extends Service {
 
   async processFolder(object: Folder, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<Folder> {
     const folder = new Folder(object, keys);
-    if (shouldDecrypt) {
+    if ((await this.isEncrypted(folder)) && shouldDecrypt) {
       try {
         await folder.decrypt(this.encrypter);
       } catch (error) {
@@ -36,7 +36,11 @@ class FolderService extends Service {
   }
 
   async setName(name: string) {
-    this.name =  await this.processWriteString(name);
+    this.name = await this.processWriteString(name);
+  }
+
+  private async isEncrypted(folder: Folder) {
+    return folder.vaultId && !folder.__public__;
   }
 }
 
