@@ -2,6 +2,7 @@ import { Encryptable } from "../crypto";
 import { User } from "./user";
 
 export type RoleType = "viewer" | "contributor" | "owner";
+export type MemberRoleType = "viewer" | "contributor";
 export type StatusType = "accepted" | "pending" | "revoked";
 
 export const activeStatus = ["accepted", "pending"] as StatusType[];
@@ -29,6 +30,7 @@ export class Membership extends Encryptable {
   encPublicSigningKey: string;
   email: string;
   memberDetails: User;
+  allowedPaths: AllowedPaths // defines granular permissions to fragments of the vault
   vaultId: string;
   keys: VaultKeyPair[];
 
@@ -50,6 +52,7 @@ export class Membership extends Encryptable {
     this.vaultId = membershipProto.vaultId;
     this.keys = membershipProto.keys;
     this.memberDetails = membershipProto.memberDetails ? new User(membershipProto.memberDetails) : undefined;
+    this.allowedPaths = membershipProto.allowedPaths ? JSON.parse(membershipProto.allowedPaths) : undefined;
     this.__public__ = membershipProto.__public__;
   }
 }
@@ -68,7 +71,12 @@ export type MembershipAirdropOptions = {
   name?: string
   expiresAt?: number // expiration date
   allowedStorage?: number // allowed storage
-  contextPath?: string // folder id, file id, if not provided defaults to vault id
-  role?: RoleType //  member role,
+  allowedPaths?: AllowedPaths // folder ids, file ids, if not provided defaults to vault id
+  role?: MemberRoleType //  member role, defaults to viewer
   password?: string // password to protect member encryption keys, if not provided a random password will be generated
+}
+
+export type AllowedPaths = {
+  folders?: string[] // folder ids to share within the vault
+  files?: string[] // file ids to share within the vault
 }

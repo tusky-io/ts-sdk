@@ -1,7 +1,8 @@
 import { Akord } from "../akord";
 import { Forbidden } from "../errors/forbidden";
-import { cleanup, initInstance, setupVault, vaultCreate } from "./common";
+import { cleanup, initInstance, setupVault, testDataPath, vaultCreate } from "./common";
 import faker from '@faker-js/faker';
+import { firstFileName, secondFileName } from "./data/content";
 
 let akord: Akord;
 
@@ -24,7 +25,7 @@ describe("Testing airdrop actions", () => {
     vaultId = vault.id;
   });
 
-  describe("Vault access control tests", () => {
+  describe("Sharing vault", () => {
     it("should only list owner for all members of the vault", async () => {
       const members = await akord.vault.members(vaultId);
 
@@ -135,6 +136,172 @@ describe("Testing airdrop actions", () => {
         expect(vault).toBeTruthy();
         expect(vault.name).toBeTruthy();
       }).rejects.toThrow(Forbidden);
+    });
+  });
+
+  describe("Sharing a part of a vault", () => {
+    let viewerIdentityPrivateKey: string;
+    let viewerPassword: string;
+    let contributorIdentityPrivateKey: string;
+    let contributorPassword: string;
+    let folderId: string;
+    let fileId: string;
+    let ownerFileId: string;
+
+    it("should create file & folder by the owner", async () => {
+      const { id } = await akord.folder.create(vaultId, faker.random.word());
+      folderId = id;
+
+      fileId = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    });
+
+    it("should share file with a viewer member", async () => {
+      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { allowedPaths: { files: [fileId] } });
+
+      viewerIdentityPrivateKey = identityPrivateKey;
+      viewerPassword = password;
+
+      expect(membership).toBeTruthy();
+      expect(membership.role).toEqual("viewer");
+      expect(membership.allowedPaths).toBeTruthy();
+      expect(membership.allowedPaths.files).toBeTruthy();
+      expect(membership.allowedPaths.files).toContain(fileId);
+    });
+
+    it("should share file with a contributor member", async () => {
+      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { files: [fileId] } });
+
+      contributorIdentityPrivateKey = identityPrivateKey;
+      contributorPassword = password;
+
+      expect(membership).toBeTruthy();
+      expect(membership.role).toEqual("contributor");
+      expect(membership.allowedPaths).toBeTruthy();
+      expect(membership.allowedPaths.files).toBeTruthy();
+      expect(membership.allowedPaths.files).toContain(fileId);
+    });
+
+    it("should get the file metadata by the viewer member", async () => {
+      const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: viewerPassword });
+
+      const file = await memberAkord.file.get(fileId);
+      expect(file).toBeTruthy();
+      expect(file.name).toBeTruthy();
+    });
+
+    it("should download the file by the viewer member", async () => {
+      const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: viewerPassword });
+
+      const response = await memberAkord.file.arrayBuffer(fileId);
+      expect(response).toBeTruthy();
+    });
+
+    it("should fail renaming file by the viewer member", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+          .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+          .signIn();
+
+        await memberAkord.withEncrypter({ password: viewerPassword });
+
+        await memberAkord.file.rename(fileId, faker.random.word());
+      }).rejects.toThrow(Forbidden);
+    });
+
+    it("should fail getting the folder by the viewer member with restricted access", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+          .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+          .signIn();
+
+        await memberAkord.withEncrypter({ password: viewerPassword });
+
+        await memberAkord.folder.get(folderId);
+      }).rejects.toThrow(Forbidden);
+    });
+
+    it("should download the file by the contributor member", async () => {
+      const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: contributorIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: contributorPassword });
+
+      const response = await memberAkord.file.arrayBuffer(fileId);
+      expect(response).toBeTruthy();
+    });
+
+    it("should rename the file by the contributor member", async () => {
+      const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: contributorIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: contributorPassword });
+
+      const name = faker.random.word();
+      const file = await memberAkord.file.rename(fileId, name);
+      expect(file).toBeTruthy();
+      expect(file.name).toEqual(name);
+    });
+
+    it("should fail updating the folder by the contributor with restricted access", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+          .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+          .signIn();
+
+        await memberAkord.withEncrypter({ password: viewerPassword });
+
+        await memberAkord.folder.rename(folderId, faker.random.word());
+      }).rejects.toThrow(Forbidden);
+    });
+
+    it("should upload another file by the owner", async () => {
+      ownerFileId = await akord.file.upload(vaultId, testDataPath + secondFileName);
+    });
+
+    it("should fail getting the owner's file metadata by the viewer member", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: viewerPassword });
+
+        await memberAkord.file.get(ownerFileId);
+      }).rejects.toThrow(Forbidden);
+    });
+
+    it("should fail downloading owner's file by the contributor member", async () => {
+      await expect(async () => {
+        const memberAkord = await Akord
+        .withWallet({ walletPrivateKey: contributorIdentityPrivateKey })
+        .signIn();
+
+      await memberAkord.withEncrypter({ password: contributorPassword });
+
+        await memberAkord.file.arrayBuffer(ownerFileId);
+      }).rejects.toThrow(Forbidden);
+    });
+
+    it("should share folder with a contributor member", async () => {
+      const { id } = await akord.folder.create(vaultId, faker.random.word());
+
+      const { membership } = await akord.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { folders: [id] } });
+
+      expect(membership).toBeTruthy();
+      expect(membership.role).toEqual("contributor");
+      expect(membership.allowedPaths).toBeTruthy();
+      expect(membership.allowedPaths.folders).toBeTruthy();
+      expect(membership.allowedPaths.folders).toContain(id);
     });
   });
 });

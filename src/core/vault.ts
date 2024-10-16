@@ -12,6 +12,8 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Encrypter } from "../crypto/encrypter";
 import { UserEncryption } from "../crypto/user-encryption";
 
+const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
+
 class VaultModule {
   protected service: VaultService;
 
@@ -183,7 +185,7 @@ class VaultModule {
    * @returns Promise with new membership
    */
   public async airdropAccess(vaultId: string, options: MembershipAirdropOptions = {
-    role: role.CONTRIBUTOR
+    role: DEFAULT_AIRDROP_ACCESS_ROLE
   }): Promise<{ identityPrivateKey: string, password: string, membership: Membership }> {
     await this.service.setVaultContext(vaultId);
 
@@ -207,10 +209,10 @@ class VaultModule {
       vaultId: vaultId,
       address: memberKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
-      contextPath: options.contextPath,
+      allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
       name: options.name,
-      role: options.role || role.CONTRIBUTOR,
+      role: options.role || DEFAULT_AIRDROP_ACCESS_ROLE,
       keys: keys,
       encPrivateKey: userEncPrivateKey
     });
