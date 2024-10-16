@@ -70,7 +70,7 @@ export type MembershipAirdropOptions = {
   name?: string
   expiresAt?: number // expiration date
   allowedStorage?: number // allowed storage
-  contextPath?: ContextPath // parent ids, file ids, if not provided defaults to vault id
+  contextPath?: ContextPath // folder ids, file ids, if not provided defaults to vault id
   role?: RoleType //  member role,
   password?: string // password to protect member encryption keys, if not provided a random password will be generated
 }
