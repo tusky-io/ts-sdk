@@ -42,4 +42,5 @@ export class Vault extends Encryptable {
 export type VaultCreateOptions = {
   public?: boolean,
   description?: string,
+  tags?: string[]
 }

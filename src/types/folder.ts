@@ -14,7 +14,6 @@ export class Folder extends Encryptable {
 
   vaultId: string;
   parentId?: string;
-  tags?: string[];
 
   // vault context
   __public__?: boolean;
@@ -31,7 +30,6 @@ export class Folder extends Encryptable {
     this.status = folder.status;
     this.vaultId = folder.vaultId;
     this.parentId = folder.parentId;
-    this.tags = folder.tags;
     this.__public__ = folder.__public__;
   }
 }

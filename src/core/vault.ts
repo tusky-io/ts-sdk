@@ -9,7 +9,6 @@ import { ServiceConfig } from ".";
 import { arrayToBase64, generateKeyPair } from "../crypto";
 import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { Encrypter } from "../crypto/encrypter";
 import { UserEncryption } from "../crypto/user-encryption";
 
 class VaultModule {
@@ -88,7 +87,7 @@ class VaultModule {
 
   /**
    * @param  {string} name new vault name
-   * @param  {VaultCreateOptions} options public/private, terms of access, etc.
+   * @param  {VaultCreateOptions} options public/private, description, tags, etc.
    * @returns Promise with newly created vault
    */
   public async create(name: string, options: VaultCreateOptions = this.defaultCreateOptions): Promise<Vault> {
@@ -122,7 +121,13 @@ class VaultModule {
       await this.service.setDescription(createOptions.description);
     }
 
-    const vault = await this.service.api.createVault({ name: this.service.name, description: this.service.description, public: this.service.isPublic, keys: this.service.keys });
+    const vault = await this.service.api.createVault({
+      name: this.service.name,
+      description: this.service.description,
+      public: this.service.isPublic,
+      tags: createOptions.tags,
+      keys: this.service.keys
+    });
 
     // if (!this.service.api.autoExecute) {
     //   const signature = await this.service.signer.sign(bytes);
