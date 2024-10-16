@@ -1,3 +1,15 @@
+# [0.22.0-dev.36](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.35...v0.22.0-dev.36) (2024-10-16)
+
+
+### Bug Fixes
+
+* skip decrypting trash folder ([5ac7025](https://github.com/Akord-com/carmella-sdk/commit/5ac70250fc7284bdd8a47f18e0a7779c200dfa87))
+
+
+### Features
+
+* add expiresAt field to file model ([b6e1ddc](https://github.com/Akord-com/carmella-sdk/commit/b6e1ddc6eaee6b628a1fa7adfdd06d5bfb84a7c4))
+
 # [0.22.0-dev.35](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.34...v0.22.0-dev.35) (2024-10-15)
 
 
