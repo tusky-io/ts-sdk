@@ -1,3 +1,18 @@
+# [0.22.0-dev.37](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.36...v0.22.0-dev.37) (2024-10-16)
+
+
+### Bug Fixes
+
+* use member instance for member calls ([ec55004](https://github.com/Akord-com/carmella-sdk/commit/ec5500478273a07efb337c82f72951ee8eecb085))
+
+
+### Features
+
+* change contextPath to allowedPaths in member model ([d1e5d3d](https://github.com/Akord-com/carmella-sdk/commit/d1e5d3da5a3201c3a245e1af376569d1207ea421))
+* set viewer as default aidrop access role ([098dba8](https://github.com/Akord-com/carmella-sdk/commit/098dba8cca07c3a7d4d97d80fc8a90f14c605116))
+* sharing part of the vault ([fadf1c6](https://github.com/Akord-com/carmella-sdk/commit/fadf1c66eb3004a2a08f6433497611e34459fc75))
+* use folder instead of parent in content path ([9c7c4be](https://github.com/Akord-com/carmella-sdk/commit/9c7c4bea0d2755b090cda30b9723a12cf14c08e8))
+
 # [0.22.0-dev.36](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.35...v0.22.0-dev.36) (2024-10-16)
 
 
