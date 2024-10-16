@@ -103,7 +103,7 @@ class FolderModule {
       ...options
     }
     const nodeProto = await this.service.api.getFolder(id);
-    return this.service.processFolder(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    return this.service.processFolder(nodeProto, getOptions.shouldDecrypt);
   }
 
   /**
@@ -125,7 +125,7 @@ class FolderModule {
     const errors = [];
     const processItem = async (nodeProto: any) => {
       try {
-        const node = await this.service.processFolder(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        const node = await this.service.processFolder(nodeProto, listOptions.shouldDecrypt);
         items.push(node);
       } catch (error) {
         errors.push({ id: nodeProto.id, error });
