@@ -14,7 +14,8 @@ lib
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-akord-error.log*
+akord.log*
 
 src/__tests__/data/out/*
+src/__tests__/data/generated/*
 !/**/.gitkeep

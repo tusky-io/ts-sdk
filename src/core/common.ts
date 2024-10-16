@@ -1,9 +1,6 @@
 import { ListOptions } from "../types/query-options";
-import lodash from "lodash";
-import { EncryptedPayload, EncryptionMetadata } from "../types/encryption";
 import PQueue from "@esm2cjs/p-queue";
 import { InternalError } from "../errors/internal-error";
-import { base64ToArray } from "../crypto";
 
 const DECRYPTION_CONCURRENCY = 1;
 
@@ -31,32 +28,4 @@ export const paginate = async <T>(apiCall: any, listOptions: ListOptions & { vau
     }
   } while (token);
   return results;
-}
-
-export const mergeState = (currentState: any, stateUpdates: any): any => {
-  let newState = lodash.cloneDeepWith(currentState);
-  lodash.mergeWith(
-    newState,
-    stateUpdates,
-    function concatArrays(objValue, srcValue) {
-      if (lodash.isArray(objValue)) {
-        return objValue.concat(srcValue);
-      }
-    });
-  return newState;
-}
-
-export const getEncryptedPayload = (data: ArrayBuffer | string, metadata: EncryptionMetadata)
-  : EncryptedPayload => {
-  const { encryptedKey, iv } = metadata;
-  if (encryptedKey && iv) {
-    return {
-      encryptedKey,
-      encryptedData: {
-        iv: base64ToArray(iv),
-        ciphertext: data as ArrayBuffer
-      }
-    }
-  }
-  return null;
 }

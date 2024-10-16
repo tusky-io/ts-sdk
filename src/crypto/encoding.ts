@@ -1,4 +1,4 @@
-import { toByteArray, fromByteArray } from 'base64-js'
+import { toByteArray, fromByteArray } from "base64-js";
 
 /**
  * Decode base64 string from an array
@@ -39,6 +39,16 @@ function stringToArray(string: string): Uint8Array {
 }
 
 /**
+ * Encode string into base64 string
+ * @param {string} string
+ * @returns {string}
+ */
+function stringToBase64(string: string): string {
+  const byteArray = stringToArray(string)
+  return arrayToBase64(byteArray)
+}
+
+/**
  * Encode JSON object into base64 string
  * @param {Object} json
  * @returns {string}
@@ -56,6 +66,16 @@ function jsonToBase64(json: object): string {
 function base64ToJson(b64string: string): object {
   const byteArray = toByteArray(b64string)
   return JSON.parse(arrayToString(byteArray))
+}
+
+/**
+ * Decode string from base64 string
+ * @param {string} b64string
+ * @returns {Object}
+ */
+function base64ToString(b64string: string): string {
+  const byteArray = toByteArray(b64string)
+  return arrayToString(byteArray)
 }
 
 /**
@@ -108,6 +128,8 @@ function mergeBuffers(buffer1: ArrayBuffer, buffer2: ArrayBuffer) {
 export {
   arrayToBase64,
   base64ToArray,
+  base64ToString,
+  stringToBase64,
   arrayToString,
   stringToArray,
   jsonToBase64,

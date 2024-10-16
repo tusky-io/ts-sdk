@@ -1,32 +1,36 @@
+import { FileSource, fileSourceToTusFile } from "@env/types/file";
 import { status } from "../constants";
 import { ApiClient } from "../api/api-client";
-import { FileSource, createFileLike } from "../types/file";
 import { BadRequest } from "../errors/bad-request";
 import { StreamConverter } from "../util/stream-converter";
-import { File } from "../types";
+import { File, FileDownloadOptions, FileUploadOptions } from "../types";
 import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
-import { BatchModule } from './batch';
-import { isServer } from '../util/platform';
-import { importDynamic } from '../util/import';
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
-import { decryptWithPrivateKey } from "../crypto-lib";
-import { AsymEncryptedPayload } from "../crypto/types";
-import { arrayBufferToArray } from "../crypto";
+import { arrayToString, base64ToJson } from "../crypto";
+import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, decryptWithPrivateKey, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
+import * as tus from 'tus-js-client'
+import { Auth } from "../auth";
+import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
+import { EncryptableHttpStack } from "../crypto/tus/http-stack";
+import { X25519EncryptedPayload } from "../crypto/types";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
-export const BYTES_IN_MB = 1000000;
-export const DEFAULT_CHUNK_SIZE_IN_BYTES = 10 * BYTES_IN_MB;
-export const MINIMAL_CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
-export const CHUNKS_CONCURRENCY = 25;
-export const UPLOADER_POLLING_RATE_IN_MILLISECONDS = 2500;
+export const DEFAULT_FILE_NAME = "unnamed";
 
+export const BYTES_IN_MB = 1000000;
+export const CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
+export const ENCRYPTED_CHUNK_SIZE_IN_BYTES = CHUNK_SIZE_IN_BYTES + AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES;
+
+export const UPLOADER_SERVER_MAX_CONNECTIONS_PER_CLIENT = 20;
 export const EMPTY_FILE_ERROR_MESSAGE = "Cannot upload an empty file";
 
+
 class FileModule {
+
   protected contentType = null as string;
   protected client: ApiClient;
   protected type: "File";
@@ -48,59 +52,130 @@ class FileModule {
     parentId: undefined,
   };
 
+  protected auth: Auth;
+
   constructor(config?: ServiceConfig) {
     this.service = new FileService(config);
+    this.auth = config.auth;
   }
 
-  // public async create(
-  //   file: FileLike,
-  //   options: FileUploadOptions
-  // ): Promise<FileUploadResult> {
-  //   options.public = this.service.isPublic;
-  //   const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE_IN_BYTES;
-  //   if (chunkSize < MINIMAL_CHUNK_SIZE_IN_BYTES) {
-  //     throw new BadRequest("Chunk size can not be smaller than: " + MINIMAL_CHUNK_SIZE_IN_BYTES / BYTES_IN_MB)
-  //   }
-  //   if (file.size > chunkSize) {
-  //     options.chunkSize = chunkSize;
-  //     const tags = this.getFileTags(file, options);
-  //     return await this.uploadChunked(file, tags, options);
-  //   } else {
-  //     const tags = this.getFileTags(file, options);
-  //     return await this.uploadInternal(file, tags, options);
-  //   }
-  // }
+  /**
+   * Generate preconfigured Tus uploader
+   * @param  {string} vaultId
+   * @param  {FileSource} file 
+   *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
+   *    Browser: File | Blob | Uint8Array | ArrayBuffer
+   * @param  {FileUploadOptions} options parent id, file name file mime type, etc
+   * @returns Promise with tus.Upload instance
+   * 
+   *
+   * <b>Example 1 - use in Browser with Uppy upload</b>
+   * 
+   * const uploader = akord.zip.uploader(vaultId)
+   * 
+   * const uppy = new Uppy({
+   *    restrictions: {
+   *      allowedFileTypes: ['.zip', 'application/zip', 'application/x-zip-compressed'],
+   *      maxFileSize: 1000000000,
+   *    },
+   *    autoProceed: false
+   *  })
+   *  .use(Tus, uploader.options)
+   * 
+   * uppy.addFile(file)
+   * uppy.upload()
+   * 
+   * 
+   * <b>Example 2 - use in Nodejs</b>
+   * 
+   * const uploader = akord.zip.uploader(vaultId, file, {
+   *    onSuccess: () => {
+   *      console.log('Upload complete');
+   *    },
+   *    onError: (error) => {
+   *      console.log('Upload error', error);
+   *    },
+   *    onProgress: (progress) => {
+   *      console.log('Upload progress', progress);
+   *    }
+   * })
+   * 
+   * uploader.start()
+   * 
+   */
+  public async uploader(
+    vaultId: string,
+    file: FileSource = null,
+    options: FileUploadOptions = {}
+  ): Promise<tus.Upload> {
+    const vault = await this.service.api.getVault(vaultId);
+
+    let fileLike = null;
+    if (file) {
+      fileLike = await fileSourceToTusFile(file);
+
+      if (fileLike.size === 0) {
+        throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
+      }
+    }
+
+    const upload = new tus.Upload(fileLike as any, {
+      endpoint: `${this.service.api.config.apiUrl}/uploads`,
+      retryDelays: [0, 500, 2000, 5000],
+      metadata: {
+        vaultId: vaultId,
+        parentId: options?.parentId || vaultId,
+        filename: options?.name || fileLike?.name || DEFAULT_FILE_NAME, //auto-populated when using Uppy
+        filetype: options?.mimeType || fileLike?.type || DEFAULT_FILE_TYPE, //auto-populated when using Uppy
+      },
+      uploadDataDuringCreation: true,
+      parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
+      chunkSize: CHUNK_SIZE_IN_BYTES,
+      headers: {
+        ...(await this.auth.getAuthorizationHeader() as Record<string, string>),
+      },
+      httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault),
+      removeFingerprintOnSuccess: true,
+      onError: options.onError,
+      onProgress: options.onProgress,
+      onSuccess: options.onSuccess,
+    })
+    return upload;
+  }
 
 
   /**
    * Upload file
    * @param  {string} vaultId
-   * @param  {FileSource} file file source: web File object, file path, buffer or stream
-   * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
-   * @returns Promise with file id & uri
+   * @param  {FileSource} file 
+   *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
+   *    Browser: File | Blob | Uint8Array | ArrayBuffer
+   * @param  {FileUploadOptions} options parent id, file name file mime type, etc.
+   * @returns Promise with upload id
    */
   public async upload(
     vaultId: string,
     file: FileSource,
     options: FileUploadOptions = {}
-  ): Promise<File> {
-    await this.service.setVaultContext(vaultId);
-    this.service.setParentId(options.parentId ? options.parentId : vaultId);
-
-    const fileLike = await createFileLike(file, { name: file.name, ...options });
-
-    if (fileLike.size === 0) {
-      throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
-    }
-
-    await this.service.setFile(fileLike);
-
-    const fileResult = await this.service.api.createFile({
-      vaultId: vaultId,
-      file: this.service.file,
-      parentId: this.service.parentId
+  ): Promise<string> {
+    const upload = await this.uploader(vaultId, file, options);
+    await new Promise<void>((resolve, reject) => {
+      upload.options.onSuccess = () => {
+        if (options.onSuccess) {
+          options.onSuccess();
+        }
+        resolve();
+      };
+      upload.options.onError = (error) => {
+        if (options.onError) {
+          options.onError(error);
+        }
+        reject(error);
+      };
+      upload.start();
     });
-    return this.service.processFile(fileResult, !this.service.isPublic, this.service.keys);
+    const uploadId = upload.url.split('/').pop();
+    return uploadId;
   }
 
   /**
@@ -110,14 +185,14 @@ class FileModule {
    * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
    * @returns Promise with array of data response & errors if any
    */
-  public async batchUpload(vaultId: string, items: {
-    file: FileSource,
-    options?: FileUploadOptions
-  }[]): Promise<{ data: File[], errors: any[] }> {
-    const batchModule = new BatchModule(this.service);
-    const { data, errors } = await batchModule.batchUpload(vaultId, items);
-    return { data, errors };
-  }
+  // public async batchUpload(vaultId: string, items: {
+  //   file: FileSource,
+  //   options?: FileUploadOptions
+  // }[]): Promise<{ data: File[], errors: any[] }> {
+  //   const batchModule = new BatchModule(this.service);
+  //   const { data, errors } = await batchModule.batchUpload(vaultId, items);
+  //   return { data, errors };
+  // }
 
   /**
    * @param  {string} id
@@ -228,65 +303,46 @@ class FileModule {
     return this.service.api.deleteFile(id);
   }
 
-  public async download(id: string, options: FileChunkedGetOptions = { responseType: 'arraybuffer' }): Promise<ReadableStream<Uint8Array> | ArrayBuffer> {
-    const file = await this.service.api.downloadFile(id, { responseType: options.responseType, public: false });
+  public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
+    const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
     // TODO: send encryption context directly with the file data
-    const fileProto = await this.service.api.getFile(id);
+    const fileMetadata = new File(await this.service.api.getFile(id));
     this.service.setIsPublic(false);
-    if (fileProto.__public__) {
-      return file.fileData as ArrayBuffer;
-    } else {
-      const fileBuffer = arrayBufferToArray(file.fileData as ArrayBuffer);
-      const payload = JSON.parse(new TextDecoder().decode(fileBuffer)) as AsymEncryptedPayload;
-      const vaultEncPrivateKey = fileProto.__keys__.find((key) => key.publicKey === payload.publicKey).encPrivateKey;
-      const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
-      const decryptedFile = await decryptWithPrivateKey(privateKey, payload);
-      return decryptedFile.buffer;
-    }
-    // TODO: handle encrypted files
-    // let stream: ReadableStream<Uint8Array>;
-    // if (this.service.isPublic) {
-    //   stream = file.fileData as ReadableStream<Uint8Array>;
-    // } else {
-    //   const encryptedKey = file.metadata.encryptedKey;
-    //   const iv = file.metadata.iv?.split(',');
-    //   const streamChunkSize = options.chunkSize ? options.chunkSize + AUTH_TAG_LENGTH_IN_BYTES + (iv ? 0 : IV_LENGTH_IN_BYTES) : null;
-    //   if (!this.service.keys && file.metadata.vaultId) {
-    //     await this.service.setVaultContext(file.metadata.vaultId);
-    //   } else {
-    //     const file = await this.service.api.getFile(id);
-    //     await this.service.setVaultContext(file.vaultId);
-    //   }
-    //   stream = await this.service.encrypter.decryptStream(file.fileData as ReadableStream, encryptedKey, streamChunkSize, iv);
-    // }
 
-    // if (options.responseType === 'arraybuffer') {
-    //   return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
-    // }
-    // return stream;
+    let stream: ReadableStream<Uint8Array>;
+    if (fileMetadata.__public__) {
+      stream = file as ReadableStream<Uint8Array>;
+    } else {
+      const aesKey = await this.aesKey(id);
+      const aesCryptoKey = await importKeyFromBase64(aesKey);
+      stream = await decryptStream(file as ReadableStream, aesCryptoKey, fileMetadata.chunkSize);
+    }
+    return stream;
   }
 
-  private async saveFile(path: string, type: string, stream: ReadableStream, skipSave: boolean = false): Promise<string> {
-    if (isServer()) {
-      const fs = importDynamic("fs");
-      const Readable = importDynamic("stream").Readable;
-      return new Promise((resolve, reject) =>
-        Readable.from(stream).pipe(fs.createWriteStream(path))
-          .on('error', error => reject(error))
-          .on('finish', () => resolve(path))
-      );
-    } else {
-      const buffer = await StreamConverter.toArrayBuffer(stream)
-      const blob = new Blob([buffer], { type: type });
-      const url = window.URL.createObjectURL(blob);
-      if (!skipSave) {
-        const a = document.createElement("a");
-        a.download = path;
-        a.href = url
-        a.click();
-      }
-      return url;
+  public async arrayBuffer(id: string): Promise<ArrayBuffer> {
+    const stream = await this.stream(id);
+    return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
+  }
+
+  protected async aesKey(id: string): Promise<string | null> {
+    const fileMetadata = await this.get(id);
+    if (!fileMetadata.encryptedAesKey) {
+      return null;
     }
+    const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as X25519EncryptedPayload;
+
+    if (!fileMetadata.encryptedAesKey) {
+      throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
+    }
+    // decrypt vault's private key
+    const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedAesKey.publicKey).encPrivateKey;
+    const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
+
+    // decrypt AES key with vault's private key
+    const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
+    const aesKey = arrayToString(decryptedKey);
+    return aesKey;
   }
 }
 
@@ -300,41 +356,24 @@ export type FileUploadResult = {
 }
 
 export type Hooks = {
-  progressHook?: (percentageProgress: number, bytesProgress?: number, id?: string) => void,
-  cancelHook?: AbortController
+  onProgress?: ((bytesSent: number, bytesTotal: number) => void) | null,
+  onChunkComplete?: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null,
+  onSuccess?: (() => void) | null,
+  onError?: ((error: Error | tus.DetailedError) => void) | null,
 }
 
-export type FileOptions = {
+export type FileMetadataOptions = {
   name?: string,
   mimeType?: string,
   lastModified?: number
 }
 
-export type FileUploadOptions = Hooks & FileOptions & {
-  public?: boolean,
-  chunkSize?: number,
-  parentId?: string,
-}
-
-export type FileDownloadOptions = Hooks & {
-  path?: string,
-  skipSave?: boolean,
-  public?: boolean,
+export type FileLocationOptions = {
+  parentId?: string
 }
 
 export type FileGetOptions = FileDownloadOptions & {
   responseType?: 'arraybuffer' | 'stream',
-}
-
-export type FileChunkedGetOptions = {
-  responseType?: 'arraybuffer' | 'stream',
-  chunkSize?: number
-}
-
-export type FileVersionData = {
-  [K in keyof File]?: File[K]
-} & {
-  data: ReadableStream<Uint8Array> | ArrayBuffer
 }
 
 export {

@@ -85,7 +85,7 @@ const akord = new Akord({ encrypter: wallet, signer: wallet, plugins: [new PubSu
 ##### use OAuth (Google, Twitch, Facebook)
 ```js
 import { Akord } from "@akord/carmella-sdk";
-const akord = Akord.withAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" });
+const akord = Akord.withOAuth({ authProvider: "Google", redirectUri: "http://localhost:3000" });
 
 // init OAuth flow
 await akord.initOAuthFlow();

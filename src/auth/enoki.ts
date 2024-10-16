@@ -1,12 +1,28 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Unauthorized } from '../errors/unauthorized';
+import { logger } from '../logger';
 
 export const ENOKI_API_URL = 'https://api.enoki.mystenlabs.com/v1';
 
 export interface EnokiClientConfig {
-  apiKey: string;
-  network?: string;
+  apiKey?: string;
+  network?: "mainnet" | "testnet" | "devnet";
+  env?: string;
 }
+
+export const enokiConfig = (env: string) => {
+  switch (env) {
+    case "mainnet":
+      return {
+        publicApiKey: "enoki_public_5313f34194cbfb93bb60354118d85ada"
+      };
+    case "testnet":
+    default:
+      return {
+        publicApiKey: "enoki_public_b0c8cf52ada845c7dfbfe8eef1e9ded2"
+      };
+  }
+};
 
 export interface ZkLoginResponse {
   salt: string;
@@ -27,7 +43,7 @@ export default class EnokiClient {
   network: string;
 
   constructor(config: EnokiClientConfig) {
-    this.apiKey = config.apiKey
+    this.apiKey = config.apiKey || enokiConfig(config.env).publicApiKey;
     this.network = config.network || "devnet";
     if (!this.apiKey) {
       throw new Error("Missing api key configuration. Please provide Enoki API key.");
@@ -47,7 +63,7 @@ export default class EnokiClient {
       }
     );
     if (!response.ok) {
-      console.error(response)
+      logger.error(response);
       throw new Unauthorized("Invalid authorization.");
     }
     return (await response.json()).data;
@@ -70,7 +86,7 @@ export default class EnokiClient {
       }
     );
     if (!response.ok) {
-      console.error(response)
+      logger.error(response);
       throw new Unauthorized("Invalid authorization.");
     }
     return (await response.json()).data;

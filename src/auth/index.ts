@@ -1,17 +1,14 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
-import { Logger } from "../logger";
-import { AuthProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
-import { Conflict } from "../errors/conflict";
-import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519";
+import { logger } from "../logger";
+import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
-import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 import AkordApi from "../api/akord-api";
-import { Env } from "../env";
-
-export const STORAGE_PATH_ACCESS_TOKEN = "carmella_access_token";
-export const STORAGE_PATH_ID_TOKEN = "carmella_id_token";
-export const STORAGE_PATH_REFRESH_TOKEN = "carmella_refresh_token";
+import { Env } from "../types/env";
+import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
+import { BadRequest } from "../errors/bad-request";
+import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
@@ -21,49 +18,75 @@ export type SignPersonalMessageClient = (
   }
 ) => void;
 
+export type WalletAccount = {
+  address: string,
+  publicKey: Uint8Array
+}
+
 export class Auth {
-  private static env: Env
+  private env: Env;
 
-  public static authTokenProvider: () => Promise<string>
+  public authTokenProvider: AuthTokenProvider;
 
-  private static authType: AuthType;
+  private authType: AuthType;
+
+  private jwtClient: JWTClient;
 
   // OAuth
-  private static authProvider: AuthProvider;
-  private static clientId: string;
-  private static redirectUri: string; // OAuth callback url
-  private static storage: Storage; // tokens storage
+  private authProvider: AuthProvider;
+  private clientId: string;
+  private redirectUri: string; // OAuth callback url
+  private storage: Storage; // tokens storage
 
   // Wallet-based auth
-  private static walletType: WalletType;
-  private static walletSignFnClient: SignPersonalMessageClient | null;
-  private static walletSigner: Ed25519Keypair | null;
+  private walletType: WalletType;
+  private walletSignFnClient: SignPersonalMessageClient | null;
+  private walletAccount: WalletAccount | null;
+  private walletSigner: Ed25519Keypair | null;
 
   // API key auth
-  private static apiKey: string
+  private apiKey: string
 
-  private constructor() { }
-
-  public static configure(options: AuthOptions = { authType: "OAuth" }) {
+  constructor(options: AuthOptions = { authType: "OAuth" }) {
     // reset previous configuration
     this.authType = options.authType;
     this.apiKey = options.apiKey;
+    this.env = options.env;
     this.authTokenProvider = options.authTokenProvider;
     // walet-based auth
     this.walletType = options.walletType;
     this.walletSignFnClient = options.walletSignFnClient;
-    this.walletSigner = options.walletSigner;
+    this.walletAccount = options.walletAccount;
+    this.walletSigner = options.walletSigner || options.walletPrivateKey && Ed25519Keypair.fromSecretKey(decodeSuiPrivateKey(options.walletPrivateKey).secretKey);
     // Oauth
     this.authProvider = options.authProvider;
     this.clientId = options.clientId;
     this.redirectUri = options.redirectUri;
-    this.storage = options.storage || sessionStorage;
+    this.storage = options.storage || DEFAULT_STORAGE;
+    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
-  public static async signIn(): Promise<{ address?: string }> {
+  public setEnv(env: Env) {
+    this.env = env;
+    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
+  }
+
+  public async signIn(): Promise<{ address?: string }> {
     switch (this.authType) {
       case "Wallet": {
-        const message = new TextEncoder().encode("hello");
+        let address: string;
+        if (this.walletSignFnClient && this.walletAccount) {
+          address = this.walletAccount.address;
+        } else if (this.walletSigner) {
+          address = this.walletSigner.toSuiAddress();
+        } else {
+          throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
+        }
+        const api = new AkordApi({ env: this.env });
+        const { nonce } = await api.createAuthChallenge({ address });
+
+        const message = new TextEncoder().encode("akord:login:" + nonce);
+
         let signature: string;
         if (this.walletSignFnClient) {
           const res = await new Promise<string>((resolve, reject) => {
@@ -73,11 +96,11 @@ export class Auth {
               },
               {
                 onSuccess: (data: { signature: string }) => {
-                  Logger.log("Message signed on client: " + data.signature);
+                  logger.info("Message signed on client: " + data.signature);
                   resolve(data.signature);
                 },
                 onError: (error: Error) => {
-                  Logger.log("Error signing on client: " + error);
+                  logger.info("Error signing on client: " + error);
                   reject(error);
                 },
               }
@@ -88,12 +111,15 @@ export class Auth {
           const { signature: res } = await this.walletSigner.signPersonalMessage(message);
           signature = res;
         } else {
-          throw new Conflict("Missing wallet signing function for Wallet based auth.");
+          throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
         }
-        const publicKey = await verifyPersonalMessageSignature(message, signature);
-        const address = publicKey.toSuiAddress();
-        const jwt = await new AkordApi({ debug: true, logToFile: true, env: this.env }).verifyAuthChallenge({ signature });
-        this.authTokenProvider = async () => jwt;
+        // const publicKey = await verifyPersonalMessageSignature(message, signature);
+        // const address = publicKey.toSuiAddress();
+
+        const { idToken } = await api.verifyAuthChallenge({ signature, address });
+
+        this.jwtClient.setAddress(address);
+        this.jwtClient.setIdToken(idToken);
         return { address };
       }
       case "OAuth": {
@@ -105,7 +131,8 @@ export class Auth {
           clientId: this.clientId,
           redirectUri: this.redirectUri,
           authProvider: this.authProvider,
-          storage: this.storage
+          storage: this.storage,
+          env: this.env
         });
 
         if (code) {
@@ -114,44 +141,44 @@ export class Auth {
           return { address };
         } else {
           // step 1: if no code in the URL, initiate the OAuth flow
-          Logger.log('No authorization code found, redirecting to OAuth provider...');
+          logger.info('No authorization code found, redirecting to OAuth provider...');
           await aOuthClient.initOAuthFlow();
           return {};
         }
       }
       default:
-        throw new Error(`Missing or unsupported auth type for sign in: ${this.authType}`);
+        throw new BadRequest(`Missing or unsupported auth type for sign in: ${this.authType}`);
     }
   }
 
-  public static signOut(): void {
+  public signOut(): void {
     // clear auth tokens from the storage
-    this.storage.removeItem(STORAGE_PATH_ACCESS_TOKEN);
-    this.storage.removeItem(STORAGE_PATH_ID_TOKEN);
-    this.storage.removeItem(STORAGE_PATH_REFRESH_TOKEN);
+    this.jwtClient.clearTokens();
   }
 
-  public static async initOAuthFlow(): Promise<void> {
+  public async initOAuthFlow(): Promise<void> {
     const aOuthClient = new OAuth({
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
-      storage: this.storage
+      storage: this.storage,
+      env: this.env
     });
     await aOuthClient.initOAuthFlow();
   }
 
-  public static async handleOAuthCallback(): Promise<{ address: string }> {
+  public async handleOAuthCallback(): Promise<{ address: string }> {
     const aOuthClient = new OAuth({
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
-      storage: this.storage
+      storage: this.storage,
+      env: this.env
     });
     return aOuthClient.handleOAuthCallback();
   }
 
-  public static async getAuthorizationHeader(): Promise<AxiosRequestHeaders> {
+  public async getAuthorizationHeader(): Promise<AxiosRequestHeaders> {
     switch (this.authType) {
       case "ApiKey": {
         if (this.apiKey) {
@@ -162,30 +189,46 @@ export class Auth {
         throw new Unauthorized("Please add apiKey into config.");
       }
       case "OAuth": {
-        const aOuthClient = new OAuth({
+        let idToken = this.jwtClient.getIdToken();
+        const oauthClient = new OAuth({
           clientId: this.clientId,
           redirectUri: this.redirectUri,
           authProvider: this.authProvider,
-          storage: this.storage
+          storage: this.storage,
+          env: this.env
         });
-        let idToken = aOuthClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid authorization.");
+          logger.info('Id token not found. Trying to use refresh token...');
+          await oauthClient.refreshTokens();
+          logger.info('Tokens refreshed successfully.');
+          idToken = this.jwtClient.getIdToken();
         }
-        if (aOuthClient.isTokenExpiringSoon(idToken)) {
-          Logger.log('Token is expired or about to expire. Refreshing tokens...');
-          await aOuthClient.refreshTokens();
-          Logger.log('Tokens refreshed successfully.');
-          idToken = aOuthClient.getIdToken();
+        if (this.jwtClient.isTokenExpiringSoon(idToken)) {
+          logger.info('Token is expired or about to expire. Refreshing tokens...');
+          await oauthClient.refreshTokens();
+          logger.info('Tokens refreshed successfully.');
+          idToken = this.jwtClient.getIdToken();
         }
         return {
           "Authorization": `Bearer ${idToken}`
         }
       }
-      case "Wallet":
+      // TODO: consolidate OAuth & Wallet flow with refresh token logic
+      case "Wallet": {
+        let idToken = this.jwtClient.getIdToken();
+        if (!idToken) {
+          throw new Unauthorized("Invalid authorization.");
+        }
+        if (this.jwtClient.isTokenExpiringSoon(idToken, 0)) {
+          throw new Unauthorized("JWT is expired, please log in again.");
+        }
+        return {
+          "Authorization": `Bearer ${idToken}`
+        }
+      }
       case "AuthTokenProvider": {
         try {
-          const token = await this.authTokenProvider();
+          const token = this.authTokenProvider();
           if (token) {
             return {
               "Authorization": `Bearer ${token}`
@@ -193,7 +236,7 @@ export class Auth {
           }
           throw new Unauthorized("Please add authTokenProvider into config.");
         } catch (e) {
-          Logger.error(e)
+          logger.error(e)
           throw new Unauthorized("Invalid authorization.");
         }
       }
@@ -201,13 +244,31 @@ export class Auth {
         throw new Unauthorized(`Missing or unsupported auth type: ${this.authType}`);
     }
   }
+
+  public getAddress(): string {
+    switch (this.authType) {
+      case "OAuth":
+      case "Wallet": {
+        return this.jwtClient.getAddress();
+      }
+      case "AuthTokenProvider": {
+        const token = this.authTokenProvider();
+        if (token) {
+          const address = decode(token).address;
+          return address;
+        }
+        break;
+      }
+      default:
+        return undefined;
+    }
+    return undefined;
+  }
 }
 
-type AuthOptions = {
+export type AuthOptions = {
   authType?: AuthType,
   env?: Env,
-  authTokenProvider?: () => Promise<string>
+  authTokenProvider?: AuthTokenProvider
   apiKey?: string,
 } & OAuthConfig & WalletConfig
-
-Auth.configure()

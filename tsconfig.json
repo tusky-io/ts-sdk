@@ -1,15 +1,31 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "target": "es2015",
+    "target": "ES2020",
     "module": "commonjs",
-    "declaration": true,
-    "outDir": "./lib",
+    "lib": ["ES2020", "WebWorker"],
+    "moduleResolution": "node",
+    "outDir": "./lib/node/types",
+    "baseUrl": "src",
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "allowJs": true,
-    "moduleResolution": "Node"
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "experimentalDecorators": true,
+    "types": ["jest", "node"],
+    
+    "paths": {
+      "@env/types/*": ["types/node/*"],
+      "@env/core/*": ["core/node/*"]
+    },
+    "plugins": [
+      { "transform": "typescript-transform-paths" },
+      { "transform": "typescript-transform-paths", "afterDeclarations": true }
+    ]
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*", "src/__tests__/*"]

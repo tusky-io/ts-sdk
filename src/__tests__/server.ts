@@ -1,18 +1,31 @@
 const express = require('express');
-const app = express();
 
-let authCode = "";
+let server: any;
 
-app.get('/auth', (req, res) => {
-  authCode = req.query.code;
-  console.log("Authorization code: " + authCode);
-  res.send('Authorization code received. You can close this window and go back to the terminal.');
-});
+export const startServer = () => {
+  const app = express();
 
-const server = app.listen(3000, () => {
-  console.log('Server is listening on http://localhost:3000');
-});
+  let authCode = "";
 
-const getAuthCode = () => authCode
+  app.get('/auth', (req, res) => {
+    authCode = req.query.code;
+    console.log("Authorization code: " + authCode);
+    res.send('Authorization code received. You can close this window and go back to the terminal.');
+  });
 
-export { server, getAuthCode }
+  server = app.listen(3000, () => {
+    console.log('Server is listening on http://localhost:3000');
+  });
+
+  const getAuthCode = () => authCode;
+
+  return { server, getAuthCode };
+};
+
+export const stopServer = () => {
+  if (server) {
+    server.close(() => {
+      console.log('Server stopped.');
+    });
+  }
+};

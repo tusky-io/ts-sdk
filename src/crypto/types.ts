@@ -1,12 +1,19 @@
-export type EncryptedPayload = {
-  encryptedData: EncryptedData,
-  encryptedKey: string,
-  publicKey?: string
+export type X25519EncryptedPayload = {
+  ciphertext: string,
+  nonce: string,
+  ephemPublicKey: string,
+  publicKey: string,
 }
 
-export type EncryptedData = {
+export type AESEncryptedPayload = {
   ciphertext: ArrayBufferLike | ReadableStream,
   iv?: ArrayBufferLike
+}
+
+export type EncryptedPayload = {
+  encryptedData: AESEncryptedPayload,
+  encryptedKey: X25519EncryptedPayload,
+  publicKey?: string
 }
 
 export type EncryptOptions = {
@@ -15,9 +22,7 @@ export type EncryptOptions = {
   prefixCiphertextWithIv?: boolean
 }
 
-export type AsymEncryptedPayload = {
-  ciphertext: string,
-  nonce: string,
-  ephemPublicKey: string,
-  publicKey: string,
+export type EncryptionMetadata = {
+  encryptedKey?: string,
+  iv?: string
 }

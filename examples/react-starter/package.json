@@ -5,7 +5,7 @@
   "dependencies": {
     "@mysten/dapp-kit": "^0.14.18",
     "@mysten/sui": "^1.3.0",
-    "@akord/carmella-sdk": "0.21.2",
+    "@akord/carmella-sdk": "0.22.0-dev.26",
     "@tanstack/react-query": "^5.37.1",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -27,6 +27,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "copy:dsw": "cp node_modules/@akord/carmella-sdk/lib/web/sw/worker.js ./public/dsw.js",
     "set:registry": "bash ../../registry.sh",
     "i": "npm run set:registry && npm install"
   },

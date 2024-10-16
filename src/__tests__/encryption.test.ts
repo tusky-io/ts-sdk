@@ -1,9 +1,10 @@
 import faker from '@faker-js/faker';
-import { Akord, AkordWallet, Encrypter } from '../';
-import { cleanup, testDataPath } from './common';
-import { createFileLike } from '../types/file';
+import { Akord } from '../';
+import { cleanup, generateAndSavePixelFile, testDataGeneratedPath, testDataPath } from './common';
+import { promises as fs } from 'fs';
 import { firstFileName } from './data/content';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { status } from '../constants';
 
 jest.setTimeout(3000000);
 
@@ -65,54 +66,81 @@ describe("Testing encryption functions", () => {
     const keypair = new Ed25519Keypair();
     akord = Akord
       .withWallet({ walletSigner: keypair })
-      .withLogger({ debug: true, logToFile: true })
-      .env(process.env.ENV as any)
+      .withLogger({ logLevel: "debug", logToFile: true })
+      .withApi({ env: process.env.ENV as any })
 
     await akord.signIn();
 
     password = faker.random.word();
 
-    const userWallet = await AkordWallet.create(password);
-
-    await akord.me.update({ encPrivateKey: userWallet.encBackupPhrase as any });
+    await akord.me.setupPassword(password);
   });
 
-  it("should retrieve user encryption context", async () => {
-    const user = await akord.me.get();
-    const userWallet = await AkordWallet.importFromEncBackupPhrase(password, user.encPrivateKey as string);
-    const encrypter = new Encrypter({ keypair: userWallet.encryptionKeyPair });
-    akord.withEncrypter(encrypter);
+  it("should set user encryption context from password & persist encryption session with keystore", async () => {
+    await akord.withEncrypter({ password: password, keystore: true });
+  });
+
+  it("should retrieve user context from session", async () => {
+    akord = new Akord({ authType: "Wallet", env: process.env.ENV as any, logLevel: "debug" });
+    await akord.withEncrypter({ keystore: true });
   });
 
   it("should create a private vault", async () => {
     const name = faker.random.words();
-
     const vault = await akord.vault.create(name, { public: false });
-
+    expect(vault.id).toBeTruthy();
+    expect(vault.name).toEqual(name);
+    expect(vault.status).toEqual(status.ACTIVE);
+    expect(vault.public).toEqual(false);
     vaultId = vault.id;
-
-    const object = await akord.vault.get(vault.id);
-    console.log(object);
   });
 
   it("should create a private folder", async () => {
     const folderName = faker.random.words();
     const folder = await akord.folder.create(vaultId, folderName);
-    console.log(folder)
+    expect(folder.id).toBeTruthy();
+    expect(folder.vaultId).toEqual(vaultId);
+    expect(folder.parentId).toEqual(vaultId);
+    expect(folder.status).toEqual(status.ACTIVE);
+    expect(folder.name).toEqual(folderName);
   });
 
-  it("should upload a private file", async () => {
-    const file = await akord.file.upload(vaultId, testDataPath + firstFileName);
-    console.log(file)
+  it("should upload single-chunk encrypted file", async () => {
+    const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
     const type = "image/png";
-    console.log(file)
+    const file = await akord.file.get(id);
     expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.ACTIVE);
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.download(file.id);
-    console.log(response)
-    const filelike = await createFileLike(testDataPath + firstFileName);
-    expect(response).toEqual(await filelike.arrayBuffer());
+    const response = await akord.file.arrayBuffer(file.id);
+    const buffer = await fs.readFile(testDataPath + firstFileName);
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+    expect(response).toEqual(arrayBuffer);
+  });
+
+  it("should upload multi-chunk encrypted file", async () => {
+    const fileName = "11mb.png";
+    await generateAndSavePixelFile(11, testDataGeneratedPath + fileName);
+    const id = await akord.file.upload(vaultId, testDataGeneratedPath + fileName);
+
+    const type = "image/png";
+    const file = await akord.file.get(id);
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.parentId).toEqual(vaultId);
+    expect(file.status).toEqual(status.ACTIVE);
+    expect(file.name).toEqual(fileName);
+    expect(file.mimeType).toEqual(type);
+
+    const response = await akord.file.arrayBuffer(file.id);
+
+    const buffer = await fs.readFile(testDataPath + firstFileName);
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+
+    expect(response).toEqual(arrayBuffer);
   });
 });

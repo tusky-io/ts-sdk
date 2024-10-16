@@ -40,4 +40,56 @@
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
   </body>
+  <script>
+    // This will prevent the sw from restarting
+    let keepAlive = () => {
+      keepAlive = () => {}
+      var ping = location.href.substr(0, location.href.lastIndexOf('/')) + '/ping'
+      var interval = setInterval(() => {
+        if (sw) {
+          sw.postMessage('ping')
+        } else {
+          fetch(ping).then(res => res.text(!res.ok && clearInterval(interval)))
+        }
+      }, 10000)
+    }
+    
+    // message event is the first thing we need to setup a listner for
+    // don't want the opener to do a random timeout - instead they can listen for
+    // the ready event
+    // but since we need to wait for the Service Worker registration, we store the
+    // message for later
+    let messages = []
+    window.onmessage = evt => messages.push(evt)
+    
+    let sw = null
+    let scope = ''
+    
+      // Check if there's an existing service worker and unregister it
+    async function unregisterExistingServiceWorker() {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      registrations.forEach(registration => {
+        registration.unregister();
+      });
+    }
+  
+    // Register a new service worker
+    async function registerServiceWorker() {
+      try {
+        await unregisterExistingServiceWorker();
+        await navigator.serviceWorker.register('/dsw.js');
+      } catch (error) {
+        console.error('Error registering service worker:', error);
+      }
+    }
+  
+    if (navigator.serviceWorker) {
+      registerServiceWorker()
+    } else {
+      // FF can ping sw with fetch from a secure hidden iframe
+      // shouldn't really be possible?
+      keepAlive()
+    }
+    
+    </script>
 </html>

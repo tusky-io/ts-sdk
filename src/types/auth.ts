@@ -1,5 +1,6 @@
-import { SignPersonalMessageClient } from "../auth"
-import { Ed25519Keypair } from "@mysten/sui/dist/cjs/keypairs/ed25519"
+import { SignPersonalMessageClient, WalletAccount } from "../auth"
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519"
+import { Env } from "../types/env";
 
 export type AuthType = "OAuth" | "Wallet" | "ApiKey" | "AuthTokenProvider";
 
@@ -12,12 +13,15 @@ export interface OAuthConfig {
   redirectUri?: string
   clientId?: string,
   storage?: Storage,
+  env?: Env,
 }
 
 export interface WalletConfig {
   walletType?: "Sui"
   walletSignFnClient?: SignPersonalMessageClient
+  walletAccount?: WalletAccount | null
   walletSigner?: Ed25519Keypair
+  walletPrivateKey?: string // private key in hex format
 }
 
 export interface ApiKeyConfig {
@@ -25,14 +29,17 @@ export interface ApiKeyConfig {
 }
 
 export interface AuthTokenProviderConfig {
-  authTokenProvider: () => Promise<string>
+  authTokenProvider: AuthTokenProvider
 }
+
+export type AuthTokenProvider = () => string;
 
 export type CreateChallengeRequestPayload = {
   address: string
 }
 
 export type VerifyChallengeRequestPayload = {
+  address: string,
   signature: string,
 }
 

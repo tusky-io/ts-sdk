@@ -8,21 +8,21 @@ import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { User, UserPublicInfo } from "../types/user";
-import { EncryptedVaultKeyPair, File, Folder } from "../types";
+import { AllowedPaths, EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
-import { Logger } from "../logger";
-import FormData from "form-data";
-import { Buffer } from "buffer";
+import { logger } from "../logger";
 import { httpClient } from "./http";
-import { FileLike } from "../types/file";
 import { ApiKey } from "../types/api-key";
 import { PaymentPlan, PaymentSession } from "../types/payment";
 import { GenerateJWTResponsePayload } from "../types/auth";
+import { InternalError } from "../errors/internal-error";
 
 export class ApiClient {
   private _apiUrl: string;
   private _cdnUrl: string;
+
+  private _auth: Auth;
 
   // API endpoints
   private _meUri: string = "me";
@@ -30,7 +30,7 @@ export class ApiClient {
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
   private _trashUri: string = "trash";
-  private _membershipUri: string = "memberships";
+  private _membershipUri: string = "members";
   private _transactionUri: string = "transactions";
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
@@ -62,16 +62,18 @@ export class ApiClient {
   private _address: string;
   private _role: string;
   private _expiresAt: number;
+  private _allowedStorage: number;
+  private _allowedPaths: AllowedPaths;
 
   // file specific
-  private _file: FileLike;
   private _numberOfChunks: number;
 
   // user specific
   private _picture: string;
   private _termsAccepted: boolean;
   private _trashExpiration: number;
-  private _encPrivateKey: string
+  private _encPrivateKey: string;
+  private _encPrivateKeyBackup: string;
 
   private _autoExecute: boolean
 
@@ -107,10 +109,10 @@ export class ApiClient {
     const clone = new ApiClient();
     clone._apiUrl = this._apiUrl;
     clone._cdnUrl = this._cdnUrl;
+    clone._auth = this._auth;
     clone._resourceId = this._resourceId;
     clone._vaultId = this._vaultId;
     clone._numberOfChunks = this._numberOfChunks;
-    clone._file = this._file;
     clone._public = this._public;
     clone._signature = this._signature;
     clone._digest = this._digest;
@@ -120,10 +122,13 @@ export class ApiClient {
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
+    clone._allowedStorage = this._allowedStorage;
+    clone._allowedPaths = this._allowedPaths;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
     clone._encPrivateKey = this._encPrivateKey;
+    clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
 
     clone._authProvider = this._authProvider;
     clone._redirectUri = this._redirectUri;
@@ -153,6 +158,11 @@ export class ApiClient {
   }): ApiClient {
     this._apiUrl = config.apiUrl;
     this._cdnUrl = config.cdnUrl
+    return this;
+  }
+
+  auth(auth: Auth): ApiClient {
+    this._auth = auth;
     return this;
   }
 
@@ -226,6 +236,16 @@ export class ApiClient {
     return this;
   }
 
+  allowedStorage(allowedStorage: number): ApiClient {
+    this._allowedStorage = allowedStorage;
+    return this;
+  }
+
+  allowedPaths(allowedPaths: AllowedPaths): ApiClient {
+    this._allowedPaths = allowedPaths;
+    return this;
+  }
+
   picture(picture: string): ApiClient {
     this._picture = picture;
     return this;
@@ -243,6 +263,11 @@ export class ApiClient {
 
   encPrivateKey(encPrivateKey: string): ApiClient {
     this._encPrivateKey = encPrivateKey;
+    return this;
+  }
+
+  encPrivateKeyBackup(encPrivateKeyBackup: string): ApiClient {
+    this._encPrivateKeyBackup = encPrivateKeyBackup;
     return this;
   }
 
@@ -273,11 +298,6 @@ export class ApiClient {
 
   address(address: string): ApiClient {
     this._address = address;
-    return this;
-  }
-
-  file(file: any): ApiClient {
-    this._file = file;
     return this;
   }
 
@@ -357,17 +377,19 @@ export class ApiClient {
    * - picture()
    * - termsAccepted()
    * - encPrivateKey()
+   * - encPrivateKeyBackup()
    * @returns {Promise<User>}
    */
   async updateMe(): Promise<User> {
-    if (!this._name && !this._picture && !this._termsAccepted && !this._encPrivateKey) {
+    if (!this._name && !this._picture && !this._termsAccepted && !this._encPrivateKey && !this._encPrivateKeyBackup) {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
       name: this._name,
       picture: this._picture,
       termsAccepted: this._termsAccepted,
-      encPrivateKey: this._encPrivateKey
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
@@ -485,7 +507,7 @@ export class ApiClient {
    */
   async getMembership(): Promise<Membership> {
     return this.get(
-      `${this._apiUrl}/${this._membershipUri}/${this._resourceId}`
+      `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`
     );
   }
 
@@ -581,19 +603,22 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
-        ...(!this._publicRoute ? (await Auth.getAuthorizationHeader()) : {})
+        ...(!this._publicRoute ? (await this._auth.getAuthorizationHeader()) : {})
       },
     } as AxiosRequestConfig;
     if (this._data) {
       config.data = this._data;
     }
-    Logger.log(`Request ${config.method}: ` + config.url);
+    logger.info(`Request ${config.method}: ` + config.url);
+    logger.debug(config);
 
     return await retry(async () => {
       try {
         const response = await this._httpClient(config);
         return response.data;
       } catch (error) {
+        logger.debug(config);
+        logger.debug(error);
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
     });
@@ -604,90 +629,6 @@ export class ApiClient {
     url += "?" + queryParams.toString();
     return url;
   };
-
-  /**
-  *
-  * @requires:
-  * - vaultId()
-  * - file()
-  * @uses:
-  * - parentId()
-  * - autoExecute()
-  * @returns {Promise<File>}
-  */
-  async createFile(): Promise<File> {
-    if (!this._vaultId) {
-      throw new BadRequest(
-        "Missing vault id parameter. Use ApiClient#vaultId() to add it"
-      );
-    }
-    if (!this._file) {
-      throw new BadRequest(
-        "Missing file input. Use ApiClient#file() to add it"
-      );
-    }
-
-    const me = this;
-    let headers = {
-      "Content-Type": "multipart/form-data",
-      ...(await Auth.getAuthorizationHeader())
-    } as Record<string, string>;
-
-    const form = new FormData();
-
-    form.append("vaultId", this._vaultId);
-    form.append("parentId", this._parentId);
-    form.append("name", this._file.name);
-
-    try {
-      const buffer = await this._file.arrayBuffer()
-      // const blob = new Blob([buffer], { type: 'application/octet-stream' });
-      form.append("file", Buffer.from(buffer), { filename: this._file.name, contentType: this._file.type });
-    } catch (e) {
-      form.append("file", this._file, {
-        filename: "file",
-        contentType: "application/octet-stream",
-      });
-    }
-
-    const config = {
-      method: "post",
-      url: `${this._apiUrl}/files?${new URLSearchParams(
-        this._queryParams
-      ).toString()}`,
-      data: form,
-      headers: headers,
-      signal: this._cancelHook ? this._cancelHook.signal : null,
-      onUploadProgress(progressEvent) {
-        if (me._progressHook) {
-          let percentageProgress;
-          let bytesProgress;
-          if (me._totalBytes) {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / me._totalBytes) * 100
-            );
-          } else {
-            bytesProgress = progressEvent.loaded;
-            percentageProgress = Math.round(
-              (bytesProgress / progressEvent.total) * 100
-            );
-          }
-          me._progressHook(percentageProgress, bytesProgress, me._progressId);
-        }
-      },
-    } as AxiosRequestConfig;
-
-    Logger.log(`Request ${config.method}: ` + config.url);
-
-    try {
-      const response = await this._httpClient(config);
-      return response.data;
-    } catch (error) {
-      Logger.error(error)
-      throwError(error.response?.status, error.response?.data?.msg, error);
-    }
-  }
 
   /**
    *
@@ -766,12 +707,12 @@ export class ApiClient {
   }
 
   /**
- *
- * @requires:
- * - address()
- * @returns {Promise<string>}
- */
-  async createAuthChallenge(): Promise<string> {
+   *
+   * @requires:
+   * - address()
+   * @returns {Promise<string>}
+   */
+  async createAuthChallenge(): Promise<{ nonce: string }> {
     if (!this._address) {
       throw new BadRequest(
         "Missing address input. Use ApiClient#address() to add it"
@@ -786,12 +727,19 @@ export class ApiClient {
   }
 
   /**
-*
-* @requires:
-* - signature()
-* @returns {Promise<string>}
-*/
-  async verifyAuthChallenge(): Promise<string> {
+   *
+   * @requires:
+   * - address()
+   * - signature()
+   * @returns {Promise<string>}
+   */
+  async verifyAuthChallenge(): Promise<GenerateJWTResponsePayload> {
+    if (!this._address) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#address() to add it"
+      );
+    }
+
     if (!this._signature) {
       throw new BadRequest(
         "Missing signature input. Use ApiClient#signature() to add it"
@@ -799,6 +747,7 @@ export class ApiClient {
     }
 
     this.data({
+      address: this._address,
       signature: this._signature
     });
 
@@ -971,14 +920,24 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - vaultId()
    * - address()
    * - role()
    * @uses:
    * - expiresAt()
+   * - keys()
+   * - encPrivateKey()
+   * - allowedStorage()
+   * - allowedPaths()
    * - autoExecute()
    * @returns {Promise<Membership>}
    */
   async createMembership(): Promise<Membership> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#vaultId() to add it"
+      );
+    }
     if (!this._address) {
       throw new BadRequest(
         "Missing address input. Use ApiClient#address() to add it"
@@ -994,10 +953,15 @@ export class ApiClient {
       address: this._address,
       role: this._role,
       expiresAt: this._expiresAt,
+      name: this._name,
+      keys: this._keys,
+      encPrivateKey: this._encPrivateKey,
+      allowedStorage: this._allowedStorage,
+      allowedPaths: this._allowedPaths,
       autoExecute: this._autoExecute
     });
 
-    return this.post(`${this._apiUrl}/${this._membershipUri}`);
+    return this.post(`${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`);
   }
 
   /**
@@ -1008,6 +972,7 @@ export class ApiClient {
   * - role()
   * - expiresAt()
   * - status()
+  * - keys()
   * - autoExecute()
   * @returns {Promise<Membership>}
   */
@@ -1021,9 +986,10 @@ export class ApiClient {
       role: this._role,
       expiresAt: this._expiresAt,
       status: this._status,
+      keys: this._keys,
       autoExecute: this._autoExecute
     });
-    return this.patch(`${this._apiUrl}/${this._membershipUri}/${this._resourceId}`);
+    return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`);
   }
 
   /**
@@ -1079,16 +1045,16 @@ export class ApiClient {
     } as RequestInit;
 
     if (!this._public) {
-      config.headers = (await Auth.getAuthorizationHeader()) as any
+      config.headers = (await this._auth.getAuthorizationHeader()) as any
     }
 
     const url = `${this._apiUrl}/files/${this._resourceId}/data`;
 
-    Logger.log(`Request ${config.method}: ` + url);
+    logger.info(`Request ${config.method}: ` + url);
 
     try {
       const response = await fetch(url, config);
-      return { resourceUrl: this._resourceId, response: response };
+      return response;
     } catch (error) {
       throwError(error.response?.status, error.response?.data?.msg, error);
     }
@@ -1109,7 +1075,7 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function retry<T>(
+export async function retry<T>(
   fn: () => Promise<T>,
   retries: number = 5,
   delayMs: number = 1000
@@ -1122,7 +1088,7 @@ async function retry<T>(
     } catch (error) {
       if (retryableErrors.some((type) => error instanceof type)) {
         attempt++;
-        Logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
+        logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
         if (attempt >= retries) {
           throw error;
         }
@@ -1132,5 +1098,5 @@ async function retry<T>(
       }
     }
   }
-  throw new Error("Retry attempts exceeded");
+  throw new InternalError("Retry attempts exceeded");
 }

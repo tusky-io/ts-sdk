@@ -1,4 +1,4 @@
-import { Env } from "./env";
+import { Env } from "./types/env";
 
 export interface Plugin {
     key: PluginKey

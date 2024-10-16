@@ -3,7 +3,7 @@ import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 import { EncryptedVaultKeyPair } from "../../types";
 import { arrayToBase64, base64ToArray, jsonToBase64 } from "../../crypto";
-import { encryptWithPublicKey, generateKeyPair } from "../../crypto-lib";
+import { encryptWithPublicKey, generateKeyPair } from "../../crypto/lib";
 
 class MembershipService extends Service {
 

@@ -2,13 +2,9 @@ import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
 import { EncryptedVaultKeyPair, File } from "../../types";
 import { objects } from "../../constants";
-import { createFileLike, FileLike } from "../../types/file";
-import { arrayBufferToArray, base64ToArray } from "../../crypto";
-import { encryptWithPublicKey } from "../../crypto-lib";
 
 class FileService extends Service {
 
-  file: FileLike
   name: string
 
   constructor(config?: ServiceConfig) {
@@ -37,18 +33,6 @@ class FileService extends Service {
       }
     }
     return file;
-  }
-
-  async setFile(file: FileLike) {
-    if (this.isPublic) {
-      this.file = file;
-    } else {
-      await this.setName(file.name);
-      const fileBuffer = arrayBufferToArray(await file.arrayBuffer());
-      const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
-      const encryptedFile = await encryptWithPublicKey(base64ToArray(currentVaultPublicKey), fileBuffer);
-      this.file = await createFileLike(new TextEncoder().encode(JSON.stringify(encryptedFile)), { name: this.name, mimeType: file.type, lastModified: file.lastModified });
-    }
   }
 
   async setName(name: string) {

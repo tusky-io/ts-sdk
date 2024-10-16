@@ -1,7 +1,5 @@
 import { EncryptedVaultKeyPair } from ".";
-import { arrayToString, base64ToJson, Encryptable, encrypted } from "../crypto";
-import { decryptWithPrivateKey } from "../crypto-lib";
-import Encrypter, { Ed25519EncryptedPayload } from "../encrypter";
+import { Encryptable, encrypted } from "../crypto";
 
 export class Folder extends Encryptable {
   @encrypted() name: string;

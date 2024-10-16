@@ -1,4 +1,4 @@
-import { EncryptedVaultKeyPair } from "."
+import { AllowedPaths, EncryptedVaultKeyPair } from "."
 import { actions, objects } from "../constants"
 
 export interface Transaction {
@@ -57,12 +57,18 @@ export interface CreateMembershipTxPayload {
   address: string,
   role: string,
   status?: string,
+  name?: string,
   expiresAt?: number,
+  keys?: EncryptedVaultKeyPair[],
+  encPrivateKey?: string,
+  allowedStorage?: number,
+  allowedPaths?: AllowedPaths
 }
 
 export interface UpdateMembershipTxPayload {
   id: string,
   role?: string,
   status?: string,
-  expiresAt?: number
+  expiresAt?: number,
+  keys?: Map<string, EncryptedVaultKeyPair[]>
 }

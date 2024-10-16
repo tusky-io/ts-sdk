@@ -1,0 +1,58 @@
+{
+  "name": "uppy-uploads",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@akord/carmella-sdk": "0.21.0-dev.4",
+    "@tanstack/react-query": "^5.37.1",
+    "@uppy/audio": "^2.0.1",
+    "@uppy/compressor": "^2.1.0",
+    "@uppy/dashboard": "^4.1.0",
+    "@uppy/drag-drop": "^4.0.2",
+    "@uppy/dropbox": "^4.1.0",
+    "@uppy/file-input": "^4.0.1",
+    "@uppy/informer": "^4.1.0",
+    "@uppy/progress-bar": "^4.0.0",
+    "@uppy/react": "^4.0.2",
+    "@uppy/screen-capture": "^4.1.0",
+    "@uppy/transloadit": "^4.1.0",
+    "@uppy/webcam": "^4.0.1",
+    "bootstrap": "^5.2.3",
+    "bootstrap-icons": "^1.11.3",
+    "buffer": "^6.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-scripts": "5.0.1",
+    "typescript": "^5.0.4",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "eject": "react-scripts eject",
+    "set:registry": "bash ../../registry.sh",
+    "i": "npm run set:registry && npm install"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0"
+  }
+}

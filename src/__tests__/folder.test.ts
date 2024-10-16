@@ -15,9 +15,9 @@ describe("Testing folder functions", () => {
   let subFolderId: string;
 
   beforeAll(async () => {
-    akord = await initInstance();
+    akord = await initInstance(false);
 
-    const vault = await vaultCreate(akord, true);
+    const vault = await vaultCreate(akord, false);
     vaultId = vault.id;
   });
 
@@ -34,17 +34,20 @@ describe("Testing folder functions", () => {
   });
 
   it("should create files in different folder levels and list them correctly", async () => {
-    const { id, parentId } = await akord.file.upload(vaultId, testDataPath + firstFileName);
-    expect(id).toBeTruthy();
-    expect(parentId).toEqual(vaultId);
+    const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    const file = await akord.file.get(id);
+    expect(file.id).toBeTruthy();
+    expect(file.parentId).toEqual(vaultId);
 
-    const { id: rootFolderFileId, parentId: rootFolderFileParentId } = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: rootFolderId });
+    const rootFolderFileId = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: rootFolderId });
     expect(rootFolderFileId).toBeTruthy();
-    expect(rootFolderFileParentId).toEqual(rootFolderId);
+    const rootFolderFile = await akord.file.get(rootFolderFileId);
+    expect(rootFolderFile.parentId).toEqual(rootFolderId);
 
-    const { id: subFolderFileId, parentId: subFolderFileParentId } = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: subFolderId });
+    const subFolderFileId = await akord.file.upload(vaultId, testDataPath + firstFileName, { parentId: subFolderId });
     expect(subFolderFileId).toBeTruthy();
-    expect(subFolderFileParentId).toEqual(subFolderId);
+    const subFolderFile = await akord.file.get(subFolderFileId);
+    expect(subFolderFile.parentId).toEqual(subFolderId);
 
     const allVaultFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined });
     expect(allVaultFiles?.length).toEqual(3);

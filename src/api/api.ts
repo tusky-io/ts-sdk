@@ -1,10 +1,9 @@
 import { Vault } from "../types/vault";
-import { Membership, MembershipKeys } from "../types/membership";
-import { CreateVaultTxPayload, CreateFileTxPayload, CreateFolderTxPayload, Transaction, UpdateVaultTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, CreateMembershipTxPayload, UpdateFileTxPayload } from "../types/transaction";
+import { Membership } from "../types/membership";
+import { CreateVaultTxPayload, CreateFolderTxPayload, UpdateVaultTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, CreateMembershipTxPayload, UpdateFileTxPayload } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
 import { User, UserMutable, UserPublicInfo } from "../types/user";
-import { EncryptionMetadata } from "../types/encryption";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";
@@ -16,20 +15,19 @@ import { CreateChallengeRequestPayload, GenerateJWTRequestPayload, GenerateJWTRe
 abstract class Api {
   config: ApiConfig
   autoExecute: boolean // if set to true, transactions will be admin signed & executed
+  userAgent: string // client name
 
   constructor() { }
 
   abstract generateJWT(payload: GenerateJWTRequestPayload): Promise<GenerateJWTResponsePayload>
 
-  abstract createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<string>
+  abstract createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<{ nonce: string }>
 
-  abstract verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<string>
+  abstract verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<GenerateJWTResponsePayload>
 
   abstract getMe(): Promise<User>
 
   abstract updateMe(input: UserMutable): Promise<User>
-
-  abstract createFile(tx: CreateFileTxPayload): Promise<File>
 
   abstract updateFile(tx: UpdateFileTxPayload): Promise<File>
 
@@ -57,7 +55,7 @@ abstract class Api {
 
   abstract postTransaction(digest: string, signature: string): Promise<any>
 
-  abstract downloadFile(id: string, options?: FileGetOptions): Promise<{ fileData: ArrayBuffer | ReadableStream, metadata: EncryptionMetadata & { vaultId?: string } }>
+  abstract downloadFile(id: string, options?: FileGetOptions): Promise<ArrayBuffer | ReadableStream<Uint8Array>>
 
   abstract getStorage(): Promise<Storage>
 

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
+    "moduleResolution": "node",
+    "outDir": "./lib/web/types",
+    "baseUrl": "src",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "importHelpers": true,
+    "noEmitHelpers": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "@env/types/*": ["types/web/*"],
+      "@env/core/*": ["core/web/*"]
+    },
+    "plugins": [
+      { "transform": "typescript-transform-paths" },
+      { "transform": "typescript-transform-paths", "afterDeclarations": true }
+    ]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "**/__tests__/*", "src/__tests__/*"]
+}
