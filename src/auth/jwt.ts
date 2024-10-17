@@ -1,4 +1,4 @@
-import { Unauthorized } from "errors/unauthorized";
+import { Unauthorized } from "../errors/unauthorized";
 import { Env } from "../types/env";
 import { isServer } from "../util/platform";
 
