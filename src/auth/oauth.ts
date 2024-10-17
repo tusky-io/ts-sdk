@@ -158,14 +158,18 @@ class OAuth {
         throw new Unauthorized("Session expired. Please log in again.");
       }
 
-      const { idToken, accessToken } = await new AkordApi({ env: this.env }).generateJWT({
+      const result = await new AkordApi({ env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "refreshToken",
         refreshToken: refreshToken
       });
 
-      this.jwtClient.setAccessToken(accessToken);
-      this.jwtClient.setIdToken(idToken);
+      if (!result || !result.accessToken || !result.idToken) {
+        throw new Unauthorized("Invalid session. Please log in again.");
+      }
+
+      this.jwtClient.setAccessToken(result.accessToken);
+      this.jwtClient.setIdToken(result.idToken);
 
     } catch (error) {
       logger.error(error);
