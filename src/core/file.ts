@@ -17,6 +17,7 @@ import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { X25519EncryptedPayload } from "../crypto/types";
+import { onCreateFile, onUpdateFile } from '@akord/carmella-gql/dist/types/subscriptions';
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -36,7 +37,6 @@ class FileModule {
   protected type: "File";
 
   protected service: FileService;
-
   protected parentId?: string;
 
   protected defaultListOptions = {
@@ -323,6 +323,52 @@ class FileModule {
   public async arrayBuffer(id: string): Promise<ArrayBuffer> {
     const stream = await this.stream(id);
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
+  }
+
+  public async onCreate(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void) {
+    this.service.pubsub.client.graphql({
+      query: onCreateFile,
+      variables: {
+          filter: {
+            vaultId: { eq: vaultId }
+          }
+      }
+    }).subscribe({
+      next: async ({ data }) => {
+          const fileProto = data.onCreateFile;
+          if (fileProto && onSuccess) {
+            await onSuccess(new File(fileProto));
+          }
+      },
+      error: (e: Error) => {
+          if (onError) {
+              onError(e);
+          }
+      }
+    });
+  }
+
+  public async onUpdate(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void) {
+    this.service.pubsub.client.graphql({
+      query: onUpdateFile,
+      variables: {
+          filter: {
+            vaultId: { eq: vaultId }
+          }
+      }
+    }).subscribe({
+      next: async ({ data }) => {
+          const fileProto = data.onUpdateFile;
+          if (fileProto && onSuccess) {
+            await onSuccess(new File(fileProto));
+          }
+      },
+      error: (e: Error) => {
+          if (onError) {
+              onError(e);
+          }
+      }
+    });
   }
 
   protected async aesKey(id: string): Promise<string | null> {

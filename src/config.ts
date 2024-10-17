@@ -44,3 +44,7 @@ export interface ApiConfig {
   autoExecute?: boolean,
   auth?: Auth
 }
+
+export interface PubSubConfig {
+  env?: Env
+}
