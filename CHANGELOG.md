@@ -1,3 +1,11 @@
+# [0.22.0-dev.41](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.40...v0.22.0-dev.41) (2024-10-17)
+
+
+### Features
+
+* add pubsub dependencies ([9d294d6](https://github.com/Akord-com/carmella-sdk/commit/9d294d6df3a04bbc3fb8d9bf135a5f7e7b70636a))
+* **file:** add simple pubsub ([fabff03](https://github.com/Akord-com/carmella-sdk/commit/fabff03896313952a25ed8d7304aa798b89838fd))
+
 # [0.22.0-dev.40](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.39...v0.22.0-dev.40) (2024-10-17)
 
 
