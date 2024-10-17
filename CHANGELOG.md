@@ -1,3 +1,10 @@
+# [0.22.0-dev.39](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.38...v0.22.0-dev.39) (2024-10-17)
+
+
+### Bug Fixes
+
+* skip throwing error on getUserId() ([26fb163](https://github.com/Akord-com/carmella-sdk/commit/26fb163591b317af502ce38699822f27fba4e035))
+
 # [0.22.0-dev.38](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.37...v0.22.0-dev.38) (2024-10-17)
 
 
