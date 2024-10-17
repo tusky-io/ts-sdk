@@ -8,7 +8,6 @@ import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
 import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
-import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
 import { Env } from "./types/env";
@@ -20,9 +19,11 @@ import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
 import { UserEncryption } from "./crypto/user-encryption";
+import PubSub from "./api/pubsub";
 
 export class Akord {
   public api: Api;
+  public pubsub: PubSub;
   public address: string;
   private _signer: Signer;
   private _encrypter: Encrypter;
@@ -158,6 +159,7 @@ export class Akord {
   private getConfig() {
     return {
       api: this.api,
+      pubsub: this.pubsub,
       auth: this._auth,
       signer: this._signer,
       encrypter: this._encrypter,
@@ -184,8 +186,8 @@ export class Akord {
     this._env = config.env || 'testnet';
     this._auth = new Auth(config);
     this.api = config.api ? config.api : new AkordApi(this.getConfig());
+    this.pubsub = new PubSub({ env: this._env });
     this.setCurrentSession();
-    Plugins.register(config?.plugins, this._env);
     CacheBusters.cache = config?.cache;
   }
 }
