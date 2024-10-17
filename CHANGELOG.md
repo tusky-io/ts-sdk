@@ -1,3 +1,10 @@
+# [0.22.0-dev.38](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.37...v0.22.0-dev.38) (2024-10-17)
+
+
+### Features
+
+* throw unauthorized errors for invalid auth session ([c5f3461](https://github.com/Akord-com/carmella-sdk/commit/c5f3461fac86408d61c9a1809a90e38c325fba35))
+
 # [0.22.0-dev.37](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.36...v0.22.0-dev.37) (2024-10-16)
 
 
