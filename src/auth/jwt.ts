@@ -90,9 +90,6 @@ class JWTClient {
 
   getUserId() {
     const idToken = this.getIdToken();
-    if (!idToken) {
-      throw new Unauthorized("Invalid session. Please log in again.");
-    }
     return idToken ? decode(idToken).sub : "";
   }
 
