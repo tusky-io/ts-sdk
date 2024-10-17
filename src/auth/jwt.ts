@@ -1,3 +1,4 @@
+import { Unauthorized } from "errors/unauthorized";
 import { Env } from "../types/env";
 import { isServer } from "../util/platform";
 
@@ -29,6 +30,9 @@ class JWTClient {
   }
 
   isTokenExpiringSoon(token: string, bufferTime: number = 10): boolean {
+    if (!token) {
+      throw new Unauthorized("Invalid session. Please log in again.");
+    }
     const decoded = decode(token) as any;
     const currentTime = Math.floor(Date.now() / 1000);
     // check if the token will expire within the next `bufferTime` seconds
@@ -86,6 +90,9 @@ class JWTClient {
 
   getUserId() {
     const idToken = this.getIdToken();
+    if (!idToken) {
+      throw new Unauthorized("Invalid session. Please log in again.");
+    }
     return idToken ? decode(idToken).sub : "";
   }
 
