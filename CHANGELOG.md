@@ -1,3 +1,10 @@
+# [0.22.0-dev.40](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.39...v0.22.0-dev.40) (2024-10-17)
+
+
+### Bug Fixes
+
+* import ([bbb29b4](https://github.com/Akord-com/carmella-sdk/commit/bbb29b443548d07f05ec1fbc327015bc2470a9b4))
+
 # [0.22.0-dev.39](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.38...v0.22.0-dev.39) (2024-10-17)
 
 
