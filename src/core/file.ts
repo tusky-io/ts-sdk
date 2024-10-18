@@ -17,7 +17,8 @@ import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { X25519EncryptedPayload } from "../crypto/types";
-import { onCreateFile, onUpdateFile } from '@akord/carmella-gql/dist/types/subscriptions';
+import { onUpdateFile } from '@akord/carmella-gql/dist/types/subscriptions';
+import { Subscription } from "rxjs";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -325,31 +326,22 @@ class FileModule {
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
   }
 
-  public async onCreate(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void) {
-    this.service.pubsub.client.graphql({
-      query: onCreateFile,
-      variables: {
-          filter: {
-            vaultId: { eq: vaultId }
-          }
-      }
-    }).subscribe({
-      next: async ({ data }) => {
-          const fileProto = data.onCreateFile;
-          if (fileProto && onSuccess) {
-            await onSuccess(new File(fileProto));
-          }
-      },
-      error: (e: Error) => {
-          if (onError) {
-              onError(e);
-          }
-      }
-    });
-  }
-
-  public async onUpdate(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void) {
-    this.service.pubsub.client.graphql({
+  /**
+   * Subscribe to file create/update events.
+   * 
+   * To unsubscribe:
+   * const subscription = subscribe(vaultId, onSuccess, onError)
+   * subscription.unsubscribe()
+   * 
+   * @param  {string} vaultId
+   * @param  {(file: File) => Promise<void>} onSuccess
+   * @param  {(error: Error) => void} onError
+   * @returns {Subscription}
+   */
+  public async subscribe(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void): Promise<Subscription> {
+    await this.service.setVaultContext(vaultId);
+    const keys = this.service.keys;
+    return this.service.pubsub.client.graphql({
       query: onUpdateFile,
       variables: {
           filter: {
@@ -358,10 +350,10 @@ class FileModule {
       }
     }).subscribe({
       next: async ({ data }) => {
-          const fileProto = data.onUpdateFile;
-          if (fileProto && onSuccess) {
-            await onSuccess(new File(fileProto));
-          }
+        const fileProto = data.onUpdateFile;
+        if (fileProto && onSuccess) {
+          await onSuccess(new File(fileProto, keys));
+        }
       },
       error: (e: Error) => {
           if (onError) {

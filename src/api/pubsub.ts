@@ -22,7 +22,7 @@ export default class PubSub {
     });
     this.client = generateClient({
       authMode: 'lambda',
-      authToken: 'custom'
+      authToken: 'custom-authorized'
     });
   }
 }

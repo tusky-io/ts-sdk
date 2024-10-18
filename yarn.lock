@@ -25,10 +25,10 @@
     module-error "^1.0.2"
     run-parallel-limit "^1.1.0"
 
-"@akord/carmella-gql@^0.47.0":
-  version "0.47.0"
-  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@akord/carmella-gql/-/carmella-gql-0.47.0.tgz#cd17cfd3bb7f049219a61ac661cc77cd50865175"
-  integrity sha512-DELSjeQhVQqAX4REuqHTt7tmCjbZ4Q+3MySpMQkYBLv7Em8lAOm3F5YgrOWeRL1r0xkszQ+NSSBc9vNCQPd87Q==
+"@akord/carmella-gql@^0.48.1":
+  version "0.48.1"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@akord/carmella-gql/-/carmella-gql-0.48.1.tgz#a12d8e072d5339c8467455efd6abd980dd6c2757"
+  integrity sha512-3hTn484TYqBzxSsBvd6rdtygcOunFNA/4CkktAukT76HqdTkwIQNF8XCCGMZa/1o/3ISMxtn4GD8QeapS5JoYQ==
 
 "@akord/ts-cacheable@1.0.13":
   version "1.0.13"
