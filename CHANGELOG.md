@@ -1,3 +1,10 @@
+# [0.22.0-dev.42](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.41...v0.22.0-dev.42) (2024-10-18)
+
+
+### Features
+
+* add subscribe on file on module ([0ad126a](https://github.com/Akord-com/carmella-sdk/commit/0ad126a81998ac3e3c86e680a6d9f398cf9fefa2))
+
 # [0.22.0-dev.41](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.40...v0.22.0-dev.41) (2024-10-17)
 
 
