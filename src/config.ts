@@ -1,10 +1,8 @@
 import { Api } from "./api/api"
-import { Plugin } from "./plugin"
 import { Signer } from "./signer"
 import { Env } from "./types/env"
 import { Encrypter } from "./crypto/encrypter"
 import { Logger, LogLevel } from "./logger"
-import AkordApi from "./api/akord-api"
 import { AuthTokenProvider, AuthType } from "./types/auth"
 import { Auth } from "./auth"
 
@@ -17,7 +15,6 @@ export interface ClientConfig {
   cache?: boolean
   api?: Api
   storage?: Storage
-  plugins?: [Plugin]
   authTokenProvider?: AuthTokenProvider
   apiKey?: string,
   userAgent?: string,

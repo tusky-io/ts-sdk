@@ -110,6 +110,7 @@ class Service {
     return jsonToBase64(encryptedMessage);
   }
 
+  // TODO: cache it
   async setVaultContext(vaultId: string) {
     const vault = await this.api.getVault(vaultId);
     this.setVault(vault);
