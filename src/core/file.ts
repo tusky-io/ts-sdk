@@ -341,6 +341,7 @@ class FileModule {
   public async subscribe(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void): Promise<Subscription> {
     await this.service.setVaultContext(vaultId);
     const keys = this.service.keys;
+    const encrypter = this.service.encrypter;
     return this.service.pubsub.client.graphql({
       query: onUpdateFile,
       variables: {
@@ -353,7 +354,7 @@ class FileModule {
         const fileProto = data.onUpdateFile;
         if (fileProto && onSuccess) {
           const file = new File(fileProto, keys);
-          await file.decrypt();
+          await file.decrypt(encrypter);
           await onSuccess(file);
         }
       },
