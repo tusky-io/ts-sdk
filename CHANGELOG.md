@@ -1,3 +1,10 @@
+# [0.22.0-dev.43](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.42...v0.22.0-dev.43) (2024-10-19)
+
+
+### Bug Fixes
+
+* **pubsub:** decrypt data before onSuccess fn call ([b4ac056](https://github.com/Akord-com/carmella-sdk/commit/b4ac0564a97ceeddbb5dde5ca6f87c8775d7298f))
+
 # [0.22.0-dev.42](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.41...v0.22.0-dev.42) (2024-10-18)
 
 
