@@ -1,3 +1,10 @@
+# [0.22.0-dev.44](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.43...v0.22.0-dev.44) (2024-10-19)
+
+
+### Bug Fixes
+
+* **pubsub:** add encrypter in file#decrypt ([6363de7](https://github.com/Akord-com/carmella-sdk/commit/6363de77d90724ac2cf762335b69f5743a81e171))
+
 # [0.22.0-dev.43](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.42...v0.22.0-dev.43) (2024-10-19)
 
 
