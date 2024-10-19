@@ -342,6 +342,7 @@ class FileModule {
     await this.service.setVaultContext(vaultId);
     const keys = this.service.keys;
     const encrypter = this.service.encrypter;
+    const isPublic = this.service.isPublic;
     return this.service.pubsub.client.graphql({
       query: onUpdateFile,
       variables: {
@@ -354,7 +355,9 @@ class FileModule {
         const fileProto = data.onUpdateFile;
         if (fileProto && onSuccess) {
           const file = new File(fileProto, keys);
-          await file.decrypt(encrypter);
+          if (!isPublic) {
+            await file.decrypt(encrypter);
+          }
           await onSuccess(file);
         }
       },
