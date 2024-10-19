@@ -1,3 +1,10 @@
+# [0.22.0-dev.45](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.44...v0.22.0-dev.45) (2024-10-19)
+
+
+### Bug Fixes
+
+* **pubsub:** skip decrypt for public vault ([c62bf4d](https://github.com/Akord-com/carmella-sdk/commit/c62bf4d96c639455b9aab8069bcea645e70f5e0b))
+
 # [0.22.0-dev.44](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.43...v0.22.0-dev.44) (2024-10-19)
 
 
