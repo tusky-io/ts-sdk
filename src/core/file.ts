@@ -352,7 +352,9 @@ class FileModule {
       next: async ({ data }) => {
         const fileProto = data.onUpdateFile;
         if (fileProto && onSuccess) {
-          await onSuccess(new File(fileProto, keys));
+          const file = new File(fileProto, keys);
+          await file.decrypt();
+          await onSuccess(file);
         }
       },
       error: (e: Error) => {
