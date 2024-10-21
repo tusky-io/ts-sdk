@@ -1,3 +1,10 @@
+# [0.22.0-dev.46](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.45...v0.22.0-dev.46) (2024-10-21)
+
+
+### Features
+
+* add vault tags ([21525b3](https://github.com/Akord-com/carmella-sdk/commit/21525b3d068d826db05afb282e297728dee37f83))
+
 # [0.22.0-dev.45](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.44...v0.22.0-dev.45) (2024-10-19)
 
 
