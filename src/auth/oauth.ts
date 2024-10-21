@@ -170,6 +170,9 @@ class OAuth {
 
       this.jwtClient.setAccessToken(result.accessToken);
       this.jwtClient.setIdToken(result.idToken);
+      if (result.refreshToken) {
+        this.jwtClient.setRefreshToken(result.refreshToken);
+      }
 
     } catch (error) {
       logger.error(error);
