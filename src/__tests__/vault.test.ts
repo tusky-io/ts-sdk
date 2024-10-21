@@ -87,4 +87,17 @@ describe("Testing vault functions", () => {
     const vault = await akord.vault.get(vaultId);
     expect(vault.status).toEqual(status.ACTIVE);
   });
+
+  it("should create vault with tags", async () => {
+    const name = faker.random.words();
+
+    const tag1 = faker.random.word();
+    const tag2 = faker.random.word();
+    const vault = await akord.vault.create(name, { public: true, tags: [tag1, tag2] });
+
+    expect(vault.tags).toBeTruthy();
+    expect(vault.tags?.length).toEqual(2);
+    expect(vault.tags).toContain(tag1);
+    expect(vault.tags).toContain(tag2);
+  });
 });

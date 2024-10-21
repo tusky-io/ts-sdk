@@ -56,6 +56,7 @@ export class ApiClient {
   // vault specific
   private _public: boolean
   private _description: string
+  private _tags: Array<string>
   private _keys: Array<EncryptedVaultKeyPair>
 
   // member specific
@@ -118,6 +119,7 @@ export class ApiClient {
     clone._digest = this._digest;
     clone._name = this._name;
     clone._description = this._description;
+    clone._tags = this._tags;
     clone._keys = this._keys;
     clone._address = this._address;
     clone._role = this._role;
@@ -193,6 +195,11 @@ export class ApiClient {
 
   description(description: string): ApiClient {
     this._description = description;
+    return this;
+  }
+
+  tags(tags: string[]): ApiClient {
+    this._tags = tags;
     return this;
   }
 
@@ -841,6 +848,7 @@ export class ApiClient {
    * @uses:
    * - description()
    * - public()
+   * - tags()
    * - keys()
    * - autoExecute()
    * @returns {Promise<Vault>}
@@ -856,6 +864,7 @@ export class ApiClient {
       name: this._name,
       description: this._description,
       public: this._public,
+      tags: this._tags,
       keys: this._keys,
       autoExecute: this._autoExecute
     });

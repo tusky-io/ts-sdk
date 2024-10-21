@@ -125,6 +125,7 @@ export default class AkordApi extends Api {
       .public(tx.public)
       .name(tx.name)
       .description(tx.description)
+      .tags(tx.tags)
       .keys(tx.keys)
       .autoExecute(this.autoExecute)
       .createVault();

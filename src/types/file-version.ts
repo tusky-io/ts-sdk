@@ -21,7 +21,6 @@ export class File extends Encryptable {
 
   vaultId: string;
   parentId?: string;
-  tags?: string[];
 
   // vault context
   __public__?: boolean;
