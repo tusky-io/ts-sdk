@@ -1,3 +1,10 @@
+# [0.22.0-dev.47](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.46...v0.22.0-dev.47) (2024-10-21)
+
+
+### Bug Fixes
+
+* set new refresh token if present in the response ([dcff6c8](https://github.com/Akord-com/carmella-sdk/commit/dcff6c8aec52ff9804993c5074a163095ec1cf68))
+
 # [0.22.0-dev.46](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.45...v0.22.0-dev.46) (2024-10-21)
 
 
