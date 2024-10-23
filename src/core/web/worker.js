@@ -112,7 +112,7 @@ async function decryptStream(id, options) {
   if (externalRange) {
     const headers = {
       'Accept-Range': 'bytes',
-      'Content-Range': `bytes ${externalRange.start}-${externalRange.end}/${file.size}`,
+      'Content-Range': `bytes ${externalRange.start}-${externalRange.end}/${externalRange.size}`,
       'Content-Type': response.headers.get('Content-Type'),
       'Content-Length': externalRange.end - externalRange.start
     };
@@ -179,13 +179,21 @@ function getExternalRange(range, file) {
   const byteStart = parseInt(byteStartEnd[0]);
   const byteEnd = byteStartEnd[1] ? parseInt(byteStartEnd[1]) : null;
   if (!file.key) {
-    return { start: byteStart, end: byteEnd }
+    return { start: byteStart, end: byteEnd, size: file.size }
   }
-
-  const chunkSize = file.chunkSize ?? file.size;
+  
+  const chunkSize = file.chunkSize ?? DEFAUTL_CHUNK_SIZE;
+  
+  let unencryptedFileSize;
+  if (file.numberOfChunks && file.numberOfChunks > 0) {
+    unencryptedFileSize = file.size - file.numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
+  } else {
+    const numberOfChunks = Math.ceil(file.size / chunkSize)
+    unencryptedFileSize = file.size - numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
+  }
   const start = byteStart - Math.floor(byteStart / chunkSize) * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
   const end = byteEnd ? byteEnd - Math.ceil(byteEnd / chunkSize) * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES) : '';
-  return { start, end }
+  return { start, end, size: unencryptedFileSize }
 }
 
 function getChunkedFileRange(range, file) {
