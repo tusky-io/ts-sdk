@@ -78,7 +78,7 @@ export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
       await akord.folder.deletePermanently(folder.id);
     }
     await new Promise((resolve) => setTimeout(resolve, 10000));
-    await akord.vault.deletePermanently(vaultId);
+    await akord.vault.delete(vaultId);
   }
 }
 
