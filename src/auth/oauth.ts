@@ -152,31 +152,34 @@ class OAuth {
   }
 
   async refreshTokens(): Promise<void> {
-    try {
-      const refreshToken = this.jwtClient.getRefreshToken();
-      if (!refreshToken) {
-        throw new Unauthorized("Session expired. Please log in again.");
+    if (!this.jwtClient.getRefreshInProgress()) {
+      this.jwtClient.setRefreshInProgress(true);
+      try {
+        const refreshToken = this.jwtClient.getRefreshToken();
+        if (!refreshToken) {
+          throw new Unauthorized("Session expired. Please log in again.");
+        }
+        const result = await new AkordApi({ env: this.env }).generateJWT({
+          authProvider: this.authProvider,
+          grantType: "refreshToken",
+          refreshToken: refreshToken
+        });
+
+        if (!result || !result.accessToken || !result.idToken) {
+          throw new Unauthorized("Invalid session. Please log in again.");
+        }
+
+        this.jwtClient.setAccessToken(result.accessToken);
+        this.jwtClient.setIdToken(result.idToken);
+        if (result.refreshToken) {
+          this.jwtClient.setRefreshToken(result.refreshToken);
+        }
+        this.jwtClient.setRefreshInProgress(false);
+      } catch (error) {
+        logger.error(error);
+        this.jwtClient.setRefreshInProgress(false);
+        throw new Unauthorized("Failed to refresh tokens.");
       }
-
-      const result = await new AkordApi({ env: this.env }).generateJWT({
-        authProvider: this.authProvider,
-        grantType: "refreshToken",
-        refreshToken: refreshToken
-      });
-
-      if (!result || !result.accessToken || !result.idToken) {
-        throw new Unauthorized("Invalid session. Please log in again.");
-      }
-
-      this.jwtClient.setAccessToken(result.accessToken);
-      this.jwtClient.setIdToken(result.idToken);
-      if (result.refreshToken) {
-        this.jwtClient.setRefreshToken(result.refreshToken);
-      }
-
-    } catch (error) {
-      logger.error(error);
-      throw new Unauthorized("Failed to refresh tokens.");
     }
   };
 }
