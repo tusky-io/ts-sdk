@@ -1,3 +1,10 @@
+# [0.22.0-dev.48](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.47...v0.22.0-dev.48) (2024-10-23)
+
+
+### Bug Fixes
+
+* **dsw:** correct external range request header calculation ([508080e](https://github.com/Akord-com/carmella-sdk/commit/508080e8678c53e557833ee25bfd46b60ce3e49d))
+
 # [0.22.0-dev.47](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.46...v0.22.0-dev.47) (2024-10-21)
 
 
