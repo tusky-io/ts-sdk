@@ -1,14 +1,12 @@
 import { Akord } from "../akord";
 import { Forbidden } from "../errors/forbidden";
-import { cleanup, initInstance, setupVault, testDataPath, vaultCreate } from "./common";
+import { cleanup, initInstance, isEncrypted, setupVault, testDataPath, vaultCreate } from "./common";
 import faker from '@faker-js/faker';
 import { firstFileName, secondFileName } from "./data/content";
 
 let akord: Akord;
 
 jest.setTimeout(3000000);
-
-const isPublic = false;
 
 describe("Testing airdrop actions", () => {
   let vaultId: string;
@@ -18,14 +16,17 @@ describe("Testing airdrop actions", () => {
   let airdropeePassword: string;
 
   beforeAll(async () => {
-    // set up private vault
-    akord = await initInstance(isPublic);
+    akord = await initInstance(!isEncrypted);
 
-    const vault = await vaultCreate(akord, isPublic);
+    const vault = await vaultCreate(akord, !isEncrypted);
     vaultId = vault.id;
   });
 
-  describe("Sharing vault", () => {
+  afterAll(async () => {
+    await cleanup(akord, vaultId);
+  });
+
+  describe(`Sharing ${isEncrypted ? "private" : "public"} vault`, () => {
     it("should only list owner for all members of the vault", async () => {
       const members = await akord.vault.members(vaultId);
 
@@ -40,28 +41,28 @@ describe("Testing airdrop actions", () => {
 
       const { identityPrivateKey, password, membership } = await akord.vault.airdropAccess(vaultId, { expiresAt: expiresAt, role });
       expect(identityPrivateKey).toBeTruthy();
-      isPublic ? expect(password).toBeFalsy() : expect(password).toBeTruthy();
+      isEncrypted ? expect(password).toBeTruthy() : expect(password).toBeFalsy();
 
       expect(membership).toBeTruthy();
       expect(membership.id).toBeTruthy();
       expect(membership.memberAddress).toBeTruthy();
       expect(membership.role).toEqual(role);
       expect(membership.expiresAt).toEqual(expiresAt.toString());
-      isPublic ? expect(membership.keys).toBeFalsy() : expect(membership.keys).toBeTruthy();
+      isEncrypted ? expect(membership.keys).toBeTruthy() : expect(membership.keys).toBeFalsy();
     });
 
     it("should airdrop access with link name identifier", async () => {
       const name = faker.random.words(2);
       const { identityPrivateKey, password, membership } = await akord.vault.airdropAccess(vaultId, { name });
       expect(identityPrivateKey).toBeTruthy();
-      isPublic ? expect(password).toBeFalsy() : expect(password).toBeTruthy();
+      isEncrypted ? expect(password).toBeTruthy() : expect(password).toBeFalsy();
 
       expect(membership).toBeTruthy();
       expect(membership.id).toBeTruthy();
       expect(membership.memberAddress).toBeTruthy();
       expect(membership.memberDetails).toBeTruthy();
       expect(membership.memberDetails.name).toEqual(name);
-      isPublic ? expect(membership.keys).toBeFalsy() : expect(membership.keys).toBeTruthy();
+      isEncrypted ? expect(membership.keys).toBeTruthy() : expect(membership.keys).toBeFalsy();
     });
 
     it("should airdrop access with user specified password and no expiration date", async () => {
@@ -86,6 +87,7 @@ describe("Testing airdrop actions", () => {
     it("should get vault by airdropee", async () => {
       const memberAkord = await Akord
         .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+        .withApi({ env: process.env.ENV as any })
         .signIn();
 
       expect(memberAkord.address).toEqual(airdropeeAddress);
@@ -128,6 +130,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberAkord = await Akord
           .withWallet({ walletPrivateKey: airdropeeIdentityPrivateKey })
+          .withApi({ env: process.env.ENV as any })
           .signIn();
 
         await memberAkord.withEncrypter({ password: airdropeePassword });
@@ -139,7 +142,7 @@ describe("Testing airdrop actions", () => {
     });
   });
 
-  describe("Sharing a part of a vault", () => {
+  describe(`Sharing a part of a ${isEncrypted ? "private" : "public"} vault`, () => {
     let viewerIdentityPrivateKey: string;
     let viewerPassword: string;
     let contributorIdentityPrivateKey: string;
@@ -184,6 +187,7 @@ describe("Testing airdrop actions", () => {
     it("should get the file metadata by the viewer member", async () => {
       const memberAkord = await Akord
         .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+        .withApi({ env: process.env.ENV as any })
         .signIn();
 
       await memberAkord.withEncrypter({ password: viewerPassword });
@@ -196,6 +200,7 @@ describe("Testing airdrop actions", () => {
     it("should download the file by the viewer member", async () => {
       const memberAkord = await Akord
         .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+        .withApi({ env: process.env.ENV as any })
         .signIn();
 
       await memberAkord.withEncrypter({ password: viewerPassword });
@@ -208,6 +213,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberAkord = await Akord
           .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+          .withApi({ env: process.env.ENV as any })
           .signIn();
 
         await memberAkord.withEncrypter({ password: viewerPassword });
@@ -220,6 +226,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberAkord = await Akord
           .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+          .withApi({ env: process.env.ENV as any })
           .signIn();
 
         await memberAkord.withEncrypter({ password: viewerPassword });
@@ -231,6 +238,7 @@ describe("Testing airdrop actions", () => {
     it("should download the file by the contributor member", async () => {
       const memberAkord = await Akord
         .withWallet({ walletPrivateKey: contributorIdentityPrivateKey })
+        .withApi({ env: process.env.ENV as any })
         .signIn();
 
       await memberAkord.withEncrypter({ password: contributorPassword });
@@ -242,6 +250,7 @@ describe("Testing airdrop actions", () => {
     it("should rename the file by the contributor member", async () => {
       const memberAkord = await Akord
         .withWallet({ walletPrivateKey: contributorIdentityPrivateKey })
+        .withApi({ env: process.env.ENV as any })
         .signIn();
 
       await memberAkord.withEncrypter({ password: contributorPassword });
@@ -256,6 +265,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberAkord = await Akord
           .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+          .withApi({ env: process.env.ENV as any })
           .signIn();
 
         await memberAkord.withEncrypter({ password: viewerPassword });
@@ -272,6 +282,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberAkord = await Akord
         .withWallet({ walletPrivateKey: viewerIdentityPrivateKey })
+        .withApi({ env: process.env.ENV as any })
         .signIn();
 
       await memberAkord.withEncrypter({ password: viewerPassword });
@@ -284,6 +295,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberAkord = await Akord
         .withWallet({ walletPrivateKey: contributorIdentityPrivateKey })
+        .withApi({ env: process.env.ENV as any })
         .signIn();
 
       await memberAkord.withEncrypter({ password: contributorPassword });

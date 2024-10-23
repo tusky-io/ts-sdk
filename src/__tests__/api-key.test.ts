@@ -9,7 +9,7 @@ jest.setTimeout(3000000);
 describe("Testing api key functions", () => {
 
   beforeAll(async () => {
-    akord = await initInstance();
+    akord = await initInstance(false);
   });
 
   afterAll(async () => {

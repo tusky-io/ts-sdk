@@ -12,7 +12,10 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 export const TESTING_ENV = "testnet";
 
-export async function initInstance(isPublic = true): Promise<Akord> {
+// check if the encrypted flag is present
+export const isEncrypted = true || process.argv.includes('--encrypted');
+
+export async function initInstance(isEncrypted = true): Promise<Akord> {
   let akord: Akord;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
@@ -42,7 +45,7 @@ export async function initInstance(isPublic = true): Promise<Akord> {
       .withApi({ env: process.env.ENV as any })
     await akord.signIn();
   }
-  if (!isPublic) {
+  if (isEncrypted) {
     const password = faker.random.word();
     await akord.me.setupPassword(password);
     await akord.withEncrypter({ password: password, keystore: true });
@@ -50,9 +53,9 @@ export async function initInstance(isPublic = true): Promise<Akord> {
   return akord;
 }
 
-export async function setupVault(isPublic = false): Promise<string> {
-  const akord = await initInstance(isPublic);
-  const vault = await vaultCreate(akord, isPublic);
+export async function setupVault(isEncrypted = true): Promise<string> {
+  const akord = await initInstance(isEncrypted);
+  const vault = await vaultCreate(akord, isEncrypted);
   return vault.id;
 }
 
@@ -60,13 +63,28 @@ export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   stopServer();
   if (akord && vaultId) {
+    const files = await akord.file.listAll({ vaultId: vaultId, parentId: undefined });
+    for (const file of files) {
+      if (file.status !== status.DELETED) {
+        await akord.file.delete(file.id);
+      }
+      await akord.file.deletePermanently(file.id);
+    }
+    const folders = await akord.folder.listAll({ vaultId: vaultId, parentId: undefined });
+    for (const folder of folders) {
+      if (folder.status !== status.DELETED) {
+        await akord.folder.delete(folder.id);
+      }
+      await akord.folder.deletePermanently(folder.id);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10000));
     await akord.vault.deletePermanently(vaultId);
   }
 }
 
-export const vaultCreate = async (akord: Akord, isPublic: boolean = false) => {
+export const vaultCreate = async (akord: Akord, isEncrypted: boolean = true) => {
   const name = faker.random.words();
-  const { id } = await akord.vault.create(name, { public: isPublic });
+  const { id } = await akord.vault.create(name, { public: !isEncrypted });
 
   // const membership = await akord.membership.get(membershipId);
   // expect(membership.status).toEqual("ACCEPTED");

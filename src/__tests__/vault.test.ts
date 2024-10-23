@@ -1,6 +1,6 @@
 import { Akord } from "../index";
 import faker from '@faker-js/faker';
-import { cleanup, initInstance, setupVault, vaultCreate } from './common';
+import { cleanup, initInstance, isEncrypted, setupVault, vaultCreate } from './common';
 import { BadRequest } from "../errors/bad-request";
 import { status } from "../constants";
 
@@ -8,13 +8,13 @@ let akord: Akord;
 
 jest.setTimeout(3000000);
 
-describe("Testing vault functions", () => {
+describe(`Testing ${isEncrypted ? "private" : "public"} vault functions`, () => {
   let vaultId: string;
 
   beforeAll(async () => {
-    akord = await initInstance();
+    akord = await initInstance(isEncrypted);
 
-    const vault = await vaultCreate(akord, true);
+    const vault = await vaultCreate(akord, isEncrypted);
     vaultId = vault.id;
   });
 
@@ -22,8 +22,8 @@ describe("Testing vault functions", () => {
     await cleanup(akord, vaultId);
   });
 
-  it("should create another vault", async () => {
-    await vaultCreate(akord, true);
+  it(`should create another ${isEncrypted ? "private" : "public"} vault`, async () => {
+    await vaultCreate(akord, isEncrypted);
   });
 
   it("should list user vaults", async () => {
