@@ -135,7 +135,7 @@ class FileModule {
       headers: {
         ...(await this.auth.getAuthorizationHeader() as Record<string, string>),
       },
-      httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault),
+      httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault, this.service.encrypter),
       removeFingerprintOnSuccess: true,
       onError: options.onError,
       onProgress: options.onProgress,
