@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { EncryptedVaultKeyPair } from "../../types";
 import { Encrypter } from "../encrypter";
-import { EncryptedPayload, X25519EncryptedPayload } from "../types";
+import { EncryptedPayload } from "../types";
 import { arrayToString, base64ToJson } from "../encoding";
 import { X25519KeyPair } from "../keypair";
 

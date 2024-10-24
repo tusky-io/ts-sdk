@@ -22,6 +22,9 @@ import { logger } from '../logger';
 import { DecryptStreamController, StreamSlicer, transformStream } from './stream';
 import { ReadableStream } from "web-streams-polyfill/ponyfill";
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
+import BIP32Factory from 'bip32';
+import * as ecc from 'tiny-secp256k1';
+import * as bip39 from 'bip39';
 
 const HASH_ALGORITHM = 'SHA-256'
 
@@ -389,6 +392,21 @@ async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoK
   return null;
 }
 
+async function deriveAesKeyFromMnemonic(mnemonic: string): Promise<CryptoKey> {
+  // generate seed from the mnemonic
+  const seed: Buffer = await bip39.mnemonicToSeed(mnemonic);
+
+  // derive master key from the seed
+  const bip32 = BIP32Factory(ecc);
+  const root = bip32.fromSeed(seed);
+  // const child = root.derivePath("m/44'/0'/0'/0/0");
+
+  const masterKey = root.privateKey;
+
+  const aesKey = await importKeyFromArray(masterKey);
+  return aesKey;
+}
+
 export {
   exportKeyToArray,
   importKeyFromArray,
@@ -408,5 +426,6 @@ export {
   generateKeyPair,
   encryptWithPublicKey,
   decryptWithPrivateKey,
-  decryptStream
+  decryptStream,
+  deriveAesKeyFromMnemonic
 }

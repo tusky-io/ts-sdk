@@ -1,4 +1,4 @@
-import { decryptAes, decryptWithPrivateKey, encryptAes, encryptWithPublicKey, exportKeyToArray, exportKeyToBase64, generateKey, importKeyFromArray, importKeyFromBase64 } from './lib';
+import { decryptAes, decryptWithPrivateKey, encryptAes, encryptWithPublicKey, exportKeyToArray, generateKey, importKeyFromArray } from './lib';
 import { base64ToJson, jsonToBase64 } from './encoding';
 import { X25519KeyPair } from './keypair';
 import { AESEncryptedPayload, EncryptedPayload, X25519EncryptedPayload } from './types';

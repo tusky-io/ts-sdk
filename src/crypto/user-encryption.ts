@@ -1,15 +1,13 @@
 import { arrayToBase64, base64ToArray, base64ToJson, jsonToBase64 } from './encoding';
-import { decryptAes, deriveAesKey, encryptAes, exportKeyToArray, generateKey, generateKeyPair, importKeyFromArray } from './lib';
+import { decryptAes, deriveAesKey, deriveAesKeyFromMnemonic, encryptAes, exportKeyToArray, generateKey, generateKeyPair, importKeyFromArray } from './lib';
 import Keystore from './storage/keystore';
-import * as bip39 from 'bip39';
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
 import { logger } from '../logger';
 import { X25519KeyPair } from './keypair';
 import { DEFAULT_STORAGE, JWTClient } from '../auth/jwt';
 import { Env } from '../types';
-import BIP32Factory from 'bip32';
-import * as ecc from 'tiny-secp256k1';
-import { AESEncryptedPayload, X25519EncryptedPayload } from './types';
+import { AESEncryptedPayload } from './types';
+import * as bip39 from 'bip39';
 
 const SALT_LENGTH = 16;
 const SESSION_KEY_PATH = "session_key";
@@ -204,7 +202,7 @@ export class UserEncryption {
   */
   private async encryptWithBackupPhrase(backupPhrase: string, plaintext: Uint8Array): Promise<string> {
     try {
-      const aesKey = await deriveKeyFromMnemonic(backupPhrase);
+      const aesKey = await deriveAesKeyFromMnemonic(backupPhrase);
 
       const encryptedPayload = await encryptAes(plaintext, aesKey) as string;
 
@@ -225,7 +223,7 @@ export class UserEncryption {
    */
   private async decryptWithBackupPhrase(backupPhrase: string, encryptedPayload: string): Promise<Uint8Array> {
     try {
-      const aesKey = await deriveKeyFromMnemonic(backupPhrase);
+      const aesKey = await deriveAesKeyFromMnemonic(backupPhrase);
 
       const plaintext = await decryptAes(encryptedPayload, aesKey);
       return new Uint8Array(plaintext);
@@ -243,35 +241,10 @@ export class UserEncryption {
 
   private async saveSessionInKeystore(passwordKey: CryptoKey) {
     const sessionKey = await generateKey();
-    // const exportedPasswordKey = await crypto.subtle.exportKey("raw", passwordKey);
     const exportedPasswordKey = await exportKeyToArray(passwordKey);
     const encryptedPasswordKey = await encryptAes(exportedPasswordKey, sessionKey) as string;
-    // const iv = crypto.getRandomValues(new Uint8Array(12));
-    // const encryptedPasswordKey = await crypto.subtle.encrypt(
-    //   {
-    //     name: "AES-GCM",
-    //     iv: iv,
-    //   },
-    //   sessionKey,
-    //   exportedPasswordKey
-    // );
     this.storage.setItem(this.encryptedPasswordKeyPath, encryptedPasswordKey);
     const keystore = await Keystore.instance();
     await keystore.store(this.sessionKeyPath, sessionKey);
   }
-}
-
-async function deriveKeyFromMnemonic(mnemonic: string): Promise<CryptoKey> {
-  // generate seed from the mnemonic
-  const seed: Buffer = await bip39.mnemonicToSeed(mnemonic);
-
-  // derive master key from the seed
-  const bip32 = BIP32Factory(ecc);
-  const root = bip32.fromSeed(seed);
-  // const child = root.derivePath("m/44'/0'/0'/0/0");
-
-  const masterKey = root.privateKey;
-
-  const aesKey = await importKeyFromArray(masterKey);
-  return aesKey;
 }
