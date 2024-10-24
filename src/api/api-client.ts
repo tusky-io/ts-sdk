@@ -1086,6 +1086,7 @@ function delay(ms: number): Promise<void> {
 
 export async function retry<T>(
   fn: () => Promise<T>,
+  force: boolean = false,
   retries: number = 5,
   delayMs: number = 1000
 ): Promise<T> {
@@ -1095,7 +1096,7 @@ export async function retry<T>(
     try {
       return await fn();
     } catch (error) {
-      if (retryableErrors.some((type) => error instanceof type)) {
+      if (force || retryableErrors.some((type) => error instanceof type)) {
         attempt++;
         logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
         if (attempt >= retries) {
