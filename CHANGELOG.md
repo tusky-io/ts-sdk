@@ -1,3 +1,10 @@
+# [0.22.0-dev.50](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.49...v0.22.0-dev.50) (2024-10-24)
+
+
+### Bug Fixes
+
+* prevent simultaneous refresh token calls ([3843890](https://github.com/Akord-com/carmella-sdk/commit/3843890ff68929f4df2db30641234d99c225c60f))
+
 # [0.22.0-dev.49](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.48...v0.22.0-dev.49) (2024-10-24)
 
 
