@@ -49,10 +49,10 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
     const subFolderFile = await akord.file.get(subFolderFileId);
     expect(subFolderFile.parentId).toEqual(subFolderId);
 
-    const allVaultFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined });
+    const allVaultFiles = await akord.file.listAll({ vaultId: vaultId });
     expect(allVaultFiles?.length).toEqual(3);
 
-    const vaultRootFiles = await akord.file.listAll({ vaultId: vaultId });
+    const vaultRootFiles = await akord.file.listAll({ parentId: vaultId });
     expect(vaultRootFiles?.length).toEqual(1);
     expect(vaultRootFiles[0].id).toEqual(id);
     expect(vaultRootFiles[0].parentId).toEqual(vaultId);
@@ -69,9 +69,9 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
 
     // should delete a file and list active/deleted files corretly
     await akord.file.delete(subFolderFileId);
-    const allFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined });
-    const activeFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined, status: "active" });
-    const deletedFiles = await akord.file.listAll({ vaultId: vaultId, parentId: undefined, status: "deleted" });
+    const allFiles = await akord.file.listAll({ vaultId: vaultId });
+    const activeFiles = await akord.file.listAll({ vaultId: vaultId, status: "active" });
+    const deletedFiles = await akord.file.listAll({ vaultId: vaultId, status: "deleted" });
     expect(allFiles?.length).toEqual(3);
     expect(activeFiles?.length).toEqual(2);
     expect(deletedFiles?.length).toEqual(1);
@@ -82,7 +82,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
 
     const rootFolder = await akord.folder.get(rootFolderId);
     expect(rootFolder.status).toEqual(status.DELETED);
-    const deletedFolders = await akord.folder.listAll({ vaultId: vaultId, parentId: undefined, status: "deleted" });
+    const deletedFolders = await akord.folder.listAll({ vaultId: vaultId, status: "deleted" });
     expect(deletedFolders?.length).toEqual(1);
 
     // this part is async
@@ -109,7 +109,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
   });
 
   it("should list all root folders", async () => {
-    const folders = await akord.folder.listAll({ vaultId });
+    const folders = await akord.folder.listAll({ parentId: vaultId });
     expect(folders?.length).toEqual(1);
     expect(folders[0]?.id).toEqual(rootFolderId);
   });
@@ -125,16 +125,5 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
     await expect(async () =>
       await akord.folder.deletePermanently(rootFolderId)
     ).rejects.toThrow(BadRequest);
-  });
-
-  it("should delete root folder", async () => {
-    await akord.folder.delete(rootFolderId);
-
-    const rootFolder = await akord.folder.get(rootFolderId);
-    expect(rootFolder.status).toEqual(status.DELETED);
-  });
-
-  it("should delete root folder permanently", async () => {
-    await akord.folder.deletePermanently(rootFolderId);
   });
 });

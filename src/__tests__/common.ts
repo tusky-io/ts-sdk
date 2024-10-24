@@ -63,14 +63,14 @@ export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   stopServer();
   if (akord && vaultId) {
-    const files = await akord.file.listAll({ vaultId: vaultId, parentId: undefined });
+    const files = await akord.file.listAll({ vaultId: vaultId });
     for (const file of files) {
       if (file.status !== status.DELETED) {
         await akord.file.delete(file.id);
       }
       await akord.file.deletePermanently(file.id);
     }
-    const folders = await akord.folder.listAll({ vaultId: vaultId, parentId: undefined });
+    const folders = await akord.folder.listAll({ vaultId: vaultId });
     for (const folder of folders) {
       if (folder.status !== status.DELETED) {
         await akord.folder.delete(folder.id);

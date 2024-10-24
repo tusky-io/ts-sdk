@@ -112,10 +112,7 @@ class FolderModule {
    */
   public async list(options: ListOptions = this.defaultListOptions): Promise<Paginated<Folder>> {
     validateListPaginatedApiOptions(options);
-    if (!options.hasOwnProperty('parentId')) {
-      // if parent id not present default to root - vault id
-      options.parentId = options.vaultId;
-    }
+
     const listOptions = {
       ...this.defaultListOptions,
       ...options
