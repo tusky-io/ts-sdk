@@ -18,7 +18,6 @@ interface AuthProviderConfig {
 
 interface AuthProviderConfigType {
   Google: AuthProviderConfig;
-  Facebook: AuthProviderConfig;
   Twitch: AuthProviderConfig;
 }
 
@@ -28,11 +27,6 @@ export const authProviderConfig = (env?: string): AuthProviderConfigType => {
       "CLIENT_ID": env === Envs.PROD ? "426736059844-ut21sgi6j7fhai51hlk9nq1785198tcq.apps.googleusercontent.com" : "426736059844-2o0vvj882fvvris0kqpfuh1vi47js7he.apps.googleusercontent.com",
       "AUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
       "SCOPES": "openid email profile",
-    },
-    "Facebook": {
-      "CLIENT_ID": env === Envs.PROD ? "1030800888399080" : "1030800888399080",
-      "AUTH_URL": "https://www.facebook.com/v11.0/dialog/oauth",
-      "SCOPES": "email public_profile",
     },
     "Twitch": {
       "CLIENT_ID": env === Envs.PROD ? "zjvek40acgbaade27yrwdsvsslx0e4" : "6h9wlqcwu01ve4al9qs04zeul7znj7",
