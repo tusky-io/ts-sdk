@@ -10,8 +10,6 @@ import { PNG } from "pngjs";
 import { DEFAULT_STORAGE } from "../auth/jwt";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
-export const TESTING_ENV = "testnet";
-
 // check if the encrypted flag is present
 export const isEncrypted = true || process.argv.includes('--encrypted');
 
