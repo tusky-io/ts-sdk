@@ -1,3 +1,10 @@
+# [0.22.0-dev.49](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.48...v0.22.0-dev.49) (2024-10-24)
+
+
+### Features
+
+* support resumability for encrypted uploads ([aab421c](https://github.com/Akord-com/carmella-sdk/commit/aab421c107a9477a0f3e34a518418c247a9ff5fc))
+
 # [0.22.0-dev.48](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.47...v0.22.0-dev.48) (2024-10-23)
 
 
