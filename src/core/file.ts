@@ -215,10 +215,6 @@ class FileModule {
   public async list(options: ListOptions = this.defaultListOptions = this.defaultListOptions): Promise<Paginated<File>> {
     validateListPaginatedApiOptions(options);
 
-    if (!options.hasOwnProperty('parentId')) {
-      // if parent id not present default to root - vault id
-      options.parentId = options.vaultId;
-    }
     const listOptions = {
       ...this.defaultListOptions,
       ...options
@@ -261,7 +257,8 @@ class FileModule {
   public async rename(id: string, name: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
-    return this.service.api.updateFile({ id: id, name: this.service.name });
+    const fileProto = await this.service.api.updateFile({ id: id, name: this.service.name });
+    return this.service.processFile(fileProto, !fileProto.__public__, fileProto.__keys__);
   }
 
   /**

@@ -1,6 +1,6 @@
-import { Akord } from "../index";
-import { cleanup, initInstance } from './common';
-import { apiKeyStatus } from '../constants';
+import { Akord } from "../../index";
+import { cleanup, initInstance } from '../common';
+import { apiKeyStatus } from '../../constants';
 
 let akord: Akord;
 
@@ -9,7 +9,7 @@ jest.setTimeout(3000000);
 describe("Testing api key functions", () => {
 
   beforeAll(async () => {
-    akord = await initInstance();
+    akord = await initInstance(false);
   });
 
   afterAll(async () => {

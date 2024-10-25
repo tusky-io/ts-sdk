@@ -1,5 +1,5 @@
-import { Akord } from "../index";
-import { cleanup, initInstance } from './common';
+import { Akord } from "../../index";
+import { cleanup, initInstance } from '../common';
 
 
 let akord: Akord;
@@ -9,7 +9,7 @@ jest.setTimeout(3000000);
 describe("Testing storage functions", () => {
 
   beforeAll(async () => {
-    akord = await initInstance();
+    akord = await initInstance(false);
   });
 
   afterAll(async () => {

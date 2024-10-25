@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
-import { Akord } from "../index";
-import { cleanup } from './common';
+import { Akord } from "../../index";
+import { cleanup } from '../common';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 let akord: Akord;

@@ -10,7 +10,7 @@ import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
-import { Env } from "./types/env";
+import { DEFAULT_ENV, Env } from "./types/env";
 import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
@@ -183,7 +183,7 @@ export class Akord {
   constructor(config: ClientConfig & AuthOptions = {}) {
     this._signer = config.signer;
     this._encrypter = config.encrypter;
-    this._env = config.env || 'testnet';
+    this._env = config.env || DEFAULT_ENV;
     this._auth = new Auth(config);
     this.api = config.api ? config.api : new AkordApi(this.getConfig());
     this.pubsub = new PubSub({ env: this._env });

@@ -1,4 +1,4 @@
-import { membershipStatus, role, status } from "../constants";
+import { membershipStatus, role } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
@@ -152,34 +152,12 @@ class VaultModule {
   }
 
   /**
-   * The vault will be moved to the trash. All vault data will be permanently deleted within 30 days.
-   * To undo this action, call vault.restore() within the 30-day period.
+   * Delete the vault
+   * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
    * @param id vault id
-   * @returns Promise with the updated vault
-   */
-  public async delete(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.DELETED });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * Restores the vault from the trash, recovering all vault data.
-   * This action must be performed within 30 days of the vault being moved to the trash to prevent permanent deletion.
-   * @param  {string} id
-   * @returns Promise with the updated vault
-   */
-  public async restore(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.ACTIVE });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * The vault and all its contents will be permanently deleted.
-   * This action is irrevocable and can only be performed if the vault is already in trash.
-   * @param  {string} id vault id
    * @returns {Promise<void>}
    */
-  public async deletePermanently(id: string): Promise<void> {
+  public async delete(id: string): Promise<void> {
     return this.service.api.deleteVault(id);
   }
 

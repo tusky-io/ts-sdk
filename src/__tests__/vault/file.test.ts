@@ -1,33 +1,27 @@
-import { BadRequest } from "../errors/bad-request";
-import { Akord } from "../index";
-import { cleanup, generateAndSavePixelFile, initInstance, testDataGeneratedPath, testDataPath, vaultCreate } from './common';
-import { firstFileName } from './data/content';
+import { BadRequest } from "../../errors/bad-request";
+import { Akord } from "../../index";
+import { cleanup, generateAndSavePixelFile, initInstance, isEncrypted, testDataGeneratedPath, testDataPath, vaultCreate } from '../common';
+import { firstFileName } from '../data/content';
 import { createReadStream, promises as fs } from 'fs';
-import { status } from "../constants";
-import { pathToReadable } from "../types/node/file";
+import { status } from "../../constants";
+import { pathToReadable } from "../../types/node/file";
 
 let akord: Akord;
 
 jest.setTimeout(3000000);
 
-describe("Testing file & folder upload functions", () => {
+describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, () => {
 
   let vaultId: string;
 
   beforeAll(async () => {
-    akord = await initInstance();
+    akord = await initInstance(isEncrypted);
 
-    const vault = await vaultCreate(akord, true);
+    const vault = await vaultCreate(akord, isEncrypted);
     vaultId = vault.id;
   });
 
   afterAll(async () => {
-    const files = await akord.file.list({ vaultId: vaultId });
-    for (const file of files.items) {
-      await akord.file.delete(file.id);
-      await akord.file.deletePermanently(file.id);
-    }
-
     await cleanup(akord, vaultId);
   });
 

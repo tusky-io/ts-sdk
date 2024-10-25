@@ -1,5 +1,5 @@
 require("dotenv").config();
-import { Akord } from "../index";
+import { Akord, DEFAULT_ENV, Env } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
 import { EnokiSigner } from "./enoki/signer";
@@ -10,16 +10,19 @@ import { PNG } from "pngjs";
 import { DEFAULT_STORAGE } from "../auth/jwt";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
-export const TESTING_ENV = "testnet";
+// check if the encrypted flag is present
+export const isEncrypted = process.argv.includes('--encrypted');
 
-export async function initInstance(isPublic = true): Promise<Akord> {
+const ENV_TEST_RUN = (process.env.ENV || DEFAULT_ENV) as Env;
+
+export async function initInstance(encrypted = true): Promise<Akord> {
   let akord: Akord;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
     akord = Akord
       .withApiKey({ apiKey: process.env.API_KEY })
       .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any })
+      .withApi({ env: ENV_TEST_RUN })
   } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
@@ -27,22 +30,22 @@ export async function initInstance(isPublic = true): Promise<Akord> {
       .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
       .withLogger({ logLevel: "debug", logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
-      .withApi({ env: process.env.ENV as any })
+      .withApi({ env: ENV_TEST_RUN })
 
-    DEFAULT_STORAGE.setItem(`akord_testnet_access_token`, tokens.accessToken);
-    DEFAULT_STORAGE.setItem(`akord_testnet_id_token`, tokens.idToken);
+    DEFAULT_STORAGE.setItem(`akord_${ENV_TEST_RUN}_access_token`, tokens.accessToken);
+    DEFAULT_STORAGE.setItem(`akord_${ENV_TEST_RUN}_id_token`, tokens.idToken);
     if (tokens.refreshToken) {
-      DEFAULT_STORAGE.setItem(`akord_testnet_refresh_token`, tokens.refreshToken);
+      DEFAULT_STORAGE.setItem(`akord_${ENV_TEST_RUN}_refresh_token`, tokens.refreshToken);
     }
   } else {
     const keypair = new Ed25519Keypair();
     akord = Akord
       .withWallet({ walletSigner: keypair })
       .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any })
+      .withApi({ env: ENV_TEST_RUN })
     await akord.signIn();
   }
-  if (!isPublic) {
+  if (encrypted) {
     const password = faker.random.word();
     await akord.me.setupPassword(password);
     await akord.withEncrypter({ password: password, keystore: true });
@@ -50,9 +53,9 @@ export async function initInstance(isPublic = true): Promise<Akord> {
   return akord;
 }
 
-export async function setupVault(isPublic = false): Promise<string> {
-  const akord = await initInstance(isPublic);
-  const vault = await vaultCreate(akord, isPublic);
+export async function setupVault(isEncrypted = true): Promise<string> {
+  const akord = await initInstance(isEncrypted);
+  const vault = await vaultCreate(akord, isEncrypted);
   return vault.id;
 }
 
@@ -60,13 +63,28 @@ export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   stopServer();
   if (akord && vaultId) {
-    await akord.vault.deletePermanently(vaultId);
+    const files = await akord.file.listAll({ vaultId: vaultId });
+    for (const file of files) {
+      if (file.status !== status.DELETED) {
+        await akord.file.delete(file.id);
+      }
+      await akord.file.deletePermanently(file.id);
+    }
+    const folders = await akord.folder.listAll({ vaultId: vaultId });
+    for (const folder of folders) {
+      if (folder.status !== status.DELETED) {
+        await akord.folder.delete(folder.id);
+      }
+      await akord.folder.deletePermanently(folder.id);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+    await akord.vault.delete(vaultId);
   }
 }
 
-export const vaultCreate = async (akord: Akord, isPublic: boolean = false) => {
+export const vaultCreate = async (akord: Akord, isEncrypted: boolean = true) => {
   const name = faker.random.words();
-  const { id } = await akord.vault.create(name, { public: isPublic });
+  const { id } = await akord.vault.create(name, { public: !isEncrypted });
 
   // const membership = await akord.membership.get(membershipId);
   // expect(membership.status).toEqual("ACCEPTED");

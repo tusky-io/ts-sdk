@@ -4,7 +4,7 @@ import { Env } from "../types/env";
 
 export type AuthType = "OAuth" | "Wallet" | "ApiKey" | "AuthTokenProvider";
 
-export type AuthProvider = "Google" | "Twitch" | "Facebook";
+export type AuthProvider = "Google" | "Twitch";
 
 export type WalletType = "Sui";
 

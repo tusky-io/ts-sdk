@@ -1,5 +1,5 @@
 import { Unauthorized } from "../errors/unauthorized";
-import { Env } from "../types/env";
+import { DEFAULT_ENV, Env } from "../types/env";
 import { isServer } from "../util/platform";
 
 const STORAGE_PATH_PREFIX = "akord";
@@ -27,7 +27,7 @@ class JWTClient {
 
   constructor(config?: { storage?: Storage, env?: Env }) {
     this.storage = config?.storage || DEFAULT_STORAGE;
-    this.env = config?.env || "testnet";
+    this.env = config?.env || DEFAULT_ENV;
     this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_access_token`;
     this.STORAGE_PATH_ID_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_id_token`;
     this.STORAGE_PATH_REFRESH_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_refresh_token`;

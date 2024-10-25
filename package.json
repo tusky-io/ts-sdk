@@ -27,8 +27,10 @@
   },
   "repository": "git@github.com:Akord-com/carmella-sdk.git",
   "scripts": {
-    "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
-    "test:web": "karma start karma.conf.js",
+    "test": "npm run test:user",
+    "test:user": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/user/*.test.ts",
+    "test:vault": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/vault/*.test.ts",
+    "test:vault:private": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/vault/*.test.ts -- --encrypted",
     "build": "webpack --config webpack.config.js",
     "analyze": "STATS=server npm run build",
     "set:registry": "bash ./registry.sh",
