@@ -1,3 +1,18 @@
+# [0.22.0-experimental.2](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.1...v0.22.0-experimental.2) (2024-10-25)
+
+
+### Bug Fixes
+
+* vault deletion ([73352ab](https://github.com/Akord-com/carmella-sdk/commit/73352ab61bc7a5b962045daa1f2742f56f13269c))
+
+
+### Features
+
+* list by vault id by default, and use parentId to list root level in vault ([1cedda9](https://github.com/Akord-com/carmella-sdk/commit/1cedda9b1da7921ebd08f68d6cd212566931fff8))
+* private/public vault tests ([a8b9b18](https://github.com/Akord-com/carmella-sdk/commit/a8b9b182706e9209b8e6458e3df3ef7d3e2d1025))
+* run SDK test on pull request ([d8f15b6](https://github.com/Akord-com/carmella-sdk/commit/d8f15b645dc3929dfa601624d95af9f0c852a3de))
+* use prod/dev/local env ([dafa8f8](https://github.com/Akord-com/carmella-sdk/commit/dafa8f88dbed31776dce0a9d473b3622fc28d584))
+
 # [0.22.0-experimental.1](https://github.com/Akord-com/carmella-sdk/compare/v0.21.2...v0.22.0-experimental.1) (2024-10-25)
 
 
