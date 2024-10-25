@@ -5,6 +5,11 @@
         "name": "dev",
         "prerelease": true,
         "channel": "beta"
+      },
+      {
+        "name": "experimental",
+        "prerelease": true,
+        "channel": "experimental"
       }
     ],
     "plugins": [
