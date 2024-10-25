@@ -1,8 +1,8 @@
-import { Akord } from "../index";
+import { Akord } from "../../index";
 import faker from '@faker-js/faker';
-import { cleanup, initInstance, isEncrypted, vaultCreate } from './common';
-import { status } from "../constants";
-import { BadRequest } from "../errors/bad-request";
+import { cleanup, initInstance, isEncrypted, vaultCreate } from '../common';
+import { status } from "../../constants";
+import { BadRequest } from "../../errors/bad-request";
 
 let akord: Akord;
 

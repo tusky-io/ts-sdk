@@ -257,7 +257,8 @@ class FileModule {
   public async rename(id: string, name: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
-    return this.service.api.updateFile({ id: id, name: this.service.name });
+    const fileProto = await this.service.api.updateFile({ id: id, name: this.service.name });
+    return this.service.processFile(fileProto, !fileProto.__public__, fileProto.__keys__);
   }
 
   /**

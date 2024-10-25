@@ -1,5 +1,5 @@
-import { Akord } from "../index";
-import { cleanup, initInstance } from './common';
+import { Akord } from "../../index";
+import { cleanup, initInstance } from '../common';
 
 
 let akord: Akord;

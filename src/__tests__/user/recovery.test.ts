@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
-import { UserEncryption } from '../crypto/user-encryption';
-import { ConsoleLogger, setLogger } from '../logger';
+import { UserEncryption } from '../../crypto/user-encryption';
+import { ConsoleLogger, setLogger } from '../../logger';
 
 jest.setTimeout(3000000);
 

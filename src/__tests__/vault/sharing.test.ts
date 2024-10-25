@@ -1,8 +1,8 @@
-import { Akord } from "../akord";
-import { Forbidden } from "../errors/forbidden";
-import { cleanup, initInstance, isEncrypted, setupVault, testDataPath, vaultCreate } from "./common";
+import { Akord } from "../../akord";
+import { Forbidden } from "../../errors/forbidden";
+import { cleanup, initInstance, isEncrypted, testDataPath, vaultCreate } from "../common";
 import faker from '@faker-js/faker';
-import { firstFileName, secondFileName } from "./data/content";
+import { firstFileName, secondFileName } from "../data/content";
 
 let akord: Akord;
 
@@ -16,9 +16,9 @@ describe("Testing airdrop actions", () => {
   let airdropeePassword: string;
 
   beforeAll(async () => {
-    akord = await initInstance(!isEncrypted);
+    akord = await initInstance(isEncrypted);
 
-    const vault = await vaultCreate(akord, !isEncrypted);
+    const vault = await vaultCreate(akord, isEncrypted);
     vaultId = vault.id;
   });
 

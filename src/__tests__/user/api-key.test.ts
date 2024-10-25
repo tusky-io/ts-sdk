@@ -1,6 +1,6 @@
-import { Akord } from "../index";
-import { cleanup, initInstance } from './common';
-import { apiKeyStatus } from '../constants';
+import { Akord } from "../../index";
+import { cleanup, initInstance } from '../common';
+import { apiKeyStatus } from '../../constants';
 
 let akord: Akord;
 

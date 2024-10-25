@@ -1,10 +1,10 @@
-import { BadRequest } from "../errors/bad-request";
-import { Akord } from "../index";
-import { cleanup, generateAndSavePixelFile, initInstance, isEncrypted, testDataGeneratedPath, testDataPath, vaultCreate } from './common';
-import { firstFileName } from './data/content';
+import { BadRequest } from "../../errors/bad-request";
+import { Akord } from "../../index";
+import { cleanup, generateAndSavePixelFile, initInstance, isEncrypted, testDataGeneratedPath, testDataPath, vaultCreate } from '../common';
+import { firstFileName } from '../data/content';
 import { createReadStream, promises as fs } from 'fs';
-import { status } from "../constants";
-import { pathToReadable } from "../types/node/file";
+import { status } from "../../constants";
+import { pathToReadable } from "../../types/node/file";
 
 let akord: Akord;
 
