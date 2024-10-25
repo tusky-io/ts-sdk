@@ -1,3 +1,4 @@
+
 /**
  * Service worker intercepting the HTTP requests and decrypting the response stream
  * Usage: 
@@ -19,10 +20,9 @@
       </video>
  */
 
+/* eslint-disable no-restricted-globals */
 if (!self) {
-  // eslint-disable-next-line no-undef
   global.self = global;
-  // eslint-disable-next-line no-undef
   global.window = {};
 }
 
@@ -31,8 +31,7 @@ const SYMMETRIC_KEY_ALGORITHM = 'AES-GCM';
 const SYMMETRIC_KEY_LENGTH = 256;
 const AUTH_TAG_SIZE_IN_BYTES = 16;
 const IV_SIZE_IN_BYTES = 12;
-const MAX_SLICE_SIZE = 250000000; //250MB
-const DEFAUTL_CHUNK_SIZE = 5000028; //5MB + encryption bytes
+const DEFAUTL_CHUNK_SIZE = 5000000 + AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES; //5MB + encryption bytes
 const MODE_DECRYPT = 'decrypt';
 
 const files = new Map();
@@ -53,9 +52,6 @@ self.onmessage = (event) => {
     if (!file) {
       event.ports[0].postMessage({ error: 'cancelled' });
     } else {
-      if (file.progress === file.size) {
-        files.delete(event.data.id);
-      }
       event.ports[0].postMessage({ type: 'progress', progress: file.progress });
     }
   } else if (event.data.type === 'cancel') {
@@ -75,14 +71,12 @@ self.onmessage = (event) => {
 
 self.addEventListener('fetch', event => {
   const req = event.request;
-
   if (req.method !== 'GET') {
     return;
   }
   const url = new URL(req.url);
   const dlmatch = DOWNLOAD_URL.exec(url.pathname);
   if (dlmatch) {
-    console.log("INFO: overriding the response with cleartext stream (@akord/carmella-sdk)")
     const range = req.headers.get('range');
     event.respondWith(decryptStream(dlmatch[1], { range }));
   }
@@ -118,7 +112,7 @@ async function decryptStream(id, options) {
   if (externalRange) {
     const headers = {
       'Accept-Range': 'bytes',
-      'Content-Range': `bytes ${externalRange.start}-${externalRange.end}/${file.size}`,
+      'Content-Range': `bytes ${externalRange.start}-${externalRange.end}/${externalRange.size}`,
       'Content-Type': response.headers.get('Content-Type'),
       'Content-Length': externalRange.end - externalRange.start
     };
@@ -140,7 +134,7 @@ async function getDecryptionStream(file, stream, startChunkIndex = 0) {
   const base64Key = file.key;
   const key = base64Key ? await getDecryptionKey(base64Key) : null;
   const slicesStream = transformStream(stream, new StreamSlicer(chunkSize, MODE_DECRYPT))
-  return new transformStream(slicesStream, new DecryptStreamController(key, startChunkIndex, file.id, files))
+  return transformStream(slicesStream, new DecryptStreamController(key, startChunkIndex, file.id, files))
 }
 
 async function getDecryptionKey(base64Key) {
@@ -185,13 +179,21 @@ function getExternalRange(range, file) {
   const byteStart = parseInt(byteStartEnd[0]);
   const byteEnd = byteStartEnd[1] ? parseInt(byteStartEnd[1]) : null;
   if (!file.key) {
-    return { start: byteStart, end: byteEnd }
+    return { start: byteStart, end: byteEnd, size: file.size }
   }
-
-  const chunkSize = file.chunkSize ?? file.size;
+  
+  const chunkSize = file.chunkSize ?? DEFAUTL_CHUNK_SIZE;
+  
+  let unencryptedFileSize;
+  if (file.numberOfChunks && file.numberOfChunks > 0) {
+    unencryptedFileSize = file.size - file.numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
+  } else {
+    const numberOfChunks = Math.ceil(file.size / chunkSize)
+    unencryptedFileSize = file.size - numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
+  }
   const start = byteStart - Math.floor(byteStart / chunkSize) * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
   const end = byteEnd ? byteEnd - Math.ceil(byteEnd / chunkSize) * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES) : '';
-  return { start, end }
+  return { start, end, size: unencryptedFileSize }
 }
 
 function getChunkedFileRange(range, file) {
@@ -231,9 +233,8 @@ function getChunkedFileRange(range, file) {
 }
 
 class DecryptStreamController {
-  constructor(key, iv, index, id) {
+  constructor(key, index, id, files) {
     this.key = key;
-    this.iv = iv;
     this.index = index || 0;
     if (id) {
       this.file = files.get(id);
@@ -243,14 +244,7 @@ class DecryptStreamController {
   async transform(chunk, controller) {
     let ivBytes;
     let ciphertextBytes;
-    if (this.iv) {
-      if (Array.isArray(this.iv)) {
-        ivBytes = toByteArray(this.iv[this.index]);
-      } else {
-        ivBytes = toByteArray(this.iv);
-      }
-      ciphertextBytes = chunk;
-    } else if (this.key) {
+    if (this.key) {
       ivBytes = chunk.slice(0, IV_SIZE_IN_BYTES);
       ciphertextBytes = chunk.slice(IV_SIZE_IN_BYTES);
     }

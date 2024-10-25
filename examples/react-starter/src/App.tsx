@@ -108,12 +108,8 @@ function App() {
       const fileId = await akord.file.upload(id, file)
       alert("Uploaded file: " + fileId)
       alert("Downloading file: " + fileId)
-      const fileRes = await akord.file.download(fileId);
-      console.log(fileRes)
-      const a = document.createElement("a");
-      a.download = file.name;
-      a.href = window.URL.createObjectURL(new Blob([fileRes as ArrayBuffer]));
-      a.click();
+      console.log("Downloading file: " + fileId)
+      await akord.file.download(fileId);
       setAkord(null)
     } catch (error) {
       console.error(error);

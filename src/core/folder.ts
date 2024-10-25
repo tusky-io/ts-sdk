@@ -103,7 +103,7 @@ class FolderModule {
       ...options
     }
     const nodeProto = await this.service.api.getFolder(id);
-    return this.service.processFolder(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    return this.service.processFolder(nodeProto, getOptions.shouldDecrypt);
   }
 
   /**
@@ -112,10 +112,7 @@ class FolderModule {
    */
   public async list(options: ListOptions = this.defaultListOptions): Promise<Paginated<Folder>> {
     validateListPaginatedApiOptions(options);
-    if (!options.hasOwnProperty('parentId')) {
-      // if parent id not present default to root - vault id
-      options.parentId = options.vaultId;
-    }
+
     const listOptions = {
       ...this.defaultListOptions,
       ...options
@@ -125,7 +122,7 @@ class FolderModule {
     const errors = [];
     const processItem = async (nodeProto: any) => {
       try {
-        const node = await this.service.processFolder(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        const node = await this.service.processFolder(nodeProto, listOptions.shouldDecrypt);
         items.push(node);
       } catch (error) {
         errors.push({ id: nodeProto.id, error });
@@ -158,7 +155,8 @@ class FolderModule {
   public async rename(id: string, name: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
-    return this.service.api.updateFolder({ id: id, name: this.service.name });
+    const folderProto = await this.service.api.updateFolder({ id: id, name: this.service.name });
+    return this.service.processFolder(folderProto, true);
   }
 
   /**
@@ -168,7 +166,8 @@ class FolderModule {
    */
   public async move(id: string, parentId?: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
-    return this.service.api.updateFolder({ id: id, parentId: parentId ? parentId : this.service.vaultId });
+    const folderProto = await this.service.api.updateFolder({ id: id, parentId: parentId ? parentId : this.service.vaultId });
+    return this.service.processFolder(folderProto, true);
   }
 
   /**

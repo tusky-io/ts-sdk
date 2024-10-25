@@ -8,7 +8,7 @@ import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { User, UserPublicInfo } from "../types/user";
-import { EncryptedVaultKeyPair, File, Folder } from "../types";
+import { AllowedPaths, EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
 import { logger } from "../logger";
@@ -56,6 +56,7 @@ export class ApiClient {
   // vault specific
   private _public: boolean
   private _description: string
+  private _tags: Array<string>
   private _keys: Array<EncryptedVaultKeyPair>
 
   // member specific
@@ -63,7 +64,7 @@ export class ApiClient {
   private _role: string;
   private _expiresAt: number;
   private _allowedStorage: number;
-  private _contextPath: string;
+  private _allowedPaths: AllowedPaths;
 
   // file specific
   private _numberOfChunks: number;
@@ -118,12 +119,13 @@ export class ApiClient {
     clone._digest = this._digest;
     clone._name = this._name;
     clone._description = this._description;
+    clone._tags = this._tags;
     clone._keys = this._keys;
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
     clone._allowedStorage = this._allowedStorage;
-    clone._contextPath = this._contextPath;
+    clone._allowedPaths = this._allowedPaths;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
@@ -196,6 +198,11 @@ export class ApiClient {
     return this;
   }
 
+  tags(tags: string[]): ApiClient {
+    this._tags = tags;
+    return this;
+  }
+
   vaultId(vaultId: string): ApiClient {
     this._vaultId = vaultId;
     return this;
@@ -241,8 +248,8 @@ export class ApiClient {
     return this;
   }
 
-  contextPath(contextPath: string): ApiClient {
-    this._contextPath = contextPath;
+  allowedPaths(allowedPaths: AllowedPaths): ApiClient {
+    this._allowedPaths = allowedPaths;
     return this;
   }
 
@@ -841,6 +848,7 @@ export class ApiClient {
    * @uses:
    * - description()
    * - public()
+   * - tags()
    * - keys()
    * - autoExecute()
    * @returns {Promise<Vault>}
@@ -856,6 +864,7 @@ export class ApiClient {
       name: this._name,
       description: this._description,
       public: this._public,
+      tags: this._tags,
       keys: this._keys,
       autoExecute: this._autoExecute
     });
@@ -928,7 +937,7 @@ export class ApiClient {
    * - keys()
    * - encPrivateKey()
    * - allowedStorage()
-   * - contextPath()
+   * - allowedPaths()
    * - autoExecute()
    * @returns {Promise<Membership>}
    */
@@ -957,7 +966,7 @@ export class ApiClient {
       keys: this._keys,
       encPrivateKey: this._encPrivateKey,
       allowedStorage: this._allowedStorage,
-      contextPath: this._contextPath,
+      allowedPaths: this._allowedPaths,
       autoExecute: this._autoExecute
     });
 
@@ -1077,6 +1086,7 @@ function delay(ms: number): Promise<void> {
 
 export async function retry<T>(
   fn: () => Promise<T>,
+  force: boolean = false,
   retries: number = 5,
   delayMs: number = 1000
 ): Promise<T> {
@@ -1086,7 +1096,7 @@ export async function retry<T>(
     try {
       return await fn();
     } catch (error) {
-      if (retryableErrors.some((type) => error instanceof type)) {
+      if (force || retryableErrors.some((type) => error instanceof type)) {
         attempt++;
         logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
         if (attempt >= retries) {

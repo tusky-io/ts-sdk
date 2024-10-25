@@ -8,10 +8,9 @@ import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
 import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
-import { Plugins } from "./plugin";
 import { StorageModule } from "./core/storage";
 import { Signer } from "./signer";
-import { Env } from "./types/env";
+import { DEFAULT_ENV, Env } from "./types/env";
 import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
@@ -20,9 +19,11 @@ import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
 import { UserEncryption } from "./crypto/user-encryption";
+import PubSub from "./api/pubsub";
 
 export class Akord {
   public api: Api;
+  public pubsub: PubSub;
   public address: string;
   private _signer: Signer;
   private _encrypter: Encrypter;
@@ -81,7 +82,7 @@ export class Akord {
 
   async signIn(): Promise<this> {
     const { address } = await this._auth.signIn();
-    this.setAddress(address);
+    this.setCurrentSession(address);
     return this;
   }
 
@@ -99,7 +100,7 @@ export class Akord {
 
   async handleOAuthCallback(): Promise<this> {
     const { address } = await this._auth.handleOAuthCallback();
-    this.setAddress(address);
+    this.setCurrentSession(address);
     return this;
   }
 
@@ -158,6 +159,7 @@ export class Akord {
   private getConfig() {
     return {
       api: this.api,
+      pubsub: this.pubsub,
       auth: this._auth,
       signer: this._signer,
       encrypter: this._encrypter,
@@ -170,18 +172,22 @@ export class Akord {
     this.address = address;
   }
 
+  private setCurrentSession(address?: string) {
+    this.setAddress(address || this._auth.getAddress());
+    this._userEncryption = new UserEncryption(this.getConfig());
+  }
+
   /**
    * @param  {ClientConfig} config
    */
   constructor(config: ClientConfig & AuthOptions = {}) {
     this._signer = config.signer;
     this._encrypter = config.encrypter;
-    this._env = config.env || 'testnet';
+    this._env = config.env || DEFAULT_ENV;
     this._auth = new Auth(config);
     this.api = config.api ? config.api : new AkordApi(this.getConfig());
-    this.setAddress(this._auth.getAddress());
-    this._userEncryption = new UserEncryption(this.getConfig());
-    Plugins.register(config?.plugins, this._env);
+    this.pubsub = new PubSub({ env: this._env });
+    this.setCurrentSession();
     CacheBusters.cache = config?.cache;
   }
 }

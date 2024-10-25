@@ -1,7 +1,10 @@
-import { Env } from "../types/env";
+import { Unauthorized } from "../errors/unauthorized";
+import { DEFAULT_ENV, Env } from "../types/env";
 import { isServer } from "../util/platform";
 
 const STORAGE_PATH_PREFIX = "akord";
+
+const EXPIRATION_BUFFER = 5 * 60; // 5 minutes
 
 class JWTClient {
   private env: Env;
@@ -10,25 +13,33 @@ class JWTClient {
   private idToken: string;
   private refreshToken: string;
 
+  refreshInProgress: boolean;
+
   private address: string;
 
   private STORAGE_PATH_ACCESS_TOKEN: string;
   private STORAGE_PATH_ID_TOKEN: string;
   private STORAGE_PATH_REFRESH_TOKEN: string;
   private STORAGE_PATH_ADDRESS: string;
+  private STORAGE_PATH_REFRESH_IN_PROGRESS: string;
 
   private storage: Storage;
 
   constructor(config?: { storage?: Storage, env?: Env }) {
     this.storage = config?.storage || DEFAULT_STORAGE;
-    this.env = config?.env || "testnet";
+    this.env = config?.env || DEFAULT_ENV;
     this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_access_token`;
     this.STORAGE_PATH_ID_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_id_token`;
     this.STORAGE_PATH_REFRESH_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_refresh_token`;
     this.STORAGE_PATH_ADDRESS = `${STORAGE_PATH_PREFIX}_${this.env}_address`;
+    this.STORAGE_PATH_REFRESH_IN_PROGRESS = `${STORAGE_PATH_PREFIX}_${this.env}_refresh_in_progress`;
+    this.refreshInProgress = false;
   }
 
-  isTokenExpiringSoon(token: string, bufferTime: number = 10): boolean {
+  isTokenExpiringSoon(token: string, bufferTime: number = EXPIRATION_BUFFER): boolean {
+    if (!token) {
+      throw new Unauthorized("Invalid session. Please log in again.");
+    }
     const decoded = decode(token) as any;
     const currentTime = Math.floor(Date.now() / 1000);
     // check if the token will expire within the next `bufferTime` seconds
@@ -36,24 +47,28 @@ class JWTClient {
     return tokenExpiringSoon;
   };
 
+  getRefreshInProgress() {
+    this.refreshInProgress = this.storage.getItem(this.STORAGE_PATH_REFRESH_IN_PROGRESS) === "true" ? true : false;
+    return this.refreshInProgress;
+  }
+
+  setRefreshInProgress(refreshInProgress: boolean) {
+    this.refreshInProgress = refreshInProgress;
+    this.storage.setItem(this.STORAGE_PATH_REFRESH_IN_PROGRESS, refreshInProgress ? "true" : "false");
+  }
+
   getAccessToken() {
-    if (!this.accessToken) {
-      this.accessToken = this.storage.getItem(this.STORAGE_PATH_ACCESS_TOKEN);
-    }
+    this.accessToken = this.storage.getItem(this.STORAGE_PATH_ACCESS_TOKEN);
     return this.accessToken;
   }
 
   getRefreshToken() {
-    if (!this.refreshToken) {
-      this.refreshToken = this.storage.getItem(this.STORAGE_PATH_REFRESH_TOKEN);
-    }
+    this.refreshToken = this.storage.getItem(this.STORAGE_PATH_REFRESH_TOKEN);
     return this.refreshToken;
   }
 
   getIdToken() {
-    if (!this.idToken) {
-      this.idToken = this.storage.getItem(this.STORAGE_PATH_ID_TOKEN);
-    }
+    this.idToken = this.storage.getItem(this.STORAGE_PATH_ID_TOKEN);
     return this.idToken;
   }
 

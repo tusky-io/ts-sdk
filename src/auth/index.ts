@@ -4,11 +4,12 @@ import { logger } from "../logger";
 import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
-import AkordApi from "../api/akord-api";
+import { AkordApi } from "../api/akord-api";
 import { Env } from "../types/env";
 import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
+import { retry } from "../api/api-client";
 
 export type SignPersonalMessageClient = (
   message: { message: Uint8Array },
@@ -131,7 +132,8 @@ export class Auth {
           clientId: this.clientId,
           redirectUri: this.redirectUri,
           authProvider: this.authProvider,
-          storage: this.storage
+          storage: this.storage,
+          env: this.env
         });
 
         if (code) {
@@ -160,7 +162,8 @@ export class Auth {
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
-      storage: this.storage
+      storage: this.storage,
+      env: this.env
     });
     await aOuthClient.initOAuthFlow();
   }
@@ -170,7 +173,8 @@ export class Auth {
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
-      storage: this.storage
+      storage: this.storage,
+      env: this.env
     });
     return aOuthClient.handleOAuthCallback();
   }
@@ -187,23 +191,31 @@ export class Auth {
       }
       case "OAuth": {
         let idToken = this.jwtClient.getIdToken();
-        const oauthClient = new OAuth({
-          clientId: this.clientId,
-          redirectUri: this.redirectUri,
-          authProvider: this.authProvider,
-          storage: this.storage
-        });
         if (!idToken) {
-          logger.info('Id token not found. Trying to use refresh token...');
-          await oauthClient.refreshTokens();
-          logger.info('Tokens refreshed successfully.');
-          idToken = this.jwtClient.getIdToken();
+          throw new Unauthorized("Invalid session.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
-          logger.info('Token is expired or about to expire. Refreshing tokens...');
-          await oauthClient.refreshTokens();
-          logger.info('Tokens refreshed successfully.');
-          idToken = this.jwtClient.getIdToken();
+          await retry(async () => {
+            if (!this.jwtClient.getRefreshInProgress()) {
+              logger.info('Token is expired or about to expire. Refreshing tokens...');
+              const oauthClient = new OAuth({
+                clientId: this.clientId,
+                redirectUri: this.redirectUri,
+                authProvider: this.authProvider,
+                storage: this.storage,
+                env: this.env
+              });
+              await oauthClient.refreshTokens();
+              logger.info('Tokens refreshed successfully.');
+              idToken = this.jwtClient.getIdToken();
+            } else {
+              logger.info('Refresh already in progress...');
+              let idToken = this.jwtClient.getIdToken();
+              if (!idToken) {
+                throw new Unauthorized("Invalid session.");
+              }
+            }
+          }, true);
         }
         return {
           "Authorization": `Bearer ${idToken}`
@@ -213,7 +225,7 @@ export class Auth {
       case "Wallet": {
         let idToken = this.jwtClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid authorization.");
+          throw new Unauthorized("Invalid session.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken, 0)) {
           throw new Unauthorized("JWT is expired, please log in again.");

@@ -14,13 +14,13 @@ export class File extends Encryptable {
   status: string;
   size: number;
   external?: boolean;
+  expiresAt?: string;
   numberOfChunks?: number;
   chunkSize?: number;
   encryptedAesKey?: string; // encrypted AES key used to encrypt private files
 
   vaultId: string;
   parentId?: string;
-  tags?: string[];
 
   // vault context
   __public__?: boolean;
@@ -41,6 +41,7 @@ export class File extends Encryptable {
     this.name = file.name;
     this.status = file.status;
     this.external = file.external;
+    this.expiresAt = file.expiresAt;
     this.vaultId = file.vaultId;
     this.parentId = file.parentId;
     this.tags = file.tags;

@@ -1,4 +1,4 @@
-import { membershipStatus, role, status } from "../constants";
+import { membershipStatus, role } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
@@ -10,6 +10,8 @@ import { arrayToBase64, generateKeyPair } from "../crypto";
 import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
+
+const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
 class VaultModule {
   protected service: VaultService;
@@ -87,7 +89,7 @@ class VaultModule {
 
   /**
    * @param  {string} name new vault name
-   * @param  {VaultCreateOptions} options public/private, terms of access, etc.
+   * @param  {VaultCreateOptions} options public/private, description, tags, etc.
    * @returns Promise with newly created vault
    */
   public async create(name: string, options: VaultCreateOptions = this.defaultCreateOptions): Promise<Vault> {
@@ -121,7 +123,13 @@ class VaultModule {
       await this.service.setDescription(createOptions.description);
     }
 
-    const vault = await this.service.api.createVault({ name: this.service.name, description: this.service.description, public: this.service.isPublic, keys: this.service.keys });
+    const vault = await this.service.api.createVault({
+      name: this.service.name,
+      description: this.service.description,
+      public: this.service.isPublic,
+      tags: createOptions.tags,
+      keys: this.service.keys
+    });
 
     // if (!this.service.api.autoExecute) {
     //   const signature = await this.service.signer.sign(bytes);
@@ -144,34 +152,12 @@ class VaultModule {
   }
 
   /**
-   * The vault will be moved to the trash. All vault data will be permanently deleted within 30 days.
-   * To undo this action, call vault.restore() within the 30-day period.
+   * Delete the vault
+   * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
    * @param id vault id
-   * @returns Promise with the updated vault
-   */
-  public async delete(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.DELETED });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * Restores the vault from the trash, recovering all vault data.
-   * This action must be performed within 30 days of the vault being moved to the trash to prevent permanent deletion.
-   * @param  {string} id
-   * @returns Promise with the updated vault
-   */
-  public async restore(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.ACTIVE });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * The vault and all its contents will be permanently deleted.
-   * This action is irrevocable and can only be performed if the vault is already in trash.
-   * @param  {string} id vault id
    * @returns {Promise<void>}
    */
-  public async deletePermanently(id: string): Promise<void> {
+  public async delete(id: string): Promise<void> {
     return this.service.api.deleteVault(id);
   }
 
@@ -182,7 +168,7 @@ class VaultModule {
    * @returns Promise with new membership
    */
   public async airdropAccess(vaultId: string, options: MembershipAirdropOptions = {
-    role: role.CONTRIBUTOR
+    role: DEFAULT_AIRDROP_ACCESS_ROLE
   }): Promise<{ identityPrivateKey: string, password: string, membership: Membership }> {
     await this.service.setVaultContext(vaultId);
 
@@ -206,10 +192,10 @@ class VaultModule {
       vaultId: vaultId,
       address: memberKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
-      contextPath: options.contextPath,
+      allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
       name: options.name,
-      role: options.role || role.CONTRIBUTOR,
+      role: options.role || DEFAULT_AIRDROP_ACCESS_ROLE,
       keys: keys,
       encPrivateKey: userEncPrivateKey
     });

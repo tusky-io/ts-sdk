@@ -7,6 +7,7 @@ export class User {
   picture?: string
   termsAccepted?: boolean
   storage: Storage
+  guest?: boolean
   encPrivateKey?: string;
   encPrivateKeyBackup?: string;
 
@@ -19,6 +20,7 @@ export class User {
     this.encPrivateKey = json.encPrivateKey
     this.encPrivateKeyBackup = json.encPrivateKeyBackup
     this.storage = json.storage ? new Storage(json.storage) : json.storage
+    this.guest = json.guest
   }
 }
 

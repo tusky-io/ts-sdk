@@ -78,7 +78,7 @@ class ZipModule {
     }
 
     const upload = new tus.Upload(fileLike as any, {
-      endpoint: `${this.service.api.config.apiUrl}/zips`,
+      endpoint: `${this.service.api.config.apiUrl}/uploads`,
       retryDelays: [0, 500, 2000, 5000],
       metadata: {
         vaultId: vaultId,

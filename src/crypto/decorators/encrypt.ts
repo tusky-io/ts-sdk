@@ -19,7 +19,7 @@ export abstract class Encryptable {
     return privateKey;
   }
 
-  async decrypt(encrypter?: Encrypter): Promise<void> {
+  async decrypt(encrypter: Encrypter): Promise<void> {
     if (this.__encryptProps__) {
       await Promise.all(
         Array.from(this.__encryptProps__.values()).map(async (prop) => {

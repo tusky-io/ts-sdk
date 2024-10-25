@@ -1,6 +1,6 @@
 {
   "name": "@akord/carmella-sdk",
-  "version": "0.22.0-dev.31",
+  "version": "0.22.0-experimental.2",
   "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
   "main": "./lib/web/cjs/index.js",
   "module": "./lib/web/esm/index.esm.js",
@@ -27,8 +27,10 @@
   },
   "repository": "git@github.com:Akord-com/carmella-sdk.git",
   "scripts": {
-    "test": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles",
-    "test:web": "karma start karma.conf.js",
+    "test": "npm run test:user",
+    "test:user": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/user/*.test.ts",
+    "test:vault": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/vault/*.test.ts",
+    "test:vault:private": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/vault/*.test.ts -- --encrypted",
     "build": "webpack --config webpack.config.js",
     "analyze": "STATS=server npm run build",
     "set:registry": "bash ./registry.sh",
@@ -58,7 +60,11 @@
   },
   "dependencies": {
     "@akord/browser-level": "^1.0.2",
+    "@akord/carmella-gql": "^0.48.1",
     "@akord/ts-cacheable": "1.0.13",
+    "@aws-amplify/api": "^6.0.54",
+    "@aws-amplify/api-graphql": "^4.4.1",
+    "@aws-amplify/core": "^6.4.5",
     "@esm2cjs/p-queue": "^7.3.0",
     "@uppy/core": "^4.2.0",
     "@uppy/tus": "^4.1.0",

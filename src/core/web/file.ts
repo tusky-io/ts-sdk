@@ -7,34 +7,31 @@ import { ServiceConfig } from "../service/service";
 
 export const PROXY_DOWNLOAD_URL = '/api/proxy/download'
 
+
 class WebFileModule extends FileModule {
-    
+
     private sessionFile: File;
-    private decryptionWorker: Worker;
 
     constructor(config?: ServiceConfig) {
         super(config);
-        //this.registerDecryptionWorker();
     }
 
-    public async previewUrl(id: string, options: FileDownloadOptions): Promise<string> {
-        const fileMetadata = await this.get(id);
-        if (fileMetadata.__public__) {
-            return this.cdnPreviewUrl(id);
+    public async previewUrl(id: string, options: FileDownloadOptions = {}): Promise<string> {
+        if (this.hasServiceWorkerInstalled()) {
+            return this.webWorkerStreamUrl(id, options);
         } else {
-            if (this.hasDecryptionWebWorker()) {
-                return this.webWorkerStreamUrl(id, options);
-            } else {
-                logger.warn("No decryption web worker found, downloading file into memory buffer.");
-                return this.inMemoryBufferUrl(id);
+            const fileMetadata = await this.get(id);
+            if (!fileMetadata.encryptedAesKey) {
+                return this.cdnPreviewUrl(id);
             }
+            logger.warn("No decryption web worker found, downloading file into memory buffer.");
+            return this.inMemoryBufferUrl(id);
         }
     }
 
-    public async download(id: string, options: FileDownloadOptions): Promise<void> {
-        const fileMetadata = await this.get(id);
+    public async download(id: string, options: FileDownloadOptions = {}): Promise<void> {
         const url = await this.previewUrl(id, options);
-        this.saveAs(url, fileMetadata.filename);
+        this.saveAs(url);
     }
 
     public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<File> {
@@ -46,23 +43,13 @@ class WebFileModule extends FileModule {
         return file;
     }
 
-    // private registerDecryptionWorker() {
-    //     if (typeof window !== 'undefined' && 'Worker' in window) {
-    //         try {
-    //             //@ts-ignore: tsconfig is defaulting to node. This file is only bundled for the browser.
-    //             this.decryptionWorker = new Worker(new URL('./worker.js', import.meta.url));
-    //         } catch (error) {
-    //             console.warn('Failed to create Web Worker:', error);
-    //         }
-    //     } else {
-    //         this.decryptionWorker = null;
-    //     }
-    // }
-
-    private saveAs(url: string, filename: string) {
+    private saveAs(url: string) {
         const a = document.createElement("a");
-        a.download = filename;
         a.href = url
+        if (!this.hasServiceWorkerInstalled() && this.sessionFile) {
+            a.download = this.sessionFile.name;
+        }
+        document.body.appendChild(a);
         a.click();
     }
 
@@ -79,7 +66,7 @@ class WebFileModule extends FileModule {
         return url;
     }
 
-    private async webWorkerStreamUrl(id: string, options: FileDownloadOptions): Promise<string> {
+    private async webWorkerStreamUrl(id: string, options: FileDownloadOptions = {}): Promise<string> {
         const fileMetadata = await this.get(id);
         const proxyUrl = `${PROXY_DOWNLOAD_URL}/${id}`
 
@@ -95,7 +82,7 @@ class WebFileModule extends FileModule {
             name: fileMetadata.name,
           } as Record<string, any>;
 
-        this.decryptionWorker.postMessage(workerMessage);
+          navigator.serviceWorker.controller.postMessage(workerMessage);
 
         if (options.cancel) {
             options.cancel.signal.onabort = () => {
@@ -107,39 +94,41 @@ class WebFileModule extends FileModule {
         }
     
         const interval = setInterval(() => {
-        const channel = new MessageChannel();
+            const channel = new MessageChannel();
 
-        channel.port2.onmessage = (event) => {
-            if (event.data.type === 'progress') {
-                const progress = Math.min(100, Math.ceil(event.data.progress / fileMetadata.size * 100));
-                if (options.onProgress) {
-                    options.onProgress(progress);
+            channel.port2.onmessage = (event) => {
+                if (event.data.type === 'progress') {
+                    const bytesProgress = event.data.progress;
+                    const percentageProgress = Math.min(100, Math.ceil(bytesProgress / fileMetadata.size * 100));
+                    console.log(percentageProgress, bytesProgress)
+                    if (options.onProgress) {
+                        options.onProgress(percentageProgress, bytesProgress);
+                    }
+                    if (percentageProgress === 100) {
+                        clearInterval(interval);
+                    }
+                } else {
+                    throw new Error(event.data);
                 }
-                if (event.data.progress === fileMetadata.size) {
-                    clearInterval(interval);
-                }
-            } else {
-                throw new Error(event.data);
-            }
-        };
+            };
 
-        this.decryptionWorker.postMessage({
-            type: 'progress',
-            id: id
-        }, [channel.port1]);
-        }, 100);
+            navigator.serviceWorker.controller.postMessage({
+                type: 'progress',
+                id: id
+            }, [channel.port1]);
+        }, 250);
 
         return proxyUrl;
     }
 
-    private hasDecryptionWebWorker(): boolean {
-        return !!this.decryptionWorker && !!navigator.serviceWorker?.controller
+    private hasServiceWorkerInstalled(): boolean {
+        return !!navigator.serviceWorker?.controller
     }
 }
 
 export type FileDownloadOptions = {
     cancel?: AbortController;
-    onProgress?: (progress: number) => void;
+    onProgress?: (percentageProgress: number, bytesProgress: number) => void;
 }
   
 export { WebFileModule as FileModule };

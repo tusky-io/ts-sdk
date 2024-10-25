@@ -17,7 +17,8 @@ import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { X25519EncryptedPayload } from "../crypto/types";
-import Encrypter from "crypto/encrypter";
+import { onUpdateFile } from '@akord/carmella-gql/dist/types/subscriptions';
+import { Subscription } from "rxjs";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -37,7 +38,6 @@ class FileModule {
   protected type: "File";
 
   protected service: FileService;
-
   protected parentId?: string;
 
   protected defaultListOptions = {
@@ -135,7 +135,7 @@ class FileModule {
       headers: {
         ...(await this.auth.getAuthorizationHeader() as Record<string, string>),
       },
-      httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault),
+      httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault, this.service.encrypter),
       removeFingerprintOnSuccess: true,
       onError: options.onError,
       onProgress: options.onProgress,
@@ -215,10 +215,6 @@ class FileModule {
   public async list(options: ListOptions = this.defaultListOptions = this.defaultListOptions): Promise<Paginated<File>> {
     validateListPaginatedApiOptions(options);
 
-    if (!options.hasOwnProperty('parentId')) {
-      // if parent id not present default to root - vault id
-      options.parentId = options.vaultId;
-    }
     const listOptions = {
       ...this.defaultListOptions,
       ...options
@@ -261,7 +257,8 @@ class FileModule {
   public async rename(id: string, name: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
-    return this.service.api.updateFile({ id: id, name: this.service.name });
+    const fileProto = await this.service.api.updateFile({ id: id, name: this.service.name });
+    return this.service.processFile(fileProto, !fileProto.__public__, fileProto.__keys__);
   }
 
   /**
@@ -325,8 +322,54 @@ class FileModule {
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
   }
 
-  protected async aesKey(id: string): Promise<CryptoKey> {
+  /**
+   * Subscribe to file create/update events.
+   * 
+   * To unsubscribe:
+   * const subscription = subscribe(vaultId, onSuccess, onError)
+   * subscription.unsubscribe()
+   * 
+   * @param  {string} vaultId
+   * @param  {(file: File) => Promise<void>} onSuccess
+   * @param  {(error: Error) => void} onError
+   * @returns {Subscription}
+   */
+  public async subscribe(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void): Promise<Subscription> {
+    await this.service.setVaultContext(vaultId);
+    const keys = this.service.keys;
+    const encrypter = this.service.encrypter;
+    const isPublic = this.service.isPublic;
+    return this.service.pubsub.client.graphql({
+      query: onUpdateFile,
+      variables: {
+          filter: {
+            vaultId: { eq: vaultId }
+          }
+      }
+    }).subscribe({
+      next: async ({ data }) => {
+        const fileProto = data.onUpdateFile;
+        if (fileProto && onSuccess) {
+          const file = new File(fileProto, keys);
+          if (!isPublic) {
+            await file.decrypt(encrypter);
+          }
+          await onSuccess(file);
+        }
+      },
+      error: (e: Error) => {
+          if (onError) {
+              onError(e);
+          }
+      }
+    });
+  }
+
+  protected async aesKey(id: string): Promise<CryptoKey | null> {
     const fileMetadata = await this.get(id);
+    if (!fileMetadata.encryptedAesKey) {
+      return null;
+    }
     const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as X25519EncryptedPayload;
 
     if (!fileMetadata.encryptedAesKey) {
