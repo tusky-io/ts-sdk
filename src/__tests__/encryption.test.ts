@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import { Akord } from '../';
-import { cleanup, generateAndSavePixelFile, testDataGeneratedPath, testDataPath } from './common';
+import { cleanup, ENV_TEST_RUN, generateAndSavePixelFile, LOG_LEVEL, testDataGeneratedPath, testDataPath } from './common';
 import { promises as fs } from 'fs';
 import { firstFileName } from './data/content';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -66,8 +66,8 @@ describe("Testing encryption functions", () => {
     const keypair = new Ed25519Keypair();
     akord = Akord
       .withWallet({ walletSigner: keypair })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any })
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .withApi({ env: ENV_TEST_RUN })
 
     await akord.signIn();
 
@@ -81,7 +81,7 @@ describe("Testing encryption functions", () => {
   });
 
   it("should retrieve user context from session", async () => {
-    akord = new Akord({ authType: "Wallet", env: process.env.ENV as any, logLevel: "debug" });
+    akord = new Akord({ authType: "Wallet", env: ENV_TEST_RUN, logLevel: LOG_LEVEL });
     await akord.withEncrypter({ keystore: true });
   });
 

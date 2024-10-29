@@ -5,7 +5,7 @@ import * as bip39 from 'bip39';
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
 import { logger } from '../logger';
 import { X25519KeyPair } from './keypair';
-import { DEFAULT_STORAGE, JWTClient } from '../auth/jwt';
+import { defaultStorage, JWTClient } from '../auth/jwt';
 import { Env } from '../types';
 
 const SALT_LENGTH = 16;
@@ -24,7 +24,7 @@ export class UserEncryption {
   constructor(config: { encPrivateKey?: string, encPrivateKeyBackup?: string, storage?: Storage, env?: Env } = {}) {
     this.encPrivateKey = config.encPrivateKey;
     this.encPrivateKeyBackup = config.encPrivateKeyBackup;
-    this.storage = config.storage || DEFAULT_STORAGE;
+    this.storage = config.storage || defaultStorage();
     this.userId = new JWTClient(config).getUserId();
     this.sessionKeyPath = `${this.userId}_${SESSION_KEY_PATH}`;
     this.encryptedPasswordKeyPath = `${this.userId}_${ENCRYPTED_PASSWORD_KEY_PATH}`;

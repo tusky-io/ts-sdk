@@ -625,7 +625,6 @@ export class ApiClient {
         return response.data;
       } catch (error) {
         logger.debug(config);
-        logger.debug(error);
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
     });
