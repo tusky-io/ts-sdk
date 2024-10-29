@@ -3,6 +3,7 @@ import { User, UserMutable } from "../types/user";
 import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
 import { ClientConfig } from "../config";
+import { arrayToBase64 } from "../crypto";
 
 class MeModule {
   protected service: Service;
@@ -36,11 +37,14 @@ class MeModule {
     if (me.encPrivateKey) {
       throw new BadRequest("User encryption context is already setup");
     }
-    const { encPrivateKey } = await this.userEncryption.setupPassword(
+    const { encPrivateKey, keyPair } = await this.userEncryption.setupPassword(
       password,
       true,
     );
-    return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
+    return await this.service.api.updateMe({
+      encPrivateKey: encPrivateKey,
+      publicKey: arrayToBase64(keyPair.getPublicKey()),
+    });
   }
 
   /**

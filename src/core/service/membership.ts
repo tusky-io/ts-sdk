@@ -22,7 +22,7 @@ class MembershipService extends Service {
     const vault = await this.api.getVault(membership.vaultId);
     this.setVault(vault);
     this.setVaultId(membership.vaultId);
-    this.setEncrypted(membership.__encrypted__);
+    this.setEncrypted(vault.encrypted);
     await this.setMembershipKeys(membership);
     this.setObject(membership);
     this.setObjectId(membershipId);

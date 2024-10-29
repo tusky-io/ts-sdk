@@ -62,6 +62,7 @@ export interface CreateMembershipTxPayload {
   name?: string;
   expiresAt?: number;
   keys?: EncryptedVaultKeyPair[];
+  publicKey?: string;
   encPrivateKey?: string;
   ownerAccess?: string;
   allowedStorage?: number;

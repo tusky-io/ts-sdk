@@ -249,13 +249,14 @@ class VaultModule {
     memberService.setVaultId(this.service.vaultId);
 
     // generate member identity key pair for authentication
-    const memberKeyPair = new Ed25519Keypair();
+    const memberIdentityKeyPair = new Ed25519Keypair();
 
     let keys: EncryptedVaultKeyPair[];
     let userEncPrivateKey: string;
+    let userPublicKey: string;
     let password: string;
     let ownerAccessJson = {
-      identityPrivateKey: memberKeyPair.getSecretKey(),
+      identityPrivateKey: memberIdentityKeyPair.getSecretKey(),
     } as OwnerAccess;
     let ownerAccess: string;
 
@@ -275,6 +276,7 @@ class VaultModule {
       const { encPrivateKey, keyPair } =
         await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
+      userPublicKey = arrayToBase64(keyPair.getPublicKey());
       keys = await memberService.prepareMemberKeys(
         arrayToBase64(keyPair.publicKey),
       );
@@ -284,7 +286,7 @@ class VaultModule {
 
     const membership = await this.service.api.createMembership({
       vaultId: vaultId,
-      address: memberKeyPair.toSuiAddress(),
+      address: memberIdentityKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
       allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
@@ -293,10 +295,11 @@ class VaultModule {
       keys: keys,
       encPrivateKey: userEncPrivateKey,
       ownerAccess: ownerAccess,
+      publicKey: userPublicKey,
     });
 
     return {
-      identityPrivateKey: memberKeyPair.getSecretKey(),
+      identityPrivateKey: memberIdentityKeyPair.getSecretKey(),
       password: password,
       membership: await memberService.processMembership(
         membership,
@@ -316,33 +319,34 @@ class VaultModule {
     await memberService.setVaultContextFromMembershipId(id);
 
     // TODO: rotate member keys
-    // let keys: Map<string, EncryptedVaultKeyPair[]>;
-    // if (!this.service.isPublic) {
-    //   const memberships = await this.members(this.service.vaultId);
+    let keys: Map<string, EncryptedVaultKeyPair[]>;
+    if (memberService.encrypted) {
+      const memberships = await this.members(memberService.vaultId);
 
-    //   const activeMembers = memberships.filter((member: Membership) =>
-    //     member.id !== id // filter out the member being revoked
-    //     && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
+      const activeMembers = memberships.filter(
+        (member: Membership) =>
+          member.id !== id && // filter out the member being revoked
+          (member.status === membershipStatus.ACCEPTED ||
+            member.status === membershipStatus.PENDING),
+      );
 
-    //     console.log(activeMembers)
-    //   // rotate keys for all active members
-    //   const memberPublicKeys = new Map<string, string>();
-    //   await Promise.all(activeMembers.map(async (member: Membership) => {
-    //     const { publicKey } = await this.service.api.getUserPublicData(member.email);
-    //     memberPublicKeys.set(member.id, publicKey);
-    //   }));
-    //   const { memberKeys } = await memberService.rotateMemberKeys(memberPublicKeys);
-    //   keys = memberKeys;
-    // }
+      // rotate keys for all active members
+      const memberPublicKeys = new Map<string, string>();
+      for (let member of activeMembers) {
+        memberPublicKeys.set(member.id, member.memberDetails.publicKey);
+      }
+      const { memberKeys } =
+        await memberService.rotateMemberKeys(memberPublicKeys);
+      keys = memberKeys;
+    }
 
     const membership = await this.service.api.updateMembership({
       id: id,
       status: membershipStatus.REVOKED,
-      // keys: keys
+      keys: mapToObject(keys) as any,
     });
     return new Membership(membership);
   }
-
   /**
    * @param  {string} id membership id
    * @param  {RoleType} role VIEWER/CONTRIBUTOR/OWNER
@@ -381,4 +385,11 @@ function generateRandomPassword() {
   return pwd.secureMask.apply(seed).password;
 }
 
+function mapToObject(map: Map<string, any>): { [key: string]: any } {
+  const obj: { [key: string]: any } = {};
+  map.forEach((value, key) => {
+    obj[key] = value;
+  });
+  return obj;
+}
 export { VaultModule };
