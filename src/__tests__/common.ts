@@ -12,7 +12,7 @@ import { logger } from "../logger";
 
 // check if the encrypted flag is present
 export const isEncrypted = process.argv.includes('--encrypted');
-export const LOG_LEVEL = "debug";
+export const LOG_LEVEL = "error";
 export const ENV_TEST_RUN = (process.env.ENV || DEFAULT_ENV) as Env;
 
 export async function initInstance(encrypted = true): Promise<Akord> {

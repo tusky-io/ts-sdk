@@ -8,8 +8,7 @@ export class AkordError extends Error {
     super(message);
     this.requestId = (<any>error)?.response?.headers?.['request-id'];
     if (error && error.response) {
-      logger.debug(error.response.status);
-      logger.debug(error.response.statusText);
+      logger.error(`${error.response.status}: ${error.response.statusText}`);
       logger.debug(error.response.headers);
       logger.debug(error.response.data);
     } else {
