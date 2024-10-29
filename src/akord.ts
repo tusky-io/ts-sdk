@@ -20,6 +20,7 @@ import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
 import { UserEncryption } from "./crypto/user-encryption";
 import PubSub from "./api/pubsub";
+import { defaultStorage } from "./auth/jwt";
 
 export class Akord {
   public api: Api;
@@ -110,6 +111,14 @@ export class Akord {
     return this;
   }
 
+  withStorage(storage: Storage): this {
+    this._storage = storage;
+    if (this._auth) {
+      this._auth.setStorage(storage);
+    }
+    return this;
+  }
+
   withSigner(signer: Signer): this {
     this._signer = signer;
     return this;
@@ -184,7 +193,8 @@ export class Akord {
     this._signer = config.signer;
     this._encrypter = config.encrypter;
     this._env = config.env || DEFAULT_ENV;
-    this._auth = new Auth(config);
+    this._storage = config.storage || defaultStorage();
+    this._auth = new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new AkordApi(this.getConfig());
     this.pubsub = new PubSub({ env: this._env });
     this.setCurrentSession();

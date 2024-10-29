@@ -5,7 +5,7 @@ import { BadRequest } from '../errors/bad-request';
 import { logger } from '../logger';
 import AkordApi from '../api/akord-api';
 import { Unauthorized } from '../errors/unauthorized';
-import { DEFAULT_STORAGE, JWTClient } from './jwt';
+import { defaultStorage, JWTClient } from './jwt';
 import { Env, Envs } from '../types/env';
 import { retry } from '../api/api-client';
 import { throwError } from '../errors/error-factory';
@@ -60,7 +60,7 @@ class OAuth {
     }
     this.redirectUri = config.redirectUri;
     this.authProvider = config.authProvider;
-    this.storage = config.storage || DEFAULT_STORAGE;
+    this.storage = config.storage || defaultStorage();
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
     this.enokiClient = new EnokiClient({ env: config.env });
   }

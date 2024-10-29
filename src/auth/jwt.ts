@@ -26,7 +26,7 @@ class JWTClient {
   private storage: Storage;
 
   constructor(config?: { storage?: Storage, env?: Env }) {
-    this.storage = config?.storage || DEFAULT_STORAGE;
+    this.storage = config?.storage || defaultStorage();
     this.env = config?.env || DEFAULT_ENV;
     this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_access_token`;
     this.STORAGE_PATH_ID_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_id_token`;
@@ -155,7 +155,7 @@ class MemoryStorage {
   }
 }
 
-export const DEFAULT_STORAGE = isServer() ? new MemoryStorage() : globalThis.sessionStorage;
+export const defaultStorage = () => isServer() ? new MemoryStorage() : globalThis.sessionStorage;
 
 export {
   JWTClient,
