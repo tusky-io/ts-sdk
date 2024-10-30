@@ -2,7 +2,7 @@ module.exports = {
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
 
-  bail: true,
+  bail: false,
 
   moduleFileExtensions: ['ts', 'js', 'node'],
 

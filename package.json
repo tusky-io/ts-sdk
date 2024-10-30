@@ -28,9 +28,9 @@
   "repository": "git@github.com:Akord-com/carmella-sdk.git",
   "scripts": {
     "test": "npm run test:user && npm run test:vault && npm run test:vault:private",
-    "test:user": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/user/*.test.ts",
-    "test:vault": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/vault/*.test.ts",
-    "test:vault:private": "jest --verbose --collectCoverage=false --forceExit --detectOpenHandles src/__tests__/vault/*.test.ts -- --encrypted",
+    "test:user": "jest --verbose --collectCoverage=false src/__tests__/user/*.test.ts",
+    "test:vault": "jest --verbose --collectCoverage=false src/__tests__/vault/*.test.ts",
+    "test:vault:private": "jest --verbose --collectCoverage=false src/__tests__/vault/*.test.ts -- --encrypted",
     "build": "webpack --config webpack.config.js",
     "analyze": "STATS=server npm run build",
     "set:registry": "bash ./registry.sh",
