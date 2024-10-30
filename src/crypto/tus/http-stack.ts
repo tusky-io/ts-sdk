@@ -135,9 +135,11 @@ export class EncryptableHttpStack {
                 const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
                 const aesKey = await importKeyFromBase64(arrayToString(decryptedKey));
                 key = { aesKey, encryptedAesKey: encryptedAesKeyBase64 };
-                this.uploadAes.set(uploadId, key);
               }
             }
+          }
+          if (key && !this.uploadAes.has(uploadId)) {
+            this.uploadAes.set(uploadId, key);
           }
         }
   
