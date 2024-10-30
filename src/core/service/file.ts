@@ -25,7 +25,7 @@ class FileService extends Service {
 
   async processFile(object: File, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<File> {
     const file = new File(object, keys);
-    if (shouldDecrypt) {
+    if ((await this.isEncrypted(file)) && shouldDecrypt) {
       try {
         await file.decrypt(this.encrypter);
       } catch (error) {
@@ -33,6 +33,10 @@ class FileService extends Service {
       }
     }
     return file;
+  }
+
+  private async isEncrypted(file: File) {
+    return file.vaultId && !file.__public__;
   }
 
   async setName(name: string) {

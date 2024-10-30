@@ -30,8 +30,8 @@ export abstract class Encryptable {
           const vaultEncPrivateKey = this.__keys__.find((key) => key.publicKey === payload.encryptedKey.publicKey).encPrivateKey;
           const privateKey = await encrypter.decrypt(vaultEncPrivateKey);
           // init data encrypter from vault private key
-          const dataEncrypter = new Encrypter({ keypair: new X25519KeyPair(privateKey)});
-          const decryptedArray = await dataEncrypter.decryptHybrid(this[prop]);
+          const dataPublicEncrypter = new Encrypter({ keypair: new X25519KeyPair(privateKey)});
+          const decryptedArray = await dataPublicEncrypter.decryptHybrid(this[prop]);
           // const decryptedArray = await decryptWithPrivateKey(privateKey, payload);
           const decrypted = arrayToString(decryptedArray);
           this[prop] = decrypted

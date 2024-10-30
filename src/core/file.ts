@@ -205,7 +205,7 @@ class FileModule {
       ...options
     }
     const nodeProto = await this.service.api.getFile(id);
-    return this.service.processFile(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    return this.service.processFile(nodeProto, getOptions.shouldDecrypt);
   }
 
   /**
@@ -224,7 +224,7 @@ class FileModule {
     const errors = [];
     const processItem = async (nodeProto: any) => {
       try {
-        const node = await this.service.processFile(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        const node = await this.service.processFile(nodeProto, listOptions.shouldDecrypt);
         items.push(node);
       } catch (error) {
         errors.push({ id: nodeProto.id, error });
@@ -258,7 +258,7 @@ class FileModule {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
     const fileProto = await this.service.api.updateFile({ id: id, name: this.service.name });
-    return this.service.processFile(fileProto, !fileProto.__public__, fileProto.__keys__);
+    return this.service.processFile(fileProto, true);
   }
 
   /**

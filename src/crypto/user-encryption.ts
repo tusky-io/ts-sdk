@@ -1,12 +1,11 @@
-import { arrayToBase64, base64ToArray, base64ToJson, jsonToBase64 } from './encoding';
-import { decryptAes, deriveAesKey, deriveAesKeyFromMnemonic, encryptAes, exportKeyToArray, generateKey, generateKeyPair, importKeyFromArray } from './lib';
+import { arrayToBase64, base64ToArray, base64ToJson, base64ToString, jsonToBase64 } from './encoding';
+import { decodeAesPayload, decryptAes, deriveAesKey, deriveAesKeyFromMnemonic, encryptAes, exportKeyToArray, generateKey, generateKeyPair, importKeyFromArray } from './lib';
 import Keystore from './storage/keystore';
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
 import { logger } from '../logger';
 import { X25519KeyPair } from './keypair';
 import { defaultStorage, JWTClient } from '../auth/jwt';
 import { Env } from '../types';
-import { AESEncryptedPayload } from './types';
 import * as bip39 from 'bip39';
 
 const SALT_LENGTH = 16;
@@ -91,9 +90,9 @@ export class UserEncryption {
       throw new IncorrectEncryptionKey(new Error("The user needs to provide the password again."));
     }
 
-    const { ciphertext, iv } = JSON.parse(encryptedPasswordKeyPayload) as AESEncryptedPayload;
+    const { ciphertext, iv } = decodeAesPayload(encryptedPasswordKeyPayload);
 
-    const decryptedKey = await decryptAes({ iv: new Uint8Array(iv), ciphertext: new Uint8Array(ciphertext as ArrayBufferLike) }, sessionKey);
+    const decryptedKey = await decryptAes({ ciphertext, iv }, sessionKey);
     const passwordKey = await importKeyFromArray(new Uint8Array(decryptedKey));
 
     const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any; // TODO: type here
@@ -125,7 +124,7 @@ export class UserEncryption {
       throw new IncorrectEncryptionKey(new Error("Missing encrypted private key backup data."));
     }
 
-    const privateKey = await this.decryptWithPassword(backupPhrase, this.encPrivateKeyBackup);
+    const privateKey = await this.decryptWithBackupPhrase(backupPhrase, this.encPrivateKeyBackup);
 
     return { keyPair: new X25519KeyPair(privateKey) };
   }

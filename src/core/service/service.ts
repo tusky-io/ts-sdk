@@ -1,5 +1,5 @@
 import { Api } from "../../api/api";
-import { jsonToBase64, base64ToArray, encryptWithPublicKey, stringToArray } from "../../crypto";
+import { jsonToBase64, base64ToArray, encryptWithPublicKey, stringToArray, base64ToJson } from "../../crypto";
 import { actions } from '../../constants';
 import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
@@ -106,10 +106,11 @@ class Service {
   async processWriteString(data: string): Promise<string> {
     if (this.isPublic) return data;
     const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
-    const dataEncrypter = new Encrypter({ publicKey: base64ToArray(currentVaultPublicKey) });
+    const dataPublicEncrypter = new Encrypter({ publicKey: base64ToArray(currentVaultPublicKey) });
     const dataArray = stringToArray(data);
-    const dataString = await dataEncrypter.encryptHybrid(dataArray);
+    const dataString = await dataPublicEncrypter.encryptHybrid(dataArray);
     console.log("Length: " + dataString.length);
+    console.log(base64ToJson(dataString))
     return dataString
   }
 

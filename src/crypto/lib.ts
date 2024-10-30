@@ -194,7 +194,7 @@ async function encryptAes(plaintext: Uint8Array, key: CryptoKey, encode: boolean
       plaintext,
     )
     if (encode) {
-      return encodePayload(ciphertextArray, iv)
+      return encodeAesPayload(ciphertextArray, iv)
     }
     const combinedArray = new Uint8Array(iv.length + ciphertextArray.byteLength);
     combinedArray.set(iv, 0);
@@ -215,7 +215,9 @@ async function encryptAes(plaintext: Uint8Array, key: CryptoKey, encode: boolean
  */
 async function decryptAes(encryptedPayload: string | AESEncryptedPayload, key: CryptoKey): Promise<ArrayBuffer> {
   try {
-    const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext ? encryptedPayload as AESEncryptedPayload : decodePayload(encryptedPayload as string);
+    const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext
+      ? encryptedPayload as AESEncryptedPayload
+      : decodeAesPayload(encryptedPayload as string);
     const plaintext = await crypto.subtle.decrypt(
       {
         name: SYMMETRIC_KEY_ALGORITHM,
@@ -231,7 +233,7 @@ async function decryptAes(encryptedPayload: string | AESEncryptedPayload, key: C
   }
 }
 
-function encodePayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Array): string {
+function encodeAesPayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Array): string {
   const encryptedPayload = {
     ciphertext: arrayToBase64(ciphertextArray),
     iv: arrayToBase64(iv),
@@ -239,7 +241,7 @@ function encodePayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Arra
   return jsonToBase64(encryptedPayload)
 }
 
-function decodePayload(payload: string): AESEncryptedPayload {
+function decodeAesPayload(payload: string): AESEncryptedPayload {
   const parsedPayload = base64ToJson(payload) as any;
   const decodedPayload = {
     ciphertext: base64ToArray(parsedPayload.ciphertext),
@@ -427,5 +429,6 @@ export {
   encryptWithPublicKey,
   decryptWithPrivateKey,
   decryptStream,
-  deriveAesKeyFromMnemonic
+  deriveAesKeyFromMnemonic,
+  decodeAesPayload
 }

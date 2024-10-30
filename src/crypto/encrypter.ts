@@ -30,16 +30,13 @@ export default class Encrypter {
   }
 
   async encryptHybrid(data: Uint8Array): Promise<string> {
-    const aesKey = await generateKey();
+    const { aesKey, encryptedAesKey } = await generateAesKey(this.publicKey);
+  
     const encryptedData = await encryptAes(
       data,
       aesKey,
     ) as string;
-    const keyBuffer = await exportKeyToArray(aesKey)
-    const encryptedAesKey = await encryptWithPublicKey(
-      this.publicKey,
-      keyBuffer
-    );
+  
     const encryptedPayload = {
       encryptedData: base64ToJson(encryptedData) as AESEncryptedPayload,
       encryptedKey: encryptedAesKey,
@@ -60,6 +57,21 @@ export default class Encrypter {
     )
     return new Uint8Array(decryptedDataArray);
   }
+}
+
+export async function generateAesKey(publicKey: Uint8Array): Promise<AESKeyPayload> {
+  const aesKey = await generateKey(true);
+  const keyBuffer = await exportKeyToArray(aesKey)
+  const encryptedAesKey = await encryptWithPublicKey(
+    publicKey,
+    keyBuffer
+  );
+  return { aesKey, encryptedAesKey };
+}
+
+export type AESKeyPayload = {
+  aesKey: CryptoKey,
+  encryptedAesKey: X25519EncryptedPayload
 }
 
 export {
