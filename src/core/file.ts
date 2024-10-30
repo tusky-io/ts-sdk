@@ -10,15 +10,14 @@ import { paginate, processListItems } from "./common";
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
-import { base64ToJson } from "../crypto";
-import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, decryptWithPrivateKey, importKeyFromArray, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
+import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, IV_LENGTH_IN_BYTES } from "../crypto/lib";
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
-import { X25519EncryptedPayload } from "../crypto/types";
 import { onUpdateFile } from '@akord/carmella-gql/dist/types/subscriptions';
 import { Subscription } from "rxjs";
+import { VaultEncryption } from "../crypto/vault-encryption";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -342,9 +341,9 @@ class FileModule {
     return this.service.pubsub.client.graphql({
       query: onUpdateFile,
       variables: {
-          filter: {
-            vaultId: { eq: vaultId }
-          }
+        filter: {
+          vaultId: { eq: vaultId }
+        }
       }
     }).subscribe({
       next: async ({ data }) => {
@@ -358,9 +357,9 @@ class FileModule {
         }
       },
       error: (e: Error) => {
-          if (onError) {
-              onError(e);
-          }
+        if (onError) {
+          onError(e);
+        }
       }
     });
   }
@@ -370,18 +369,12 @@ class FileModule {
     if (!fileMetadata.encryptedAesKey) {
       return null;
     }
-    const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as X25519EncryptedPayload;
-
     if (!fileMetadata.encryptedAesKey) {
       throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
     }
-    // decrypt vault's private key
-    const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedAesKey.publicKey).encPrivateKey;
-    const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
 
-    // decrypt AES key with vault's private key
-    const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
-    const aesKey = await importKeyFromArray(decryptedKey);
+    const vaultEncryption = new VaultEncryption({ vaultKeys: fileMetadata.__keys__, userEncrypter: this.service.encrypter });
+    const aesKey = await vaultEncryption.decryptAesKey(fileMetadata.encryptedAesKey);
     return aesKey;
   }
 }

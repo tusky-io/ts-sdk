@@ -28,50 +28,6 @@ export default class Encrypter {
     }
     return decryptWithPrivateKey(this.keypair.getPrivateKey(), base64ToJson(data) as X25519EncryptedPayload);
   }
-
-  async encryptHybrid(data: Uint8Array): Promise<string> {
-    const { aesKey, encryptedAesKey } = await generateAesKey(this.publicKey);
-  
-    const encryptedData = await encryptAes(
-      data,
-      aesKey,
-    ) as string;
-  
-    const encryptedPayload = {
-      encryptedData: base64ToJson(encryptedData) as AESEncryptedPayload,
-      encryptedKey: encryptedAesKey,
-    } as EncryptedPayload;
-    return jsonToBase64(encryptedPayload)
-  }
-
-  async decryptHybrid(encryptedPayload: string): Promise<Uint8Array> {
-    if (!this.keypair) {
-      throw new IncorrectEncryptionKey(new Error("Missing keypair configuration. Please provide X25519 key pair."));
-    }
-    const payload = base64ToJson(encryptedPayload as string) as EncryptedPayload;
-    const decryptedKey = await decryptWithPrivateKey(this.keypair.getPrivateKey(), payload.encryptedKey)
-    const aesKey = await importKeyFromArray(decryptedKey)
-    const decryptedDataArray = await decryptAes(
-      jsonToBase64(payload.encryptedData),
-      aesKey,
-    )
-    return new Uint8Array(decryptedDataArray);
-  }
-}
-
-export async function generateAesKey(publicKey: Uint8Array): Promise<AESKeyPayload> {
-  const aesKey = await generateKey(true);
-  const keyBuffer = await exportKeyToArray(aesKey)
-  const encryptedAesKey = await encryptWithPublicKey(
-    publicKey,
-    keyBuffer
-  );
-  return { aesKey, encryptedAesKey };
-}
-
-export type AESKeyPayload = {
-  aesKey: CryptoKey,
-  encryptedAesKey: X25519EncryptedPayload
 }
 
 export {

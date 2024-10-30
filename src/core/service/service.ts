@@ -1,5 +1,5 @@
 import { Api } from "../../api/api";
-import { jsonToBase64, base64ToArray, encryptWithPublicKey, stringToArray, base64ToJson } from "../../crypto";
+import { base64ToArray, stringToArray, base64ToJson } from "../../crypto";
 import { actions } from '../../constants';
 import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
@@ -8,6 +8,7 @@ import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
 import { Encrypter } from "../../crypto/encrypter";
 import { Auth } from "../../auth";
 import PubSub from "../../api/pubsub";
+import { VaultEncryption } from "../../crypto/vault-encryption";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
@@ -105,12 +106,8 @@ class Service {
 
   async processWriteString(data: string): Promise<string> {
     if (this.isPublic) return data;
-    const currentVaultPublicKey = this.keys[this.keys.length - 1].publicKey;
-    const dataPublicEncrypter = new Encrypter({ publicKey: base64ToArray(currentVaultPublicKey) });
-    const dataArray = stringToArray(data);
-    const dataString = await dataPublicEncrypter.encryptHybrid(dataArray);
-    console.log("Length: " + dataString.length);
-    console.log(base64ToJson(dataString))
+    const vaultEncryption = new VaultEncryption({ vaultKeys: this.keys });
+    const dataString = await vaultEncryption.encryptHybrid(stringToArray(data));
     return dataString
   }
 

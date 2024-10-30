@@ -1,11 +1,12 @@
 import { tusFileToUint8Array } from "@env/types/file";
-import { base64ToArray, base64ToJson, base64ToString, jsonToBase64, stringToArray, stringToBase64 } from "../";
+import { base64ToJson, base64ToString, jsonToBase64, stringToArray, stringToBase64 } from "../";
 import { CHUNK_SIZE_IN_BYTES, ENCRYPTED_CHUNK_SIZE_IN_BYTES } from "../../core/file";
 import { Vault } from "../../types";
-import { AUTH_TAG_LENGTH_IN_BYTES, decryptWithPrivateKey, encryptAes, encryptWithPublicKey, exportKeyToBase64, generateKey, importKeyFromArray, IV_LENGTH_IN_BYTES } from "../lib";
+import { AUTH_TAG_LENGTH_IN_BYTES, encryptAes, IV_LENGTH_IN_BYTES } from "../lib";
 import * as tus from 'tus-js-client'
 import { X25519EncryptedPayload } from "../types";
-import Encrypter, { AESKeyPayload, generateAesKey } from "../encrypter";
+import { Encrypter } from "../encrypter";
+import { AESKeyPayload, VaultEncryption } from "../vault-encryption";
 
 export const CONTENT_LENGTH_HEADER = "Content-Length";
 export const UPLOAD_LENGTH_HEADER = "Upload-Length";
@@ -20,10 +21,8 @@ export class EncryptableHttpStack {
     private defaultStack: tus.HttpStack;
     private vault: Vault;
     private uploadAes: Map<string, AESKeyPayload> = new Map();
-    private publicKey?: string;
-    private encPrivateKey?: string;
-    private encrypter?: Encrypter;
-    
+    private vaultEncryption?: VaultEncryption;
+
     constructor(defaultStack: tus.HttpStack, vault: Vault, encrypter: Encrypter) {
       this.defaultStack = defaultStack;
       if (!vault) {
@@ -34,9 +33,7 @@ export class EncryptableHttpStack {
         if (!vault.__keys__ || vault.__keys__.length === 0) {
           throw new Error("Encrypted vault has no keys");
         }
-        this.publicKey = vault.__keys__[vault.__keys__.length - 1].publicKey;
-        this.encPrivateKey = vault.__keys__[vault.__keys__.length - 1].encPrivateKey;
-        this.encrypter = encrypter;
+        this.vaultEncryption = new VaultEncryption({ vaultKeys: vault.__keys__, userEncrypter: encrypter });
       }
     }
   
@@ -67,7 +64,7 @@ export class EncryptableHttpStack {
           if (uploadId && this.uploadAes.has(uploadId)) {
             key = this.uploadAes.get(uploadId);
           } else {
-            key = await generateAesKey(base64ToArray(this.publicKey));
+            key = await this.vaultEncryption.generateAesKey();
           }
   
           // encrypt the body
@@ -80,8 +77,7 @@ export class EncryptableHttpStack {
           
           // encrypt the filename
           const filename = this.getMetadata(request, UPLOAD_METADATA_FILENAME_KEY) || 'unnamed';
-          const dataPublicEncrypter = new Encrypter({ publicKey: base64ToArray(this.publicKey) });
-          const encryptedFileNameB64 = await dataPublicEncrypter.encryptHybrid(stringToArray(filename));
+          const encryptedFileNameB64 = await this.vaultEncryption.encryptHybrid(stringToArray(filename));
           this.putMetadata(request, UPLOAD_METADATA_FILENAME_KEY, stringToBase64(encryptedFileNameB64));
     
           // set the upload length
@@ -132,16 +128,10 @@ export class EncryptableHttpStack {
               key = this.uploadAes.get(uploadId);
             } else {
               // read the aes key from the response (primary for HEAD requests but would work for POST & PATCH as well)
-              const encryptedAesKeyBase64 = this.getMetadata(response, UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY);
-              if (encryptedAesKeyBase64 && this.encrypter) {
-                // decrypt vault's private key
-                const privateKey = await this.encrypter.decrypt(this.encPrivateKey);
-                
-                // decrypt AES key with vault's private key
-                const encryptedAesKey = base64ToJson(encryptedAesKeyBase64) as X25519EncryptedPayload;
-                const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
-                const aesKey = await importKeyFromArray(decryptedKey);
-                key = { aesKey, encryptedAesKey: encryptedAesKey };
+              const encryptedAesKey = this.getMetadata(response, UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY);
+              if (encryptedAesKey && this.vaultEncryption) {
+                const aesKey = await this.vaultEncryption.decryptAesKey(encryptedAesKey);
+                key = { aesKey, encryptedAesKey: base64ToJson(encryptedAesKey) as X25519EncryptedPayload };
               }
             }
           }
