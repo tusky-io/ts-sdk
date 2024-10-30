@@ -40,6 +40,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
+    expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);
   });
 
   it("should upload multi-chunk file from path and download it", async () => {
@@ -60,6 +61,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     const buffer = await fs.readFile(testDataGeneratedPath + fileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
+    expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);
   });
 
   it("should fail uploading an empty file", async () => {
