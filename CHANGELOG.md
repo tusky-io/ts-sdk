@@ -1,3 +1,17 @@
+# [0.22.0-experimental.4](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.3...v0.22.0-experimental.4) (2024-10-30)
+
+
+### Bug Fixes
+
+* encrypt/decrypt streamed chunks ([e730913](https://github.com/Akord-com/carmella-sdk/commit/e73091379320fde0adaab0732ce1417b52536ead))
+
+# [0.22.0-experimental.3](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.2...v0.22.0-experimental.3) (2024-10-29)
+
+
+### Bug Fixes
+
+* storage config in akord instance ([5b84048](https://github.com/Akord-com/carmella-sdk/commit/5b8404856b654741e0f190ae495d561c0da22b47))
+
 # [0.22.0-experimental.2](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.1...v0.22.0-experimental.2) (2024-10-25)
 
 

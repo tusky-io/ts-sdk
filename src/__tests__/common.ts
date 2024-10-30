@@ -7,13 +7,13 @@ import { status } from "../constants";
 import { stopServer } from "./server";
 import { createWriteStream } from "fs";
 import { PNG } from "pngjs";
-import { DEFAULT_STORAGE } from "../auth/jwt";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { logger } from "../logger";
 
 // check if the encrypted flag is present
 export const isEncrypted = process.argv.includes('--encrypted');
-
-const ENV_TEST_RUN = (process.env.ENV || DEFAULT_ENV) as Env;
+export const LOG_LEVEL = "error";
+export const ENV_TEST_RUN = (process.env.ENV || DEFAULT_ENV) as Env;
 
 export async function initInstance(encrypted = true): Promise<Akord> {
   let akord: Akord;
@@ -21,27 +21,21 @@ export async function initInstance(encrypted = true): Promise<Akord> {
     console.log("--- API key flow");
     akord = Akord
       .withApiKey({ apiKey: process.env.API_KEY })
-      .withLogger({ logLevel: "debug", logToFile: true })
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withApi({ env: ENV_TEST_RUN })
   } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
     akord = Akord
       .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
-      .withLogger({ logLevel: "debug", logToFile: true })
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
-      .withApi({ env: ENV_TEST_RUN })
-
-    DEFAULT_STORAGE.setItem(`akord_${ENV_TEST_RUN}_access_token`, tokens.accessToken);
-    DEFAULT_STORAGE.setItem(`akord_${ENV_TEST_RUN}_id_token`, tokens.idToken);
-    if (tokens.refreshToken) {
-      DEFAULT_STORAGE.setItem(`akord_${ENV_TEST_RUN}_refresh_token`, tokens.refreshToken);
-    }
+      .withApi({ env: ENV_TEST_RUN });
   } else {
     const keypair = new Ed25519Keypair();
     akord = Akord
       .withWallet({ walletSigner: keypair })
-      .withLogger({ logLevel: "debug", logToFile: true })
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withApi({ env: ENV_TEST_RUN })
     await akord.signIn();
   }
@@ -62,23 +56,29 @@ export async function setupVault(isEncrypted = true): Promise<string> {
 export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   stopServer();
-  if (akord && vaultId) {
-    const files = await akord.file.listAll({ vaultId: vaultId });
-    for (const file of files) {
-      if (file.status !== status.DELETED) {
-        await akord.file.delete(file.id);
+  logger.debug("Post test cleanup");
+  try {
+    if (akord && vaultId) {
+      const files = await akord.file.listAll({ vaultId: vaultId });
+      for (const file of files) {
+        if (file.status !== status.DELETED) {
+          await akord.file.delete(file.id);
+        }
+        await akord.file.deletePermanently(file.id);
       }
-      await akord.file.deletePermanently(file.id);
-    }
-    const folders = await akord.folder.listAll({ vaultId: vaultId });
-    for (const folder of folders) {
-      if (folder.status !== status.DELETED) {
-        await akord.folder.delete(folder.id);
+      const folders = await akord.folder.listAll({ vaultId: vaultId });
+      for (const folder of folders) {
+        if (folder.status !== status.DELETED) {
+          await akord.folder.delete(folder.id);
+        }
+        await akord.folder.deletePermanently(folder.id);
       }
-      await akord.folder.deletePermanently(folder.id);
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+      await akord.vault.delete(vaultId);
     }
-    await new Promise((resolve) => setTimeout(resolve, 10000));
-    await akord.vault.delete(vaultId);
+  } catch(error) {
+    logger.error("Post test cleanup failed");
+    logger.error(error);
   }
 }
 

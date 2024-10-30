@@ -55,7 +55,7 @@ export class ConsoleLogger implements Logger {
 
   info(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.INFO)) {
-      console.info(`[INFO] ${message}`, ...params);
+      console.info(`[INFO] ${stringify(message)}`, ...params);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -64,8 +64,7 @@ export class ConsoleLogger implements Logger {
 
   warn(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.WARN)) {
-      console.warn(`[WARN] ${message}`, ...params);
-      console.debug(message);
+      console.warn(`[WARN] ${stringify(message)}`, ...params);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -75,7 +74,6 @@ export class ConsoleLogger implements Logger {
   error(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.ERROR)) {
       console.error(`[ERROR] ${message}`, ...params);
-      console.debug(message);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -84,13 +82,16 @@ export class ConsoleLogger implements Logger {
 
   debug(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.DEBUG)) {
-      console.debug(`[DEBUG] ${message}`, ...params);
-      console.debug(message);
+      console.debug(`[DEBUG] ${stringify(message)}`, ...params);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
     }
   }
+}
+
+function stringify(message: any) {
+  return message && typeof message === 'object' ? JSON.stringify(message) : message;
 }
 
 let logger: Logger = new ConsoleLogger({ logLevel: "none" });

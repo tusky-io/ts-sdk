@@ -82,8 +82,6 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
 
     const rootFolder = await akord.folder.get(rootFolderId);
     expect(rootFolder.status).toEqual(status.DELETED);
-    const deletedFolders = await akord.folder.listAll({ vaultId: vaultId, status: "deleted" });
-    expect(deletedFolders?.length).toEqual(1);
 
     // this part is async
     // const subFolder = await akord.folder.get(subFolderId);

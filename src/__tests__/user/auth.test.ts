@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import { Akord } from "../../index";
-import { cleanup } from '../common';
+import { cleanup, ENV_TEST_RUN, LOG_LEVEL } from '../common';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 let akord: Akord;
@@ -16,8 +16,8 @@ describe("Testing auth functions", () => {
     const keypair = new Ed25519Keypair();
     akord = Akord
       .withWallet({ walletSigner: keypair })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any })
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .withApi({ env: ENV_TEST_RUN })
 
     await akord.signIn();
   });
