@@ -84,6 +84,14 @@ class MeModule {
     const { encPrivateKey } = await this.userEncryption.resetPassword(backupPhrase, newPassword);
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }
+
+  /**
+   * Check whether the user has ongoing encryption session
+   */
+  public async hasEncryptionSession(): Promise<boolean> {
+    const hasEncryptionSession = await this.userEncryption.hasEncryptionSession();
+    return hasEncryptionSession ? true : false;
+  }
 }
 
 export {
