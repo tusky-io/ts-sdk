@@ -10,6 +10,8 @@ import { arrayToBase64, generateKeyPair } from "../crypto";
 import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
+import * as pwd from "micro-key-producer/lib/password";
+import { randomBytes } from '@noble/hashes/utils';
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -182,7 +184,7 @@ class VaultModule {
     let userEncPrivateKey: string;
     let password: string;
     if (!this.service.isPublic) {
-      password = options.password ? options.password : generateRandomPassword(16);
+      password = options.password ? options.password : generateRandomPassword();
       const { encPrivateKey, keyPair } = await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
       keys = await memberService.prepareMemberKeys(arrayToBase64(keyPair.publicKey));
@@ -271,13 +273,9 @@ class VaultModule {
   }
 };
 
-function generateRandomPassword(length: number) {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
-  const password = Array.from(crypto.getRandomValues(new Uint8Array(length)))
-    .map(value => charset[value % charset.length])
-    .join('');
-
-  return password;
+function generateRandomPassword() {
+  const seed = randomBytes(32);
+  return pwd.secureMask.apply(seed).password;
 }
 
 export {
