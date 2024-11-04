@@ -777,7 +777,12 @@
     tweetnacl "^1.0.3"
     valibot "^0.36.0"
 
-"@noble/curves@^1.4.2", "@noble/curves@~1.6.0":
+"@noble/ciphers@^1.0.0":
+  version "1.0.0"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@noble/ciphers/-/ciphers-1.0.0.tgz#34758a1cbfcd4126880f83e6b1cdeb88785b7970"
+  integrity sha512-wH5EHOmLi0rEazphPbecAzmjd12I6/Yv/SiHdkA9LSycsQk7RuuTp7am5/o62qYr0RScE7Pc9icXGBbsr6cesA==
+
+"@noble/curves@^1.4.2", "@noble/curves@^1.6.0", "@noble/curves@~1.6.0":
   version "1.6.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@noble/curves/-/curves-1.6.0.tgz#be5296ebcd5a1730fccea4786d420f87abfeb40b"
   integrity sha512-TlaHRXDehJuRNR9TfZDNQ45mMEd5dwUwmicsafcIX4SsNiqnCHKjE/1alYPd/lDRVhxdhUAlv8uEhMCI5zjIJQ==
@@ -789,7 +794,7 @@
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@noble/hashes/-/hashes-1.2.0.tgz#a3150eeb09cc7ab207ebf6d7b9ad311a9bdbed12"
   integrity sha512-FZfhjEDbT5GRswV3C6uvLPHMiVD6lQBmpoX5+eSiPaMTXte/IKqI5dykDxzZB/WBeK/CDuQRBWarPdi3FNY2zQ==
 
-"@noble/hashes@1.5.0", "@noble/hashes@^1.2.0", "@noble/hashes@^1.4.0", "@noble/hashes@~1.5.0":
+"@noble/hashes@1.5.0", "@noble/hashes@^1.2.0", "@noble/hashes@^1.4.0", "@noble/hashes@^1.5.0", "@noble/hashes@~1.5.0":
   version "1.5.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@noble/hashes/-/hashes-1.5.0.tgz#abadc5ca20332db2b1b2aa3e496e9af1213570b0"
   integrity sha512-1j6kQFb7QRru7eKN3ZDvRcP13rugwdxZqCjbiAVZfIJwgj2A65UmT4TgARXGlXgnRkORLTDTrO19ZErt7+QXgA==
@@ -1128,7 +1133,7 @@
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@polka/url/-/url-1.0.0-next.28.tgz#d45e01c4a56f143ee69c54dd6b12eade9e270a73"
   integrity sha512-8LduaNlMZGwdZ6qWrKlfa+2M4gahzFkprZiAt2TF8uS0qQgBizKXpXURqvTJ4WtmupWxaLqjRb2UCTe72mu+Aw==
 
-"@scure/base@~1.1.0", "@scure/base@~1.1.7", "@scure/base@~1.1.8":
+"@scure/base@^1.1.1", "@scure/base@~1.1.0", "@scure/base@~1.1.5", "@scure/base@~1.1.7", "@scure/base@~1.1.8", "@scure/base@~1.1.9":
   version "1.1.9"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@scure/base/-/base-1.1.9.tgz#e5e142fbbfe251091f9c5f1dd4c834ac04c3dbd1"
   integrity sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==
@@ -2147,6 +2152,13 @@ balanced-match@^1.0.0:
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
+base-x@^3.0.2:
+  version "3.0.10"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/base-x/-/base-x-3.0.10.tgz#62de58653f8762b5d6f8d9fe30fa75f7b2585a75"
+  integrity sha512-7d0s06rR9rYaIWHkpfLIFICM/tkSVdoPC9qYAQRpxn9DdKNWNsKC0uk++akckyLq16Tx2WIinnZ6WRriAt6njQ==
+  dependencies:
+    safe-buffer "^5.0.1"
+
 base-x@^5.0.0:
   version "5.0.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/base-x/-/base-x-5.0.0.tgz#6d835ceae379130e1a4cb846a70ac4746f28ea9b"
@@ -2192,6 +2204,16 @@ binary-extensions@^2.0.0, binary-extensions@^2.3.0:
   version "2.3.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/binary-extensions/-/binary-extensions-2.3.0.tgz#f6e14a97858d327252200242d4ccfe522c445522"
   integrity sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==
+
+bip32@^4.0.0:
+  version "4.0.0"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/bip32/-/bip32-4.0.0.tgz#7fac3c05072188d2d355a4d6596b37188f06aa2f"
+  integrity sha512-aOGy88DDlVUhspIXJN+dVEtclhIsfAUppD43V0j40cPTld3pv/0X/MlrZSZ6jowIaQQzFwP8M6rFU2z2mVYjDQ==
+  dependencies:
+    "@noble/hashes" "^1.2.0"
+    "@scure/base" "^1.1.1"
+    typeforce "^1.11.5"
+    wif "^2.0.6"
 
 bip39@^3.1.0:
   version "3.1.0"
@@ -2340,12 +2362,28 @@ bs-logger@^0.2.6:
   dependencies:
     fast-json-stable-stringify "2.x"
 
+bs58@^4.0.0:
+  version "4.0.1"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/bs58/-/bs58-4.0.1.tgz#be161e76c354f6f788ae4071f63f34e8c4f0a42a"
+  integrity sha512-Ok3Wdf5vOIlBrgCvTq96gBkJw+JUEzdBgyaza5HLtPm7yTHkjRy8+JzNyHF7BHa0bNWOQIp3m5YF0nnFcOIKLw==
+  dependencies:
+    base-x "^3.0.2"
+
 bs58@^6.0.0:
   version "6.0.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/bs58/-/bs58-6.0.0.tgz#a2cda0130558535dd281a2f8697df79caaf425d8"
   integrity sha512-PD0wEnEYg6ijszw/u8s+iI3H17cTymlrwkKhDhPZq+Sokl3AU4htyBFTjAeNAlCCmg0f53g6ih3jATyCKftTfw==
   dependencies:
     base-x "^5.0.0"
+
+bs58check@<3.0.0:
+  version "2.1.2"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/bs58check/-/bs58check-2.1.2.tgz#53b018291228d82a5aa08e7d796fdafda54aebfc"
+  integrity sha512-0TS1jicxdU09dwJMNZtVAfzPi6Q6QeN0pM1Fkzrjn+XYHvzMKPU3pHVpva+769iNVSfIYWf7LJ6WR+BuuMf8cA==
+  dependencies:
+    bs58 "^4.0.0"
+    create-hash "^1.1.0"
+    safe-buffer "^5.1.2"
 
 bser@2.1.1:
   version "2.1.1"
@@ -5424,6 +5462,24 @@ methods@~1.1.2:
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/methods/-/methods-1.1.2.tgz#5529a4d67654134edcc5266656835b0f851afcee"
   integrity sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==
 
+micro-key-producer@^0.7.0:
+  version "0.7.1"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/micro-key-producer/-/micro-key-producer-0.7.1.tgz#60465c50b81a70ca377b0d9e166034cb288a90be"
+  integrity sha512-2BdtXMha712vZ57PfWaJokLSNl5HQTAVUvIw7oge/3gNSpaQfiYbLrZZGPUSPE3EqZMyOhydSVifrBkXQHVHcg==
+  dependencies:
+    "@noble/ciphers" "^1.0.0"
+    "@noble/curves" "^1.6.0"
+    "@noble/hashes" "^1.5.0"
+    "@scure/base" "~1.1.9"
+    micro-packed "~0.6.2"
+
+micro-packed@~0.6.2:
+  version "0.6.3"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/micro-packed/-/micro-packed-0.6.3.tgz#125e36bcfd4aa03dbdb31c81cda3bfea84367ae0"
+  integrity sha512-VmVkyc7lIzAq/XCPFuLc/CwQ7Ehs5XDK3IwqsZHiBIDttAI9Gs7go6Lv4lNRuAIKrGKcRTtthFKUNyHS0S4wJQ==
+  dependencies:
+    "@scure/base" "~1.1.5"
+
 micromatch@^4.0.0, micromatch@^4.0.2, micromatch@^4.0.4:
   version "4.0.8"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/micromatch/-/micromatch-4.0.8.tgz#d66fa18f3a47076789320b9b1af32bd86d9fa202"
@@ -7280,6 +7336,13 @@ tiny-relative-date@^1.3.0:
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/tiny-relative-date/-/tiny-relative-date-1.3.0.tgz#fa08aad501ed730f31cc043181d995c39a935e07"
   integrity sha512-MOQHpzllWxDCHHaDno30hhLfbouoYlOI8YlMNtvKe1zXbjEVhbcEovQxvZrPvtiYW630GQDoMMarCnjfyfHA+A==
 
+tiny-secp256k1@^2.2.3:
+  version "2.2.3"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/tiny-secp256k1/-/tiny-secp256k1-2.2.3.tgz#fe1dde11a64fcee2091157d4b78bcb300feb9b65"
+  integrity sha512-SGcL07SxcPN2nGKHTCvRMkQLYPSoeFcvArUSCYtjVARiFAWU44cCIqYS0mYAU6nY7XfvwURuTIGo2Omt3ZQr0Q==
+  dependencies:
+    uint8array-tools "0.0.7"
+
 tmp@^0.2.1:
   version "0.2.3"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/tmp/-/tmp-0.2.3.tgz#eb783cc22bc1e8bebd0671476d46ea4eb32a79ae"
@@ -7447,6 +7510,11 @@ type-is@~1.6.18:
     media-typer "0.3.0"
     mime-types "~2.1.24"
 
+typeforce@^1.11.5:
+  version "1.18.0"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/typeforce/-/typeforce-1.18.0.tgz#d7416a2c5845e085034d70fcc5b6cc4a90edbfdc"
+  integrity sha512-7uc1O8h1M1g0rArakJdf0uLRSSgFcYexrVoKo+bzJd32gd4gDy2L/Z+8/FjPnU9ydY3pEnVPtr9FyscYY60K1g==
+
 typescript-transform-paths@^3.5.1:
   version "3.5.1"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/typescript-transform-paths/-/typescript-transform-paths-3.5.1.tgz#472a4223ad9463b88fd9ef3dc1ec0616018c4294"
@@ -7468,6 +7536,11 @@ uglify-js@^3.1.4:
   version "3.19.3"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/uglify-js/-/uglify-js-3.19.3.tgz#82315e9bbc6f2b25888858acd1fff8441035b77f"
   integrity sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==
+
+uint8array-tools@0.0.7:
+  version "0.0.7"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/uint8array-tools/-/uint8array-tools-0.0.7.tgz#a7a2bb5d8836eae2fade68c771454e6a438b390d"
+  integrity sha512-vrrNZJiusLWoFWBqz5Y5KMCgP9W9hnjZHzZiZRT8oNAkq3d5Z5Oe76jAvVVSRh4U8GGR90N2X1dWtrhvx6L8UQ==
 
 undici-types@~6.19.2:
   version "6.19.8"
@@ -7816,6 +7889,13 @@ which@^5.0.0:
   integrity sha512-JEdGzHwwkrbWoGOlIHqQ5gtprKGOenpDHpxE9zVR1bWbOtYRyPPHMe9FaP6x61CmNaTThSkb0DAJte5jD+DmzQ==
   dependencies:
     isexe "^3.1.1"
+
+wif@^2.0.6:
+  version "2.0.6"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/wif/-/wif-2.0.6.tgz#08d3f52056c66679299726fade0d432ae74b4704"
+  integrity sha512-HIanZn1zmduSF+BQhkE+YXIbEiH0xPr1012QbFEGB0xsKqJii0/SqJjyn8dFv6y36kOznMgMB+LGcbZTJ1xACQ==
+  dependencies:
+    bs58check "<3.0.0"
 
 wildcard@^1.1.0:
   version "1.1.2"
