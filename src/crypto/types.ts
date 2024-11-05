@@ -25,3 +25,8 @@ export type EncryptionMetadata = {
   encryptedKey?: string,
   iv?: string
 }
+
+export type EncryptedUserBackupPayload = {
+  encryptedPayload: string | AESEncryptedPayload,
+  salt: string
+}

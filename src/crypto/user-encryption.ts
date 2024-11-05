@@ -1,5 +1,5 @@
-import { arrayToBase64, base64ToArray, base64ToJson, base64ToString, jsonToBase64 } from './encoding';
-import { decodeAesPayload, decryptAes, deriveAesKey, deriveAesKeyFromMnemonic, encryptAes, exportKeyToArray, generateKey, generateKeyPair, importKeyFromArray } from './lib';
+import { arrayToBase64, base64ToArray, base64ToJson, jsonToBase64 } from './encoding';
+import { decodeAesPayload, decryptAes, deriveAesKey, encryptAes, exportKeyToArray, generateKey, generateKeyPair, importKeyFromArray } from './lib';
 import Keystore from './storage/keystore';
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
 import { logger } from '../logger';
@@ -7,7 +7,10 @@ import { X25519KeyPair } from './keypair';
 import { defaultStorage, JWTClient } from '../auth/jwt';
 import { Env } from '../types';
 import * as bip39 from 'bip39';
+import { EncryptedUserBackupPayload } from './types';
+import { Conflict } from '../errors/conflict';
 
+const MNEMONIC_ENTROPY = 256;
 const SALT_LENGTH = 16;
 const SESSION_KEY_PATH = "session_key";
 const ENCRYPTED_PASSWORD_KEY_PATH = "encrypted_password_key";
@@ -59,7 +62,7 @@ export class UserEncryption {
     const privateKey = await this.decryptWithPassword(password, this.encPrivateKey);
 
     // generate BIP-39 mnemonic
-    const backupPhrase = bip39.generateMnemonic();
+    const backupPhrase = bip39.generateMnemonic(MNEMONIC_ENTROPY);
 
     this.encPrivateKeyBackup = await this.encryptWithBackupPhrase(backupPhrase, privateKey);
     return { backupPhrase, encPrivateKeyBackup: this.encPrivateKeyBackup };
@@ -167,14 +170,17 @@ export class UserEncryption {
    * - derive the decryption key from password and salt
    * - decrypt the ciphertext with the derived key
    * @param {string} password
-   * @param {string} strPayload stringified payload
+   * @param {string} encryptedPayload stringified payload
    * @returns {Promise.<string>} Promise of string represents utf-8 plaintext
    */
-  private async decryptWithPassword(password: string, strPayload: string, keystore: boolean = false): Promise<Uint8Array> {
+  private async decryptWithPassword(password: string, encryptedPayload: string, keystore: boolean = false): Promise<Uint8Array> {
     try {
-      const parsedPayload = base64ToJson(strPayload) as any;
+      const parsedPayload = base64ToJson(encryptedPayload) as EncryptedUserBackupPayload;
 
-      const encryptedPayload = parsedPayload.encryptedPayload;
+      if (!parsedPayload.salt || !parsedPayload.encryptedPayload) {
+        throw new Conflict("Malformed encrypted payload.");
+      }
+
       const salt = base64ToArray(parsedPayload.salt);
 
       const passwordKey = await deriveAesKey(password, salt);
@@ -183,7 +189,7 @@ export class UserEncryption {
         await this.saveSessionInKeystore(passwordKey);
       }
 
-      const plaintext = await decryptAes(encryptedPayload, passwordKey);
+      const plaintext = await decryptAes(parsedPayload.encryptedPayload, passwordKey);
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);
@@ -200,16 +206,7 @@ export class UserEncryption {
   * @returns {Promise.<string>} Promise of string represents stringified payload
   */
   private async encryptWithBackupPhrase(backupPhrase: string, plaintext: Uint8Array): Promise<string> {
-    try {
-      const aesKey = await deriveAesKeyFromMnemonic(backupPhrase);
-
-      const encryptedPayload = await encryptAes(plaintext, aesKey) as string;
-
-      return encryptedPayload;
-    } catch (err) {
-      logger.error(err);
-      throw new IncorrectEncryptionKey(new Error("Encrypting data failed."));
-    }
+    return this.encryptWithPassword(backupPhrase, plaintext, false);
   }
 
   /**
@@ -221,15 +218,7 @@ export class UserEncryption {
    * @returns {Promise.<Uint8Array>} Promise of string represents utf-8 plaintext
    */
   private async decryptWithBackupPhrase(backupPhrase: string, encryptedPayload: string): Promise<Uint8Array> {
-    try {
-      const aesKey = await deriveAesKeyFromMnemonic(backupPhrase);
-
-      const plaintext = await decryptAes(encryptedPayload, aesKey);
-      return new Uint8Array(plaintext);
-    } catch (err) {
-      logger.error(err);
-      throw new IncorrectEncryptionKey(new Error("Decrypting data failed."));
-    }
+    return this.decryptWithPassword(backupPhrase, encryptedPayload, false);
   }
 
   async clear() {
