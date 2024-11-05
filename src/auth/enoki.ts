@@ -45,7 +45,7 @@ export default class EnokiClient {
 
   constructor(config: EnokiClientConfig) {
     this.apiKey = config.apiKey || enokiConfig(config.env).publicApiKey;
-    this.network = config.network || "devnet";
+    this.network = config.network || "testnet";
     if (!this.apiKey) {
       throw new Error("Missing api key configuration. Please provide Enoki API key.");
     }
