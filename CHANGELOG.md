@@ -1,3 +1,10 @@
+# [0.22.0-dev.51](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.50...v0.22.0-dev.51) (2024-11-05)
+
+
+### Features
+
+* add has encryption session ([927cc49](https://github.com/Akord-com/carmella-sdk/commit/927cc4914d57f075429d0d0f1fc8e5b62a387228))
+
 # [0.22.0-dev.50](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.49...v0.22.0-dev.50) (2024-10-24)
 
 
