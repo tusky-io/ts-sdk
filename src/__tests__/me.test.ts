@@ -34,6 +34,11 @@ describe("Testing me functions", () => {
     expect(user.termsAccepted).toEqual(true);
   });
 
+  it("should check for the user encryption session - falsy", async () => {
+    const hasEncryptionSession = await akord.me.hasEncryptionSession();
+    expect(hasEncryptionSession).toBeFalsy();
+  });
+
   it("should setup password", async () => {
     password = faker.random.word();
     const user = await akord.me.setupPassword(password);
@@ -61,5 +66,10 @@ describe("Testing me functions", () => {
     const user = await akord.me.resetPassword(backupPhrase, resetPassword);
     expect(user).toBeTruthy();
     expect(user.encPrivateKey).toBeTruthy();
+  });
+
+  it("should check for the user encryption session - truthy", async () => {
+    const hasEncryptionSession = await akord.me.hasEncryptionSession();
+    expect(hasEncryptionSession).toBeTruthy();
   });
 });
