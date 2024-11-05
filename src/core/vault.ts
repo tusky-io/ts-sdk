@@ -10,7 +10,7 @@ import { arrayToBase64, generateKeyPair } from "../crypto";
 import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
-import * as pwd from "micro-key-producer/lib/password";
+import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from '@noble/hashes/utils';
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
