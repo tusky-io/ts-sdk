@@ -7,8 +7,6 @@ import { membershipStatus, status } from "../../constants";
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 const initAkordFromPrivateKey = (privateKey: string) => {
   return Akord
     .withWallet({ walletPrivateKey: privateKey })

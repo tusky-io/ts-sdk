@@ -6,8 +6,6 @@ import { BadRequest } from "../../errors/bad-request";
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 describe(`Testing ${isEncrypted ? "private" : "public"} vault functions`, () => {
   let vaultId: string;
   let anotherVaultId: string;

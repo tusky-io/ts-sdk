@@ -5,8 +5,6 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 describe("Testing auth functions", () => {
   afterAll(async () => {
     await cleanup(akord);

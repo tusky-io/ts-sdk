@@ -6,8 +6,6 @@ import { firstFileName } from './data/content';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { status } from '../constants';
 
-jest.setTimeout(3000000);
-
 describe("Testing encryption functions", () => {
   afterAll(async () => {
     await cleanup();

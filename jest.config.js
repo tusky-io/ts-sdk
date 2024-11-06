@@ -2,6 +2,8 @@ module.exports = {
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
 
+  testTimeout: 180000, // 3 minutes
+
   bail: false,
 
   moduleFileExtensions: ['ts', 'js', 'node'],

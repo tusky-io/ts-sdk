@@ -8,8 +8,6 @@ import { pathToReadable } from "../../types/node/file";
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, () => {
 
   let vaultId: string;
