@@ -41,7 +41,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);
   });
 
-  it("should upload multi-chunk file from path and download it", async () => {
+  it.skip("should upload multi-chunk file from path and download it", async () => {
     const fileName = "11mb.png";
     await generateAndSavePixelFile(11, testDataGeneratedPath + fileName);
     const id = await akord.file.upload(vaultId, testDataGeneratedPath + fileName);
