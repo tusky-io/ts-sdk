@@ -7,8 +7,6 @@ import { status } from "../../constants";
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () => {
   let vaultId: string;
   let rootFolderId: string;

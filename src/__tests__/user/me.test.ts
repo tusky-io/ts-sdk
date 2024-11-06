@@ -4,8 +4,6 @@ import { cleanup, initInstance } from '../common';
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 describe("Testing me functions", () => {
 
   let password: string;

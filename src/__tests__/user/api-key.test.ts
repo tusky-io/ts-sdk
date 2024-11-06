@@ -4,8 +4,6 @@ import { apiKeyStatus } from '../../constants';
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 describe("Testing api key functions", () => {
 
   beforeAll(async () => {

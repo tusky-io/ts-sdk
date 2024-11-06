@@ -4,8 +4,6 @@ import { ConsoleLogger, setLogger } from '../../logger';
 import { LOG_LEVEL } from '../common';
 import { defaultStorage } from '../../auth/jwt';
 
-jest.setTimeout(3000000);
-
 setLogger(new ConsoleLogger({ logLevel: LOG_LEVEL }));
 
 const storage = defaultStorage();

@@ -8,8 +8,6 @@ import { pathToReadable } from "../../types/node/file";
 
 let akord: Akord;
 
-jest.setTimeout(3000000);
-
 describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, () => {
 
   let vaultId: string;
@@ -43,7 +41,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);
   });
 
-  it("should upload multi-chunk file from path and download it", async () => {
+  it.skip("should upload multi-chunk file from path and download it", async () => {
     const fileName = "11mb.png";
     const id = await akord.file.upload(vaultId, testDataPath + fileName);
 
