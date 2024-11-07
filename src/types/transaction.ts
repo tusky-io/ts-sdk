@@ -24,6 +24,7 @@ export interface UpdateVaultTxPayload {
   id: string,
   name?: string,
   description?: string
+  tags?: string[]
   status?: string
 }
 

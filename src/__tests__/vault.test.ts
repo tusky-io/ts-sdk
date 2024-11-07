@@ -10,6 +10,7 @@ jest.setTimeout(3000000);
 
 describe("Testing vault functions", () => {
   let vaultId: string;
+  let publicVaultId: string;
 
   beforeAll(async () => {
     akord = await initInstance();
@@ -95,6 +96,22 @@ describe("Testing vault functions", () => {
     const tag2 = faker.random.word();
     const vault = await akord.vault.create(name, { public: true, tags: [tag1, tag2] });
 
+    expect(vault.tags).toBeTruthy();
+    expect(vault.tags?.length).toEqual(2);
+    expect(vault.tags).toContain(tag1);
+    expect(vault.tags).toContain(tag2);
+
+    publicVaultId = vault.id;
+  });
+
+  it("should update vault metadata", async () => {
+    const description = faker.random.words();
+
+    const tag1 = faker.random.word();
+    const tag2 = faker.random.word();
+    const vault = await akord.vault.update(publicVaultId, { description: description, tags: [tag1, tag2] });
+
+    expect(vault.description).toEqual(description);
     expect(vault.tags).toBeTruthy();
     expect(vault.tags?.length).toEqual(2);
     expect(vault.tags).toContain(tag1);

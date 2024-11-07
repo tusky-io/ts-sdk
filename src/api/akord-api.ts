@@ -138,6 +138,7 @@ export default class AkordApi extends Api {
       .resourceId(tx.id)
       .name(tx.name)
       .description(tx.description)
+      .tags(tx.tags)
       .status(tx.status)
       .autoExecute(this.autoExecute)
       .updateVault();

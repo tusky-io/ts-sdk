@@ -7,7 +7,7 @@ import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
 import { arrayToBase64, generateKeyPair } from "../crypto";
-import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
+import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType, VaultUpdateOptions } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
 
@@ -148,6 +148,32 @@ class VaultModule {
     await this.service.setName(name);
 
     const vault = await this.service.api.updateVault({ id: id, name: this.service.name });
+    return this.service.processVault(vault, true, this.service.keys);
+  }
+
+  /**
+   * Update vault metadata: name, description, tags
+   * @param id vault id
+   * @param updates vault metadata updates
+   * @returns Promise with vault object
+   */
+  public async update(id: string, updates: VaultUpdateOptions): Promise<Vault> {
+    await this.service.setVaultContext(id);
+
+    if (updates.name) {
+      await this.service.setName(updates.name);
+    }
+
+    if (updates.description) {
+      await this.service.setDescription(updates.description);
+    }
+
+    const vault = await this.service.api.updateVault({
+      id: id,
+      name: this.service.name,
+      description: this.service.description,
+      tags: updates.tags,
+    });
     return this.service.processVault(vault, true, this.service.keys);
   }
 
