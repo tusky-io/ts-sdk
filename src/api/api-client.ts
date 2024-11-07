@@ -892,6 +892,7 @@ export class ApiClient {
     this.data({
       name: this._name,
       description: this._description,
+      tags: this._tags,
       status: this._status,
       autoExecute: this._autoExecute
     });
