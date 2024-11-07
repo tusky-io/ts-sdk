@@ -1,3 +1,10 @@
+# [0.22.0-dev.53](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.52...v0.22.0-dev.53) (2024-11-07)
+
+
+### Features
+
+* enable owner access to the membership ([23ab416](https://github.com/Akord-com/carmella-sdk/commit/23ab41697133946ef476dc8913bc400fb7a24e3b))
+
 # [0.22.0-dev.52](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.51...v0.22.0-dev.52) (2024-11-07)
 
 
