@@ -165,6 +165,7 @@ export class Akord {
       encrypter: this._encrypter,
       env: this._env,
       storage: this._storage,
+      address: this._auth.getAddress()
     }
   }
 

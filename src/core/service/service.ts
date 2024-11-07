@@ -15,6 +15,7 @@ class Service {
   api: Api
   pubsub: PubSub;
 
+  address: string
   signer: Signer
   encrypter: Encrypter
 
@@ -40,6 +41,7 @@ class Service {
     this.api = config.api;
     this.pubsub = config.pubsub;
     this.encrypter = config.encrypter;
+    this.address = config.address;
     // set context from config / another service
     this.vault = config.vault;
     this.vaultId = config.vaultId;
@@ -128,6 +130,7 @@ class Service {
 
 export type ServiceConfig = {
   decryptedKeys?: VaultKeyPair[];
+  address?: string,
   api?: Api,
   pubsub?: PubSub,
   auth?: Auth,

@@ -178,6 +178,7 @@ export default class AkordApi extends Api {
       .keys(tx.keys)
       .name(tx.name)
       .encPrivateKey(tx.encPrivateKey)
+      .ownerAccess(tx.ownerAccess)
       .allowedStorage(tx.allowedStorage)
       .allowedPaths(tx.allowedPaths)
       .autoExecute(this.autoExecute)
