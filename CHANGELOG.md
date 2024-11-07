@@ -1,3 +1,10 @@
+# [0.22.0-dev.52](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.51...v0.22.0-dev.52) (2024-11-07)
+
+
+### Features
+
+* enable vault metadata updates ([d3cef03](https://github.com/Akord-com/carmella-sdk/commit/d3cef03a33553387626aaece3b9b27a8fbf0828d))
+
 # [0.22.0-dev.51](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.50...v0.22.0-dev.51) (2024-11-05)
 
 
