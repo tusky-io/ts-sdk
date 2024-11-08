@@ -17,7 +17,7 @@ class FileService extends Service {
     const vault = await this.api.getVault(object.vaultId);
     this.setVault(vault);
     this.setVaultId(object.vaultId);
-    this.setIsPublic(object.__public__);
+    this.setEncrypted(object.__encrypted__);
     await this.setMembershipKeys(object);
     this.setObject(object);
     this.setObjectId(fileId);
@@ -36,7 +36,7 @@ class FileService extends Service {
   }
 
   private async isEncrypted(file: File) {
-    return file.vaultId && !file.__public__;
+    return file.vaultId && file.__encrypted__;
   }
 
   async setName(name: string) {

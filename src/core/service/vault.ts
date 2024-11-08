@@ -29,7 +29,7 @@ class VaultService extends Service {
 
   async processVault(object: Vault, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<Vault> {
     const vault = new Vault(object, keys);
-    if (shouldDecrypt && !vault.public) {
+    if (shouldDecrypt && vault.encrypted) {
       try {
         await vault.decrypt(this.encrypter);
       } catch (error) {

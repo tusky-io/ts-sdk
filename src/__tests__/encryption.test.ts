@@ -85,11 +85,11 @@ describe("Testing encryption functions", () => {
 
   it("should create a private vault", async () => {
     const name = faker.random.words();
-    const vault = await akord.vault.create(name, { public: false });
+    const vault = await akord.vault.create(name, { encrypted: true });
     expect(vault.id).toBeTruthy();
     expect(vault.name).toEqual(name);
     expect(vault.status).toEqual(status.ACTIVE);
-    expect(vault.public).toEqual(false);
+    expect(vault.encrypted).toEqual(true);
     vaultId = vault.id;
   });
 

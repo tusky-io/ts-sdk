@@ -18,7 +18,7 @@ import { Auth } from "../auth";
 import { ApiConfig } from "../config";
 
 export const defaultFileUploadOptions = {
-  public: false
+  encrypted: true
 };
 
 const DEFAULT_LIMIT = 1000;
@@ -122,7 +122,7 @@ export default class AkordApi extends Api {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
-      .public(tx.public)
+      .encrypted(tx.encrypted)
       .name(tx.name)
       .description(tx.description)
       .tags(tx.tags)
@@ -218,7 +218,7 @@ export default class AkordApi extends Api {
       .env(this.config)
       .auth(this.auth)
       .resourceId(id)
-      .public(options.public)
+      .encrypted(options.encrypted)
       // .progressHook(options.progressHook)
       // .cancelHook(options.cancelHook)
       .downloadFile();

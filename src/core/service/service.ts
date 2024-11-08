@@ -26,7 +26,7 @@ class Service {
   parentId: string
   objectId: string
   type: ObjectType
-  isPublic: boolean
+  encrypted: boolean
   vault: Vault
   object: Object
   groupRef: string
@@ -47,7 +47,7 @@ class Service {
     this.keys = config.keys;
     this.decryptedKeys = config.decryptedKeys || [];
     this.objectId = config.objectId;
-    this.isPublic = config.isPublic;
+    this.encrypted = config.encrypted;
     this.type = config.type;
     this.object = config.object;
     this.groupRef = config.groupRef;
@@ -96,8 +96,8 @@ class Service {
     this.object = object;
   }
 
-  setIsPublic(isPublic: boolean) {
-    this.isPublic = isPublic;
+  setEncrypted(encrypted: boolean) {
+    this.encrypted = encrypted;
   }
 
   setVault(vault: Vault) {
@@ -105,7 +105,7 @@ class Service {
   }
 
   async processWriteString(data: string): Promise<string> {
-    if (this.isPublic) return data;
+    if (!this.encrypted) return data;
     const vaultEncryption = new VaultEncryption({ vaultKeys: this.keys });
     const dataString = await vaultEncryption.encryptHybrid(stringToArray(data));
     return dataString
@@ -116,12 +116,12 @@ class Service {
     const vault = await this.api.getVault(vaultId);
     this.setVault(vault);
     this.setVaultId(vaultId);
-    this.setIsPublic(vault.public);
+    this.setEncrypted(vault.encrypted);
     await this.setMembershipKeys(vault);
   }
 
   async setMembershipKeys(object: Object) {
-    if (!this.isPublic) {
+    if (this.encrypted) {
       this.setKeys(object.__keys__);
     }
   }
@@ -139,7 +139,7 @@ export type ServiceConfig = {
   objectId?: string,
   type?: ObjectType,
   action?: actions,
-  isPublic?: boolean,
+  encrypted?: boolean,
   vault?: Vault,
   object?: Object,
   actionRef?: string,
@@ -152,7 +152,7 @@ export type ServiceConfig = {
 
 export type VaultOptions = {
   vaultId?: string,
-  public?: boolean
+  encrypted?: boolean
 }
 
 export { Service };

@@ -82,9 +82,9 @@ export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   }
 }
 
-export const vaultCreate = async (akord: Akord, isEncrypted: boolean = true) => {
+export const vaultCreate = async (akord: Akord, encrypted: boolean = true) => {
   const name = faker.random.words();
-  const { id } = await akord.vault.create(name, { public: !isEncrypted });
+  const { id } = await akord.vault.create(name, { encrypted: encrypted });
 
   // const membership = await akord.membership.get(membershipId);
   // expect(membership.status).toEqual("ACCEPTED");

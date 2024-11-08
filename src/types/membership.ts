@@ -35,7 +35,7 @@ export class Membership extends Encryptable {
   keys: VaultKeyPair[];
 
   // vault context
-  __public__?: boolean;
+  __encrypted__?: boolean;
 
   constructor(membershipProto: any, keys?: Array<EncryptedVaultKeyPair>) {
     super(keys);
@@ -53,7 +53,7 @@ export class Membership extends Encryptable {
     this.keys = membershipProto.keys;
     this.memberDetails = membershipProto.memberDetails ? new User(membershipProto.memberDetails) : undefined;
     this.allowedPaths = membershipProto.allowedPaths ? JSON.parse(membershipProto.allowedPaths) : undefined;
-    this.__public__ = membershipProto.__public__;
+    this.__encrypted__ = membershipProto.__encrypted__;
   }
 }
 
