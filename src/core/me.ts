@@ -59,15 +59,15 @@ class MeModule {
    * Backup user password
    * Generate fresh backup phrase & use it as a backup
    */
-  public async backupPassword(password: string): Promise<{ backupPhrase: string }> {
+  public async backupPassword(password: string): Promise<{ backupPhrase: string, user: User }> {
     const me = await this.get();
     if (!me.encPrivateKey) {
       throw new BadRequest("Missing user encryption context, setup the user password first.");
     }
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
     const { backupPhrase, encPrivateKeyBackup } = await this.userEncryption.backupPassword(password);
-    await this.service.api.updateMe({ encPrivateKeyBackup: encPrivateKeyBackup });
-    return { backupPhrase };
+    const user = await this.service.api.updateMe({ encPrivateKeyBackup: encPrivateKeyBackup });
+    return { user, backupPhrase };
   }
 
   /**

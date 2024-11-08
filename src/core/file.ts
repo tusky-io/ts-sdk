@@ -10,15 +10,14 @@ import { paginate, processListItems } from "./common";
 import { ReadableStream } from 'web-streams-polyfill/ponyfill/es2018';
 import { FileService } from './service/file';
 import { ServiceConfig } from './service/service';
-import { arrayToString, base64ToJson } from "../crypto";
-import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, decryptWithPrivateKey, importKeyFromBase64, IV_LENGTH_IN_BYTES } from "../crypto/lib";
+import { AUTH_TAG_LENGTH_IN_BYTES, decryptStream, IV_LENGTH_IN_BYTES } from "../crypto/lib";
 import * as tus from 'tus-js-client'
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
-import { X25519EncryptedPayload } from "../crypto/types";
 import { onUpdateFile } from '@akord/carmella-gql/dist/types/subscriptions';
 import { Subscription } from "rxjs";
+import { VaultEncryption } from "../crypto/vault-encryption";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -205,7 +204,7 @@ class FileModule {
       ...options
     }
     const nodeProto = await this.service.api.getFile(id);
-    return this.service.processFile(nodeProto, !nodeProto.__public__ && getOptions.shouldDecrypt, nodeProto.__keys__);
+    return this.service.processFile(nodeProto, getOptions.shouldDecrypt);
   }
 
   /**
@@ -224,7 +223,7 @@ class FileModule {
     const errors = [];
     const processItem = async (nodeProto: any) => {
       try {
-        const node = await this.service.processFile(nodeProto, !nodeProto.__public__ && listOptions.shouldDecrypt, nodeProto.__keys__);
+        const node = await this.service.processFile(nodeProto, listOptions.shouldDecrypt);
         items.push(node);
       } catch (error) {
         errors.push({ id: nodeProto.id, error });
@@ -258,7 +257,7 @@ class FileModule {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
     const fileProto = await this.service.api.updateFile({ id: id, name: this.service.name });
-    return this.service.processFile(fileProto, !fileProto.__public__, fileProto.__keys__);
+    return this.service.processFile(fileProto, true);
   }
 
   /**
@@ -302,18 +301,17 @@ class FileModule {
   }
 
   public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
-    const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
+    const file = await this.service.api.downloadFile(id, { responseType: 'stream', encrypted: true });
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));
-    this.service.setIsPublic(false);
+    this.service.setEncrypted(fileMetadata.__encrypted__);
 
     let stream: ReadableStream<Uint8Array>;
-    if (fileMetadata.__public__) {
+    if (!this.service.encrypted) {
       stream = file as ReadableStream<Uint8Array>;
     } else {
       const aesKey = await this.aesKey(id);
-      const aesCryptoKey = await importKeyFromBase64(aesKey);
-      stream = await decryptStream(file as ReadableStream, aesCryptoKey, fileMetadata.chunkSize);
+      stream = await decryptStream(file as ReadableStream, aesKey, fileMetadata.chunkSize);
     }
     return stream;
   }
@@ -339,50 +337,44 @@ class FileModule {
     await this.service.setVaultContext(vaultId);
     const keys = this.service.keys;
     const encrypter = this.service.encrypter;
-    const isPublic = this.service.isPublic;
+    const isEncrypted = this.service.encrypted;
     return this.service.pubsub.client.graphql({
       query: onUpdateFile,
       variables: {
-          filter: {
-            vaultId: { eq: vaultId }
-          }
+        filter: {
+          vaultId: { eq: vaultId }
+        }
       }
     }).subscribe({
       next: async ({ data }) => {
         const fileProto = data.onUpdateFile;
         if (fileProto && onSuccess) {
           const file = new File(fileProto, keys);
-          if (!isPublic) {
+          if (isEncrypted) {
             await file.decrypt(encrypter);
           }
           await onSuccess(file);
         }
       },
       error: (e: Error) => {
-          if (onError) {
-              onError(e);
-          }
+        if (onError) {
+          onError(e);
+        }
       }
     });
   }
 
-  protected async aesKey(id: string): Promise<string | null> {
+  protected async aesKey(id: string): Promise<CryptoKey | null> {
     const fileMetadata = await this.get(id);
     if (!fileMetadata.encryptedAesKey) {
       return null;
     }
-    const encryptedAesKey = base64ToJson(fileMetadata.encryptedAesKey) as X25519EncryptedPayload;
-
     if (!fileMetadata.encryptedAesKey) {
       throw new IncorrectEncryptionKey(new Error("Missing file encryption context."));
     }
-    // decrypt vault's private key
-    const vaultEncPrivateKey = fileMetadata.__keys__.find((key) => key.publicKey === encryptedAesKey.publicKey).encPrivateKey;
-    const privateKey = await this.service.encrypter.decrypt(vaultEncPrivateKey);
 
-    // decrypt AES key with vault's private key
-    const decryptedKey = await decryptWithPrivateKey(privateKey, encryptedAesKey);
-    const aesKey = arrayToString(decryptedKey);
+    const vaultEncryption = new VaultEncryption({ vaultKeys: fileMetadata.__keys__, userEncrypter: this.service.encrypter });
+    const aesKey = await vaultEncryption.decryptAesKey(fileMetadata.encryptedAesKey);
     return aesKey;
   }
 }

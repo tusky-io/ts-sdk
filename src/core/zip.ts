@@ -65,7 +65,7 @@ class ZipModule {
     options: ZipUploadOptions = {}
   ): Promise<tus.Upload> {
     const vault = await this.service.api.getVault(vaultId);
-    if (!vault.public) {
+    if (vault.encrypted) {
       throw new BadRequest("Zip upload is not supported for encrypted vaults");
     }
     let fileLike = null;

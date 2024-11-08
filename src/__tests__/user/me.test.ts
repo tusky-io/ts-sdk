@@ -48,8 +48,10 @@ describe("Testing me functions", () => {
   });
 
   it("should backup password", async () => {
-    const { backupPhrase: backup } = await akord.me.backupPassword(password);
+    const { backupPhrase: backup, user } = await akord.me.backupPassword(password);
     expect(backup).toBeTruthy();
+    expect(user.encPrivateKey).toBeTruthy();
+    expect(user.encPrivateKeyBackup).toBeTruthy();
     console.log("User backup phrase: " + backup);
     backupPhrase = backup;
   });
@@ -59,5 +61,6 @@ describe("Testing me functions", () => {
     const user = await akord.me.resetPassword(backupPhrase, resetPassword);
     expect(user).toBeTruthy();
     expect(user.encPrivateKey).toBeTruthy();
+    expect(user.encPrivateKeyBackup).toBeTruthy();
   });
 });

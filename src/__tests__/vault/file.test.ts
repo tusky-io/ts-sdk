@@ -1,6 +1,6 @@
 import { BadRequest } from "../../errors/bad-request";
 import { Akord } from "../../index";
-import { cleanup, generateAndSavePixelFile, initInstance, isEncrypted, testDataGeneratedPath, testDataPath, vaultCreate } from '../common';
+import { cleanup, initInstance, isEncrypted, testDataPath, vaultCreate } from '../common';
 import { firstFileName } from '../data/content';
 import { createReadStream, promises as fs } from 'fs';
 import { status } from "../../constants";
@@ -43,8 +43,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
 
   it.skip("should upload multi-chunk file from path and download it", async () => {
     const fileName = "11mb.png";
-    await generateAndSavePixelFile(11, testDataGeneratedPath + fileName);
-    const id = await akord.file.upload(vaultId, testDataGeneratedPath + fileName);
+    const id = await akord.file.upload(vaultId, testDataPath + fileName);
 
     const type = "image/png";
     const file = await akord.file.get(id);
@@ -56,7 +55,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     expect(file.mimeType).toEqual(type);
 
     const response = await akord.file.arrayBuffer(file.id);
-    const buffer = await fs.readFile(testDataGeneratedPath + fileName);
+    const buffer = await fs.readFile(testDataPath + fileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
     expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);

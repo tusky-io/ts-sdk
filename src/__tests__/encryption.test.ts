@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import { Akord } from '../';
-import { cleanup, ENV_TEST_RUN, generateAndSavePixelFile, LOG_LEVEL, testDataGeneratedPath, testDataPath } from './common';
+import { cleanup, ENV_TEST_RUN, LOG_LEVEL, testDataPath } from './common';
 import { promises as fs } from 'fs';
 import { firstFileName } from './data/content';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -85,11 +85,11 @@ describe("Testing encryption functions", () => {
 
   it("should create a private vault", async () => {
     const name = faker.random.words();
-    const vault = await akord.vault.create(name, { public: false });
+    const vault = await akord.vault.create(name, { encrypted: true });
     expect(vault.id).toBeTruthy();
     expect(vault.name).toEqual(name);
     expect(vault.status).toEqual(status.ACTIVE);
-    expect(vault.public).toEqual(false);
+    expect(vault.encrypted).toEqual(true);
     vaultId = vault.id;
   });
 
@@ -122,8 +122,7 @@ describe("Testing encryption functions", () => {
 
   it("should upload multi-chunk encrypted file", async () => {
     const fileName = "11mb.png";
-    await generateAndSavePixelFile(11, testDataGeneratedPath + fileName);
-    const id = await akord.file.upload(vaultId, testDataGeneratedPath + fileName);
+    const id = await akord.file.upload(vaultId, testDataPath + fileName);
 
     const type = "image/png";
     const file = await akord.file.get(id);

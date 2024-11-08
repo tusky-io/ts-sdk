@@ -6,7 +6,7 @@ import { Encryptable, encrypted } from "../crypto";
 export class Vault extends Encryptable {
   id: string;
   status: string;
-  public: boolean;
+  encrypted: boolean;
   createdAt: string;
   updatedAt: string;
   owner: string;
@@ -24,7 +24,7 @@ export class Vault extends Encryptable {
     super(keys);
     this.id = vaultProto.id;
     this.owner = vaultProto.owner;
-    this.public = vaultProto.public;
+    this.encrypted = vaultProto.encrypted;
     this.createdAt = vaultProto.createdAt;
     this.updatedAt = vaultProto.updatedAt;
     this.size = vaultProto.size;
@@ -40,7 +40,7 @@ export class Vault extends Encryptable {
 }
 
 export type VaultCreateOptions = {
-  public?: boolean,
+  encrypted?: boolean,
   description?: string,
   tags?: string[]
 }
