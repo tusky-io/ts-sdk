@@ -1,3 +1,10 @@
+# [0.22.0-experimental.7](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.6...v0.22.0-experimental.7) (2024-11-08)
+
+
+### Features
+
+* rename akord to tusky ([fbe9317](https://github.com/Akord-com/carmella-sdk/commit/fbe9317c48855029381434a8e6f21471169e88f9))
+
 # [0.22.0-experimental.6](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.5...v0.22.0-experimental.6) (2024-11-08)
 
 
