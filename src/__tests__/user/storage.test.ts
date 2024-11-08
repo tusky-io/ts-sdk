@@ -1,21 +1,20 @@
-import { Akord } from "../../index";
+import { Tusky } from "../../index";
 import { cleanup, initInstance } from '../common';
 
-
-let akord: Akord;
+let tusky: Tusky;
 
 describe("Testing storage functions", () => {
 
   beforeAll(async () => {
-    akord = await initInstance(false);
+    tusky = await initInstance(false);
   });
 
   afterAll(async () => {
-    await cleanup(akord);
+    await cleanup(tusky);
   });
 
   it("should get user storage balance", async () => {
-    const storage = await akord.storage.get();
+    const storage = await tusky.storage.get();
     expect(storage).toBeTruthy();
     expect(storage.storageTotal).toBeGreaterThan(0);
     expect(storage.storageAvailable).toBeGreaterThanOrEqual(0);

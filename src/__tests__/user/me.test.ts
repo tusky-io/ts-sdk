@@ -1,8 +1,8 @@
 import faker from '@faker-js/faker';
-import { Akord } from "../../index";
+import { Tusky } from "../../index";
 import { cleanup, initInstance } from '../common';
 
-let akord: Akord;
+let tusky: Tusky;
 
 describe("Testing me functions", () => {
 
@@ -10,22 +10,22 @@ describe("Testing me functions", () => {
   let backupPhrase: string;
 
   beforeAll(async () => {
-    akord = await initInstance(false);
+    tusky = await initInstance(false);
   });
 
   afterAll(async () => {
-    await cleanup(akord);
+    await cleanup(tusky);
   });
 
   it("should get me", async () => {
-    const user = await akord.me.get();
+    const user = await tusky.me.get();
     expect(user).toBeTruthy();
     expect(user.address).toBeTruthy();
   });
 
   it("should update me", async () => {
     const name = faker.random.words();
-    const user = await akord.me.update({ name: name, termsAccepted: true });
+    const user = await tusky.me.update({ name: name, termsAccepted: true });
     expect(user).toBeTruthy();
     expect(user.address).toBeTruthy();
     expect(user.name).toEqual(name);
@@ -34,21 +34,21 @@ describe("Testing me functions", () => {
 
   it("should setup password", async () => {
     password = faker.random.word();
-    const user = await akord.me.setupPassword(password);
+    const user = await tusky.me.setupPassword(password);
     expect(user).toBeTruthy();
     expect(user.encPrivateKey).toBeTruthy();
   });
 
   it("should change password", async () => {
     const newPassword = faker.random.word();
-    const user = await akord.me.changePassword(password, newPassword);
+    const user = await tusky.me.changePassword(password, newPassword);
     expect(user).toBeTruthy();
     expect(user.encPrivateKey).toBeTruthy();
     password = newPassword;
   });
 
   it("should backup password", async () => {
-    const { backupPhrase: backup, user } = await akord.me.backupPassword(password);
+    const { backupPhrase: backup, user } = await tusky.me.backupPassword(password);
     expect(backup).toBeTruthy();
     expect(user.encPrivateKey).toBeTruthy();
     expect(user.encPrivateKeyBackup).toBeTruthy();
@@ -58,7 +58,7 @@ describe("Testing me functions", () => {
 
   it("should reset password", async () => {
     const resetPassword = faker.random.word();
-    const user = await akord.me.resetPassword(backupPhrase, resetPassword);
+    const user = await tusky.me.resetPassword(backupPhrase, resetPassword);
     expect(user).toBeTruthy();
     expect(user.encPrivateKey).toBeTruthy();
     expect(user.encPrivateKeyBackup).toBeTruthy();

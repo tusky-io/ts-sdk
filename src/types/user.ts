@@ -27,7 +27,7 @@ export class User {
 export type UserMutable = {
   name?: string,
   picture?: string,
-  termsAccepted?: boolean // by setting it to true, the user accepts following terms: https://akord.com/terms-of-service-consumer
+  termsAccepted?: boolean // by setting it to true, the user accepts following terms: https://tusky.io/terms-of-service-consumer
   encPrivateKey?: string // encrypted user private key using user password
   encPrivateKeyBackup?: string // encrypted user private key using user backup phrase
 }

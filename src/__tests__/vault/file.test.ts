@@ -1,32 +1,32 @@
 import { BadRequest } from "../../errors/bad-request";
-import { Akord } from "../../index";
+import { Tusky } from "../../index";
 import { cleanup, initInstance, isEncrypted, testDataPath, vaultCreate } from '../common';
 import { firstFileName } from '../data/content';
 import { createReadStream, promises as fs } from 'fs';
 import { status } from "../../constants";
 import { pathToReadable } from "../../types/node/file";
 
-let akord: Akord;
+let tusky: Tusky;
 
 describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, () => {
 
   let vaultId: string;
 
   beforeAll(async () => {
-    akord = await initInstance(isEncrypted);
+    tusky = await initInstance(isEncrypted);
 
-    const vault = await vaultCreate(akord, isEncrypted);
+    const vault = await vaultCreate(tusky, isEncrypted);
     vaultId = vault.id;
   });
 
   afterAll(async () => {
-    await cleanup(akord, vaultId);
+    await cleanup(tusky, vaultId);
   });
 
   it("should upload single-chunk file from path and download it", async () => {
-    const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    const id = await tusky.file.upload(vaultId, testDataPath + firstFileName);
     const type = "image/png";
-    const file = await akord.file.get(id);
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -34,7 +34,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.arrayBuffer(file.id);
+    const response = await tusky.file.arrayBuffer(file.id);
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
@@ -43,10 +43,10 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
 
   it.skip("should upload multi-chunk file from path and download it", async () => {
     const fileName = "11mb.png";
-    const id = await akord.file.upload(vaultId, testDataPath + fileName);
+    const id = await tusky.file.upload(vaultId, testDataPath + fileName);
 
     const type = "image/png";
-    const file = await akord.file.get(id);
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -54,7 +54,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     expect(file.name).toEqual(fileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.arrayBuffer(file.id);
+    const response = await tusky.file.arrayBuffer(file.id);
     const buffer = await fs.readFile(testDataPath + fileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
@@ -63,7 +63,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
 
   it("should fail uploading an empty file", async () => {
     await expect(async () => {
-      await akord.file.upload(vaultId, testDataPath + "empty-file.md");
+      await tusky.file.upload(vaultId, testDataPath + "empty-file.md");
     }).rejects.toThrow(BadRequest);
   });
 
@@ -71,9 +71,9 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const type = "image/png";
 
-    const id = await akord.file.upload(vaultId, buffer, { name: firstFileName, mimeType: type });
+    const id = await tusky.file.upload(vaultId, buffer, { name: firstFileName, mimeType: type });
     
-    const file = await akord.file.get(id);
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -85,8 +85,8 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
   it("should upload a file buffer without provided mime type", async () => {
     const buffer = await fs.readFile(testDataPath + firstFileName);
 
-    const id = await akord.file.upload(vaultId, buffer, { name: firstFileName });
-    const file = await akord.file.get(id);
+    const id = await tusky.file.upload(vaultId, buffer, { name: firstFileName });
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.name).toEqual(firstFileName);
   });
@@ -95,8 +95,8 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     const fileStream = createReadStream(testDataPath + firstFileName);
     const type = "image/png";
 
-    const id = await akord.file.upload(vaultId, fileStream, { name: firstFileName, mimeType: type });
-    const file = await akord.file.get(id);
+    const id = await tusky.file.upload(vaultId, fileStream, { name: firstFileName, mimeType: type });
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -108,8 +108,8 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
   it("should upload a file object", async () => {
     const fileObject = await pathToReadable(testDataPath + firstFileName);
     const type = "image/png";
-    const id = await akord.file.upload(vaultId, fileObject, { name: firstFileName });
-    const file = await akord.file.get(id);
+    const id = await tusky.file.upload(vaultId, fileObject, { name: firstFileName });
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -127,7 +127,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
   //     items.push({ file: testDataPath + fileName });
   //   }
 
-  //   const { data, errors } = await akord.file.batchUpload(vaultId, items);
+  //   const { data, errors } = await tusky.file.batchUpload(vaultId, items);
 
   //   expect(errors.length).toEqual(0);
   //   expect(data.length).toEqual(batchSize);

@@ -1,5 +1,5 @@
 import { Api } from "./api/api";
-import { AkordApi } from "./api/akord-api";
+import { TuskyApi } from "./api/tusky-api";
 import { ApiConfig, ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
 import { ConsoleLogger, logger, setLogger } from "./logger";
@@ -22,7 +22,7 @@ import { UserEncryption } from "./crypto/user-encryption";
 import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 
-export class Akord {
+export class Tusky {
   public api: Api;
   public pubsub: PubSub;
   public address: string;
@@ -61,23 +61,23 @@ export class Akord {
     return new PaymentModule(this.getConfig());
   }
 
-  static withOAuth(config: OAuthConfig): Akord {
-    const instance = new Akord({ ...config, authType: "OAuth" });
+  static withOAuth(config: OAuthConfig): Tusky {
+    const instance = new Tusky({ ...config, authType: "OAuth" });
     return instance;
   }
 
-  static withWallet(config: WalletConfig): Akord {
-    const instance = new Akord({ ...config, authType: "Wallet" });
+  static withWallet(config: WalletConfig): Tusky {
+    const instance = new Tusky({ ...config, authType: "Wallet" });
     return instance;
   }
 
-  static withApiKey(config: ApiKeyConfig): Akord {
-    const instance = new Akord({ ...config, authType: "ApiKey" });
+  static withApiKey(config: ApiKeyConfig): Tusky {
+    const instance = new Tusky({ ...config, authType: "ApiKey" });
     return instance;
   }
 
-  static withAuthTokenProvider(config: AuthTokenProviderConfig): Akord {
-    const instance = new Akord({ ...config, authType: "AuthTokenProvider" });
+  static withAuthTokenProvider(config: AuthTokenProviderConfig): Tusky {
+    const instance = new Tusky({ ...config, authType: "AuthTokenProvider" });
     return instance;
   }
 
@@ -159,7 +159,7 @@ export class Akord {
   }
 
   withApi(config: ApiConfig): this {
-    this.api = config.api ? config.api : new AkordApi({ ...config, auth: this._auth });
+    this.api = config.api ? config.api : new TuskyApi({ ...config, auth: this._auth });
     this._env = config.env;
     this._auth.setEnv(this._env);
     return this;
@@ -195,7 +195,7 @@ export class Akord {
     this._env = config.env || DEFAULT_ENV;
     this._storage = config.storage || defaultStorage();
     this._auth = new Auth({ ...config, ...this.getConfig() });
-    this.api = config.api ? config.api : new AkordApi(this.getConfig());
+    this.api = config.api ? config.api : new TuskyApi(this.getConfig());
     this.pubsub = new PubSub({ env: this._env });
     this.setCurrentSession();
     CacheBusters.cache = config?.cache;

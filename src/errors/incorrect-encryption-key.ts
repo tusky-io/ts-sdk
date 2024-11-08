@@ -1,6 +1,6 @@
-import { AkordError } from "./error";
+import { TuskyError } from "./error";
 
-export class IncorrectEncryptionKey extends AkordError {
+export class IncorrectEncryptionKey extends TuskyError {
   statusCode: number = 409;
 
   constructor(error?: Error) {

@@ -2,7 +2,7 @@ import { Unauthorized } from "../errors/unauthorized";
 import { DEFAULT_ENV, Env } from "../types/env";
 import { isServer } from "../util/platform";
 
-const STORAGE_PATH_PREFIX = "akord";
+const STORAGE_PATH_PREFIX = "tusky";
 
 const EXPIRATION_BUFFER = 5 * 60; // 5 minutes
 

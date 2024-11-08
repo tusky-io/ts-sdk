@@ -2,7 +2,7 @@ import { LoggerConfig } from "./config";
 import { importDynamic } from "./util/import";
 import { isServer } from "./util/platform";
 
-const LOG_FILE = 'akord.log';
+const LOG_FILE = 'tusky.log';
 
 export interface Logger {
   info(message: any, ...params: any[]): void;

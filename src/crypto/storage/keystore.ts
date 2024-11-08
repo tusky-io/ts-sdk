@@ -4,7 +4,7 @@ import { logger } from "../../logger";
 
 export default class Keystore {
 
-  public static KEYSTORE_LOCATION = '.akord/keystore'
+  public static KEYSTORE_LOCATION = '.tusky/keystore'
   private static DEFAULT_ENCODING_OPTIONS = {
     valueEncoding: {
         encode(data: any) { return data; },

@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { Akord } from '../';
+import { Tusky } from '../';
 import { cleanup, ENV_TEST_RUN, LOG_LEVEL, testDataPath } from './common';
 import { promises as fs } from 'fs';
 import { firstFileName } from './data/content';
@@ -11,7 +11,7 @@ describe("Testing encryption functions", () => {
     await cleanup();
   });
 
-  let akord: Akord;
+  let tusky: Tusky;
   let vaultId: string;
   let password: string;
 
@@ -62,30 +62,30 @@ describe("Testing encryption functions", () => {
 
   it("should set user encryption context", async () => {
     const keypair = new Ed25519Keypair();
-    akord = Akord
+    tusky = Tusky
       .withWallet({ walletSigner: keypair })
       .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withApi({ env: ENV_TEST_RUN })
 
-    await akord.signIn();
+    await tusky.signIn();
 
     password = faker.random.word();
 
-    await akord.me.setupPassword(password);
+    await tusky.me.setupPassword(password);
   });
 
   it("should set user encryption context from password & persist encryption session with keystore", async () => {
-    await akord.withEncrypter({ password: password, keystore: true });
+    await tusky.withEncrypter({ password: password, keystore: true });
   });
 
   it("should retrieve user context from session", async () => {
-    akord = new Akord({ authType: "Wallet", env: ENV_TEST_RUN, logLevel: LOG_LEVEL });
-    await akord.withEncrypter({ keystore: true });
+    tusky = new Tusky({ authType: "Wallet", env: ENV_TEST_RUN, logLevel: LOG_LEVEL });
+    await tusky.withEncrypter({ keystore: true });
   });
 
   it("should create a private vault", async () => {
     const name = faker.random.words();
-    const vault = await akord.vault.create(name, { encrypted: true });
+    const vault = await tusky.vault.create(name, { encrypted: true });
     expect(vault.id).toBeTruthy();
     expect(vault.name).toEqual(name);
     expect(vault.status).toEqual(status.ACTIVE);
@@ -95,7 +95,7 @@ describe("Testing encryption functions", () => {
 
   it("should create a private folder", async () => {
     const folderName = faker.random.words();
-    const folder = await akord.folder.create(vaultId, folderName);
+    const folder = await tusky.folder.create(vaultId, folderName);
     expect(folder.id).toBeTruthy();
     expect(folder.vaultId).toEqual(vaultId);
     expect(folder.parentId).toEqual(vaultId);
@@ -104,9 +104,9 @@ describe("Testing encryption functions", () => {
   });
 
   it("should upload single-chunk encrypted file", async () => {
-    const id = await akord.file.upload(vaultId, testDataPath + firstFileName);
+    const id = await tusky.file.upload(vaultId, testDataPath + firstFileName);
     const type = "image/png";
-    const file = await akord.file.get(id);
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -114,7 +114,7 @@ describe("Testing encryption functions", () => {
     expect(file.name).toEqual(firstFileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.arrayBuffer(file.id);
+    const response = await tusky.file.arrayBuffer(file.id);
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     expect(response).toEqual(arrayBuffer);
@@ -122,10 +122,10 @@ describe("Testing encryption functions", () => {
 
   it("should upload multi-chunk encrypted file", async () => {
     const fileName = "11mb.png";
-    const id = await akord.file.upload(vaultId, testDataPath + fileName);
+    const id = await tusky.file.upload(vaultId, testDataPath + fileName);
 
     const type = "image/png";
-    const file = await akord.file.get(id);
+    const file = await tusky.file.get(id);
     expect(file.id).toBeTruthy();
     expect(file.vaultId).toEqual(vaultId);
     expect(file.parentId).toEqual(vaultId);
@@ -133,7 +133,7 @@ describe("Testing encryption functions", () => {
     expect(file.name).toEqual(fileName);
     expect(file.mimeType).toEqual(type);
 
-    const response = await akord.file.arrayBuffer(file.id);
+    const response = await tusky.file.arrayBuffer(file.id);
 
     const buffer = await fs.readFile(testDataPath + firstFileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)

@@ -1,6 +1,6 @@
-import { AkordError } from "./error";
+import { TuskyError } from "./error";
 
-export class GatewayTimeout extends AkordError {
+export class GatewayTimeout extends TuskyError {
   statusCode: number = 504;
 
   constructor(message: string, error?: Error) {
