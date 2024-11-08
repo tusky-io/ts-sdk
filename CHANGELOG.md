@@ -1,3 +1,24 @@
+# [0.22.0-experimental.6](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.5...v0.22.0-experimental.6) (2024-11-08)
+
+
+### Bug Fixes
+
+* error log message ([d8f79b1](https://github.com/Akord-com/carmella-sdk/commit/d8f79b1cbb6a5319ed79068a7e401fec1b9ec288))
+* micro-key-producer import ([4d84940](https://github.com/Akord-com/carmella-sdk/commit/4d8494008f5c3b561fd073abb3443011dffecdf8))
+* post merge & refactor issues with crypto lib ([9c1da97](https://github.com/Akord-com/carmella-sdk/commit/9c1da97310e03ee51cef5debdb0d1355fb8716d8))
+
+
+### Features
+
+* encryption cleanup ([5711dd3](https://github.com/Akord-com/carmella-sdk/commit/5711dd33103ec0a4cba3fea99d716b5f498f9f7c))
+* generate 24-word mnemonic & derive 256-bit AES key from it for user backup ([cb94a1a](https://github.com/Akord-com/carmella-sdk/commit/cb94a1a9bf00180b5d4b3acfde52d14712c76a46))
+* more crypto cleanup ([7cf9f2e](https://github.com/Akord-com/carmella-sdk/commit/7cf9f2e6c29aefe75f45947d26efa5e52ded442f))
+* move crypto logic to lib ([59d7bcd](https://github.com/Akord-com/carmella-sdk/commit/59d7bcd7aea8a1894586d1da0c0f9b7f5ec9130f))
+* refactor vault encryption ([9a72d4c](https://github.com/Akord-com/carmella-sdk/commit/9a72d4c78489cf8c9e7c8269dce2ba981b540779))
+* remove batch module ([7d40f76](https://github.com/Akord-com/carmella-sdk/commit/7d40f76b71a5bb5745bfbb985b293638dcdb6810))
+* use encrypted flag instead of public ([2502799](https://github.com/Akord-com/carmella-sdk/commit/2502799f224e1707327507f8b2f5799807933ba3))
+* use micro key producer to generate password for sharing the vault ([1cfd844](https://github.com/Akord-com/carmella-sdk/commit/1cfd84457da641ef87bff2661930df13902e9d10))
+
 # [0.22.0-experimental.5](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-experimental.4...v0.22.0-experimental.5) (2024-11-06)
 
 
