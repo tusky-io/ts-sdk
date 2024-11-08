@@ -17,7 +17,7 @@ class FolderService extends Service {
     const vault = await this.api.getVault(object.vaultId);
     this.setVault(vault);
     this.setVaultId(object.vaultId);
-    this.setIsPublic(object.__public__);
+    this.setEncrypted(object.__encrypted__);
     await this.setMembershipKeys(object);
     this.setObject(object);
     this.setObjectId(folderId);
@@ -40,7 +40,7 @@ class FolderService extends Service {
   }
 
   private async isEncrypted(folder: Folder) {
-    return folder.vaultId && !folder.__public__;
+    return folder.vaultId && folder.__encrypted__;
   }
 }
 

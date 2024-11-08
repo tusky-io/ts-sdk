@@ -17,7 +17,7 @@ class MembershipService extends Service {
     const vault = await this.api.getVault(membership.vaultId);
     this.setVault(vault);
     this.setVaultId(membership.vaultId);
-    this.setIsPublic(membership.__public__);
+    this.setEncrypted(membership.__encrypted__);
     await this.setMembershipKeys(membership);
     this.setObject(membership);
     this.setObjectId(membershipId);

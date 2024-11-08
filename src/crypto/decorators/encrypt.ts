@@ -25,7 +25,7 @@ export abstract class Encryptable {
           if (!this[prop]) {
             return this[prop]
           }
-          const vaultEncryption = new VaultEncryption({ vaultKeys: this.__keys__, userEncrypter:encrypter  });
+          const vaultEncryption = new VaultEncryption({ vaultKeys: this.__keys__, userEncrypter: encrypter });
 
           const decrypted = arrayToString(await vaultEncryption.decryptHybrid(this[prop]));
           this[prop] = decrypted;

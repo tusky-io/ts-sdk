@@ -59,7 +59,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} vault functions`, () => 
 
     const tag1 = faker.random.word();
     const tag2 = faker.random.word();
-    const vault = await akord.vault.create(name, { public: true, tags: [tag1, tag2] });
+    const vault = await akord.vault.create(name, { encrypted: false, tags: [tag1, tag2] });
 
     expect(vault.tags).toBeTruthy();
     expect(vault.tags?.length).toEqual(2);

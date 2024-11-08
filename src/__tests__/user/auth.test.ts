@@ -21,7 +21,7 @@ describe("Testing auth functions", () => {
   });
 
   it("should create vault", async () => {
-    const vault = await akord.vault.create(faker.random.words(), { public: true });
+    const vault = await akord.vault.create(faker.random.words(), { encrypted: false });
     expect(vault).toBeTruthy();
     expect(vault.name).toBeTruthy();
   });

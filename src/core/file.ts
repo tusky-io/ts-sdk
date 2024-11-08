@@ -301,13 +301,13 @@ class FileModule {
   }
 
   public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
-    const file = await this.service.api.downloadFile(id, { responseType: 'stream', public: false });
+    const file = await this.service.api.downloadFile(id, { responseType: 'stream', encrypted: true });
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));
-    this.service.setIsPublic(false);
+    this.service.setEncrypted(fileMetadata.__encrypted__);
 
     let stream: ReadableStream<Uint8Array>;
-    if (fileMetadata.__public__) {
+    if (!this.service.encrypted) {
       stream = file as ReadableStream<Uint8Array>;
     } else {
       const aesKey = await this.aesKey(id);
@@ -337,7 +337,7 @@ class FileModule {
     await this.service.setVaultContext(vaultId);
     const keys = this.service.keys;
     const encrypter = this.service.encrypter;
-    const isPublic = this.service.isPublic;
+    const isEncrypted = this.service.encrypted;
     return this.service.pubsub.client.graphql({
       query: onUpdateFile,
       variables: {
@@ -350,7 +350,7 @@ class FileModule {
         const fileProto = data.onUpdateFile;
         if (fileProto && onSuccess) {
           const file = new File(fileProto, keys);
-          if (!isPublic) {
+          if (isEncrypted) {
             await file.decrypt(encrypter);
           }
           await onSuccess(file);

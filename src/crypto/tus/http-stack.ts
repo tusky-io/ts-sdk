@@ -29,7 +29,7 @@ export class EncryptableHttpStack {
         throw new Error("Vault is required");
       }
       this.vault = vault;
-      if (!vault.public) {
+      if (vault.encrypted) {
         if (!vault.__keys__ || vault.__keys__.length === 0) {
           throw new Error("Encrypted vault has no keys");
         }
@@ -43,7 +43,7 @@ export class EncryptableHttpStack {
         return request;
       }
   
-      if (this.vault.public) {
+      if (!this.vault.encrypted) {
         return request;
       }
   
