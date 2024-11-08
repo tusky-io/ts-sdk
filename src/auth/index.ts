@@ -4,7 +4,7 @@ import { logger } from "../logger";
 import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
-import { AkordApi } from "../api/akord-api";
+import { TuskyApi } from "../api/tusky-api";
 import { Env } from "../types/env";
 import { decode, defaultStorage, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
@@ -23,6 +23,10 @@ export type WalletAccount = {
   address: string,
   publicKey: Uint8Array
 }
+
+// TODO: switch to Tusky
+// const AUTH_MESSAGE_PREFIX = "tusky:login:";
+const AUTH_MESSAGE_PREFIX = "akord:login:";
 
 export class Auth {
   private env: Env;
@@ -88,10 +92,10 @@ export class Auth {
         } else {
           throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
         }
-        const api = new AkordApi({ env: this.env });
+        const api = new TuskyApi({ env: this.env });
         const { nonce } = await api.createAuthChallenge({ address });
 
-        const message = new TextEncoder().encode("akord:login:" + nonce);
+        const message = new TextEncoder().encode(AUTH_MESSAGE_PREFIX + nonce);
 
         let signature: string;
         if (this.walletSignFnClient) {

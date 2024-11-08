@@ -3,7 +3,7 @@ import { EnokiClient } from './enoki';
 import { AuthProvider, OAuthConfig } from '../types/auth';
 import { BadRequest } from '../errors/bad-request';
 import { logger } from '../logger';
-import AkordApi from '../api/akord-api';
+import { TuskyApi } from '../api/tusky-api';
 import { Unauthorized } from '../errors/unauthorized';
 import { defaultStorage, JWTClient } from './jwt';
 import { Env, Envs } from '../types/env';
@@ -101,7 +101,7 @@ class OAuth {
       if (!this.redirectUri) {
         throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
       }
-      const { idToken, accessToken, refreshToken } = await new AkordApi({ env: this.env }).generateJWT({
+      const { idToken, accessToken, refreshToken } = await new TuskyApi({ env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "code",
         redirectUri: this.redirectUri,
@@ -153,7 +153,7 @@ class OAuth {
         if (!refreshToken) {
           throw new Unauthorized("Session expired. Please log in again.");
         }
-        const result = await new AkordApi({ env: this.env }).generateJWT({
+        const result = await new TuskyApi({ env: this.env }).generateJWT({
           authProvider: this.authProvider,
           grantType: "refreshToken",
           refreshToken: refreshToken

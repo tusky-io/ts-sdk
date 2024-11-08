@@ -1,6 +1,6 @@
 import { logger } from "../logger";
 
-export class AkordError extends Error {
+export class TuskyError extends Error {
   statusCode: number;
   requestId: string;
 

@@ -23,7 +23,7 @@ export const defaultFileUploadOptions = {
 
 const DEFAULT_LIMIT = 1000;
 
-export default class AkordApi extends Api {
+export default class TuskyApi extends Api {
 
   protected auth: Auth;
 
@@ -421,5 +421,5 @@ export default class AkordApi extends Api {
 }
 
 export {
-  AkordApi
+  TuskyApi
 }

@@ -1,5 +1,5 @@
 require("dotenv").config();
-import { Akord, DEFAULT_ENV, Env } from "../index";
+import { Tusky, DEFAULT_ENV, Env } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
 import { EnokiSigner } from "./enoki/signer";
@@ -15,66 +15,66 @@ export const isEncrypted = process.argv.includes('--encrypted');
 export const LOG_LEVEL = "error";
 export const ENV_TEST_RUN = (process.env.ENV || DEFAULT_ENV) as Env;
 
-export async function initInstance(encrypted = true): Promise<Akord> {
-  let akord: Akord;
+export async function initInstance(encrypted = true): Promise<Tusky> {
+  let tusky: Tusky;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
-    akord = Akord
+    tusky = Tusky
       .withApiKey({ apiKey: process.env.API_KEY })
       .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withApi({ env: ENV_TEST_RUN })
   } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
-    akord = Akord
+    tusky = Tusky
       .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
       .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
       .withApi({ env: ENV_TEST_RUN });
   } else {
     const keypair = new Ed25519Keypair();
-    akord = Akord
+    tusky = Tusky
       .withWallet({ walletSigner: keypair })
       .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withApi({ env: ENV_TEST_RUN })
-    await akord.signIn();
+    await tusky.signIn();
   }
   if (encrypted) {
     const password = faker.random.word();
-    await akord.me.setupPassword(password);
-    await akord.withEncrypter({ password: password, keystore: true });
+    await tusky.me.setupPassword(password);
+    await tusky.withEncrypter({ password: password, keystore: true });
   }
-  return akord;
+  return tusky;
 }
 
 export async function setupVault(isEncrypted = true): Promise<string> {
-  const akord = await initInstance(isEncrypted);
-  const vault = await vaultCreate(akord, isEncrypted);
+  const tusky = await initInstance(isEncrypted);
+  const vault = await vaultCreate(tusky, isEncrypted);
   return vault.id;
 }
 
-export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
+export async function cleanup(tusky?: Tusky, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   stopServer();
   logger.debug("Post test cleanup");
   try {
-    if (akord && vaultId) {
-      const files = await akord.file.listAll({ vaultId: vaultId });
+    if (tusky && vaultId) {
+      const files = await tusky.file.listAll({ vaultId: vaultId });
       for (const file of files) {
         if (file.status !== status.DELETED) {
-          await akord.file.delete(file.id);
+          await tusky.file.delete(file.id);
         }
-        await akord.file.deletePermanently(file.id);
+        await tusky.file.deletePermanently(file.id);
       }
-      const folders = await akord.folder.listAll({ vaultId: vaultId });
+      const folders = await tusky.folder.listAll({ vaultId: vaultId });
       for (const folder of folders) {
         if (folder.status !== status.DELETED) {
-          await akord.folder.delete(folder.id);
+          await tusky.folder.delete(folder.id);
         }
-        await akord.folder.deletePermanently(folder.id);
+        await tusky.folder.deletePermanently(folder.id);
       }
       await new Promise((resolve) => setTimeout(resolve, 10000));
-      await akord.vault.delete(vaultId);
+      await tusky.vault.delete(vaultId);
     }
   } catch(error) {
     logger.error("Post test cleanup failed");
@@ -82,25 +82,21 @@ export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
   }
 }
 
-export const vaultCreate = async (akord: Akord, encrypted: boolean = true) => {
+export const vaultCreate = async (tusky: Tusky, encrypted: boolean = true) => {
   const name = faker.random.words();
-  const { id } = await akord.vault.create(name, { encrypted: encrypted });
+  const { id } = await tusky.vault.create(name, { encrypted: encrypted });
 
-  // const membership = await akord.membership.get(membershipId);
-  // expect(membership.status).toEqual("ACCEPTED");
-  // expect(membership.role).toEqual("OWNER");
-
-  const vault = await akord.vault.get(id);
+  const vault = await tusky.vault.get(id);
   expect(vault.status).toEqual(status.ACTIVE);
   expect(vault.name).toEqual(name);
   return vault;
 }
 
-export const folderCreate = async (akord: Akord, vaultId: string, parentId?: string) => {
+export const folderCreate = async (tusky: Tusky, vaultId: string, parentId?: string) => {
   const name = faker.random.words();
-  const { id } = await akord.folder.create(vaultId, name, { parentId: parentId });
+  const { id } = await tusky.folder.create(vaultId, name, { parentId: parentId });
 
-  const folder = await akord.folder.get(id);
+  const folder = await tusky.folder.get(id);
   expect(folder.status).toEqual(status.ACTIVE);
   if (parentId) {
     expect(folder.parentId).toEqual(parentId);

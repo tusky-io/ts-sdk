@@ -37,7 +37,7 @@ export const throwError = (status: number, message?: string, error?: Error) => {
       if (error && error['code'] && (error['code'] === 'ENOTFOUND' || error['code'] ==='ECONNRESET' || error['code'] ==='ETIMEDOUT' || error['code'] ==='ECONNREFUSED' || error['code'] ==='ESOCKETTIMEOUT' || error['code'] ==='socket hang-up')) {
         throw new NetworkError(error['code'], error);
       }
-      throw new InternalError("Internal error. Please try again or contact Akord support.", error);
+      throw new InternalError("Internal error. Please try again or contact Tusky support.", error);
   }
 }
 

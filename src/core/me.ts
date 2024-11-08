@@ -22,7 +22,7 @@ class MeModule {
 
   /**
    * Update currently authenticated user
-   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://akord.com/terms-of-service-consumer
+   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
    */
   public async update(input: UserMutable): Promise<User> {
     return await this.service.api.updateMe(input);

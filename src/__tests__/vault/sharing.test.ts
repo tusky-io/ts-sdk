@@ -1,14 +1,13 @@
-import { Akord } from "../../akord";
+import { Tusky } from "../../tusky";
 import { Forbidden } from "../../errors/forbidden";
 import { cleanup, ENV_TEST_RUN, initInstance, isEncrypted, LOG_LEVEL, testDataPath, vaultCreate } from "../common";
 import faker from '@faker-js/faker';
 import { firstFileName, secondFileName } from "../data/content";
-import { membershipStatus, status } from "../../constants";
 
-let akord: Akord;
+let tusky: Tusky;
 
-const initAkordFromPrivateKey = (privateKey: string) => {
-  return Akord
+const initTuskyFromPrivateKey = (privateKey: string) => {
+  return Tusky
     .withWallet({ walletPrivateKey: privateKey })
     .withApi({ env: ENV_TEST_RUN })
     .withLogger({ logLevel: LOG_LEVEL })
@@ -23,19 +22,19 @@ describe("Testing airdrop actions", () => {
   let airdropeePassword: string;
 
   beforeAll(async () => {
-    akord = await initInstance(isEncrypted);
+    tusky = await initInstance(isEncrypted);
 
-    const vault = await vaultCreate(akord, isEncrypted);
+    const vault = await vaultCreate(tusky, isEncrypted);
     vaultId = vault.id;
   });
 
   afterAll(async () => {
-    await cleanup(akord, vaultId);
+    await cleanup(tusky, vaultId);
   });
 
   describe(`Sharing ${isEncrypted ? "private" : "public"} vault`, () => {
     it("should only list owner for all members of the vault", async () => {
-      const members = await akord.vault.members(vaultId);
+      const members = await tusky.vault.members(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(1);
@@ -46,7 +45,7 @@ describe("Testing airdrop actions", () => {
       const role = "contributor";
       const expiresAt = new Date().getTime() + 24 * 60 * 60 * 1000;
 
-      const { identityPrivateKey, password, membership } = await akord.vault.airdropAccess(vaultId, { expiresAt: expiresAt, role });
+      const { identityPrivateKey, password, membership } = await tusky.vault.airdropAccess(vaultId, { expiresAt: expiresAt, role });
       expect(identityPrivateKey).toBeTruthy();
       isEncrypted ? expect(password).toBeTruthy() : expect(password).toBeFalsy();
 
@@ -60,7 +59,7 @@ describe("Testing airdrop actions", () => {
 
     it("should airdrop access with link name identifier", async () => {
       const name = faker.random.words(2);
-      const { identityPrivateKey, password, membership } = await akord.vault.airdropAccess(vaultId, { name });
+      const { identityPrivateKey, password, membership } = await tusky.vault.airdropAccess(vaultId, { name });
       expect(identityPrivateKey).toBeTruthy();
       isEncrypted ? expect(password).toBeTruthy() : expect(password).toBeFalsy();
 
@@ -77,7 +76,7 @@ describe("Testing airdrop actions", () => {
 
       const password = faker.random.word();
 
-      const { identityPrivateKey, membership } = await akord.vault.airdropAccess(vaultId, { password, role });
+      const { identityPrivateKey, membership } = await tusky.vault.airdropAccess(vaultId, { password, role });
       expect(identityPrivateKey).toBeTruthy();
 
       expect(membership).toBeTruthy();
@@ -92,38 +91,38 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should get vault by airdropee", async () => {
-      const memberAkord = await initAkordFromPrivateKey(airdropeeIdentityPrivateKey);
+      const memberTusky = await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
 
-      expect(memberAkord.address).toEqual(airdropeeAddress);
+      expect(memberTusky.address).toEqual(airdropeeAddress);
 
-      await memberAkord.withEncrypter({ password: airdropeePassword });
+      await memberTusky.withEncrypter({ password: airdropeePassword });
 
-      const vault = await memberAkord.vault.get(vaultId);
+      const vault = await memberTusky.vault.get(vaultId);
       expect(vault).toBeTruthy();
       expect(vault.name).toBeTruthy();
     });
 
     it("should list all members of the vault", async () => {
-      const members = await akord.vault.members(vaultId);
+      const members = await tusky.vault.members(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(4);
     });
 
     it("should change access", async () => {
-      const membership = await akord.vault.changeAccess(airdropeeMemberId, "viewer");
+      const membership = await tusky.vault.changeAccess(airdropeeMemberId, "viewer");
       expect(membership).toBeTruthy();
       expect(membership.role).toEqual("viewer");
     });
 
     it("should revoke access", async () => {
-      const membership = await akord.vault.revokeAccess(airdropeeMemberId);
+      const membership = await tusky.vault.revokeAccess(airdropeeMemberId);
       expect(membership).toBeTruthy();
       expect(membership.status).toEqual("revoked");
     });
 
     it("should list all members of the vault with the revoked one", async () => {
-      const members = await akord.vault.members(vaultId);
+      const members = await tusky.vault.members(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(4);
@@ -132,11 +131,11 @@ describe("Testing airdrop actions", () => {
 
     it("should fail getting the vault from revoked member account", async () => {
       await expect(async () => {
-        const memberAkord = await initAkordFromPrivateKey(airdropeeIdentityPrivateKey);
+        const memberTusky = await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
 
-        await memberAkord.withEncrypter({ password: airdropeePassword });
+        await memberTusky.withEncrypter({ password: airdropeePassword });
 
-        const vault = await memberAkord.vault.get(vaultId);
+        const vault = await memberTusky.vault.get(vaultId);
         expect(vault).toBeTruthy();
         expect(vault.name).toBeTruthy();
       }).rejects.toThrow(Forbidden);
@@ -153,14 +152,14 @@ describe("Testing airdrop actions", () => {
     let ownerFileId: string;
 
     it("should create file & folder by the owner", async () => {
-      const { id } = await akord.folder.create(vaultId, faker.random.word());
+      const { id } = await tusky.folder.create(vaultId, faker.random.word());
       folderId = id;
 
-      fileId = await akord.file.upload(vaultId, testDataPath + firstFileName);
+      fileId = await tusky.file.upload(vaultId, testDataPath + firstFileName);
     });
 
     it("should share file with a viewer member", async () => {
-      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { allowedPaths: { files: [fileId] } });
+      const { membership, identityPrivateKey, password } = await tusky.vault.airdropAccess(vaultId, { allowedPaths: { files: [fileId] } });
 
       viewerIdentityPrivateKey = identityPrivateKey;
       viewerPassword = password;
@@ -173,7 +172,7 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should share file with a contributor member", async () => {
-      const { membership, identityPrivateKey, password } = await akord.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { files: [fileId] } });
+      const { membership, identityPrivateKey, password } = await tusky.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { files: [fileId] } });
 
       contributorIdentityPrivateKey = identityPrivateKey;
       contributorPassword = password;
@@ -186,102 +185,102 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should get the file metadata by the viewer member", async () => {
-      const memberAkord = await initAkordFromPrivateKey(viewerIdentityPrivateKey);
+      const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-      await memberAkord.withEncrypter({ password: viewerPassword });
+      await memberTusky.withEncrypter({ password: viewerPassword });
 
-      const file = await memberAkord.file.get(fileId);
+      const file = await memberTusky.file.get(fileId);
       expect(file).toBeTruthy();
       expect(file.name).toBeTruthy();
     });
 
     it("should download the file by the viewer member", async () => {
-      const memberAkord = await initAkordFromPrivateKey(viewerIdentityPrivateKey);
+      const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-      await memberAkord.withEncrypter({ password: viewerPassword });
+      await memberTusky.withEncrypter({ password: viewerPassword });
 
-      const response = await memberAkord.file.arrayBuffer(fileId);
+      const response = await memberTusky.file.arrayBuffer(fileId);
       expect(response).toBeTruthy();
     });
 
     it("should fail renaming file by the viewer member", async () => {
       await expect(async () => {
-        const memberAkord = await initAkordFromPrivateKey(viewerIdentityPrivateKey);
+        const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-        await memberAkord.withEncrypter({ password: viewerPassword });
+        await memberTusky.withEncrypter({ password: viewerPassword });
 
-        await memberAkord.file.rename(fileId, faker.random.word());
+        await memberTusky.file.rename(fileId, faker.random.word());
       }).rejects.toThrow(Forbidden);
     });
 
     it("should fail getting the folder by the viewer member with restricted access", async () => {
       await expect(async () => {
-        const memberAkord = await initAkordFromPrivateKey(viewerIdentityPrivateKey);
+        const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-        await memberAkord.withEncrypter({ password: viewerPassword });
+        await memberTusky.withEncrypter({ password: viewerPassword });
 
-        await memberAkord.folder.get(folderId);
+        await memberTusky.folder.get(folderId);
       }).rejects.toThrow(Forbidden);
     });
 
     it("should download the file by the contributor member", async () => {
-      const memberAkord = await initAkordFromPrivateKey(contributorIdentityPrivateKey);
+      const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-      await memberAkord.withEncrypter({ password: contributorPassword });
+      await memberTusky.withEncrypter({ password: contributorPassword });
 
-      const response = await memberAkord.file.arrayBuffer(fileId);
+      const response = await memberTusky.file.arrayBuffer(fileId);
       expect(response).toBeTruthy();
     });
 
     it("should rename the file by the contributor member", async () => {
-      const memberAkord = await initAkordFromPrivateKey(contributorIdentityPrivateKey);
+      const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-      await memberAkord.withEncrypter({ password: contributorPassword });
+      await memberTusky.withEncrypter({ password: contributorPassword });
 
       const name = faker.random.word();
-      const file = await memberAkord.file.rename(fileId, name);
+      const file = await memberTusky.file.rename(fileId, name);
       expect(file).toBeTruthy();
       expect(file.name).toEqual(name);
     });
 
     it("should fail updating the folder by the contributor with restricted access", async () => {
       await expect(async () => {
-        const memberAkord = await initAkordFromPrivateKey(contributorIdentityPrivateKey);
+        const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-        await memberAkord.withEncrypter({ password: contributorPassword });
+        await memberTusky.withEncrypter({ password: contributorPassword });
 
-        await memberAkord.folder.rename(folderId, faker.random.word());
+        await memberTusky.folder.rename(folderId, faker.random.word());
       }).rejects.toThrow(Forbidden);
     });
 
     it("should upload another file by the owner", async () => {
-      ownerFileId = await akord.file.upload(vaultId, testDataPath + secondFileName);
+      ownerFileId = await tusky.file.upload(vaultId, testDataPath + secondFileName);
     });
 
     it("should fail getting the owner's file metadata by the viewer member", async () => {
       await expect(async () => {
-        const memberAkord = await initAkordFromPrivateKey(viewerIdentityPrivateKey);
+        const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-        await memberAkord.withEncrypter({ password: viewerPassword });
+        await memberTusky.withEncrypter({ password: viewerPassword });
 
-        await memberAkord.file.get(ownerFileId);
+        await memberTusky.file.get(ownerFileId);
       }).rejects.toThrow(Forbidden);
     });
 
     it("should fail downloading owner's file by the contributor member", async () => {
       await expect(async () => {
-        const memberAkord = await initAkordFromPrivateKey(contributorIdentityPrivateKey);
+        const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-        await memberAkord.withEncrypter({ password: contributorPassword });
+        await memberTusky.withEncrypter({ password: contributorPassword });
 
-        await memberAkord.file.arrayBuffer(ownerFileId);
+        await memberTusky.file.arrayBuffer(ownerFileId);
       }).rejects.toThrow(Forbidden);
     });
 
     it("should share folder with a contributor member", async () => {
-      const { id } = await akord.folder.create(vaultId, faker.random.word());
+      const { id } = await tusky.folder.create(vaultId, faker.random.word());
 
-      const { membership } = await akord.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { folders: [id] } });
+      const { membership } = await tusky.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { folders: [id] } });
 
       expect(membership).toBeTruthy();
       expect(membership.role).toEqual("contributor");

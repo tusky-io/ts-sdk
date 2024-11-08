@@ -1,21 +1,21 @@
-import { Akord } from "../../index";
+import { Tusky } from "../../index";
 import { cleanup, initInstance } from '../common';
 import { apiKeyStatus } from '../../constants';
 
-let akord: Akord;
+let tusky: Tusky;
 
 describe("Testing api key functions", () => {
 
   beforeAll(async () => {
-    akord = await initInstance(false);
+    tusky = await initInstance(false);
   });
 
   afterAll(async () => {
-    await cleanup(akord);
+    await cleanup(tusky);
   });
 
   it("should generate new api key", async () => {
-    const apiKey = await akord.apiKey.generate();
+    const apiKey = await tusky.apiKey.generate();
     console.log(apiKey)
     expect(apiKey).toBeTruthy();
     expect(apiKey.key).toBeTruthy();
@@ -24,12 +24,12 @@ describe("Testing api key functions", () => {
   });
 
   it("should revoke the api key", async () => {
-    const apiKeys = await akord.apiKey.listAll();
+    const apiKeys = await tusky.apiKey.listAll();
     expect(apiKeys).toBeTruthy();
     expect(apiKeys.length).toBeGreaterThan(0);
     const apiKeyToRevoke = apiKeys[0].key;
     expect(apiKeyToRevoke).toBeTruthy();
-    const revokedKey = await akord.apiKey.revoke(apiKeyToRevoke);
+    const revokedKey = await tusky.apiKey.revoke(apiKeyToRevoke);
 
     expect(revokedKey).toBeTruthy();
     expect(revokedKey.status).toEqual(apiKeyStatus.REVOKED);
