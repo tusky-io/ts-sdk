@@ -1,3 +1,30 @@
+# [0.23.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0...v0.23.0-dev.1) (2024-11-11)
+
+
+### Bug Fixes
+
+* **dsw:** correct external range request header calculation ([508080e](https://github.com/Akord-com/carmella-sdk/commit/508080e8678c53e557833ee25bfd46b60ce3e49d))
+* import ([bbb29b4](https://github.com/Akord-com/carmella-sdk/commit/bbb29b443548d07f05ec1fbc327015bc2470a9b4))
+* prevent simultaneous refresh token calls ([3843890](https://github.com/Akord-com/carmella-sdk/commit/3843890ff68929f4df2db30641234d99c225c60f))
+* **pubsub:** add encrypter in file#decrypt ([6363de7](https://github.com/Akord-com/carmella-sdk/commit/6363de77d90724ac2cf762335b69f5743a81e171))
+* **pubsub:** decrypt data before onSuccess fn call ([b4ac056](https://github.com/Akord-com/carmella-sdk/commit/b4ac0564a97ceeddbb5dde5ca6f87c8775d7298f))
+* **pubsub:** skip decrypt for public vault ([c62bf4d](https://github.com/Akord-com/carmella-sdk/commit/c62bf4d96c639455b9aab8069bcea645e70f5e0b))
+* set new refresh token if present in the response ([dcff6c8](https://github.com/Akord-com/carmella-sdk/commit/dcff6c8aec52ff9804993c5074a163095ec1cf68))
+* skip throwing error on getUserId() ([26fb163](https://github.com/Akord-com/carmella-sdk/commit/26fb163591b317af502ce38699822f27fba4e035))
+
+
+### Features
+
+* add has encryption session ([927cc49](https://github.com/Akord-com/carmella-sdk/commit/927cc4914d57f075429d0d0f1fc8e5b62a387228))
+* add pubsub dependencies ([9d294d6](https://github.com/Akord-com/carmella-sdk/commit/9d294d6df3a04bbc3fb8d9bf135a5f7e7b70636a))
+* add subscribe on file on module ([0ad126a](https://github.com/Akord-com/carmella-sdk/commit/0ad126a81998ac3e3c86e680a6d9f398cf9fefa2))
+* add vault tags ([21525b3](https://github.com/Akord-com/carmella-sdk/commit/21525b3d068d826db05afb282e297728dee37f83))
+* enable owner access to the membership ([23ab416](https://github.com/Akord-com/carmella-sdk/commit/23ab41697133946ef476dc8913bc400fb7a24e3b))
+* enable vault metadata updates ([d3cef03](https://github.com/Akord-com/carmella-sdk/commit/d3cef03a33553387626aaece3b9b27a8fbf0828d))
+* **file:** add simple pubsub ([fabff03](https://github.com/Akord-com/carmella-sdk/commit/fabff03896313952a25ed8d7304aa798b89838fd))
+* support resumability for encrypted uploads ([aab421c](https://github.com/Akord-com/carmella-sdk/commit/aab421c107a9477a0f3e34a518418c247a9ff5fc))
+* throw unauthorized errors for invalid auth session ([c5f3461](https://github.com/Akord-com/carmella-sdk/commit/c5f3461fac86408d61c9a1809a90e38c325fba35))
+
 # [0.22.0-dev.53](https://github.com/Akord-com/carmella-sdk/compare/v0.22.0-dev.52...v0.22.0-dev.53) (2024-11-07)
 
 
