@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "@akord/browser-level": "^1.0.2",
-    "@akord/carmella-gql": "^0.48.1",
+    "@akord/carmella-gql": "^0.51.1",
     "@akord/ts-cacheable": "1.0.13",
     "@aws-amplify/api": "^6.0.54",
     "@aws-amplify/api-graphql": "^4.4.1",
