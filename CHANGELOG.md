@@ -1,6 +1,5 @@
 # [0.23.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.23.0-dev.1...v0.23.0-dev.2) (2024-11-12)
 
-
 ### Bug Fixes
 
 * release with updated gql ([351eec4](https://github.com/Akord-com/carmella-sdk/commit/351eec4fdeb049f4c28650be15e5fa8595fcc2eb))
