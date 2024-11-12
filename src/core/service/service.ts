@@ -7,12 +7,15 @@ import { Signer } from "../../signer";
 import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
 import { Encrypter } from "../../crypto/encrypter";
 import { Auth } from "../../auth";
+import PubSub from "../../api/pubsub";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
 class Service {
   api: Api
+  pubsub: PubSub;
 
+  address: string
   signer: Signer
   encrypter: Encrypter
 
@@ -36,7 +39,9 @@ class Service {
   constructor(config: ServiceConfig) {
     this.signer = config.signer;
     this.api = config.api;
+    this.pubsub = config.pubsub;
     this.encrypter = config.encrypter;
+    this.address = config.address;
     // set context from config / another service
     this.vault = config.vault;
     this.vaultId = config.vaultId;
@@ -107,6 +112,7 @@ class Service {
     return jsonToBase64(encryptedMessage);
   }
 
+  // TODO: cache it
   async setVaultContext(vaultId: string) {
     const vault = await this.api.getVault(vaultId);
     this.setVault(vault);
@@ -124,7 +130,9 @@ class Service {
 
 export type ServiceConfig = {
   decryptedKeys?: VaultKeyPair[];
+  address?: string,
   api?: Api,
+  pubsub?: PubSub,
   auth?: Auth,
   signer?: Signer,
   encrypter?: Encrypter,

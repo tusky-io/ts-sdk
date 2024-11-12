@@ -77,22 +77,16 @@ export class UserEncryption {
     if (!this.encPrivateKey) {
       throw new IncorrectEncryptionKey(new Error("Missing encrypted private key data."));
     }
-    const keystore = await Keystore.instance();
-    const sessionKey = await keystore.get(this.sessionKeyPath);
 
-    if (!sessionKey) {
+    const encryptionSession = await this.hasEncryptionSession();
+
+    if (!encryptionSession) {
       throw new IncorrectEncryptionKey(new Error("The user needs to provide the password again."));
     }
 
-    const encryptedPasswordKeyPayload = this.storage.getItem(this.encryptedPasswordKeyPath);
+    const { encryptedPasswordKey, iv } = JSON.parse(encryptionSession.encryptedPasswordKey);
 
-    if (!encryptedPasswordKeyPayload) {
-      throw new IncorrectEncryptionKey(new Error("The user needs to provide the password again."));
-    }
-
-    const { encryptedPasswordKey, iv } = JSON.parse(encryptedPasswordKeyPayload);
-
-    const passwordKey = await decryptPasswordKey(sessionKey, new Uint8Array(encryptedPasswordKey), new Uint8Array(iv));
+    const passwordKey = await decryptPasswordKey(encryptionSession.sessionKey, new Uint8Array(encryptedPasswordKey), new Uint8Array(iv));
 
     const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any;
     const privateKey = await decrypt(
@@ -219,6 +213,22 @@ export class UserEncryption {
     } catch (err) {
       logger.error(err);
       throw new IncorrectEncryptionKey(new Error("Decrypting data failed."));
+    }
+  }
+
+  async hasEncryptionSession(): Promise<false | { sessionKey: CryptoKey, encryptedPasswordKey: string }> {
+    const keystore = await Keystore.instance();
+    const sessionKey = await keystore.get(this.sessionKeyPath);
+    if (!sessionKey) {
+      return false;
+    }
+    const encryptedPasswordKey = this.storage.getItem(this.encryptedPasswordKeyPath);
+    if (!encryptedPasswordKey) {
+      return false;
+    }
+    return {
+      sessionKey: sessionKey,
+      encryptedPasswordKey: encryptedPasswordKey
     }
   }
 

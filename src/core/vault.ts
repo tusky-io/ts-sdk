@@ -6,10 +6,9 @@ import { paginate, processListItems } from "./common";
 import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
-import { arrayToBase64, generateKeyPair } from "../crypto";
-import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
+import { arrayToBase64, generateKeyPair, jsonToBase64 } from "../crypto";
+import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, OwnerAccess, RoleType, VaultUpdateOptions } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { Encrypter } from "../crypto/encrypter";
 import { UserEncryption } from "../crypto/user-encryption";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
@@ -90,7 +89,7 @@ class VaultModule {
 
   /**
    * @param  {string} name new vault name
-   * @param  {VaultCreateOptions} options public/private, terms of access, etc.
+   * @param  {VaultCreateOptions} options public/private, description, tags, etc.
    * @returns Promise with newly created vault
    */
   public async create(name: string, options: VaultCreateOptions = this.defaultCreateOptions): Promise<Vault> {
@@ -124,7 +123,13 @@ class VaultModule {
       await this.service.setDescription(createOptions.description);
     }
 
-    const vault = await this.service.api.createVault({ name: this.service.name, description: this.service.description, public: this.service.isPublic, keys: this.service.keys });
+    const vault = await this.service.api.createVault({
+      name: this.service.name,
+      description: this.service.description,
+      public: this.service.isPublic,
+      tags: createOptions.tags,
+      keys: this.service.keys
+    });
 
     // if (!this.service.api.autoExecute) {
     //   const signature = await this.service.signer.sign(bytes);
@@ -143,6 +148,32 @@ class VaultModule {
     await this.service.setName(name);
 
     const vault = await this.service.api.updateVault({ id: id, name: this.service.name });
+    return this.service.processVault(vault, true, this.service.keys);
+  }
+
+  /**
+   * Update vault metadata: name, description, tags
+   * @param id vault id
+   * @param updates vault metadata updates
+   * @returns Promise with vault object
+   */
+  public async update(id: string, updates: VaultUpdateOptions): Promise<Vault> {
+    await this.service.setVaultContext(id);
+
+    if (updates.name) {
+      await this.service.setName(updates.name);
+    }
+
+    if (updates.description) {
+      await this.service.setDescription(updates.description);
+    }
+
+    const vault = await this.service.api.updateVault({
+      id: id,
+      name: this.service.name,
+      description: this.service.description,
+      tags: updates.tags,
+    });
     return this.service.processVault(vault, true, this.service.keys);
   }
 
@@ -198,11 +229,27 @@ class VaultModule {
     let keys: EncryptedVaultKeyPair[];
     let userEncPrivateKey: string;
     let password: string;
+    let ownerAccessJson = {
+      identityPrivateKey: memberKeyPair.getSecretKey()
+    } as OwnerAccess;
+    let ownerAccess: string;
+
     if (!this.service.isPublic) {
-      password = options.password ? options.password : generateRandomPassword(16);
+      if (options.password) {
+        password = options.password;
+      } else {
+        // generate password & add it for owner access
+        password = generateRandomPassword(16);
+        ownerAccessJson.password = password;
+      }
+      // encrypt owner access
+      ownerAccess = await this.service.encrypter.encrypt(jsonToBase64(ownerAccessJson));
+
       const { encPrivateKey, keyPair } = await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
       keys = await memberService.prepareMemberKeys(arrayToBase64(keyPair.publicKey));
+    } else {
+      ownerAccess = jsonToBase64(ownerAccessJson);
     }
 
     const membership = await this.service.api.createMembership({
@@ -214,13 +261,14 @@ class VaultModule {
       name: options.name,
       role: options.role || DEFAULT_AIRDROP_ACCESS_ROLE,
       keys: keys,
-      encPrivateKey: userEncPrivateKey
+      encPrivateKey: userEncPrivateKey,
+      ownerAccess: ownerAccess
     });
 
     return {
       identityPrivateKey: memberKeyPair.getSecretKey(),
       password: password,
-      membership: new Membership(membership)
+      membership: await memberService.processMembership(membership, this.service.vault.owner === this.service.address)
     }
   }
 
@@ -276,7 +324,6 @@ class VaultModule {
     return new Membership(membership);
   }
 
-
   /**
   * Retrieve all vault members
   * @param  {string} vaultId
@@ -284,7 +331,9 @@ class VaultModule {
   */
   public async members(vaultId: string): Promise<Array<Membership>> {
     const memberships = await this.service.api.getMembers(vaultId) as any;
-    return memberships.items?.map((member: Membership) => new Membership(member));
+    await this.service.setVaultContext(vaultId);
+    const memberService = new MembershipService(this.service);
+    return Promise.all(memberships.items?.map(async (member: Membership) => memberService.processMembership(member, this.service.vault.owner === this.service.address)));
   }
 };
 

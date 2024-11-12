@@ -17,6 +17,8 @@ import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { X25519EncryptedPayload } from "../crypto/types";
+import { onUpdateFile } from '@akord/carmella-gql/dist/types/subscriptions';
+import { Subscription } from "rxjs";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -36,7 +38,6 @@ class FileModule {
   protected type: "File";
 
   protected service: FileService;
-
   protected parentId?: string;
 
   protected defaultListOptions = {
@@ -134,7 +135,7 @@ class FileModule {
       headers: {
         ...(await this.auth.getAuthorizationHeader() as Record<string, string>),
       },
-      httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault),
+      httpStack: new EncryptableHttpStack(new tus.DefaultHttpStack({}), vault, this.service.encrypter),
       removeFingerprintOnSuccess: true,
       onError: options.onError,
       onProgress: options.onProgress,
@@ -323,6 +324,49 @@ class FileModule {
   public async arrayBuffer(id: string): Promise<ArrayBuffer> {
     const stream = await this.stream(id);
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
+  }
+
+  /**
+   * Subscribe to file create/update events.
+   * 
+   * To unsubscribe:
+   * const subscription = subscribe(vaultId, onSuccess, onError)
+   * subscription.unsubscribe()
+   * 
+   * @param  {string} vaultId
+   * @param  {(file: File) => Promise<void>} onSuccess
+   * @param  {(error: Error) => void} onError
+   * @returns {Subscription}
+   */
+  public async subscribe(vaultId: string, onSuccess: (file: File) => Promise<void>, onError: (error: Error) => void): Promise<Subscription> {
+    await this.service.setVaultContext(vaultId);
+    const keys = this.service.keys;
+    const encrypter = this.service.encrypter;
+    const isPublic = this.service.isPublic;
+    return this.service.pubsub.client.graphql({
+      query: onUpdateFile,
+      variables: {
+          filter: {
+            vaultId: { eq: vaultId }
+          }
+      }
+    }).subscribe({
+      next: async ({ data }) => {
+        const fileProto = data.onUpdateFile;
+        if (fileProto && onSuccess) {
+          const file = new File(fileProto, keys);
+          if (!isPublic) {
+            await file.decrypt(encrypter);
+          }
+          await onSuccess(file);
+        }
+      },
+      error: (e: Error) => {
+          if (onError) {
+              onError(e);
+          }
+      }
+    });
   }
 
   protected async aesKey(id: string): Promise<string | null> {

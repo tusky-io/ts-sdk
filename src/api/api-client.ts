@@ -56,6 +56,7 @@ export class ApiClient {
   // vault specific
   private _public: boolean
   private _description: string
+  private _tags: Array<string>
   private _keys: Array<EncryptedVaultKeyPair>
 
   // member specific
@@ -64,6 +65,7 @@ export class ApiClient {
   private _expiresAt: number;
   private _allowedStorage: number;
   private _allowedPaths: AllowedPaths;
+  private _ownerAccess: string;
 
   // file specific
   private _numberOfChunks: number;
@@ -118,6 +120,7 @@ export class ApiClient {
     clone._digest = this._digest;
     clone._name = this._name;
     clone._description = this._description;
+    clone._tags = this._tags;
     clone._keys = this._keys;
     clone._address = this._address;
     clone._role = this._role;
@@ -129,6 +132,7 @@ export class ApiClient {
     clone._termsAccepted = this._termsAccepted;
     clone._encPrivateKey = this._encPrivateKey;
     clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
+    clone._ownerAccess = this._ownerAccess;
 
     clone._authProvider = this._authProvider;
     clone._redirectUri = this._redirectUri;
@@ -193,6 +197,11 @@ export class ApiClient {
 
   description(description: string): ApiClient {
     this._description = description;
+    return this;
+  }
+
+  tags(tags: string[]): ApiClient {
+    this._tags = tags;
     return this;
   }
 
@@ -268,6 +277,11 @@ export class ApiClient {
 
   encPrivateKeyBackup(encPrivateKeyBackup: string): ApiClient {
     this._encPrivateKeyBackup = encPrivateKeyBackup;
+    return this;
+  }
+
+  ownerAccess(ownerAccess: string): ApiClient {
+    this._ownerAccess = ownerAccess;
     return this;
   }
 
@@ -841,6 +855,7 @@ export class ApiClient {
    * @uses:
    * - description()
    * - public()
+   * - tags()
    * - keys()
    * - autoExecute()
    * @returns {Promise<Vault>}
@@ -856,6 +871,7 @@ export class ApiClient {
       name: this._name,
       description: this._description,
       public: this._public,
+      tags: this._tags,
       keys: this._keys,
       autoExecute: this._autoExecute
     });
@@ -883,6 +899,7 @@ export class ApiClient {
     this.data({
       name: this._name,
       description: this._description,
+      tags: this._tags,
       status: this._status,
       autoExecute: this._autoExecute
     });
@@ -956,6 +973,7 @@ export class ApiClient {
       name: this._name,
       keys: this._keys,
       encPrivateKey: this._encPrivateKey,
+      ownerAccess: this._ownerAccess,
       allowedStorage: this._allowedStorage,
       allowedPaths: this._allowedPaths,
       autoExecute: this._autoExecute
@@ -1077,6 +1095,7 @@ function delay(ms: number): Promise<void> {
 
 export async function retry<T>(
   fn: () => Promise<T>,
+  force: boolean = false,
   retries: number = 5,
   delayMs: number = 1000
 ): Promise<T> {
@@ -1086,7 +1105,7 @@ export async function retry<T>(
     try {
       return await fn();
     } catch (error) {
-      if (retryableErrors.some((type) => error instanceof type)) {
+      if (force || retryableErrors.some((type) => error instanceof type)) {
         attempt++;
         logger.warn(`Retry attempt ${attempt} failed. Retrying...`);
         if (attempt >= retries) {

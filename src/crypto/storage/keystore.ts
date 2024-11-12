@@ -7,15 +7,16 @@ export default class Keystore {
   public static KEYSTORE_LOCATION = '.akord/keystore'
   private static DEFAULT_ENCODING_OPTIONS = {
     valueEncoding: {
-        encode(data: any) { return data; },
-        decode(data: any) { return data; },
-        format: 'view'
-    }}  as DatabaseOptions<string, any>;
+      encode(data: any) { return data; },
+      decode(data: any) { return data; },
+      format: 'view'
+    }
+  } as DatabaseOptions<string, any>;
   private static DEFAULT_INMEMORY_ENCODING_OPTIONS = { ...Keystore.DEFAULT_ENCODING_OPTIONS, storeEncoding: 'view' } as DatabaseOptions<string, any>;
   private static _instance: Keystore;
   private db: BrowserLevel<string, any> | MemoryLevel<string, any>;
 
-  private constructor(db : BrowserLevel<string, any> | MemoryLevel<string, any>) {
+  private constructor(db: BrowserLevel<string, any> | MemoryLevel<string, any>) {
     this.db = db;
   }
 
@@ -24,7 +25,7 @@ export default class Keystore {
    * Falls back to in-memory Level if backing storage implementation (e.g. indexeddb) is missing
    * @returns Keystore instance
    */
-  public static async instance() : Promise<Keystore> {
+  public static async instance(): Promise<Keystore> {
     if (this._instance) {
       return this._instance;
     }
@@ -35,27 +36,29 @@ export default class Keystore {
     }
   }
 
-  public static async persitentInstance() : Promise<Keystore> {
+  public static async persitentInstance(): Promise<Keystore> {
     const db = new BrowserLevel<string, any>(Keystore.KEYSTORE_LOCATION, Keystore.DEFAULT_ENCODING_OPTIONS);
     await db.open();
     return (this._instance = new this(db));
   }
 
-  public static async inMemoryInstance() : Promise<Keystore> {
+  public static async inMemoryInstance(): Promise<Keystore> {
     const db = new MemoryLevel<string, any>(Keystore.DEFAULT_INMEMORY_ENCODING_OPTIONS);
     await db.open();
     return (this._instance = new this(db));
   }
 
-  async store(keyName: string, key: CryptoKey) : Promise<void> {
+  async store(keyName: string, key: CryptoKey): Promise<void> {
     await this.db.put(keyName, key, Keystore.DEFAULT_ENCODING_OPTIONS);
   }
 
-  async get(keyName: string) : Promise<CryptoKey> {
+  async get(keyName: string): Promise<CryptoKey> {
     try {
       return await this.db.get(keyName, Keystore.DEFAULT_ENCODING_OPTIONS);
     } catch (err) {
-      logger.error(err)
+      if (err && err.code !== 'LEVEL_NOT_FOUND') {
+        logger.debug(err);
+      }
     }
   }
 

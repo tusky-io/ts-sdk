@@ -48,6 +48,8 @@ describe("Testing airdrop actions", () => {
       expect(membership.role).toEqual(role);
       expect(membership.expiresAt).toEqual(expiresAt.toString());
       isPublic ? expect(membership.keys).toBeFalsy() : expect(membership.keys).toBeTruthy();
+      expect(membership.ownerAccess?.identityPrivateKey).toBeTruthy();
+      isPublic ? expect(membership.ownerAccess?.password).toBeFalsy() : expect(membership.ownerAccess?.password).toBeTruthy();
     });
 
     it("should airdrop access with link name identifier", async () => {
@@ -62,6 +64,9 @@ describe("Testing airdrop actions", () => {
       expect(membership.memberDetails).toBeTruthy();
       expect(membership.memberDetails.name).toEqual(name);
       isPublic ? expect(membership.keys).toBeFalsy() : expect(membership.keys).toBeTruthy();
+      expect(membership.ownerAccess?.identityPrivateKey).toBeTruthy();
+      isPublic ? expect(membership.ownerAccess?.password).toBeFalsy() : expect(membership.ownerAccess?.password).toBeTruthy();
+
     });
 
     it("should airdrop access with user specified password and no expiration date", async () => {
@@ -71,6 +76,7 @@ describe("Testing airdrop actions", () => {
 
       const { identityPrivateKey, membership } = await akord.vault.airdropAccess(vaultId, { password, role });
       expect(identityPrivateKey).toBeTruthy();
+      expect(password).toEqual(password);
 
       expect(membership).toBeTruthy();
       expect(membership.id).toBeTruthy();
@@ -81,6 +87,8 @@ describe("Testing airdrop actions", () => {
       airdropeeIdentityPrivateKey = identityPrivateKey;
       airdropeePassword = password;
       airdropeeMemberId = membership.id;
+      expect(membership.ownerAccess?.identityPrivateKey).toBeTruthy();
+      expect(membership.ownerAccess?.password).toBeFalsy();
     });
 
     it("should get vault by airdropee", async () => {
