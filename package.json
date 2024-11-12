@@ -1,6 +1,6 @@
 {
   "name": "@akord/carmella-sdk",
-  "version": "0.23.0-dev.1",
+  "version": "0.23.0-dev.2",
   "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
   "main": "./lib/web/cjs/index.js",
   "module": "./lib/web/esm/index.esm.js",
