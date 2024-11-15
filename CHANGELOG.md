@@ -1,3 +1,10 @@
+# [0.24.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.23.1-dev.1...v0.24.0-dev.1) (2024-11-15)
+
+
+### Features
+
+* **payment:** set 1 as default quantity ([1b15375](https://github.com/Akord-com/carmella-sdk/commit/1b15375a1fcc663ec9e06b5c88d491ef6870311c))
+
 ## [0.23.1-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.23.0...v0.23.1-dev.1) (2024-11-12)
 
 
