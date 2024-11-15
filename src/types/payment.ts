@@ -14,7 +14,7 @@ export type PaymentSessionOptions = {
 }
 
 export type PaymentSessionPriceLookupKey = 'monthly' | 'yearly'
-export type PaymentSessionQuantity = 1000 | 2000
+export type PaymentSessionQuantity = 1 | 2 | 5 | 10
 
 
 export type PaymentPlan = {
