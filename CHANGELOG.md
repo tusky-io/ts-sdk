@@ -1,3 +1,10 @@
+# [0.24.0-dev.2](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.1...v0.24.0-dev.2) (2024-11-17)
+
+
+### Features
+
+* /payments -> /subscriptions ([a7042df](https://github.com/Akord-com/carmella-sdk/commit/a7042df9d75983fc56bf3ee1fc9f80238dde439c))
+
 # [0.24.0-dev.1](https://github.com/Akord-com/carmella-sdk/compare/v0.23.1-dev.1...v0.24.0-dev.1) (2024-11-15)
 
 
