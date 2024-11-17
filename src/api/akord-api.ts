@@ -252,12 +252,12 @@ export default class AkordApi extends Api {
       .getPaymentPlans();
   }
 
-  public async createPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession> {
+  public async createSubscriptionPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
       .data(options)
-      .createPaymentSession();
+      .createSubscriptionPaymentSession();
   }
 
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {

@@ -21,7 +21,7 @@ class PaymentModule {
    * Create a new payment session
    */
   public async session(options: PaymentSessionOptions = this.defaultSessionOptions): Promise<PaymentSession> {
-    return await this.service.api.createPaymentSession(options);
+    return await this.service.api.createSubscriptionPaymentSession(options);
   }
 }
 
