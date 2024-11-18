@@ -30,7 +30,7 @@ export class Membership extends Encryptable {
   encPublicSigningKey: string;
   email: string;
   memberDetails: User;
-  allowedPaths: AllowedPaths // defines granular permissions to fragments of the vault
+  allowedPaths: AllowedPaths; // defines granular permissions to fragments of the vault
   vaultId: string;
   keys: VaultKeyPair[];
   ownerAccess?: OwnerAccess; // enables owner admin access to the member identity
