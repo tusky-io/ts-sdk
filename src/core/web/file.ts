@@ -4,6 +4,7 @@ import { FileModule } from "../file";
 import { logger } from "../../logger";
 import { GetOptions } from "../../types/query-options";
 import { ServiceConfig } from "../service/service";
+import { exportKeyToBase64 } from "../../crypto/lib";
 
 export const PROXY_DOWNLOAD_URL = '/api/proxy/download'
 
@@ -78,7 +79,7 @@ class WebFileModule extends FileModule {
             size: fileMetadata.size,
             id: id,
             url: this.cdnPreviewUrl(id),
-            key: aesKey,
+            key: await exportKeyToBase64(aesKey),
             name: fileMetadata.name,
           } as Record<string, any>;
 

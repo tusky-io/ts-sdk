@@ -1,7 +1,7 @@
-import { decryptAes, decryptWithPrivateKey, encryptAes, encryptWithPublicKey, exportKeyToArray, generateKey, importKeyFromArray } from './lib';
+import { decryptWithPrivateKey, encryptWithPublicKey } from './lib';
 import { base64ToJson, jsonToBase64 } from './encoding';
 import { X25519KeyPair } from './keypair';
-import { AESEncryptedPayload, EncryptedPayload, X25519EncryptedPayload } from './types';
+import { X25519EncryptedPayload } from './types';
 import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
 
 export default class Encrypter {
