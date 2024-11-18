@@ -1,3 +1,10 @@
+# [0.24.0-experimental.7](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.6...v0.24.0-experimental.7) (2024-11-18)
+
+
+### Features
+
+* use tusky:connect as auth challenge prefix ([a9a7b64](https://github.com/Akord-com/carmella-sdk/commit/a9a7b64b3914357f5b6f0666011faa2bb43c273f))
+
 # [0.24.0-experimental.6](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.5...v0.24.0-experimental.6) (2024-11-18)
 
 
