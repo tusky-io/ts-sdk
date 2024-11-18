@@ -35,7 +35,7 @@ export class ApiClient {
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
-  private _paymentUri: string = "payments";
+  private _subscriptionUri: string = "subscriptions";
 
   // path params
   private _resourceId: string;
@@ -561,7 +561,7 @@ export class ApiClient {
   }
 
   async getPaymentPlans(): Promise<PaymentPlan[]> {
-    return this.get(`${this._apiUrl}/${this._paymentUri}`);
+    return this.get(`${this._apiUrl}/${this._subscriptionUri}`);
   }
 
   /**
@@ -1082,8 +1082,8 @@ export class ApiClient {
     return new Storage(data);
   }
 
-  async createPaymentSession(): Promise<PaymentSession> {
-    const data = await this.put(`${this._apiUrl}/${this._paymentUri}`);
+  async createSubscriptionPaymentSession(): Promise<PaymentSession> {
+    const data = await this.put(`${this._apiUrl}/${this._subscriptionUri}`);
     return new PaymentSession(data);
   }
 }
