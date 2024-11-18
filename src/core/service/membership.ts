@@ -60,7 +60,7 @@ class MembershipService extends Service {
   async processMembership(object: Membership, isOwner: boolean): Promise<Membership> {
     const membership = new Membership(object);
     if (isOwner && membership.ownerAccess) {
-      if (membership.__public__) {
+      if (!membership.__encrypted__) {
         membership.ownerAccess = base64ToJson(membership.ownerAccess as any) as OwnerAccess;
       } else {
         try {
