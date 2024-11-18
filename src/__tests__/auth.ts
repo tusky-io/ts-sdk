@@ -10,7 +10,7 @@ import { authProviderConfig } from '../auth/oauth';
 const REDIRECT_URI = 'http://localhost:3000/auth';
 
 function getAuthProvider() {
-  const options = ['Google', 'Twitch', 'Facebook'];
+  const options = ['Google', 'Twitch'];
   const index = keyInSelect(options, 'Please choose your auth provider:');
   return options[index];
 }
@@ -19,10 +19,6 @@ export const AuthProvider = {
   "Google": {
     ...authProviderConfig().Google,
     "CLIENT_SECRET": process.env.GOOGLE_CLIENT_SECRET,
-  },
-  "Facebook": {
-    ...authProviderConfig().Facebook,
-    "CLIENT_SECRET": process.env.FACEBOOK_CLIENT_SECRET,
   },
   "Twitch": {
     ...authProviderConfig().Twitch,

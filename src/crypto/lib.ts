@@ -28,9 +28,6 @@ const HASH_ALGORITHM = 'SHA-256'
 const SYMMETRIC_KEY_ALGORITHM = 'AES-GCM'
 const SYMMETRIC_KEY_LENGTH = 256
 
-const ASYMMETRIC_KEY_ALGORITHM = 'RSA-OAEP'
-const ASYMMETRIC_PUBLIC_EXPONENT = "AQAB"
-
 const KEY_DERIVATION_FUNCTION = 'PBKDF2'
 const KEY_DERIVATION_ITERATION_COUNT = 150000
 
@@ -43,9 +40,19 @@ export const IV_LENGTH_IN_BYTES = 12;
  * @returns {Promise.<string>} string containing crypto key
  */
 async function exportKeyToBase64(key: CryptoKey): Promise<string> {
+  const keyBuffer = await exportKeyToArray(key);
+  return arrayToBase64(keyBuffer);
+}
+
+/**
+ * Export CryptoKey object to buffer key material
+ * @param {CryptoKey} key
+ * @returns {Promise.<Uint8Array>} buffer containing crypto key
+ */
+async function exportKeyToArray(key: CryptoKey): Promise<Uint8Array> {
   try {
     const rawKeyBuffer = await crypto.subtle.exportKey('raw', key)
-    return arrayToBase64(rawKeyBuffer)
+    return new Uint8Array(rawKeyBuffer);
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(new Error("Web Crypto key export error."));
@@ -57,16 +64,25 @@ async function exportKeyToBase64(key: CryptoKey): Promise<string> {
  * @param {string} keyBase64
  * @returns {Promise.<CryptoKey>} crypto key object
  */
-async function importKeyFromBase64(keyBase64: string): Promise<CryptoKey> {
+async function importKeyFromBase64(keyBase64: string, extractable = false): Promise<CryptoKey> {
+  return importKeyFromArray(base64ToArray(keyBase64), extractable);
+}
+
+/**
+ * Import CryptoKey object from key buffer material
+ * @param {Uint8Array} keyBuffer
+ * @returns {Promise.<CryptoKey>} crypto key object
+ */
+async function importKeyFromArray(keyBuffer: Uint8Array, extractable = false): Promise<CryptoKey> {
   try {
     const key = await crypto.subtle.importKey(
       'raw',
-      base64ToArray(keyBase64),
+      keyBuffer,
       {
         name: SYMMETRIC_KEY_ALGORITHM,
         length: SYMMETRIC_KEY_LENGTH,
       },
-      true,
+      extractable,
       ['encrypt', 'decrypt'],
     )
     return key
@@ -162,7 +178,7 @@ async function signString(payload: string, privateKey: Uint8Array): Promise<stri
  * @param {CryptoKey} key
  * @returns {Promise.<string>} Promise of base64 string represents the ciphertext along with iv
  */
-async function encrypt(plaintext: Uint8Array, key: CryptoKey, encode: boolean = true): Promise<string | Uint8Array> {
+async function encryptAes(plaintext: Uint8Array, key: CryptoKey, encode: boolean = true): Promise<string | Uint8Array> {
   try {
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_IN_BYTES))
 
@@ -175,7 +191,7 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey, encode: boolean = 
       plaintext,
     )
     if (encode) {
-      return encodePayload(ciphertextArray, iv)
+      return encodeAesPayload(ciphertextArray, iv)
     }
     const combinedArray = new Uint8Array(iv.length + ciphertextArray.byteLength);
     combinedArray.set(iv, 0);
@@ -194,9 +210,11 @@ async function encrypt(plaintext: Uint8Array, key: CryptoKey, encode: boolean = 
  * @param {CryptoKey} key
  * @returns {Promise.<ArrayBuffer>} Promise of ArrayBuffer represents the plaintext
  */
-async function decrypt(encryptedPayload: string | AESEncryptedPayload, key: CryptoKey): Promise<ArrayBuffer> {
+async function decryptAes(encryptedPayload: string | AESEncryptedPayload, key: CryptoKey): Promise<ArrayBuffer> {
   try {
-    const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext ? encryptedPayload as AESEncryptedPayload : decodePayload(encryptedPayload as string);
+    const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext
+      ? encryptedPayload as AESEncryptedPayload
+      : decodeAesPayload(encryptedPayload as string);
     const plaintext = await crypto.subtle.decrypt(
       {
         name: SYMMETRIC_KEY_ALGORITHM,
@@ -212,7 +230,7 @@ async function decrypt(encryptedPayload: string | AESEncryptedPayload, key: Cryp
   }
 }
 
-function encodePayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Array): string {
+function encodeAesPayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Array): string {
   const encryptedPayload = {
     ciphertext: arrayToBase64(ciphertextArray),
     iv: arrayToBase64(iv),
@@ -220,7 +238,7 @@ function encodePayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Arra
   return jsonToBase64(encryptedPayload)
 }
 
-function decodePayload(payload: string): AESEncryptedPayload {
+function decodeAesPayload(payload: string): AESEncryptedPayload {
   const parsedPayload = base64ToJson(payload) as any;
   const decodedPayload = {
     ciphertext: base64ToArray(parsedPayload.ciphertext),
@@ -236,7 +254,7 @@ function decodePayload(payload: string): AESEncryptedPayload {
  * @param {BufferSource} salt
  * @returns {Promise.<CryptoKey>} Promise of CryptoKey object with AES 256-bit symmetric key
  */
-async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveAesKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
   try {
     const keyBase = await crypto.subtle.importKey(
       'raw',
@@ -272,14 +290,14 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
  * - generate an extractable AES 256-bit symmetric key
  * @returns {Promise.<CryptoKey>}
  */
-async function generateKey(): Promise<CryptoKey> {
+async function generateKey(extractable = false): Promise<CryptoKey> {
   try {
     const key = await crypto.subtle.generateKey(
       {
         name: SYMMETRIC_KEY_ALGORITHM,
         length: SYMMETRIC_KEY_LENGTH,
       },
-      true,
+      extractable,
       ['encrypt', 'decrypt'],
     )
     return key
@@ -362,112 +380,6 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: X
   }
 }
 
-// /**
-//    * CryptoKey object encryption
-//    * - export CryptoKey object to base64 encoded string
-//    * - encrypts encoded key string with the given public key
-//    * @param {CryptoKey} key
-//    * @param {Uint8Array} publicKey
-//    * @returns {Promise.<string>}
-//    */
-// async function encryptKeyWithPublicKey(key: CryptoKey, publicKey: Uint8Array): Promise<string> {
-//   const keyString = await exportKeyToBase64(key)
-//   const encryptedKey = await encryptStringWithPublicKey(
-//     publicKey,
-//     keyString
-//   )
-//   return encryptedKey
-// }
-
-// /**
-//  * CryptoKey object decryption
-//  * - decrypts encoded key string with the given private key
-//  * - import CryptoKey object from the encoded string
-//  * @param {string} encryptedKey
-//  * @param {Uint8Array} privateKey
-//  * @returns {Promise.<CryptoKey>}
-//  */
-// async function decryptKeyWithPrivateKey(encryptedKey: string, privateKey: Uint8Array): Promise<CryptoKey> {
-//   const decryptedKey = await decryptStringWithPrivateKey(privateKey, encryptedKey)
-//   const key = await importKeyFromBase64(decryptedKey)
-//   return key
-// }
-
-// /**
-//  * Hybrid encryption
-//  * - generate a symmetric access key
-//  * - encrypt data with the access key
-//  * - encrypt the access key with the public key
-//  * @param {Uint8Array} plaintext raw plaintext byte array
-//  * @param {Uint8Array} publicKey public key used to encrypt the data
-//  * @returns {Promise.<Uint8Array>} Promise of raw plaintext byte array
-//  */
-// async function encryptHybridRaw(plaintext: Uint8Array, publicKey: Uint8Array, accessKey?: CryptoKey, options?: EncryptOptions)
-//   : Promise<string | EncryptedPayload> {
-//   const key = accessKey || await generateKey()
-
-//   const encryptedData = await encrypt(
-//     plaintext,
-//     key,
-//   )
-
-//   const encAccessKey = await encryptKeyWithPublicKey(
-//     key,
-//     publicKey
-//   )
-
-//   const encryptedPayload = {
-//     encryptedData: encryptedData as EncryptedData,
-//     encryptedKey: encAccessKey,
-//     publicKey: arrayToBase64(publicKey)
-//   }
-//   if (options?.encode) {
-//     return jsonToBase64(encryptedPayload)
-//   }
-//   return encryptedPayload
-// }
-
-// async function encryptHybridString(plaintext: string, publicKey: Uint8Array) {
-//   return encryptHybridRaw(stringToArray(plaintext), publicKey)
-// }
-
-// /**
-//  * Hybrid decryption
-//  * - decrypt the access key with the private key
-//  * - decrypt the data with the access key
-//  * @param {string} encryptedPayload base64 string represents the encrypted payload
-//  * @param {Uint8Array} privateKey private key used to decrypt the data key
-//  * @returns {Promise.<ArrayBuffer>} Promise of raw plaintext byte array
-//  */
-// async function decryptHybridRaw(encryptedPayload: string | EncryptedPayload, privateKey: Uint8Array, decode = true)
-//   : Promise<ArrayBuffer> {
-//   if (encryptedPayload === null) return null
-//   try {
-//     const payload = (decode ? base64ToJson(encryptedPayload as string) : encryptedPayload) as EncryptedPayload;
-//     const accessKey = await decryptKeyWithPrivateKey(
-//       payload.encryptedKey,
-//       privateKey
-//     );
-//     const decryptedDataArray = await decrypt(
-//       payload.encryptedData,
-//       accessKey,
-//     )
-//     return decryptedDataArray
-//   } catch (err) {
-//     throw new Error("Hybrid decryption error: " + err)
-//   }
-// }
-
-// async function decryptHybridString(encryptedPayload: string, privateKey: Uint8Array): Promise<string> {
-//   const decryptedDataArray = await decryptHybridRaw(encryptedPayload, privateKey, true)
-//   return arrayToString(decryptedDataArray)
-// }
-
-// async function decryptStream(encryptedPayload: EncryptedPayload, privateKey: Uint8Array): Promise<string> {
-//   const decryptedDataArray = await decryptHybridRaw(encryptedPayload, privateKey, true)
-//   return arrayToString(decryptedDataArray)
-// }
-
 async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoKey, chunkSize: number): Promise<any> {
   if (stream === null) return null
   try {
@@ -480,6 +392,8 @@ async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoK
 }
 
 export {
+  exportKeyToArray,
+  importKeyFromArray,
   exportKeyToBase64,
   importKeyFromBase64,
   importKeyFromSeed,
@@ -489,12 +403,13 @@ export {
   chainDigest,
   signHash,
   signString,
-  encrypt,
-  decrypt,
-  deriveKey,
+  encryptAes,
+  decryptAes,
+  deriveAesKey,
   generateKey,
   generateKeyPair,
   encryptWithPublicKey,
   decryptWithPrivateKey,
-  decryptStream
+  decryptStream,
+  decodeAesPayload
 }

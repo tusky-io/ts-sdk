@@ -30,13 +30,13 @@ export class Membership extends Encryptable {
   encPublicSigningKey: string;
   email: string;
   memberDetails: User;
-  allowedPaths: AllowedPaths // defines granular permissions to fragments of the vault
+  allowedPaths: AllowedPaths; // defines granular permissions to fragments of the vault
   vaultId: string;
   keys: VaultKeyPair[];
   ownerAccess?: OwnerAccess; // enables owner admin access to the member identity
 
   // vault context
-  __public__?: boolean;
+  __encrypted__?: boolean;
 
   constructor(membershipProto: any, keys?: Array<EncryptedVaultKeyPair>) {
     super(keys);
@@ -55,7 +55,7 @@ export class Membership extends Encryptable {
     this.ownerAccess = membershipProto.ownerAccess;
     this.memberDetails = membershipProto.memberDetails ? new User(membershipProto.memberDetails) : undefined;
     this.allowedPaths = membershipProto.allowedPaths ? JSON.parse(membershipProto.allowedPaths) : undefined;
-    this.__public__ = membershipProto.__public__;
+    this.__encrypted__ = membershipProto.__encrypted__;
   }
 }
 

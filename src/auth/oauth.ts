@@ -3,10 +3,10 @@ import { EnokiClient } from './enoki';
 import { AuthProvider, OAuthConfig } from '../types/auth';
 import { BadRequest } from '../errors/bad-request';
 import { logger } from '../logger';
-import AkordApi from '../api/akord-api';
+import { TuskyApi } from '../api/tusky-api';
 import { Unauthorized } from '../errors/unauthorized';
-import { DEFAULT_STORAGE, JWTClient } from './jwt';
-import { Env } from '../types/env';
+import { defaultStorage, JWTClient } from './jwt';
+import { Env, Envs } from '../types/env';
 import { retry } from '../api/api-client';
 import { throwError } from '../errors/error-factory';
 
@@ -18,24 +18,18 @@ interface AuthProviderConfig {
 
 interface AuthProviderConfigType {
   Google: AuthProviderConfig;
-  Facebook: AuthProviderConfig;
   Twitch: AuthProviderConfig;
 }
 
 export const authProviderConfig = (env?: string): AuthProviderConfigType => {
   return {
     "Google": {
-      "CLIENT_ID": env === "mainnet" ? "426736059844-ut21sgi6j7fhai51hlk9nq1785198tcq.apps.googleusercontent.com" : "426736059844-2o0vvj882fvvris0kqpfuh1vi47js7he.apps.googleusercontent.com",
+      "CLIENT_ID": env === Envs.PROD ? "426736059844-ut21sgi6j7fhai51hlk9nq1785198tcq.apps.googleusercontent.com" : "426736059844-2o0vvj882fvvris0kqpfuh1vi47js7he.apps.googleusercontent.com",
       "AUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
       "SCOPES": "openid email profile",
     },
-    "Facebook": {
-      "CLIENT_ID": env === "mainnet" ? "1030800888399080" : "1030800888399080",
-      "AUTH_URL": "https://www.facebook.com/v11.0/dialog/oauth",
-      "SCOPES": "email public_profile",
-    },
     "Twitch": {
-      "CLIENT_ID": env === "mainnet" ? "zjvek40acgbaade27yrwdsvsslx0e4" : "6h9wlqcwu01ve4al9qs04zeul7znj7",
+      "CLIENT_ID": env === Envs.PROD ? "zjvek40acgbaade27yrwdsvsslx0e4" : "6h9wlqcwu01ve4al9qs04zeul7znj7",
       "AUTH_URL": "https://id.twitch.tv/oauth2/authorize",
       "SCOPES": "openid user:read:email",
     }
@@ -66,7 +60,7 @@ class OAuth {
     }
     this.redirectUri = config.redirectUri;
     this.authProvider = config.authProvider;
-    this.storage = config.storage || DEFAULT_STORAGE;
+    this.storage = config.storage || defaultStorage();
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
     this.enokiClient = new EnokiClient({ env: config.env });
   }
@@ -107,7 +101,7 @@ class OAuth {
       if (!this.redirectUri) {
         throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
       }
-      const { idToken, accessToken, refreshToken } = await new AkordApi({ env: this.env }).generateJWT({
+      const { idToken, accessToken, refreshToken } = await new TuskyApi({ env: this.env }).generateJWT({
         authProvider: this.authProvider,
         grantType: "code",
         redirectUri: this.redirectUri,
@@ -159,7 +153,7 @@ class OAuth {
         if (!refreshToken) {
           throw new Unauthorized("Session expired. Please log in again.");
         }
-        const result = await new AkordApi({ env: this.env }).generateJWT({
+        const result = await new TuskyApi({ env: this.env }).generateJWT({
           authProvider: this.authProvider,
           grantType: "refreshToken",
           refreshToken: refreshToken

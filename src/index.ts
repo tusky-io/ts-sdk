@@ -1,6 +1,6 @@
-import { Akord } from "./akord";
+import { Tusky } from "./tusky";
 import { Auth } from "./auth";
 
 export * from "./types";
 export * from "./crypto";
-export { Akord, Auth };
+export { Tusky, Auth };

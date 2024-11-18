@@ -15,7 +15,7 @@ export interface Transaction {
 export interface CreateVaultTxPayload {
   name?: string,
   description?: string
-  public?: boolean,
+  encrypted?: boolean,
   keys?: Array<EncryptedVaultKeyPair>,
   tags?: string[]
 }

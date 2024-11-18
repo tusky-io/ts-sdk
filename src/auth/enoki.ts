@@ -1,22 +1,23 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Unauthorized } from '../errors/unauthorized';
 import { logger } from '../logger';
+import { Env, Envs } from '../types';
 
 export const ENOKI_API_URL = 'https://api.enoki.mystenlabs.com/v1';
 
 export interface EnokiClientConfig {
   apiKey?: string;
   network?: "mainnet" | "testnet" | "devnet";
-  env?: string;
+  env?: Env;
 }
 
-export const enokiConfig = (env: string) => {
+export const enokiConfig = (env: Env) => {
   switch (env) {
-    case "mainnet":
+    case Envs.PROD:
       return {
         publicApiKey: "enoki_public_5313f34194cbfb93bb60354118d85ada"
       };
-    case "testnet":
+    case Envs.DEV:
     default:
       return {
         publicApiKey: "enoki_public_b0c8cf52ada845c7dfbfe8eef1e9ded2"
@@ -44,7 +45,7 @@ export default class EnokiClient {
 
   constructor(config: EnokiClientConfig) {
     this.apiKey = config.apiKey || enokiConfig(config.env).publicApiKey;
-    this.network = config.network || "devnet";
+    this.network = config.network || "testnet";
     if (!this.apiKey) {
       throw new Error("Missing api key configuration. Please provide Enoki API key.");
     }

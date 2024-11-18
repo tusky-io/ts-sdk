@@ -13,7 +13,6 @@ export type AESEncryptedPayload = {
 export type EncryptedPayload = {
   encryptedData: AESEncryptedPayload,
   encryptedKey: X25519EncryptedPayload,
-  publicKey?: string
 }
 
 export type EncryptOptions = {
@@ -25,4 +24,9 @@ export type EncryptOptions = {
 export type EncryptionMetadata = {
   encryptedKey?: string,
   iv?: string
+}
+
+export type EncryptedUserBackupPayload = {
+  encryptedPayload: string | AESEncryptedPayload,
+  salt: string
 }

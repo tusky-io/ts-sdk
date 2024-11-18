@@ -1,4 +1,4 @@
-import { membershipStatus, role, status } from "../constants";
+import { membershipStatus, role } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
 import { Paginated } from "../types/paginated";
@@ -10,6 +10,8 @@ import { arrayToBase64, generateKeyPair, jsonToBase64 } from "../crypto";
 import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, OwnerAccess, RoleType, VaultUpdateOptions } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
+import * as pwd from "micro-key-producer/password.js";
+import { randomBytes } from '@noble/hashes/utils';
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -30,7 +32,7 @@ class VaultModule {
   } as VaultGetOptions;
 
   protected defaultCreateOptions = {
-    public: false,
+    encrypted: true,
     description: undefined,
   } as VaultCreateOptions;
 
@@ -44,7 +46,7 @@ class VaultModule {
       ...options
     }
     const result = await this.service.api.getVault(vaultId, getOptions);
-    return this.service.processVault(result, !result.public && getOptions.shouldDecrypt, result.__keys__);
+    return this.service.processVault(result, result.encrypted && getOptions.shouldDecrypt, result.__keys__);
   }
 
   /**
@@ -98,12 +100,12 @@ class VaultModule {
       ...options
     }
 
-    this.service.setIsPublic(createOptions.public);
+    this.service.setEncrypted(createOptions.encrypted);
 
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
 
-    if (!this.service.isPublic) {
+    if (this.service.encrypted) {
       const vaultKeyPair = await generateKeyPair();
       this.service.setDecryptedKeys([{
         publicKey: vaultKeyPair.publicKey,
@@ -126,7 +128,7 @@ class VaultModule {
     const vault = await this.service.api.createVault({
       name: this.service.name,
       description: this.service.description,
-      public: this.service.isPublic,
+      encrypted: this.service.encrypted,
       tags: createOptions.tags,
       keys: this.service.keys
     });
@@ -178,34 +180,12 @@ class VaultModule {
   }
 
   /**
-   * The vault will be moved to the trash. All vault data will be permanently deleted within 30 days.
-   * To undo this action, call vault.restore() within the 30-day period.
+   * Delete the vault
+   * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
    * @param id vault id
-   * @returns Promise with the updated vault
-   */
-  public async delete(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.DELETED });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * Restores the vault from the trash, recovering all vault data.
-   * This action must be performed within 30 days of the vault being moved to the trash to prevent permanent deletion.
-   * @param  {string} id
-   * @returns Promise with the updated vault
-   */
-  public async restore(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.ACTIVE });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * The vault and all its contents will be permanently deleted.
-   * This action is irrevocable and can only be performed if the vault is already in trash.
-   * @param  {string} id vault id
    * @returns {Promise<void>}
    */
-  public async deletePermanently(id: string): Promise<void> {
+  public async delete(id: string): Promise<void> {
     return this.service.api.deleteVault(id);
   }
 
@@ -234,12 +214,12 @@ class VaultModule {
     } as OwnerAccess;
     let ownerAccess: string;
 
-    if (!this.service.isPublic) {
+    if (this.service.encrypted) {
       if (options.password) {
         password = options.password;
       } else {
         // generate password & add it for owner access
-        password = generateRandomPassword(16);
+        password = generateRandomPassword();
         ownerAccessJson.password = password;
       }
       // encrypt owner access
@@ -337,13 +317,9 @@ class VaultModule {
   }
 };
 
-function generateRandomPassword(length: number) {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
-  const password = Array.from(crypto.getRandomValues(new Uint8Array(length)))
-    .map(value => charset[value % charset.length])
-    .join('');
-
-  return password;
+function generateRandomPassword() {
+  const seed = randomBytes(32);
+  return pwd.secureMask.apply(seed).password;
 }
 
 export {

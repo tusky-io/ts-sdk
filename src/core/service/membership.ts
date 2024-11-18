@@ -17,7 +17,7 @@ class MembershipService extends Service {
     const vault = await this.api.getVault(membership.vaultId);
     this.setVault(vault);
     this.setVaultId(membership.vaultId);
-    this.setIsPublic(membership.__public__);
+    this.setEncrypted(membership.__encrypted__);
     await this.setMembershipKeys(membership);
     this.setObject(membership);
     this.setObjectId(membershipId);
@@ -60,7 +60,7 @@ class MembershipService extends Service {
   async processMembership(object: Membership, isOwner: boolean): Promise<Membership> {
     const membership = new Membership(object);
     if (isOwner && membership.ownerAccess) {
-      if (membership.__public__) {
+      if (!membership.__encrypted__) {
         membership.ownerAccess = base64ToJson(membership.ownerAccess as any) as OwnerAccess;
       } else {
         try {

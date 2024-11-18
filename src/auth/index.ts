@@ -4,9 +4,9 @@ import { logger } from "../logger";
 import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
-import { AkordApi } from "../api/akord-api";
+import { TuskyApi } from "../api/tusky-api";
 import { Env } from "../types/env";
-import { decode, DEFAULT_STORAGE, JWTClient } from "./jwt";
+import { decode, defaultStorage, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
@@ -23,6 +23,8 @@ export type WalletAccount = {
   address: string,
   publicKey: Uint8Array
 }
+
+const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
 export class Auth {
   private env: Env;
@@ -63,12 +65,17 @@ export class Auth {
     this.authProvider = options.authProvider;
     this.clientId = options.clientId;
     this.redirectUri = options.redirectUri;
-    this.storage = options.storage || DEFAULT_STORAGE;
+    this.storage = options.storage || defaultStorage();
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
   public setEnv(env: Env) {
     this.env = env;
+    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
+  }
+
+  public setStorage(storage: Storage) {
+    this.storage = storage;
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
@@ -83,10 +90,10 @@ export class Auth {
         } else {
           throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
         }
-        const api = new AkordApi({ env: this.env });
+        const api = new TuskyApi({ env: this.env });
         const { nonce } = await api.createAuthChallenge({ address });
 
-        const message = new TextEncoder().encode("akord:login:" + nonce);
+        const message = new TextEncoder().encode(AUTH_MESSAGE_PREFIX + nonce);
 
         let signature: string;
         if (this.walletSignFnClient) {

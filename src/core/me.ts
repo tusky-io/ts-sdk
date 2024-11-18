@@ -22,7 +22,7 @@ class MeModule {
 
   /**
    * Update currently authenticated user
-   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://akord.com/terms-of-service-consumer
+   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
    */
   public async update(input: UserMutable): Promise<User> {
     return await this.service.api.updateMe(input);
@@ -59,15 +59,15 @@ class MeModule {
    * Backup user password
    * Generate fresh backup phrase & use it as a backup
    */
-  public async backupPassword(password: string): Promise<{ backupPhrase: string }> {
+  public async backupPassword(password: string): Promise<{ backupPhrase: string, user: User }> {
     const me = await this.get();
     if (!me.encPrivateKey) {
       throw new BadRequest("Missing user encryption context, setup the user password first.");
     }
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
     const { backupPhrase, encPrivateKeyBackup } = await this.userEncryption.backupPassword(password);
-    await this.service.api.updateMe({ encPrivateKeyBackup: encPrivateKeyBackup });
-    return { backupPhrase };
+    const user = await this.service.api.updateMe({ encPrivateKeyBackup: encPrivateKeyBackup });
+    return { user, backupPhrase };
   }
 
   /**

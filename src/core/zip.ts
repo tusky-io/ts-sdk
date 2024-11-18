@@ -27,7 +27,7 @@ class ZipModule {
    * 
    * <b>Example 1 - use in Browser with Uppy upload</b>
    * 
-   * const uploader = akord.zip.uploader(vaultId)
+   * const uploader = tusky.zip.uploader(vaultId)
    * 
    * const uppy = new Uppy({
    *    restrictions: {
@@ -43,7 +43,7 @@ class ZipModule {
    * 
    * <b>Example 2 - use in Nodejs</b>
    * 
-   * const uploader = akord.zip.uploader(vaultId, file, {
+   * const uploader = tusky.zip.uploader(vaultId, file, {
    *    onSuccess: () => {
    *      console.log('Upload complete');
    *    },
@@ -65,7 +65,7 @@ class ZipModule {
     options: ZipUploadOptions = {}
   ): Promise<tus.Upload> {
     const vault = await this.service.api.getVault(vaultId);
-    if (!vault.public) {
+    if (vault.encrypted) {
       throw new BadRequest("Zip upload is not supported for encrypted vaults");
     }
     let fileLike = null;

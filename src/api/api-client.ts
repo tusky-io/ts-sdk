@@ -54,7 +54,7 @@ export class ApiClient {
   private _grantType: string
 
   // vault specific
-  private _public: boolean
+  private _encrypted: boolean
   private _description: string
   private _tags: Array<string>
   private _keys: Array<EncryptedVaultKeyPair>
@@ -115,7 +115,7 @@ export class ApiClient {
     clone._resourceId = this._resourceId;
     clone._vaultId = this._vaultId;
     clone._numberOfChunks = this._numberOfChunks;
-    clone._public = this._public;
+    clone._encrypted = this._encrypted;
     clone._signature = this._signature;
     clone._digest = this._digest;
     clone._name = this._name;
@@ -180,8 +180,8 @@ export class ApiClient {
     return this;
   }
 
-  public(isPublic: boolean): ApiClient {
-    this._public = isPublic;
+  encrypted(encrypted: boolean): ApiClient {
+    this._encrypted = encrypted;
     return this;
   }
 
@@ -632,7 +632,6 @@ export class ApiClient {
         return response.data;
       } catch (error) {
         logger.debug(config);
-        logger.debug(error);
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
     });
@@ -854,7 +853,7 @@ export class ApiClient {
    * - name()
    * @uses:
    * - description()
-   * - public()
+   * - encrypted()
    * - tags()
    * - keys()
    * - autoExecute()
@@ -870,7 +869,7 @@ export class ApiClient {
     this.data({
       name: this._name,
       description: this._description,
-      public: this._public,
+      encrypted: this._encrypted,
       tags: this._tags,
       keys: this._keys,
       autoExecute: this._autoExecute
@@ -1045,7 +1044,7 @@ export class ApiClient {
    * - resourceId()
    * @uses:
    * - responseType()
-   * - public()
+   * - encrypted()
    * - progressHook()
    * - cancelHook()
    * - numberOfChunks()
@@ -1062,7 +1061,7 @@ export class ApiClient {
       signal: this._cancelHook ? this._cancelHook.signal : null,
     } as RequestInit;
 
-    if (!this._public) {
+    if (!this._encrypted) {
       config.headers = (await this._auth.getAuthorizationHeader()) as any
     }
 
