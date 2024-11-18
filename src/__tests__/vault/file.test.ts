@@ -41,7 +41,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);
   });
 
-  it.skip("should upload multi-chunk file from path and download it", async () => {
+  it("should upload multi-chunk file from path and download it", async () => {
     const fileName = "11mb.png";
     const id = await tusky.file.upload(vaultId, testDataPath + fileName);
 
