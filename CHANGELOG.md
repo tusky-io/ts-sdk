@@ -1,3 +1,10 @@
+# [0.24.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.3...v0.24.0-dev.4) (2024-11-18)
+
+
+### Bug Fixes
+
+* set env priority on input config ([16a492e](https://github.com/Akord-com/carmella-sdk/commit/16a492e784a77bf1a7491b0748b7f06a9d57234f))
+
 # [0.24.0-dev.3](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.2...v0.24.0-dev.3) (2024-11-18)
 
 
