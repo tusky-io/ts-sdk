@@ -24,7 +24,7 @@ export type WalletAccount = {
   publicKey: Uint8Array
 }
 
-const AUTH_MESSAGE_PREFIX = "tusky:login:";
+const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
 export class Auth {
   private env: Env;
