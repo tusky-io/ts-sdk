@@ -41,7 +41,7 @@ export class VaultEncryption {
     // decrypt AES key with vault's private key
     const vaultEncrypter = new Encrypter({ keypair: new X25519KeyPair(privateKey) });
     const decryptedKey = await vaultEncrypter.decrypt(encryptedAesKey);
-    const aesKey = await importKeyFromArray(decryptedKey);
+    const aesKey = await importKeyFromArray(decryptedKey, true);
     return aesKey;
   }
 
