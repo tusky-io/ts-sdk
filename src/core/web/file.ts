@@ -79,7 +79,7 @@ class WebFileModule extends FileModule {
             size: fileMetadata.size,
             id: id,
             url: this.cdnPreviewUrl(id),
-            key: await exportKeyToBase64(aesKey),
+            key: aesKey ? await exportKeyToBase64(aesKey) : null,
             name: fileMetadata.name,
           } as Record<string, any>;
 
