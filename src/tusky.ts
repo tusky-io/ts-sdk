@@ -193,7 +193,7 @@ export class Tusky {
   constructor(config: ClientConfig & AuthOptions = {}) {
     this._signer = config.signer;
     this._encrypter = config.encrypter;
-    this._env = { ...config, ...this.getConfig() }.env || DEFAULT_ENV;
+    this._env = { ...this.getConfig(), ...config }.env || DEFAULT_ENV;
     this._storage = config.storage || defaultStorage();
     this._auth = new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());

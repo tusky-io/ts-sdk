@@ -6,4 +6,4 @@ export enum Envs {
   LOCAL = "local"
 }
 
-export const DEFAULT_ENV = Envs.DEV;
+export const DEFAULT_ENV = Envs.PROD;
