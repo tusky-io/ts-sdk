@@ -1,3 +1,10 @@
+# [0.24.0-experimental.2](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.1...v0.24.0-experimental.2) (2024-11-18)
+
+
+### Bug Fixes
+
+* use encrypted flag instead of public ([59566a5](https://github.com/Akord-com/carmella-sdk/commit/59566a568bacfd78db46cafae702bb1347bdda08))
+
 # [0.24.0-experimental.1](https://github.com/Akord-com/carmella-sdk/compare/v0.23.0...v0.24.0-experimental.1) (2024-11-18)
 
 
