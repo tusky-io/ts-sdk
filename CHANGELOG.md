@@ -1,3 +1,10 @@
+# [0.24.0-experimental.4](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.3...v0.24.0-experimental.4) (2024-11-18)
+
+
+### Bug Fixes
+
+* worker aes key ([a085bc7](https://github.com/Akord-com/carmella-sdk/commit/a085bc7fd1a450b6f3fe491014fba73f5a23945c))
+
 # [0.24.0-experimental.3](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.2...v0.24.0-experimental.3) (2024-11-18)
 
 
