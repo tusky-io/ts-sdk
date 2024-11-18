@@ -54,6 +54,9 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
     expect(file.name).toEqual(fileName);
     expect(file.mimeType).toEqual(type);
 
+    // wait a bit so the whole file is accessible
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+
     const response = await tusky.file.arrayBuffer(file.id);
     const buffer = await fs.readFile(testDataPath + fileName);
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
