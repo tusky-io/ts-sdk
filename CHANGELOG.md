@@ -1,3 +1,10 @@
+# [0.24.0-experimental.5](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.4...v0.24.0-experimental.5) (2024-11-18)
+
+
+### Bug Fixes
+
+* safe key export ([ada6e3a](https://github.com/Akord-com/carmella-sdk/commit/ada6e3aae2706953abea724ca2ac3c98767cd31d))
+
 # [0.24.0-experimental.4](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.3...v0.24.0-experimental.4) (2024-11-18)
 
 
