@@ -1,3 +1,10 @@
+# [0.24.0-experimental.6](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.5...v0.24.0-experimental.6) (2024-11-18)
+
+
+### Bug Fixes
+
+* use extractable aes key ([a9b6698](https://github.com/Akord-com/carmella-sdk/commit/a9b6698c3aeb3366d6629277d1feb4ad61708388))
+
 # [0.24.0-experimental.5](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.4...v0.24.0-experimental.5) (2024-11-18)
 
 
