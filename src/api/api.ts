@@ -61,7 +61,7 @@ abstract class Api {
 
   abstract getPaymentPlans(): Promise<PaymentPlan[]>
 
-  abstract createPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession>
+  abstract createSubscriptionPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession>
 
   abstract getUserPublicData(email: string): Promise<UserPublicInfo>
 

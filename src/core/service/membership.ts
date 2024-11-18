@@ -1,8 +1,8 @@
 import { objects } from "../../constants";
 import { Service, ServiceConfig } from "./service";
 import { IncorrectEncryptionKey } from "../../errors/incorrect-encryption-key";
-import { EncryptedVaultKeyPair } from "../../types";
-import { arrayToBase64, base64ToArray, jsonToBase64 } from "../../crypto";
+import { EncryptedVaultKeyPair, Membership, OwnerAccess } from "../../types";
+import { arrayToBase64, arrayToString, base64ToArray, base64ToJson, jsonToBase64 } from "../../crypto";
 import { encryptWithPublicKey, generateKeyPair } from "../../crypto/lib";
 
 class MembershipService extends Service {
@@ -55,6 +55,26 @@ class MembershipService extends Service {
       }
     }
     return { memberKeys, keypair };
+  }
+
+  async processMembership(object: Membership, isOwner: boolean): Promise<Membership> {
+    const membership = new Membership(object);
+    if (isOwner && membership.ownerAccess) {
+      if (membership.__public__) {
+        membership.ownerAccess = base64ToJson(membership.ownerAccess as any) as OwnerAccess;
+      } else {
+        try {
+          // decrypt owner access with user keys
+          const ownerAccess = await this.encrypter.decrypt(membership.ownerAccess as any);
+          membership.ownerAccess = base64ToJson(arrayToString(ownerAccess)) as OwnerAccess;
+        } catch (error) {
+          throw new IncorrectEncryptionKey(error);
+        }
+      }
+    } else {
+      membership.ownerAccess = undefined;
+    }
+    return membership;
   }
 }
 

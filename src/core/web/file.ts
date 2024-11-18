@@ -100,7 +100,6 @@ class WebFileModule extends FileModule {
                 if (event.data.type === 'progress') {
                     const bytesProgress = event.data.progress;
                     const percentageProgress = Math.min(100, Math.ceil(bytesProgress / fileMetadata.size * 100));
-                    console.log(percentageProgress, bytesProgress)
                     if (options.onProgress) {
                         options.onProgress(percentageProgress, bytesProgress);
                     }

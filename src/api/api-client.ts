@@ -35,7 +35,7 @@ export class ApiClient {
   private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
-  private _paymentUri: string = "payments";
+  private _subscriptionUri: string = "subscriptions";
 
   // path params
   private _resourceId: string;
@@ -65,6 +65,7 @@ export class ApiClient {
   private _expiresAt: number;
   private _allowedStorage: number;
   private _allowedPaths: AllowedPaths;
+  private _ownerAccess: string;
 
   // file specific
   private _numberOfChunks: number;
@@ -131,6 +132,7 @@ export class ApiClient {
     clone._termsAccepted = this._termsAccepted;
     clone._encPrivateKey = this._encPrivateKey;
     clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
+    clone._ownerAccess = this._ownerAccess;
 
     clone._authProvider = this._authProvider;
     clone._redirectUri = this._redirectUri;
@@ -275,6 +277,11 @@ export class ApiClient {
 
   encPrivateKeyBackup(encPrivateKeyBackup: string): ApiClient {
     this._encPrivateKeyBackup = encPrivateKeyBackup;
+    return this;
+  }
+
+  ownerAccess(ownerAccess: string): ApiClient {
+    this._ownerAccess = ownerAccess;
     return this;
   }
 
@@ -554,7 +561,7 @@ export class ApiClient {
   }
 
   async getPaymentPlans(): Promise<PaymentPlan[]> {
-    return this.get(`${this._apiUrl}/${this._paymentUri}`);
+    return this.get(`${this._apiUrl}/${this._subscriptionUri}`);
   }
 
   /**
@@ -891,6 +898,7 @@ export class ApiClient {
     this.data({
       name: this._name,
       description: this._description,
+      tags: this._tags,
       status: this._status,
       autoExecute: this._autoExecute
     });
@@ -964,6 +972,7 @@ export class ApiClient {
       name: this._name,
       keys: this._keys,
       encPrivateKey: this._encPrivateKey,
+      ownerAccess: this._ownerAccess,
       allowedStorage: this._allowedStorage,
       allowedPaths: this._allowedPaths,
       autoExecute: this._autoExecute
@@ -1073,8 +1082,8 @@ export class ApiClient {
     return new Storage(data);
   }
 
-  async createPaymentSession(): Promise<PaymentSession> {
-    const data = await this.put(`${this._apiUrl}/${this._paymentUri}`);
+  async createSubscriptionPaymentSession(): Promise<PaymentSession> {
+    const data = await this.put(`${this._apiUrl}/${this._subscriptionUri}`);
     return new PaymentSession(data);
   }
 }

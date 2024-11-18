@@ -174,6 +174,7 @@ export class Tusky {
       encrypter: this._encrypter,
       env: this._env,
       storage: this._storage,
+      address: this._auth?.getAddress()
     }
   }
 
@@ -192,7 +193,7 @@ export class Tusky {
   constructor(config: ClientConfig & AuthOptions = {}) {
     this._signer = config.signer;
     this._encrypter = config.encrypter;
-    this._env = config.env || DEFAULT_ENV;
+    this._env = { ...config, ...this.getConfig() }.env || DEFAULT_ENV;
     this._storage = config.storage || defaultStorage();
     this._auth = new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());

@@ -24,6 +24,7 @@ export interface UpdateVaultTxPayload {
   id: string,
   name?: string,
   description?: string
+  tags?: string[]
   status?: string
 }
 
@@ -62,6 +63,7 @@ export interface CreateMembershipTxPayload {
   expiresAt?: number,
   keys?: EncryptedVaultKeyPair[],
   encPrivateKey?: string,
+  ownerAccess?: string,
   allowedStorage?: number,
   allowedPaths?: AllowedPaths
 }
