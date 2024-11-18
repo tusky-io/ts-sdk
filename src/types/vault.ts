@@ -44,3 +44,9 @@ export type VaultCreateOptions = {
   description?: string,
   tags?: string[]
 }
+
+export type VaultUpdateOptions = {
+  name?: string,
+  description?: string,
+  tags?: string[]
+}

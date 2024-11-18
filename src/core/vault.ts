@@ -6,8 +6,8 @@ import { paginate, processListItems } from "./common";
 import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
-import { arrayToBase64, generateKeyPair } from "../crypto";
-import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, RoleType } from "../types";
+import { arrayToBase64, generateKeyPair, jsonToBase64 } from "../crypto";
+import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, OwnerAccess, RoleType, VaultUpdateOptions } from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
 import * as pwd from "micro-key-producer/password.js";
@@ -154,6 +154,32 @@ class VaultModule {
   }
 
   /**
+   * Update vault metadata: name, description, tags
+   * @param id vault id
+   * @param updates vault metadata updates
+   * @returns Promise with vault object
+   */
+  public async update(id: string, updates: VaultUpdateOptions): Promise<Vault> {
+    await this.service.setVaultContext(id);
+
+    if (updates.name) {
+      await this.service.setName(updates.name);
+    }
+
+    if (updates.description) {
+      await this.service.setDescription(updates.description);
+    }
+
+    const vault = await this.service.api.updateVault({
+      id: id,
+      name: this.service.name,
+      description: this.service.description,
+      tags: updates.tags,
+    });
+    return this.service.processVault(vault, true, this.service.keys);
+  }
+
+  /**
    * Delete the vault
    * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
    * @param id vault id
@@ -183,11 +209,27 @@ class VaultModule {
     let keys: EncryptedVaultKeyPair[];
     let userEncPrivateKey: string;
     let password: string;
+    let ownerAccessJson = {
+      identityPrivateKey: memberKeyPair.getSecretKey()
+    } as OwnerAccess;
+    let ownerAccess: string;
+
     if (this.service.encrypted) {
-      password = options.password ? options.password : generateRandomPassword();
+      if (options.password) {
+        password = options.password;
+      } else {
+        // generate password & add it for owner access
+        password = generateRandomPassword();
+        ownerAccessJson.password = password;
+      }
+      // encrypt owner access
+      ownerAccess = await this.service.encrypter.encrypt(jsonToBase64(ownerAccessJson));
+
       const { encPrivateKey, keyPair } = await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
       keys = await memberService.prepareMemberKeys(arrayToBase64(keyPair.publicKey));
+    } else {
+      ownerAccess = jsonToBase64(ownerAccessJson);
     }
 
     const membership = await this.service.api.createMembership({
@@ -199,13 +241,14 @@ class VaultModule {
       name: options.name,
       role: options.role || DEFAULT_AIRDROP_ACCESS_ROLE,
       keys: keys,
-      encPrivateKey: userEncPrivateKey
+      encPrivateKey: userEncPrivateKey,
+      ownerAccess: ownerAccess
     });
 
     return {
       identityPrivateKey: memberKeyPair.getSecretKey(),
       password: password,
-      membership: new Membership(membership)
+      membership: await memberService.processMembership(membership, this.service.vault.owner === this.service.address)
     }
   }
 
@@ -261,7 +304,6 @@ class VaultModule {
     return new Membership(membership);
   }
 
-
   /**
   * Retrieve all vault members
   * @param  {string} vaultId
@@ -269,7 +311,9 @@ class VaultModule {
   */
   public async members(vaultId: string): Promise<Array<Membership>> {
     const memberships = await this.service.api.getMembers(vaultId) as any;
-    return memberships.items?.map((member: Membership) => new Membership(member));
+    await this.service.setVaultContext(vaultId);
+    const memberService = new MembershipService(this.service);
+    return Promise.all(memberships.items?.map(async (member: Membership) => memberService.processMembership(member, this.service.vault.owner === this.service.address)));
   }
 };
 

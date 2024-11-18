@@ -80,22 +80,16 @@ export class UserEncryption {
     if (!this.encPrivateKey) {
       throw new IncorrectEncryptionKey(new Error("Missing encrypted private key data."));
     }
-    const keystore = await Keystore.instance();
-    const sessionKey = await keystore.get(this.sessionKeyPath);
 
-    if (!sessionKey) {
+    const encryptionSession = await this.hasEncryptionSession();
+
+    if (!encryptionSession) {
       throw new IncorrectEncryptionKey(new Error("The user needs to provide the password again."));
     }
 
-    const encryptedPasswordKeyPayload = this.storage.getItem(this.encryptedPasswordKeyPath);
+    const { ciphertext, iv } = decodeAesPayload(encryptionSession.encryptedPasswordKey);
 
-    if (!encryptedPasswordKeyPayload) {
-      throw new IncorrectEncryptionKey(new Error("The user needs to provide the password again."));
-    }
-
-    const { ciphertext, iv } = decodeAesPayload(encryptedPasswordKeyPayload);
-
-    const decryptedKey = await decryptAes({ ciphertext, iv }, sessionKey);
+    const decryptedKey = await decryptAes({ ciphertext, iv }, encryptionSession.sessionKey);
     const passwordKey = await importKeyFromArray(new Uint8Array(decryptedKey));
 
     const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any; // TODO: type here
@@ -219,6 +213,22 @@ export class UserEncryption {
    */
   private async decryptWithBackupPhrase(backupPhrase: string, encryptedPayload: string): Promise<Uint8Array> {
     return this.decryptWithPassword(backupPhrase, encryptedPayload, false);
+  }
+
+  async hasEncryptionSession(): Promise<false | { sessionKey: CryptoKey, encryptedPasswordKey: string }> {
+    const keystore = await Keystore.instance();
+    const sessionKey = await keystore.get(this.sessionKeyPath);
+    if (!sessionKey) {
+      return false;
+    }
+    const encryptedPasswordKey = this.storage.getItem(this.encryptedPasswordKeyPath);
+    if (!encryptedPasswordKey) {
+      return false;
+    }
+    return {
+      sessionKey: sessionKey,
+      encryptedPasswordKey: encryptedPasswordKey
+    }
   }
 
   async clear() {

@@ -25,10 +25,10 @@
     module-error "^1.0.2"
     run-parallel-limit "^1.1.0"
 
-"@akord/carmella-gql@^0.48.1":
-  version "0.48.3"
-  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@akord/carmella-gql/-/carmella-gql-0.48.3.tgz#63cdd1749e98e8469bcafe89cb9d205218d7f66e"
-  integrity sha512-TIkODme5fXOlPg6HTAvvLgMwk1DxPbgMgp1IxijnXsFAUWCkBXGA0kK3P0xo/D1sFEjA0Mj4Qxmzb6Dy5nSjew==
+"@akord/carmella-gql@^0.51.1":
+  version "0.51.1"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@akord/carmella-gql/-/carmella-gql-0.51.1.tgz#ab05ec364819212f9da287091ac4194a80140535"
+  integrity sha512-TYMUUKcKwcpRd0Kbh+fe19deSpqSrZjLYqPtAsjZEKAmus5Ltz1poNR/yRh+X5R3xQRDLNGJH9D95HfI5g79LA==
 
 "@akord/ts-cacheable@1.0.13":
   version "1.0.13"
@@ -514,7 +514,7 @@
     jest-util "^29.7.0"
     slash "^3.0.0"
 
-"@jest/core@^29.7.0":
+"@jest/core@^29.2.0", "@jest/core@^29.7.0":
   version "29.7.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@jest/core/-/core-29.7.0.tgz#b6cccc239f30ff36609658c5a5e2291757ce448f"
   integrity sha512-n7aeXWKMnGtDA48y8TLWJPJmLmmZ642Ceo78cYWEpiD7FzDgmNDV/GCVRorPABdXLJZ/9wzzgZAlHjXjxDHGsg==
@@ -682,7 +682,7 @@
     slash "^3.0.0"
     write-file-atomic "^4.0.2"
 
-"@jest/types@^29.6.3":
+"@jest/types@^29.2.0", "@jest/types@^29.6.3":
   version "29.6.3"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@jest/types/-/types-29.6.3.tgz#1131f8cf634e7e84c5e77bab12f052af585fba59"
   integrity sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==
@@ -1132,7 +1132,7 @@
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@sec-ant/readable-stream/-/readable-stream-0.4.1.tgz#60de891bb126abfdc5410fdc6166aca065f10a0c"
   integrity sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==
 
-"@semantic-release/changelog@^6.0.3":
+"@semantic-release/changelog@6.0.3":
   version "6.0.3"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/changelog/-/changelog-6.0.3.tgz#6195630ecbeccad174461de727d5f975abc23eeb"
   integrity sha512-dZuR5qByyfe3Y03TpmCvAxCyTnp7r5XwtHRf/8vD9EAn4ZWbavUX8adMtXYzE86EVh0gyLA7lm5yW4IV30XUag==
@@ -1142,7 +1142,7 @@
     fs-extra "^11.0.0"
     lodash "^4.17.4"
 
-"@semantic-release/commit-analyzer@^13.0.0":
+"@semantic-release/commit-analyzer@13.0.0":
   version "13.0.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/commit-analyzer/-/commit-analyzer-13.0.0.tgz#98e28e2b2cb3d8e3a19effb82d5f493a0147e7a2"
   integrity sha512-KtXWczvTAB1ZFZ6B4O+w8HkfYm/OgQb1dUGNFZtDgQ0csggrmkq8sTxhd+lwGF8kMb59/RnG9o4Tn7M/I8dQ9Q==
@@ -1166,7 +1166,7 @@
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/error/-/error-4.0.0.tgz#692810288239637f74396976a9340fbc0aa9f6f9"
   integrity sha512-mgdxrHTLOjOddRVYIYDo0fR3/v61GNN1YGkfbrjuIKg/uMgCd+Qzo3UAXJ+woLQQpos4pl5Esuw5A7AoNlzjUQ==
 
-"@semantic-release/git@^10.0.1":
+"@semantic-release/git@10.0.1":
   version "10.0.1"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/git/-/git-10.0.1.tgz#c646e55d67fae623875bf3a06a634dd434904498"
   integrity sha512-eWrx5KguUcU2wUPaO6sfvZI0wPafUKAMNC18aXY4EnNcrZL86dEmpNVnC9uMpGZkmZJ9EfCVJBQx4pV4EMGT1w==
@@ -1180,10 +1180,10 @@
     micromatch "^4.0.0"
     p-reduce "^2.0.0"
 
-"@semantic-release/github@^10.1.1":
-  version "10.3.5"
-  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/github/-/github-10.3.5.tgz#112b6ee41fe78356359aa7ba9a1e98b68c8640fc"
-  integrity sha512-svvRglGmvqvxjmDgkXhrjf0lC88oZowFhOfifTldbgX9Dzj0inEtMLaC+3/MkDEmxmaQjWmF5Q/0CMIvPNSVdQ==
+"@semantic-release/github@10.1.1":
+  version "10.1.1"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/github/-/github-10.1.1.tgz#670e3fd7da9d294eacb26d027960c92de0831fb5"
+  integrity sha512-sSmsBKGpAlTtXf9rUJf/si16p+FwPEsvsJRjl3KCwFP0WywaSpynvUhlYvE18n5rzkQNbGJnObAKIoo3xFMSjA==
   dependencies:
     "@octokit/core" "^6.0.0"
     "@octokit/plugin-paginate-rest" "^11.0.0"
@@ -1202,7 +1202,7 @@
     p-filter "^4.0.0"
     url-join "^5.0.0"
 
-"@semantic-release/npm@^12.0.1":
+"@semantic-release/npm@12.0.1":
   version "12.0.1"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/npm/-/npm-12.0.1.tgz#ffb47906de95f8dade8fe0480df0a08dbe1b80c9"
   integrity sha512-/6nntGSUGK2aTOI0rHPwY3ZjgY9FkXmEHbW9Kr+62NVOsyqpKKeP0lrCH+tphv+EsNdJNmqqwijTEnVWUMQ2Nw==
@@ -1221,7 +1221,7 @@
     semver "^7.1.2"
     tempy "^3.0.0"
 
-"@semantic-release/release-notes-generator@^14.0.1":
+"@semantic-release/release-notes-generator@14.0.1":
   version "14.0.1"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/@semantic-release/release-notes-generator/-/release-notes-generator-14.0.1.tgz#0c091af7857a4dfbfc464b8256a289676f7eddd3"
   integrity sha512-K0w+5220TM4HZTthE5dDpIuFrnkN1NfTGPidJFm04ULT1DEZ9WG89VNXN7F0c+6nMEpWgqmPvb7vY7JkB2jyyA==
@@ -4380,7 +4380,7 @@ jest-circus@^29.7.0:
     slash "^3.0.0"
     stack-utils "^2.0.3"
 
-jest-cli@^29.7.0:
+jest-cli@^29.2.0:
   version "29.7.0"
   resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/jest-cli/-/jest-cli-29.7.0.tgz#5592c940798e0cae677eec169264f2d839a37995"
   integrity sha512-OVVobw2IubN/GSYsxETi+gOe7Ka59EFMR/twOU3Jb2GnKKeMGJB5SGUUrEz3SFVmJASUdZUzy83sLNNQ2gZslg==
@@ -4702,15 +4702,15 @@ jest-worker@^29.7.0:
     merge-stream "^2.0.0"
     supports-color "^8.0.0"
 
-jest@^29.2.0:
-  version "29.7.0"
-  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/jest/-/jest-29.7.0.tgz#994676fc24177f088f1c5e3737f5697204ff2613"
-  integrity sha512-NIy3oAFp9shda19hy4HK0HRTWKtPJmGdnvywu01nOqNC2vZg+Z+fvJDxpMQA88eb2I9EcafcdjYgsDthnYTvGw==
+jest@29.2.0:
+  version "29.2.0"
+  resolved "https://akord-586794483534.d.codeartifact.eu-central-1.amazonaws.com/npm/akord/jest/-/jest-29.2.0.tgz#e7997bc603f31e04edbbe87dd24cf6e7c432abac"
+  integrity sha512-6krPemKUXCEu5Fh3j6ZVoLMjpTQVm0OCU+7f3K/9gllX8wNIE6NSCQ6s0q2RDoiKLRaQlVRHyscjSPRPqCI0Fg==
   dependencies:
-    "@jest/core" "^29.7.0"
-    "@jest/types" "^29.6.3"
+    "@jest/core" "^29.2.0"
+    "@jest/types" "^29.2.0"
     import-local "^3.0.2"
-    jest-cli "^29.7.0"
+    jest-cli "^29.2.0"
 
 js-base64@^3.7.2:
   version "3.7.7"

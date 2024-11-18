@@ -55,6 +55,8 @@ describe("Testing airdrop actions", () => {
       expect(membership.role).toEqual(role);
       expect(membership.expiresAt).toEqual(expiresAt.toString());
       isEncrypted ? expect(membership.keys).toBeTruthy() : expect(membership.keys).toBeFalsy();
+      expect(membership.ownerAccess?.identityPrivateKey).toBeTruthy();
+      isEncrypted ? expect(membership.ownerAccess?.password).toBeTruthy() : expect(membership.ownerAccess?.password).toBeFalsy();
     });
 
     it("should airdrop access with link name identifier", async () => {
@@ -69,6 +71,9 @@ describe("Testing airdrop actions", () => {
       expect(membership.memberDetails).toBeTruthy();
       expect(membership.memberDetails.name).toEqual(name);
       isEncrypted ? expect(membership.keys).toBeTruthy() : expect(membership.keys).toBeFalsy();
+      expect(membership.ownerAccess?.identityPrivateKey).toBeTruthy();
+      isEncrypted ? expect(membership.ownerAccess?.password).toBeTruthy() : expect(membership.ownerAccess?.password).toBeFalsy();
+
     });
 
     it("should airdrop access with user specified password and no expiration date", async () => {
@@ -78,6 +83,7 @@ describe("Testing airdrop actions", () => {
 
       const { identityPrivateKey, membership } = await tusky.vault.airdropAccess(vaultId, { password, role });
       expect(identityPrivateKey).toBeTruthy();
+      expect(password).toEqual(password);
 
       expect(membership).toBeTruthy();
       expect(membership.id).toBeTruthy();
@@ -88,6 +94,8 @@ describe("Testing airdrop actions", () => {
       airdropeeIdentityPrivateKey = identityPrivateKey;
       airdropeePassword = password;
       airdropeeMemberId = membership.id;
+      expect(membership.ownerAccess?.identityPrivateKey).toBeTruthy();
+      expect(membership.ownerAccess?.password).toBeFalsy();
     });
 
     it("should get vault by airdropee", async () => {
@@ -160,6 +168,8 @@ describe("Testing airdrop actions", () => {
 
     it("should share file with a viewer member", async () => {
       const { membership, identityPrivateKey, password } = await tusky.vault.airdropAccess(vaultId, { allowedPaths: { files: [fileId] } });
+      expect(identityPrivateKey).toBeTruthy();
+      expect(password).toEqual(password);
 
       viewerIdentityPrivateKey = identityPrivateKey;
       viewerPassword = password;
@@ -173,6 +183,8 @@ describe("Testing airdrop actions", () => {
 
     it("should share file with a contributor member", async () => {
       const { membership, identityPrivateKey, password } = await tusky.vault.airdropAccess(vaultId, { role: "contributor", allowedPaths: { files: [fileId] } });
+      expect(identityPrivateKey).toBeTruthy();
+      expect(password).toEqual(password);
 
       contributorIdentityPrivateKey = identityPrivateKey;
       contributorPassword = password;

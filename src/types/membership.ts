@@ -33,6 +33,7 @@ export class Membership extends Encryptable {
   allowedPaths: AllowedPaths // defines granular permissions to fragments of the vault
   vaultId: string;
   keys: VaultKeyPair[];
+  ownerAccess?: OwnerAccess; // enables owner admin access to the member identity
 
   // vault context
   __encrypted__?: boolean;
@@ -51,6 +52,7 @@ export class Membership extends Encryptable {
     this.email = membershipProto.email;
     this.vaultId = membershipProto.vaultId;
     this.keys = membershipProto.keys;
+    this.ownerAccess = membershipProto.ownerAccess;
     this.memberDetails = membershipProto.memberDetails ? new User(membershipProto.memberDetails) : undefined;
     this.allowedPaths = membershipProto.allowedPaths ? JSON.parse(membershipProto.allowedPaths) : undefined;
     this.__encrypted__ = membershipProto.__encrypted__;
@@ -73,10 +75,16 @@ export type MembershipAirdropOptions = {
   allowedStorage?: number // allowed storage
   allowedPaths?: AllowedPaths // folder ids, file ids, if not provided defaults to vault id
   role?: MemberRoleType //  member role, defaults to viewer
-  password?: string // password to protect member encryption keys, if not provided a random password will be generated
+  password?: string // password to protect member encryption keys, if not provided a random password will be generated,
+  ownerAccess?: boolean // will enable owner access to the created membership
 }
 
 export type AllowedPaths = {
   folders?: string[] // folder ids to share within the vault
   files?: string[] // file ids to share within the vault
+}
+
+export type OwnerAccess = {
+  password?: string
+  identityPrivateKey: string
 }

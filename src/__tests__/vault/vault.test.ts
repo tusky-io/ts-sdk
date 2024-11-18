@@ -9,6 +9,7 @@ let tusky: Tusky;
 describe(`Testing ${isEncrypted ? "private" : "public"} vault functions`, () => {
   let vaultId: string;
   let anotherVaultId: string;
+  let publicVaultId: string;
 
   beforeAll(async () => {
     tusky = await initInstance(isEncrypted);
@@ -61,6 +62,22 @@ describe(`Testing ${isEncrypted ? "private" : "public"} vault functions`, () => 
     const tag2 = faker.random.word();
     const vault = await tusky.vault.create(name, { encrypted: false, tags: [tag1, tag2] });
 
+    expect(vault.tags).toBeTruthy();
+    expect(vault.tags?.length).toEqual(2);
+    expect(vault.tags).toContain(tag1);
+    expect(vault.tags).toContain(tag2);
+
+    publicVaultId = vault.id;
+  });
+
+  it("should update vault metadata", async () => {
+    const description = faker.random.words();
+
+    const tag1 = faker.random.word();
+    const tag2 = faker.random.word();
+    const vault = await tusky.vault.update(publicVaultId, { description: description, tags: [tag1, tag2] });
+
+    expect(vault.description).toEqual(description);
     expect(vault.tags).toBeTruthy();
     expect(vault.tags?.length).toEqual(2);
     expect(vault.tags).toContain(tag1);
