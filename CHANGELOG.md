@@ -1,3 +1,15 @@
+# [0.24.0-dev.7](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.6...v0.24.0-dev.7) (2024-11-19)
+
+
+### Bug Fixes
+
+* default to dev for tests ([c7b1f7d](https://github.com/Akord-com/carmella-sdk/commit/c7b1f7d764405b177d38c2849a845bbd67ead07d))
+
+
+### Features
+
+* add trash tests & fix api calls ([da3abb6](https://github.com/Akord-com/carmella-sdk/commit/da3abb60196dbaa3fe3954919a7befcb0d07353a))
+
 # [0.24.0-dev.6](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.5...v0.24.0-dev.6) (2024-11-19)
 
 
