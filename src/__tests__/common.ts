@@ -104,7 +104,7 @@ export const folderCreate = async (tusky: Tusky, vaultId: string, parentId?: str
     expect(folder.parentId).toEqual(vaultId);
   }
   expect(folder.name).toEqual(name);
-  return id;
+  return folder;
 }
 
 export const generateAndSavePixelFile = async (fileSizeMB: number, filePath: string) => {

@@ -914,12 +914,12 @@ export class ApiClient {
   }
 
   async getTrash(): Promise<Folder> {
-    const data = this.get(`${this._apiUrl}/${this._trashUri}`);
+    const data = await this.get(`${this._apiUrl}/${this._trashUri}`);
     return new Folder(data);
   }
 
   async emptyTrash(): Promise<Folder> {
-    const data = this.delete(`${this._apiUrl}/${this._trashUri}`);
+    const data = await this.delete(`${this._apiUrl}/${this._trashUri}`);
     return new Folder(data);
   }
 
