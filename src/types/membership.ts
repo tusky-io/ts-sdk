@@ -8,13 +8,13 @@ export type StatusType = "accepted" | "pending" | "revoked";
 export const activeStatus = ["accepted", "pending"] as StatusType[];
 
 export type EncryptedVaultKeyPair = {
-  publicKey: string,
-  encPrivateKey: string // vault private key encrypted with member private key
+  publicKey: string;
+  encPrivateKey: string; // vault private key encrypted with member private key
 };
 
 export type VaultKeyPair = {
-  publicKey: Uint8Array,
-  privateKey: Uint8Array,
+  publicKey: Uint8Array;
+  privateKey: Uint8Array;
 };
 
 export class Membership extends Encryptable {
@@ -53,8 +53,12 @@ export class Membership extends Encryptable {
     this.vaultId = membershipProto.vaultId;
     this.keys = membershipProto.keys;
     this.ownerAccess = membershipProto.ownerAccess;
-    this.memberDetails = membershipProto.memberDetails ? new User(membershipProto.memberDetails) : undefined;
-    this.allowedPaths = membershipProto.allowedPaths ? JSON.parse(membershipProto.allowedPaths) : undefined;
+    this.memberDetails = membershipProto.memberDetails
+      ? new User(membershipProto.memberDetails)
+      : undefined;
+    this.allowedPaths = membershipProto.allowedPaths
+      ? JSON.parse(membershipProto.allowedPaths)
+      : undefined;
     this.__encrypted__ = membershipProto.__encrypted__;
   }
 }
@@ -66,25 +70,25 @@ export type MembershipKeys = {
 };
 
 export type MembershipCreateOptions = {
-  message?: string
-}
+  message?: string;
+};
 
 export type MembershipAirdropOptions = {
-  name?: string
-  expiresAt?: number // expiration date
-  allowedStorage?: number // allowed storage
-  allowedPaths?: AllowedPaths // folder ids, file ids, if not provided defaults to vault id
-  role?: MemberRoleType //  member role, defaults to viewer
-  password?: string // password to protect member encryption keys, if not provided a random password will be generated,
-  ownerAccess?: boolean // will enable owner access to the created membership
-}
+  name?: string;
+  expiresAt?: number; // expiration date
+  allowedStorage?: number; // allowed storage
+  allowedPaths?: AllowedPaths; // folder ids, file ids, if not provided defaults to vault id
+  role?: MemberRoleType; //  member role, defaults to viewer
+  password?: string; // password to protect member encryption keys, if not provided a random password will be generated,
+  ownerAccess?: boolean; // will enable owner access to the created membership
+};
 
 export type AllowedPaths = {
-  folders?: string[] // folder ids to share within the vault
-  files?: string[] // file ids to share within the vault
-}
+  folders?: string[]; // folder ids to share within the vault
+  files?: string[]; // file ids to share within the vault
+};
 
 export type OwnerAccess = {
-  password?: string
-  identityPrivateKey: string
-}
+  password?: string;
+  identityPrivateKey: string;
+};

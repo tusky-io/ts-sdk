@@ -1,6 +1,6 @@
 import { Api } from "../../api/api";
 import { base64ToArray, stringToArray, base64ToJson } from "../../crypto";
-import { actions } from '../../constants';
+import { actions } from "../../constants";
 import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
 import { Signer } from "../../signer";
@@ -13,29 +13,29 @@ import { VaultEncryption } from "../../crypto/vault-encryption";
 export const STATE_CONTENT_TYPE = "application/json";
 
 class Service {
-  api: Api
+  api: Api;
   pubsub: PubSub;
 
-  address: string
-  signer: Signer
-  encrypter: Encrypter
+  address: string;
+  signer: Signer;
+  encrypter: Encrypter;
 
-  keys: Array<EncryptedVaultKeyPair>
-  decryptedKeys: Array<VaultKeyPair>
+  keys: Array<EncryptedVaultKeyPair>;
+  decryptedKeys: Array<VaultKeyPair>;
 
-  vaultId: string
-  parentId: string
-  objectId: string
-  type: ObjectType
-  encrypted: boolean
-  vault: Vault
-  object: Object
-  groupRef: string
+  vaultId: string;
+  parentId: string;
+  objectId: string;
+  type: ObjectType;
+  encrypted: boolean;
+  vault: Vault;
+  object: Object;
+  groupRef: string;
 
-  userAgent: string // client name
+  userAgent: string; // client name
 
-  storage: Storage // user session storage
-  env: Env
+  storage: Storage; // user session storage
+  env: Env;
 
   constructor(config: ServiceConfig) {
     this.signer = config.signer;
@@ -71,8 +71,13 @@ class Service {
       this.decryptedKeys = [];
       if (this.keys && this.keys.length > 0) {
         for (let keypair of this.keys) {
-          const privateKey = await this.encrypter.decrypt(keypair.encPrivateKey);
-          this.decryptedKeys.push({ publicKey: base64ToArray(keypair.publicKey), privateKey: privateKey });
+          const privateKey = await this.encrypter.decrypt(
+            keypair.encPrivateKey,
+          );
+          this.decryptedKeys.push({
+            publicKey: base64ToArray(keypair.publicKey),
+            privateKey: privateKey,
+          });
         }
       }
     }
@@ -110,7 +115,7 @@ class Service {
     if (!this.encrypted) return data;
     const vaultEncryption = new VaultEncryption({ vaultKeys: this.keys });
     const dataString = await vaultEncryption.encryptHybrid(stringToArray(data));
-    return dataString
+    return dataString;
   }
 
   // TODO: cache it
@@ -131,31 +136,31 @@ class Service {
 
 export type ServiceConfig = {
   decryptedKeys?: VaultKeyPair[];
-  address?: string,
-  api?: Api,
-  pubsub?: PubSub,
-  auth?: Auth,
-  signer?: Signer,
-  encrypter?: Encrypter,
-  keys?: Array<EncryptedVaultKeyPair>
-  vaultId?: string,
-  objectId?: string,
-  type?: ObjectType,
-  action?: actions,
-  encrypted?: boolean,
-  vault?: Vault,
-  object?: Object,
-  actionRef?: string,
-  groupRef?: string,
-  contentType?: string,
-  userAgent?: string,
-  storage?: Storage,
-  env?: Env
-}
+  address?: string;
+  api?: Api;
+  pubsub?: PubSub;
+  auth?: Auth;
+  signer?: Signer;
+  encrypter?: Encrypter;
+  keys?: Array<EncryptedVaultKeyPair>;
+  vaultId?: string;
+  objectId?: string;
+  type?: ObjectType;
+  action?: actions;
+  encrypted?: boolean;
+  vault?: Vault;
+  object?: Object;
+  actionRef?: string;
+  groupRef?: string;
+  contentType?: string;
+  userAgent?: string;
+  storage?: Storage;
+  env?: Env;
+};
 
 export type VaultOptions = {
-  vaultId?: string,
-  encrypted?: boolean
-}
+  vaultId?: string;
+  encrypted?: boolean;
+};
 
 export { Service };

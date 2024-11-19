@@ -6,7 +6,7 @@ import { toByteArray, fromByteArray } from "base64-js";
  * @returns {string}
  */
 function arrayToBase64(bufferSource: ArrayBuffer): string {
-  return fromByteArray(new Uint8Array(bufferSource))
+  return fromByteArray(new Uint8Array(bufferSource));
 }
 
 /**
@@ -15,7 +15,7 @@ function arrayToBase64(bufferSource: ArrayBuffer): string {
  * @returns {Uint8Array}
  */
 function base64ToArray(base64String: string): Uint8Array {
-  return toByteArray(base64String)
+  return toByteArray(base64String);
 }
 
 /**
@@ -24,8 +24,8 @@ function base64ToArray(base64String: string): Uint8Array {
  * @returns {string}
  */
 function arrayToString(bufferSource: ArrayBuffer): string {
-  const utf8Decoder = new TextDecoder()
-  return utf8Decoder.decode(bufferSource)
+  const utf8Decoder = new TextDecoder();
+  return utf8Decoder.decode(bufferSource);
 }
 
 /**
@@ -34,8 +34,8 @@ function arrayToString(bufferSource: ArrayBuffer): string {
  * @returns {Uint8Array}
  */
 function stringToArray(string: string): Uint8Array {
-  const utf8Encoder = new TextEncoder()
-  return utf8Encoder.encode(string)
+  const utf8Encoder = new TextEncoder();
+  return utf8Encoder.encode(string);
 }
 
 /**
@@ -44,8 +44,8 @@ function stringToArray(string: string): Uint8Array {
  * @returns {string}
  */
 function stringToBase64(string: string): string {
-  const byteArray = stringToArray(string)
-  return arrayToBase64(byteArray)
+  const byteArray = stringToArray(string);
+  return arrayToBase64(byteArray);
 }
 
 /**
@@ -54,8 +54,8 @@ function stringToBase64(string: string): string {
  * @returns {string}
  */
 function jsonToBase64(json: object): string {
-  const jsonString = JSON.stringify(json)
-  return fromByteArray(stringToArray(jsonString))
+  const jsonString = JSON.stringify(json);
+  return fromByteArray(stringToArray(jsonString));
 }
 
 /**
@@ -64,8 +64,8 @@ function jsonToBase64(json: object): string {
  * @returns {Object}
  */
 function base64ToJson(b64string: string): object {
-  const byteArray = toByteArray(b64string)
-  return JSON.parse(arrayToString(byteArray))
+  const byteArray = toByteArray(b64string);
+  return JSON.parse(arrayToString(byteArray));
 }
 
 /**
@@ -74,8 +74,8 @@ function base64ToJson(b64string: string): object {
  * @returns {Object}
  */
 function base64ToString(b64string: string): string {
-  const byteArray = toByteArray(b64string)
-  return arrayToString(byteArray)
+  const byteArray = toByteArray(b64string);
+  return arrayToString(byteArray);
 }
 
 /**
@@ -84,8 +84,8 @@ function base64ToString(b64string: string): string {
  * @returns {string}
  */
 function arrayToDataUrl(bufferSource: ArrayBuffer): string {
-  const blob = new Blob([bufferSource])
-  return URL.createObjectURL(blob)
+  const blob = new Blob([bufferSource]);
+  return URL.createObjectURL(blob);
 }
 
 /**
@@ -94,9 +94,9 @@ function arrayToDataUrl(bufferSource: ArrayBuffer): string {
  * @returns {Promise.<Uint8Array>}
  */
 async function dataUrlToArray(dataUrl: string): Promise<Uint8Array> {
-  const res = await fetch(dataUrl)
-  const blob = await res.blob()
-  return blobToArray(blob)
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return blobToArray(blob);
 }
 
 /**
@@ -105,8 +105,8 @@ async function dataUrlToArray(dataUrl: string): Promise<Uint8Array> {
  * @returns {Promise.<Uint8Array>}
  */
 async function blobToArray(blob: Blob): Promise<Uint8Array> {
-  const fileBuffer = await new Response(blob).arrayBuffer()
-  return new Uint8Array(fileBuffer)
+  const fileBuffer = await new Response(blob).arrayBuffer();
+  return new Uint8Array(fileBuffer);
 }
 
 function arrayBufferToArray(arrayBuffer: ArrayBuffer): Uint8Array {
@@ -115,7 +115,7 @@ function arrayBufferToArray(arrayBuffer: ArrayBuffer): Uint8Array {
   for (let i = 0; i < buffer.length; ++i) {
     buffer[i] = view[i];
   }
-  return new Uint8Array(buffer)
+  return new Uint8Array(buffer);
 }
 
 function mergeBuffers(buffer1: ArrayBuffer, buffer2: ArrayBuffer) {
@@ -123,7 +123,7 @@ function mergeBuffers(buffer1: ArrayBuffer, buffer2: ArrayBuffer) {
   tmp.set(new Uint8Array(buffer1), 0);
   tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
   return tmp.buffer;
-};
+}
 
 export {
   arrayToBase64,
@@ -138,5 +138,5 @@ export {
   dataUrlToArray,
   blobToArray,
   arrayBufferToArray,
-  mergeBuffers
-}
+  mergeBuffers,
+};

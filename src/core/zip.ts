@@ -1,13 +1,12 @@
 import { FileSource, fileSourceToTusFile } from "@env/types/file";
 import { BadRequest } from "../errors/bad-request";
-import { Service, ServiceConfig } from './service/service';
-import * as tus from 'tus-js-client'
+import { Service, ServiceConfig } from "./service/service";
+import * as tus from "tus-js-client";
 import { Auth } from "../auth";
 import { CHUNK_SIZE_IN_BYTES, EMPTY_FILE_ERROR_MESSAGE } from "./file";
 import { ZipUploadOptions } from "types/zip";
 
 class ZipModule {
-
   protected service: Service;
   protected auth: Auth;
 
@@ -19,16 +18,16 @@ class ZipModule {
   /**
    * Generate preconfigured Tus uploader
    * @param  {string} vaultId
-   * @param  {FileSource} file 
+   * @param  {FileSource} file
    *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
    *    Browser: File | Blob | Uint8Array | ArrayBuffer
    * @param  {ZipUploadOptions} options parent id
    * @returns Promise with upload id
-   * 
+   *
    * <b>Example 1 - use in Browser with Uppy upload</b>
-   * 
+   *
    * const uploader = tusky.zip.uploader(vaultId)
-   * 
+   *
    * const uppy = new Uppy({
    *    restrictions: {
    *      allowedFileTypes: ['.zip', 'application/zip', 'application/x-zip-compressed'],
@@ -37,12 +36,12 @@ class ZipModule {
    *    autoProceed: false
    *  })
    *  .use(Tus, uploader.options)
-   * 
+   *
    * uppy.addFile(file)
    * uppy.upload()
-   * 
+   *
    * <b>Example 2 - use in Nodejs</b>
-   * 
+   *
    * const uploader = tusky.zip.uploader(vaultId, file, {
    *    onSuccess: () => {
    *      console.log('Upload complete');
@@ -54,15 +53,15 @@ class ZipModule {
    *      console.log('Upload progress', progress);
    *    }
    * })
-   * 
+   *
    * uploader.start()
-   * 
-   * 
+   *
+   *
    */
   public async uploader(
     vaultId: string,
     file: FileSource = null,
-    options: ZipUploadOptions = {}
+    options: ZipUploadOptions = {},
   ): Promise<tus.Upload> {
     const vault = await this.service.api.getVault(vaultId);
     if (vault.encrypted) {
@@ -89,20 +88,23 @@ class ZipModule {
       parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
       chunkSize: CHUNK_SIZE_IN_BYTES,
       headers: {
-        ...(await this.auth.getAuthorizationHeader() as Record<string, string>),
+        ...((await this.auth.getAuthorizationHeader()) as Record<
+          string,
+          string
+        >),
       },
       removeFingerprintOnSuccess: true,
       onError: options.onError,
       onProgress: options.onProgress,
       onSuccess: options.onSuccess,
-    })
+    });
     return upload;
   }
 
   /**
    * Upload zip & unpack on server
    * @param  {string} vaultId
-   * @param  {FileSource} file 
+   * @param  {FileSource} file
    *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
    *    Browser: File | Blob | Uint8Array | ArrayBuffer
    * @param  {ZipUploadOptions} options parent id
@@ -111,7 +113,7 @@ class ZipModule {
   public async upload(
     vaultId: string,
     file: FileSource,
-    options: ZipUploadOptions = {}
+    options: ZipUploadOptions = {},
   ): Promise<string> {
     const upload = await this.uploader(vaultId, file, options);
     await new Promise<void>((resolve, reject) => {
@@ -129,11 +131,9 @@ class ZipModule {
       };
       upload.start();
     });
-    const uploadId = upload.url.split('/').pop();
+    const uploadId = upload.url.split("/").pop();
     return uploadId;
   }
 }
 
-export {
-  ZipModule
-}
+export { ZipModule };

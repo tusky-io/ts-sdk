@@ -1,7 +1,14 @@
 import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
 import { logger } from "../logger";
-import { AuthProvider, AuthTokenProvider, AuthType, OAuthConfig, WalletConfig, WalletType } from "../types/auth";
+import {
+  AuthProvider,
+  AuthTokenProvider,
+  AuthType,
+  OAuthConfig,
+  WalletConfig,
+  WalletType,
+} from "../types/auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
 import { TuskyApi } from "../api/tusky-api";
@@ -16,13 +23,13 @@ export type SignPersonalMessageClient = (
   callbacks: {
     onSuccess: (data: { signature: string }) => void;
     onError: (error: Error) => void;
-  }
+  },
 ) => void;
 
 export type WalletAccount = {
-  address: string,
-  publicKey: Uint8Array
-}
+  address: string;
+  publicKey: Uint8Array;
+};
 
 const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
@@ -48,7 +55,7 @@ export class Auth {
   private walletSigner: Ed25519Keypair | null;
 
   // API key auth
-  private apiKey: string
+  private apiKey: string;
 
   constructor(options: AuthOptions = { authType: "OAuth" }) {
     // reset previous configuration
@@ -60,7 +67,12 @@ export class Auth {
     this.walletType = options.walletType;
     this.walletSignFnClient = options.walletSignFnClient;
     this.walletAccount = options.walletAccount;
-    this.walletSigner = options.walletSigner || options.walletPrivateKey && Ed25519Keypair.fromSecretKey(decodeSuiPrivateKey(options.walletPrivateKey).secretKey);
+    this.walletSigner =
+      options.walletSigner ||
+      (options.walletPrivateKey &&
+        Ed25519Keypair.fromSecretKey(
+          decodeSuiPrivateKey(options.walletPrivateKey).secretKey,
+        ));
     // Oauth
     this.authProvider = options.authProvider;
     this.clientId = options.clientId;
@@ -88,7 +100,9 @@ export class Auth {
         } else if (this.walletSigner) {
           address = this.walletSigner.toSuiAddress();
         } else {
-          throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
+          throw new Unauthorized(
+            "Missing wallet signing function for Wallet based auth.",
+          );
         }
         const api = new TuskyApi({ env: this.env });
         const { nonce } = await api.createAuthChallenge({ address });
@@ -111,20 +125,26 @@ export class Auth {
                   logger.info("Error signing on client: " + error);
                   reject(error);
                 },
-              }
+              },
             );
           });
           signature = res;
         } else if (this.walletSigner) {
-          const { signature: res } = await this.walletSigner.signPersonalMessage(message);
+          const { signature: res } =
+            await this.walletSigner.signPersonalMessage(message);
           signature = res;
         } else {
-          throw new Unauthorized("Missing wallet signing function for Wallet based auth.");
+          throw new Unauthorized(
+            "Missing wallet signing function for Wallet based auth.",
+          );
         }
         // const publicKey = await verifyPersonalMessageSignature(message, signature);
         // const address = publicKey.toSuiAddress();
 
-        const { idToken } = await api.verifyAuthChallenge({ signature, address });
+        const { idToken } = await api.verifyAuthChallenge({
+          signature,
+          address,
+        });
 
         this.jwtClient.setAddress(address);
         this.jwtClient.setIdToken(idToken);
@@ -133,14 +153,14 @@ export class Auth {
       case "OAuth": {
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
-        const code = urlParams.get('code');
+        const code = urlParams.get("code");
 
         const aOuthClient = new OAuth({
           clientId: this.clientId,
           redirectUri: this.redirectUri,
           authProvider: this.authProvider,
           storage: this.storage,
-          env: this.env
+          env: this.env,
         });
 
         if (code) {
@@ -149,13 +169,17 @@ export class Auth {
           return { address };
         } else {
           // step 1: if no code in the URL, initiate the OAuth flow
-          logger.info('No authorization code found, redirecting to OAuth provider...');
+          logger.info(
+            "No authorization code found, redirecting to OAuth provider...",
+          );
           await aOuthClient.initOAuthFlow();
           return {};
         }
       }
       default:
-        throw new BadRequest(`Missing or unsupported auth type for sign in: ${this.authType}`);
+        throw new BadRequest(
+          `Missing or unsupported auth type for sign in: ${this.authType}`,
+        );
     }
   }
 
@@ -170,7 +194,7 @@ export class Auth {
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
       storage: this.storage,
-      env: this.env
+      env: this.env,
     });
     await aOuthClient.initOAuthFlow();
   }
@@ -181,7 +205,7 @@ export class Auth {
       redirectUri: this.redirectUri,
       authProvider: this.authProvider,
       storage: this.storage,
-      env: this.env
+      env: this.env,
     });
     return aOuthClient.handleOAuthCallback();
   }
@@ -191,8 +215,8 @@ export class Auth {
       case "ApiKey": {
         if (this.apiKey) {
           return {
-            "Api-Key": this.apiKey
-          }
+            "Api-Key": this.apiKey,
+          };
         }
         throw new Unauthorized("Please add apiKey into config.");
       }
@@ -204,19 +228,21 @@ export class Auth {
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
           await retry(async () => {
             if (!this.jwtClient.getRefreshInProgress()) {
-              logger.info('Token is expired or about to expire. Refreshing tokens...');
+              logger.info(
+                "Token is expired or about to expire. Refreshing tokens...",
+              );
               const oauthClient = new OAuth({
                 clientId: this.clientId,
                 redirectUri: this.redirectUri,
                 authProvider: this.authProvider,
                 storage: this.storage,
-                env: this.env
+                env: this.env,
               });
               await oauthClient.refreshTokens();
-              logger.info('Tokens refreshed successfully.');
+              logger.info("Tokens refreshed successfully.");
               idToken = this.jwtClient.getIdToken();
             } else {
-              logger.info('Refresh already in progress...');
+              logger.info("Refresh already in progress...");
               let idToken = this.jwtClient.getIdToken();
               if (!idToken) {
                 throw new Unauthorized("Invalid session.");
@@ -225,8 +251,8 @@ export class Auth {
           }, true);
         }
         return {
-          "Authorization": `Bearer ${idToken}`
-        }
+          Authorization: `Bearer ${idToken}`,
+        };
       }
       // TODO: consolidate OAuth & Wallet flow with refresh token logic
       case "Wallet": {
@@ -238,25 +264,27 @@ export class Auth {
           throw new Unauthorized("JWT is expired, please log in again.");
         }
         return {
-          "Authorization": `Bearer ${idToken}`
-        }
+          Authorization: `Bearer ${idToken}`,
+        };
       }
       case "AuthTokenProvider": {
         try {
           const token = this.authTokenProvider();
           if (token) {
             return {
-              "Authorization": `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            };
           }
           throw new Unauthorized("Please add authTokenProvider into config.");
         } catch (e) {
-          logger.error(e)
+          logger.error(e);
           throw new Unauthorized("Invalid authorization.");
         }
       }
       default:
-        throw new Unauthorized(`Missing or unsupported auth type: ${this.authType}`);
+        throw new Unauthorized(
+          `Missing or unsupported auth type: ${this.authType}`,
+        );
     }
   }
 
@@ -282,8 +310,9 @@ export class Auth {
 }
 
 export type AuthOptions = {
-  authType?: AuthType,
-  env?: Env,
-  authTokenProvider?: AuthTokenProvider
-  apiKey?: string,
-} & OAuthConfig & WalletConfig
+  authType?: AuthType;
+  env?: Env;
+  authTokenProvider?: AuthTokenProvider;
+  apiKey?: string;
+} & OAuthConfig &
+  WalletConfig;

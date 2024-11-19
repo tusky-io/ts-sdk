@@ -4,7 +4,6 @@ import { EncryptedVaultKeyPair, Folder } from "../../types";
 import { objects } from "../../constants";
 
 class FolderService extends Service {
-
   name: string;
 
   constructor(config?: ServiceConfig) {
@@ -23,7 +22,11 @@ class FolderService extends Service {
     this.setObjectId(folderId);
   }
 
-  async processFolder(object: Folder, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<Folder> {
+  async processFolder(
+    object: Folder,
+    shouldDecrypt: boolean,
+    keys?: EncryptedVaultKeyPair[],
+  ): Promise<Folder> {
     const folder = new Folder(object, keys);
     if ((await this.isEncrypted(folder)) && shouldDecrypt) {
       try {
@@ -44,6 +47,4 @@ class FolderService extends Service {
   }
 }
 
-export {
-  FolderService
-}
+export { FolderService };

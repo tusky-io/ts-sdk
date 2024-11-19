@@ -1,0 +1,6 @@
+lib
+node_modules
+src/__tests__
+examples
+jest.config.js
+webpack.config.js

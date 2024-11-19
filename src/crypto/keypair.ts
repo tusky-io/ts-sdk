@@ -1,5 +1,5 @@
-import { x25519 } from '@noble/curves/ed25519';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { x25519 } from "@noble/curves/ed25519";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 
 // Encryption key pair
 export class X25519KeyPair {

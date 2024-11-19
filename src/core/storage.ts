@@ -16,6 +16,4 @@ class StorageModule {
   }
 }
 
-export {
-  StorageModule
-}
+export { StorageModule };

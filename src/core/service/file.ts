@@ -4,8 +4,7 @@ import { EncryptedVaultKeyPair, File } from "../../types";
 import { objects } from "../../constants";
 
 class FileService extends Service {
-
-  name: string
+  name: string;
 
   constructor(config?: ServiceConfig) {
     super(config);
@@ -23,7 +22,11 @@ class FileService extends Service {
     this.setObjectId(fileId);
   }
 
-  async processFile(object: File, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<File> {
+  async processFile(
+    object: File,
+    shouldDecrypt: boolean,
+    keys?: EncryptedVaultKeyPair[],
+  ): Promise<File> {
     const file = new File(object, keys);
     if ((await this.isEncrypted(file)) && shouldDecrypt) {
       try {
@@ -44,6 +47,4 @@ class FileService extends Service {
   }
 }
 
-export {
-  FileService
-}
+export { FileService };

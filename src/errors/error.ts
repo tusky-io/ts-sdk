@@ -6,7 +6,7 @@ export class TuskyError extends Error {
 
   constructor(message: string, error?: any) {
     super(message);
-    this.requestId = (<any>error)?.response?.headers?.['request-id'];
+    this.requestId = (<any>error)?.response?.headers?.["request-id"];
     logger.error(message);
     if (error && error.response) {
       logger.error(`${error.response.status}: ${error.response.statusText}`);

@@ -1,22 +1,30 @@
-import { BrowserLevel } from "@akord/browser-level"
-import { DatabaseOptions, MemoryLevel } from "memory-level"
+import { BrowserLevel } from "@akord/browser-level";
+import { DatabaseOptions, MemoryLevel } from "memory-level";
 import { logger } from "../../logger";
 
 export default class Keystore {
-
-  public static KEYSTORE_LOCATION = '.tusky/keystore'
+  public static KEYSTORE_LOCATION = ".tusky/keystore";
   private static DEFAULT_ENCODING_OPTIONS = {
     valueEncoding: {
-      encode(data: any) { return data; },
-      decode(data: any) { return data; },
-      format: 'view'
-    }
+      encode(data: any) {
+        return data;
+      },
+      decode(data: any) {
+        return data;
+      },
+      format: "view",
+    },
   } as DatabaseOptions<string, any>;
-  private static DEFAULT_INMEMORY_ENCODING_OPTIONS = { ...Keystore.DEFAULT_ENCODING_OPTIONS, storeEncoding: 'view' } as DatabaseOptions<string, any>;
+  private static DEFAULT_INMEMORY_ENCODING_OPTIONS = {
+    ...Keystore.DEFAULT_ENCODING_OPTIONS,
+    storeEncoding: "view",
+  } as DatabaseOptions<string, any>;
   private static _instance: Keystore;
   private db: BrowserLevel<string, any> | MemoryLevel<string, any>;
 
-  private constructor(db: BrowserLevel<string, any> | MemoryLevel<string, any>) {
+  private constructor(
+    db: BrowserLevel<string, any> | MemoryLevel<string, any>,
+  ) {
     this.db = db;
   }
 
@@ -37,13 +45,18 @@ export default class Keystore {
   }
 
   public static async persitentInstance(): Promise<Keystore> {
-    const db = new BrowserLevel<string, any>(Keystore.KEYSTORE_LOCATION, Keystore.DEFAULT_ENCODING_OPTIONS);
+    const db = new BrowserLevel<string, any>(
+      Keystore.KEYSTORE_LOCATION,
+      Keystore.DEFAULT_ENCODING_OPTIONS,
+    );
     await db.open();
     return (this._instance = new this(db));
   }
 
   public static async inMemoryInstance(): Promise<Keystore> {
-    const db = new MemoryLevel<string, any>(Keystore.DEFAULT_INMEMORY_ENCODING_OPTIONS);
+    const db = new MemoryLevel<string, any>(
+      Keystore.DEFAULT_INMEMORY_ENCODING_OPTIONS,
+    );
     await db.open();
     return (this._instance = new this(db));
   }
@@ -56,7 +69,7 @@ export default class Keystore {
     try {
       return await this.db.get(keyName, Keystore.DEFAULT_ENCODING_OPTIONS);
     } catch (err) {
-      if (err && err.code !== 'LEVEL_NOT_FOUND') {
+      if (err && err.code !== "LEVEL_NOT_FOUND") {
         logger.debug(err);
       }
     }
