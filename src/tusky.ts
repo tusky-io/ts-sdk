@@ -1,7 +1,17 @@
 import { Api } from "./api/api";
 import { TuskyApi } from "./api/tusky-api";
-import { ApiConfig, ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
-import { ApiKeyConfig, AuthTokenProviderConfig, OAuthConfig, WalletConfig } from "./types/auth";
+import {
+  ApiConfig,
+  ClientConfig,
+  EncrypterConfig,
+  LoggerConfig,
+} from "./config";
+import {
+  ApiKeyConfig,
+  AuthTokenProviderConfig,
+  OAuthConfig,
+  WalletConfig,
+} from "./types/auth";
 import { ConsoleLogger, logger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { VaultModule } from "./core/vault";
@@ -131,22 +141,35 @@ export class Tusky {
       const user = await this.me.get();
       if (!user.encPrivateKey) {
         logger.info("Generate new user encryption context");
-        const { encPrivateKey, keyPair } = await this._userEncryption.setupPassword(config.password, config.keystore);
+        const { encPrivateKey, keyPair } =
+          await this._userEncryption.setupPassword(
+            config.password,
+            config.keystore,
+          );
         await this.me.update({ encPrivateKey: encPrivateKey });
         this._encrypter = new Encrypter({ keypair: keyPair });
       } else {
-        logger.info("Retrieve and decrypt existing user encryption content with password");
+        logger.info(
+          "Retrieve and decrypt existing user encryption content with password",
+        );
         this._userEncryption.setEncryptedPrivateKey(user.encPrivateKey);
-        const { keyPair } = await this._userEncryption.importFromPassword(config.password, config.keystore);
+        const { keyPair } = await this._userEncryption.importFromPassword(
+          config.password,
+          config.keystore,
+        );
         this._encrypter = new Encrypter({ keypair: keyPair });
       }
     } else if (config.keystore) {
       const user = await this.me.get();
       if (!user.encPrivateKey) {
-        throw new Conflict("The user needs to configure their encryption password/backup phrase.");
+        throw new Conflict(
+          "The user needs to configure their encryption password/backup phrase.",
+        );
       }
       try {
-        logger.info("Retrieve and decrypt existing user encryption content from keystore");
+        logger.info(
+          "Retrieve and decrypt existing user encryption content from keystore",
+        );
         this._userEncryption.setEncryptedPrivateKey(user.encPrivateKey);
         const { keyPair } = await this._userEncryption.importFromKeystore();
         this._encrypter = new Encrypter({ keypair: keyPair });
@@ -159,7 +182,9 @@ export class Tusky {
   }
 
   withApi(config: ApiConfig): this {
-    this.api = config.api ? config.api : new TuskyApi({ ...config, auth: this._auth });
+    this.api = config.api
+      ? config.api
+      : new TuskyApi({ ...config, auth: this._auth });
     this._env = config.env;
     this._auth.setEnv(this._env);
     return this;
@@ -174,8 +199,8 @@ export class Tusky {
       encrypter: this._encrypter,
       env: this._env,
       storage: this._storage,
-      address: this._auth?.getAddress()
-    }
+      address: this._auth?.getAddress(),
+    };
   }
 
   private setAddress(address: string) {

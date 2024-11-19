@@ -1,4 +1,3 @@
-
 import { Vault } from "./vault";
 import { Membership } from "./membership";
 import { Folder } from "./folder";

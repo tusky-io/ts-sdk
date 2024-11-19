@@ -25,7 +25,7 @@ class JWTClient {
 
   private storage: Storage;
 
-  constructor(config?: { storage?: Storage, env?: Env }) {
+  constructor(config?: { storage?: Storage; env?: Env }) {
     this.storage = config?.storage || defaultStorage();
     this.env = config?.env || DEFAULT_ENV;
     this.STORAGE_PATH_ACCESS_TOKEN = `${STORAGE_PATH_PREFIX}_${this.env}_access_token`;
@@ -36,25 +36,34 @@ class JWTClient {
     this.refreshInProgress = false;
   }
 
-  isTokenExpiringSoon(token: string, bufferTime: number = EXPIRATION_BUFFER): boolean {
+  isTokenExpiringSoon(
+    token: string,
+    bufferTime: number = EXPIRATION_BUFFER,
+  ): boolean {
     if (!token) {
       throw new Unauthorized("Invalid session. Please log in again.");
     }
     const decoded = decode(token) as any;
     const currentTime = Math.floor(Date.now() / 1000);
     // check if the token will expire within the next `bufferTime` seconds
-    const tokenExpiringSoon = currentTime >= (decoded.exp - bufferTime);
+    const tokenExpiringSoon = currentTime >= decoded.exp - bufferTime;
     return tokenExpiringSoon;
-  };
+  }
 
   getRefreshInProgress() {
-    this.refreshInProgress = this.storage.getItem(this.STORAGE_PATH_REFRESH_IN_PROGRESS) === "true" ? true : false;
+    this.refreshInProgress =
+      this.storage.getItem(this.STORAGE_PATH_REFRESH_IN_PROGRESS) === "true"
+        ? true
+        : false;
     return this.refreshInProgress;
   }
 
   setRefreshInProgress(refreshInProgress: boolean) {
     this.refreshInProgress = refreshInProgress;
-    this.storage.setItem(this.STORAGE_PATH_REFRESH_IN_PROGRESS, refreshInProgress ? "true" : "false");
+    this.storage.setItem(
+      this.STORAGE_PATH_REFRESH_IN_PROGRESS,
+      refreshInProgress ? "true" : "false",
+    );
   }
 
   getAccessToken() {
@@ -115,13 +124,18 @@ class JWTClient {
 // function to decode a JWT
 const decode = (token: string): any => {
   // split the JWT into its parts (header, payload, signature)
-  const base64Url = token.split('.')[1];
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const base64Url = token.split(".")[1];
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
 
   // decode the base64 encoded payload
-  const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split("")
+      .map(function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join(""),
+  );
 
   return JSON.parse(jsonPayload);
 };
@@ -155,9 +169,7 @@ class MemoryStorage {
   }
 }
 
-export const defaultStorage = () => isServer() ? new MemoryStorage() : globalThis.sessionStorage;
+export const defaultStorage = () =>
+  isServer() ? new MemoryStorage() : globalThis.sessionStorage;
 
-export {
-  JWTClient,
-  decode
-}
+export { JWTClient, decode };

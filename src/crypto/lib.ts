@@ -6,30 +6,34 @@ import {
   randombytes_buf,
   crypto_box_NONCEBYTES,
   crypto_box_easy,
-  KeyPair
-} from 'libsodium-wrappers'
+  KeyPair,
+} from "libsodium-wrappers";
 import {
   arrayToBase64,
   base64ToArray,
   base64ToJson,
   jsonToBase64,
-  stringToArray
-} from './encoding'
+  stringToArray,
+} from "./encoding";
 
-import jsSHA from 'jssha';
-import { AESEncryptedPayload, X25519EncryptedPayload } from './types';
-import { logger } from '../logger';
-import { DecryptStreamController, StreamSlicer, transformStream } from './stream';
+import jsSHA from "jssha";
+import { AESEncryptedPayload, X25519EncryptedPayload } from "./types";
+import { logger } from "../logger";
+import {
+  DecryptStreamController,
+  StreamSlicer,
+  transformStream,
+} from "./stream";
 import { ReadableStream } from "web-streams-polyfill/ponyfill";
-import { IncorrectEncryptionKey } from '../errors/incorrect-encryption-key';
+import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 
-const HASH_ALGORITHM = 'SHA-256'
+const HASH_ALGORITHM = "SHA-256";
 
-const SYMMETRIC_KEY_ALGORITHM = 'AES-GCM'
-const SYMMETRIC_KEY_LENGTH = 256
+const SYMMETRIC_KEY_ALGORITHM = "AES-GCM";
+const SYMMETRIC_KEY_LENGTH = 256;
 
-const KEY_DERIVATION_FUNCTION = 'PBKDF2'
-const KEY_DERIVATION_ITERATION_COUNT = 150000
+const KEY_DERIVATION_FUNCTION = "PBKDF2";
+const KEY_DERIVATION_ITERATION_COUNT = 150000;
 
 export const AUTH_TAG_LENGTH_IN_BYTES = 16;
 export const IV_LENGTH_IN_BYTES = 12;
@@ -51,7 +55,7 @@ async function exportKeyToBase64(key: CryptoKey): Promise<string> {
  */
 async function exportKeyToArray(key: CryptoKey): Promise<Uint8Array> {
   try {
-    const rawKeyBuffer = await crypto.subtle.exportKey('raw', key)
+    const rawKeyBuffer = await crypto.subtle.exportKey("raw", key);
     return new Uint8Array(rawKeyBuffer);
   } catch (error) {
     logger.error(error);
@@ -64,7 +68,10 @@ async function exportKeyToArray(key: CryptoKey): Promise<Uint8Array> {
  * @param {string} keyBase64
  * @returns {Promise.<CryptoKey>} crypto key object
  */
-async function importKeyFromBase64(keyBase64: string, extractable = false): Promise<CryptoKey> {
+async function importKeyFromBase64(
+  keyBase64: string,
+  extractable = false,
+): Promise<CryptoKey> {
   return importKeyFromArray(base64ToArray(keyBase64), extractable);
 }
 
@@ -73,19 +80,22 @@ async function importKeyFromBase64(keyBase64: string, extractable = false): Prom
  * @param {Uint8Array} keyBuffer
  * @returns {Promise.<CryptoKey>} crypto key object
  */
-async function importKeyFromArray(keyBuffer: Uint8Array, extractable = false): Promise<CryptoKey> {
+async function importKeyFromArray(
+  keyBuffer: Uint8Array,
+  extractable = false,
+): Promise<CryptoKey> {
   try {
     const key = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       keyBuffer,
       {
         name: SYMMETRIC_KEY_ALGORITHM,
         length: SYMMETRIC_KEY_LENGTH,
       },
       extractable,
-      ['encrypt', 'decrypt'],
-    )
-    return key
+      ["encrypt", "decrypt"],
+    );
+    return key;
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(new Error("Web Crypto key import error."));
@@ -99,18 +109,18 @@ async function importKeyFromArray(keyBuffer: Uint8Array, extractable = false): P
  */
 async function importKeyFromSeed(seed: Uint8Array): Promise<CryptoKey> {
   try {
-    const seedHash = await crypto.subtle.digest(HASH_ALGORITHM, seed)
+    const seedHash = await crypto.subtle.digest(HASH_ALGORITHM, seed);
     const key = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       seedHash,
       {
         name: SYMMETRIC_KEY_ALGORITHM,
         length: SYMMETRIC_KEY_LENGTH,
       },
       false,
-      ['encrypt', 'decrypt'],
-    )
-    return key
+      ["encrypt", "decrypt"],
+    );
+    return key;
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(new Error("Web Crypto key import error."));
@@ -123,11 +133,14 @@ async function importKeyFromSeed(seed: Uint8Array): Promise<CryptoKey> {
  * @param {Uint8Array} privateKey private key used to sign message hash
  * @returns {Promise.<string>} signature as base64 string
  */
-async function signHash(msgHash: ArrayBuffer, privateKey: Uint8Array): Promise<string> {
-  const msgHashByteArray = new Uint8Array(msgHash)
-  await ready
-  const signature = crypto_sign_detached(msgHashByteArray, privateKey)
-  return arrayToBase64(signature)
+async function signHash(
+  msgHash: ArrayBuffer,
+  privateKey: Uint8Array,
+): Promise<string> {
+  const msgHashByteArray = new Uint8Array(msgHash);
+  await ready;
+  const signature = crypto_sign_detached(msgHashByteArray, privateKey);
+  return arrayToBase64(signature);
 }
 
 /**
@@ -136,15 +149,12 @@ async function signHash(msgHash: ArrayBuffer, privateKey: Uint8Array): Promise<s
  * @returns {Promise.<string>} payload digest as base64 string
  */
 async function digest(payload: string): Promise<string> {
-  return digestRaw(stringToArray(payload))
+  return digestRaw(stringToArray(payload));
 }
 
 async function digestRaw(payload: Uint8Array): Promise<string> {
-  const msgHash = await crypto.subtle.digest(
-    HASH_ALGORITHM,
-    payload,
-  )
-  return arrayToBase64(msgHash)
+  const msgHash = await crypto.subtle.digest(HASH_ALGORITHM, payload);
+  return arrayToBase64(msgHash);
 }
 
 function initDigest(): jsSHA {
@@ -161,13 +171,16 @@ function chainDigest(digestObject: jsSHA, payload: Uint8Array): jsSHA {
  * @param {Uint8Array} privateKey private key used to sign string payload
  * @returns {Promise.<string>} signature as base64 string
  */
-async function signString(payload: string, privateKey: Uint8Array): Promise<string> {
+async function signString(
+  payload: string,
+  privateKey: Uint8Array,
+): Promise<string> {
   const msgHash = await crypto.subtle.digest(
     HASH_ALGORITHM,
     stringToArray(payload),
-  )
-  const signature = await signHash(msgHash, privateKey)
-  return signature
+  );
+  const signature = await signHash(msgHash, privateKey);
+  return signature;
 }
 
 /**
@@ -178,9 +191,13 @@ async function signString(payload: string, privateKey: Uint8Array): Promise<stri
  * @param {CryptoKey} key
  * @returns {Promise.<string>} Promise of base64 string represents the ciphertext along with iv
  */
-async function encryptAes(plaintext: Uint8Array, key: CryptoKey, encode: boolean = true): Promise<string | Uint8Array> {
+async function encryptAes(
+  plaintext: Uint8Array,
+  key: CryptoKey,
+  encode: boolean = true,
+): Promise<string | Uint8Array> {
   try {
-    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_IN_BYTES))
+    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_IN_BYTES));
 
     let ciphertextArray = await crypto.subtle.encrypt(
       {
@@ -189,11 +206,13 @@ async function encryptAes(plaintext: Uint8Array, key: CryptoKey, encode: boolean
       },
       key,
       plaintext,
-    )
+    );
     if (encode) {
-      return encodeAesPayload(ciphertextArray, iv)
+      return encodeAesPayload(ciphertextArray, iv);
     }
-    const combinedArray = new Uint8Array(iv.length + ciphertextArray.byteLength);
+    const combinedArray = new Uint8Array(
+      iv.length + ciphertextArray.byteLength,
+    );
     combinedArray.set(iv, 0);
     combinedArray.set(new Uint8Array(ciphertextArray), iv.length);
     return combinedArray;
@@ -210,10 +229,13 @@ async function encryptAes(plaintext: Uint8Array, key: CryptoKey, encode: boolean
  * @param {CryptoKey} key
  * @returns {Promise.<ArrayBuffer>} Promise of ArrayBuffer represents the plaintext
  */
-async function decryptAes(encryptedPayload: string | AESEncryptedPayload, key: CryptoKey): Promise<ArrayBuffer> {
+async function decryptAes(
+  encryptedPayload: string | AESEncryptedPayload,
+  key: CryptoKey,
+): Promise<ArrayBuffer> {
   try {
     const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext
-      ? encryptedPayload as AESEncryptedPayload
+      ? (encryptedPayload as AESEncryptedPayload)
       : decodeAesPayload(encryptedPayload as string);
     const plaintext = await crypto.subtle.decrypt(
       {
@@ -222,28 +244,31 @@ async function decryptAes(encryptedPayload: string | AESEncryptedPayload, key: C
       },
       key,
       payload.ciphertext as ArrayBufferLike,
-    )
-    return plaintext
+    );
+    return plaintext;
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(new Error("Web Crypto decryption error."));
   }
 }
 
-function encodeAesPayload(ciphertextArray: ArrayBuffer, iv: ArrayBuffer | Uint8Array): string {
+function encodeAesPayload(
+  ciphertextArray: ArrayBuffer,
+  iv: ArrayBuffer | Uint8Array,
+): string {
   const encryptedPayload = {
     ciphertext: arrayToBase64(ciphertextArray),
     iv: arrayToBase64(iv),
-  }
-  return jsonToBase64(encryptedPayload)
+  };
+  return jsonToBase64(encryptedPayload);
 }
 
 function decodeAesPayload(payload: string): AESEncryptedPayload {
   const parsedPayload = base64ToJson(payload) as any;
   const decodedPayload = {
     ciphertext: base64ToArray(parsedPayload.ciphertext),
-    iv: base64ToArray(parsedPayload.iv)
-  }
+    iv: base64ToArray(parsedPayload.iv),
+  };
   return decodedPayload;
 }
 
@@ -254,15 +279,18 @@ function decodeAesPayload(payload: string): AESEncryptedPayload {
  * @param {BufferSource} salt
  * @returns {Promise.<CryptoKey>} Promise of CryptoKey object with AES 256-bit symmetric key
  */
-async function deriveAesKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveAesKey(
+  password: string,
+  salt: Uint8Array,
+): Promise<CryptoKey> {
   try {
     const keyBase = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       stringToArray(password),
       KEY_DERIVATION_FUNCTION,
       false,
-      ['deriveBits', 'deriveKey'],
-    )
+      ["deriveBits", "deriveKey"],
+    );
 
     return crypto.subtle.deriveKey(
       {
@@ -277,11 +305,13 @@ async function deriveAesKey(password: string, salt: Uint8Array): Promise<CryptoK
         length: SYMMETRIC_KEY_LENGTH,
       },
       true,
-      ['encrypt', 'decrypt'],
-    )
+      ["encrypt", "decrypt"],
+    );
   } catch (error) {
     logger.error(error);
-    throw new IncorrectEncryptionKey(new Error("Web Crypto key derivation error."));
+    throw new IncorrectEncryptionKey(
+      new Error("Web Crypto key derivation error."),
+    );
   }
 }
 
@@ -298,12 +328,14 @@ async function generateKey(extractable = false): Promise<CryptoKey> {
         length: SYMMETRIC_KEY_LENGTH,
       },
       extractable,
-      ['encrypt', 'decrypt'],
-    )
-    return key
+      ["encrypt", "decrypt"],
+    );
+    return key;
   } catch (error) {
     logger.error(error);
-    throw new IncorrectEncryptionKey(new Error("Web Crypto key generation error."));
+    throw new IncorrectEncryptionKey(
+      new Error("Web Crypto key generation error."),
+    );
   }
 }
 
@@ -315,12 +347,14 @@ async function generateKey(extractable = false): Promise<CryptoKey> {
 async function generateKeyPair(): Promise<KeyPair> {
   try {
     await ready;
-    const keyPair = crypto_box_keypair()
+    const keyPair = crypto_box_keypair();
 
-    return keyPair
+    return keyPair;
   } catch (error) {
     logger.error(error);
-    throw new IncorrectEncryptionKey(new Error("Sodium box key pair generation error."));
+    throw new IncorrectEncryptionKey(
+      new Error("Sodium box key pair generation error."),
+    );
   }
 }
 
@@ -330,7 +364,10 @@ async function generateKeyPair(): Promise<KeyPair> {
  * @param {Uint8Array} plaintext raw plaintext byte array
  * @returns {Promise.<string>} Promise of base64 string represents the encrypted payload
  */
-async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | Uint8Array): Promise<X25519EncryptedPayload> {
+async function encryptWithPublicKey(
+  publicKey: Uint8Array,
+  plaintext: string | Uint8Array,
+): Promise<X25519EncryptedPayload> {
   try {
     await ready;
     const ephemeralKeyPair = crypto_box_keypair();
@@ -347,8 +384,8 @@ async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | U
       ciphertext: arrayToBase64(ciphertext),
       ephemPublicKey: arrayToBase64(ephemeralKeyPair.publicKey),
       nonce: arrayToBase64(nonce),
-      publicKey: arrayToBase64(publicKey)
-    }
+      publicKey: arrayToBase64(publicKey),
+    };
   } catch (error) {
     logger.debug(publicKey);
     logger.debug(plaintext);
@@ -363,7 +400,10 @@ async function encryptWithPublicKey(publicKey: Uint8Array, plaintext: string | U
  * @param {string} encryptedPayload base64 string represents the encrypted payload
  * @returns {Promise.<Uint8Array>} Promise of raw plaintext byte array
  */
-async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: X25519EncryptedPayload): Promise<Uint8Array> {
+async function decryptWithPrivateKey(
+  privateKey: Uint8Array,
+  encryptedPayload: X25519EncryptedPayload,
+): Promise<Uint8Array> {
   try {
     await ready;
     const plaintext = crypto_box_open_easy(
@@ -371,8 +411,8 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: X
       base64ToArray(encryptedPayload.nonce),
       base64ToArray(encryptedPayload.ephemPublicKey),
       privateKey,
-    )
-    return plaintext
+    );
+    return plaintext;
   } catch (error) {
     logger.debug(encryptedPayload);
     logger.error(error);
@@ -380,13 +420,17 @@ async function decryptWithPrivateKey(privateKey: Uint8Array, encryptedPayload: X
   }
 }
 
-async function decryptStream(stream: ReadableStream<Uint8Array>, aesKey: CryptoKey, chunkSize: number): Promise<any> {
-  if (stream === null) return null
+async function decryptStream(
+  stream: ReadableStream<Uint8Array>,
+  aesKey: CryptoKey,
+  chunkSize: number,
+): Promise<any> {
+  if (stream === null) return null;
   try {
     const slicesStream = transformStream(stream, new StreamSlicer(chunkSize));
     return transformStream(slicesStream, new DecryptStreamController(aesKey));
   } catch (error) {
-    logger.error(error)
+    logger.error(error);
   }
   return null;
 }
@@ -411,5 +455,5 @@ export {
   encryptWithPublicKey,
   decryptWithPrivateKey,
   decryptStream,
-  decodeAesPayload
-}
+  decodeAesPayload,
+};

@@ -16,7 +16,7 @@ class ApiKeyModule {
   public async listAll(): Promise<Array<ApiKey>> {
     const list = async () => {
       return this.list();
-    }
+    };
     return paginate<ApiKey>(list, {});
     // return (await this.service.api.getApiKeys()).items?.map((apiKey: ApiKey) => new ApiKey(apiKey));
   }
@@ -29,8 +29,8 @@ class ApiKeyModule {
     return {
       items: result.items?.map((apiKey: ApiKey) => new ApiKey(apiKey)),
       nextToken: result.nextToken,
-      errors: result.errors
-    }
+      errors: result.errors,
+    };
   }
 
   /**
@@ -48,6 +48,4 @@ class ApiKeyModule {
   }
 }
 
-export {
-  ApiKeyModule
-}
+export { ApiKeyModule };

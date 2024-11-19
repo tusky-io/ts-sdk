@@ -3,28 +3,49 @@ import { apiConfig } from "./config";
 import { ApiClient } from "./api-client";
 import { Membership } from "../types/membership";
 import { Vault } from "../types/vault";
-import { CreateFolderTxPayload, CreateMembershipTxPayload, CreateVaultTxPayload, Transaction, UpdateFileTxPayload, UpdateFolderTxPayload, UpdateMembershipTxPayload, UpdateVaultTxPayload } from "../types/transaction";
+import {
+  CreateFolderTxPayload,
+  CreateMembershipTxPayload,
+  CreateVaultTxPayload,
+  Transaction,
+  UpdateFileTxPayload,
+  UpdateFolderTxPayload,
+  UpdateMembershipTxPayload,
+  UpdateVaultTxPayload,
+} from "../types/transaction";
 import { Paginated } from "../types/paginated";
-import { ListApiOptions, ListOptions, VaultApiGetOptions } from "../types/query-options";
+import {
+  ListApiOptions,
+  ListOptions,
+  VaultApiGetOptions,
+} from "../types/query-options";
 import { User, UserMutable, UserPublicInfo } from "../types/user";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
-import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
-import { CreateChallengeRequestPayload, GenerateJWTRequestPayload, GenerateJWTResponsePayload, VerifyChallengeRequestPayload } from "../types/auth";
+import {
+  PaymentPlan,
+  PaymentSession,
+  PaymentSessionOptions,
+} from "../types/payment";
+import {
+  CreateChallengeRequestPayload,
+  GenerateJWTRequestPayload,
+  GenerateJWTResponsePayload,
+  VerifyChallengeRequestPayload,
+} from "../types/auth";
 import { Auth } from "../auth";
 import { ApiConfig } from "../config";
 
 export const defaultFileUploadOptions = {
-  encrypted: true
+  encrypted: true,
 };
 
 const DEFAULT_LIMIT = 1000;
 
 export default class TuskyApi extends Api {
-
   protected auth: Auth;
 
   constructor(config: ApiConfig) {
@@ -35,7 +56,9 @@ export default class TuskyApi extends Api {
     this.auth = config.auth;
   }
 
-  public async generateJWT(payload: GenerateJWTRequestPayload): Promise<GenerateJWTResponsePayload> {
+  public async generateJWT(
+    payload: GenerateJWTRequestPayload,
+  ): Promise<GenerateJWTResponsePayload> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -46,24 +69,28 @@ export default class TuskyApi extends Api {
       .redirectUri(payload.redirectUri)
       .publicRoute(true)
       .generateJWT();
-  };
+  }
 
-  public async createAuthChallenge(payload: CreateChallengeRequestPayload): Promise<{ nonce: string }> {
+  public async createAuthChallenge(
+    payload: CreateChallengeRequestPayload,
+  ): Promise<{ nonce: string }> {
     return new ApiClient()
       .env(this.config)
       .address(payload.address)
       .publicRoute(true)
       .createAuthChallenge();
-  };
+  }
 
-  public async verifyAuthChallenge(payload: VerifyChallengeRequestPayload): Promise<GenerateJWTResponsePayload> {
+  public async verifyAuthChallenge(
+    payload: VerifyChallengeRequestPayload,
+  ): Promise<GenerateJWTResponsePayload> {
     return new ApiClient()
       .env(this.config)
       .address(payload.address)
       .signature(payload.signature)
       .publicRoute(true)
       .verifyAuthChallenge();
-  };
+  }
 
   public async createFolder(tx: CreateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
@@ -74,7 +101,7 @@ export default class TuskyApi extends Api {
       .name(tx.name)
       .autoExecute(this.autoExecute)
       .createFolder();
-  };
+  }
 
   public async updateFolder(tx: UpdateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
@@ -86,7 +113,7 @@ export default class TuskyApi extends Api {
       .status(tx.status)
       .autoExecute(this.autoExecute)
       .updateFolder();
-  };
+  }
 
   public async deleteFolder(id: string): Promise<void> {
     return new ApiClient()
@@ -95,7 +122,7 @@ export default class TuskyApi extends Api {
       .resourceId(id)
       .autoExecute(this.autoExecute)
       .deleteFolder();
-  };
+  }
 
   public async updateFile(tx: UpdateFileTxPayload): Promise<File> {
     return new ApiClient()
@@ -107,7 +134,7 @@ export default class TuskyApi extends Api {
       .status(tx.status)
       .autoExecute(this.autoExecute)
       .updateFile();
-  };
+  }
 
   public async deleteFile(id: string): Promise<void> {
     return new ApiClient()
@@ -116,7 +143,7 @@ export default class TuskyApi extends Api {
       .resourceId(id)
       .autoExecute(this.autoExecute)
       .deleteFile();
-  };
+  }
 
   public async createVault(tx: CreateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
@@ -129,7 +156,7 @@ export default class TuskyApi extends Api {
       .keys(tx.keys)
       .autoExecute(this.autoExecute)
       .createVault();
-  };
+  }
 
   public async updateVault(tx: UpdateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
@@ -142,7 +169,7 @@ export default class TuskyApi extends Api {
       .status(tx.status)
       .autoExecute(this.autoExecute)
       .updateVault();
-  };
+  }
 
   public async deleteVault(id: string): Promise<void> {
     return new ApiClient()
@@ -151,23 +178,19 @@ export default class TuskyApi extends Api {
       .resourceId(id)
       .autoExecute(this.autoExecute)
       .deleteVault();
-  };
+  }
 
   public async getTrash(): Promise<Folder> {
-    return new ApiClient()
-      .env(this.config)
-      .auth(this.auth)
-      .getTrash();
+    return new ApiClient().env(this.config).auth(this.auth).getTrash();
   }
 
   public async emptyTrash(): Promise<Folder> {
-    return new ApiClient()
-      .env(this.config)
-      .auth(this.auth)
-      .emptyTrash();
+    return new ApiClient().env(this.config).auth(this.auth).emptyTrash();
   }
 
-  public async createMembership(tx: CreateMembershipTxPayload): Promise<Membership> {
+  public async createMembership(
+    tx: CreateMembershipTxPayload,
+  ): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -183,9 +206,11 @@ export default class TuskyApi extends Api {
       .allowedPaths(tx.allowedPaths)
       .autoExecute(this.autoExecute)
       .createMembership();
-  };
+  }
 
-  public async updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership> {
+  public async updateMembership(
+    tx: UpdateMembershipTxPayload,
+  ): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -196,16 +221,19 @@ export default class TuskyApi extends Api {
       .keys(tx.keys as any)
       .autoExecute(this.autoExecute)
       .updateMembership();
-  };
+  }
 
-  public async postTransaction(digest: string, signature: string): Promise<any> {
+  public async postTransaction(
+    digest: string,
+    signature: string,
+  ): Promise<any> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
       .digest(digest)
       .signature(signature)
       .postTransaction();
-  };
+  }
 
   public async getMembers(vaultId: string): Promise<Array<Membership>> {
     return new ApiClient()
@@ -213,9 +241,12 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .vaultId(vaultId)
       .getMembers();
-  };
+  }
 
-  public async downloadFile(id: string, options: FileGetOptions = {}): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
+  public async downloadFile(
+    id: string,
+    options: FileGetOptions = {},
+  ): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
     const response = await new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -226,33 +257,31 @@ export default class TuskyApi extends Api {
       .downloadFile();
 
     let data: ArrayBuffer | ReadableStream<Uint8Array>;
-    if (options.responseType === 'arraybuffer') {
+    if (options.responseType === "arraybuffer") {
       data = await response.arrayBuffer();
     } else {
       if (response.body.getReader) {
         data = response.body;
       } else {
-        data = StreamConverter.fromAsyncIterable(response.body as unknown as AsyncIterable<Uint8Array>);
+        data = StreamConverter.fromAsyncIterable(
+          response.body as unknown as AsyncIterable<Uint8Array>,
+        );
       }
     }
     return data;
-  };
+  }
 
   public async getStorage(): Promise<Storage> {
-    return new ApiClient()
-      .env(this.config)
-      .auth(this.auth)
-      .getStorage();
+    return new ApiClient().env(this.config).auth(this.auth).getStorage();
   }
 
   public async getPaymentPlans(): Promise<PaymentPlan[]> {
-    return new ApiClient()
-      .env(this.config)
-      .auth(this.auth)
-      .getPaymentPlans();
+    return new ApiClient().env(this.config).auth(this.auth).getPaymentPlans();
   }
 
-  public async createSubscriptionPaymentSession(options: PaymentSessionOptions): Promise<PaymentSession> {
+  public async createSubscriptionPaymentSession(
+    options: PaymentSessionOptions,
+  ): Promise<PaymentSession> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -266,14 +295,11 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .queryParams({ email })
       .getUserPublicData();
-  };
+  }
 
   public async getMe(): Promise<User> {
-    return new ApiClient()
-      .env(this.config)
-      .auth(this.auth)
-      .getMe();
-  };
+    return new ApiClient().env(this.config).auth(this.auth).getMe();
+  }
 
   public async updateMe(input: UserMutable): Promise<User> {
     return new ApiClient()
@@ -285,7 +311,7 @@ export default class TuskyApi extends Api {
       .encPrivateKey(input.encPrivateKey)
       .encPrivateKeyBackup(input.encPrivateKeyBackup)
       .updateMe();
-  };
+  }
 
   public async getFile(id: string): Promise<File> {
     return new ApiClient()
@@ -293,7 +319,7 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .resourceId(id)
       .getFile();
-  };
+  }
 
   public async getFolder(id: string): Promise<Folder> {
     return new ApiClient()
@@ -301,7 +327,7 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .resourceId(id)
       .getFolder();
-  };
+  }
 
   public async getMembership(id: string): Promise<Membership> {
     return new ApiClient()
@@ -309,9 +335,12 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .resourceId(id)
       .getMembership();
-  };
+  }
 
-  public async getVault(id: string, options?: VaultApiGetOptions): Promise<Vault> {
+  public async getVault(
+    id: string,
+    options?: VaultApiGetOptions,
+  ): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -324,18 +353,20 @@ export default class TuskyApi extends Api {
         withFolders: options?.deep,
       })
       .getVault();
-  };
+  }
 
-  public async getMemberships(options: ListOptions = {}): Promise<Paginated<Membership>> {
+  public async getMemberships(
+    options: ListOptions = {},
+  ): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
       .queryParams({
         limit: options.limit || DEFAULT_LIMIT,
-        nextToken: options.nextToken
+        nextToken: options.nextToken,
       })
       .getMemberships();
-  };
+  }
 
   public async getVaults(options: ListOptions = {}): Promise<Paginated<Vault>> {
     return new ApiClient()
@@ -344,12 +375,14 @@ export default class TuskyApi extends Api {
       .queryParams({
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
-        nextToken: options.nextToken
+        nextToken: options.nextToken,
       })
       .getVaults();
-  };
+  }
 
-  public async getFiles(options: ListApiOptions = {}): Promise<Paginated<File>> {
+  public async getFiles(
+    options: ListApiOptions = {},
+  ): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -358,12 +391,14 @@ export default class TuskyApi extends Api {
         parentId: options.parentId,
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
-        nextToken: options.nextToken
+        nextToken: options.nextToken,
       })
       .getFiles();
-  };
+  }
 
-  public async getFolders(options: ListApiOptions = {}): Promise<Paginated<Folder>> {
+  public async getFolders(
+    options: ListApiOptions = {},
+  ): Promise<Paginated<Folder>> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -372,12 +407,15 @@ export default class TuskyApi extends Api {
         parentId: options.parentId,
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
-        nextToken: options.nextToken
+        nextToken: options.nextToken,
       })
       .getFolders();
-  };
+  }
 
-  public async getMembershipsByVaultId(vaultId: string, options: ListOptions = {}): Promise<Paginated<Membership>> {
+  public async getMembershipsByVaultId(
+    vaultId: string,
+    options: ListOptions = {},
+  ): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
       .auth(this.auth)
@@ -386,10 +424,10 @@ export default class TuskyApi extends Api {
         vaultId: vaultId,
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
-        nextToken: options.nextToken
+        nextToken: options.nextToken,
       })
       .getMembershipsByVaultId();
-  };
+  }
 
   public async getTransactions(vaultId: string): Promise<Array<Transaction>> {
     return new ApiClient()
@@ -400,17 +438,11 @@ export default class TuskyApi extends Api {
   }
 
   public async getApiKeys(): Promise<Paginated<ApiKey>> {
-    return new ApiClient()
-      .env(this.config)
-      .auth(this.auth)
-      .getApiKeys();
+    return new ApiClient().env(this.config).auth(this.auth).getApiKeys();
   }
 
   public async generateApiKey(): Promise<ApiKey> {
-    return new ApiClient()
-      .env(this.config)
-      .auth(this.auth)
-      .generateApiKey();
+    return new ApiClient().env(this.config).auth(this.auth).generateApiKey();
   }
 
   public async revokeApiKey(key: string): Promise<ApiKey> {
@@ -422,6 +454,4 @@ export default class TuskyApi extends Api {
   }
 }
 
-export {
-  TuskyApi
-}
+export { TuskyApi };

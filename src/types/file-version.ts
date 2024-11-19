@@ -49,10 +49,12 @@ export class File extends Encryptable {
   }
 }
 
-export type FileUploadOptions = Hooks & FileLocationOptions & FileMetadataOptions
+export type FileUploadOptions = Hooks &
+  FileLocationOptions &
+  FileMetadataOptions;
 
 export type FileDownloadOptions = Hooks & {
-  path?: string,
-  skipSave?: boolean,
-  encrypted?: boolean,
-}
+  path?: string;
+  skipSave?: boolean;
+  encrypted?: boolean;
+};

@@ -1,14 +1,14 @@
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { EnokiClient } from './enoki';
-import { AuthProvider, OAuthConfig } from '../types/auth';
-import { BadRequest } from '../errors/bad-request';
-import { logger } from '../logger';
-import { TuskyApi } from '../api/tusky-api';
-import { Unauthorized } from '../errors/unauthorized';
-import { defaultStorage, JWTClient } from './jwt';
-import { Env, Envs } from '../types/env';
-import { retry } from '../api/api-client';
-import { throwError } from '../errors/error-factory';
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { EnokiClient } from "./enoki";
+import { AuthProvider, OAuthConfig } from "../types/auth";
+import { BadRequest } from "../errors/bad-request";
+import { logger } from "../logger";
+import { TuskyApi } from "../api/tusky-api";
+import { Unauthorized } from "../errors/unauthorized";
+import { defaultStorage, JWTClient } from "./jwt";
+import { Env, Envs } from "../types/env";
+import { retry } from "../api/api-client";
+import { throwError } from "../errors/error-factory";
 
 interface AuthProviderConfig {
   CLIENT_ID: string;
@@ -23,17 +23,23 @@ interface AuthProviderConfigType {
 
 export const authProviderConfig = (env?: string): AuthProviderConfigType => {
   return {
-    "Google": {
-      "CLIENT_ID": env === Envs.PROD ? "426736059844-ut21sgi6j7fhai51hlk9nq1785198tcq.apps.googleusercontent.com" : "426736059844-2o0vvj882fvvris0kqpfuh1vi47js7he.apps.googleusercontent.com",
-      "AUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
-      "SCOPES": "openid email profile",
+    Google: {
+      CLIENT_ID:
+        env === Envs.PROD
+          ? "426736059844-ut21sgi6j7fhai51hlk9nq1785198tcq.apps.googleusercontent.com"
+          : "426736059844-2o0vvj882fvvris0kqpfuh1vi47js7he.apps.googleusercontent.com",
+      AUTH_URL: "https://accounts.google.com/o/oauth2/v2/auth",
+      SCOPES: "openid email profile",
     },
-    "Twitch": {
-      "CLIENT_ID": env === Envs.PROD ? "zjvek40acgbaade27yrwdsvsslx0e4" : "6h9wlqcwu01ve4al9qs04zeul7znj7",
-      "AUTH_URL": "https://id.twitch.tv/oauth2/authorize",
-      "SCOPES": "openid user:read:email",
-    }
-  }
+    Twitch: {
+      CLIENT_ID:
+        env === Envs.PROD
+          ? "zjvek40acgbaade27yrwdsvsslx0e4"
+          : "6h9wlqcwu01ve4al9qs04zeul7znj7",
+      AUTH_URL: "https://id.twitch.tv/oauth2/authorize",
+      SCOPES: "openid user:read:email",
+    },
+  };
 };
 
 class OAuth {
@@ -50,13 +56,20 @@ class OAuth {
 
   constructor(config: OAuthConfig) {
     if (!config.authProvider) {
-      throw new BadRequest("Missing auth provider, please provide in the OAuth config.");
+      throw new BadRequest(
+        "Missing auth provider, please provide in the OAuth config.",
+      );
     }
     this.env = config.env;
-    this.authProviderConfig = authProviderConfig(config.env)[config.authProvider];
+    this.authProviderConfig = authProviderConfig(config.env)[
+      config.authProvider
+    ];
 
     if (!this.authProviderConfig) {
-      throw new BadRequest("Unsupported authProvider, valid providers: " + Object.keys(authProviderConfig(config.env)).join(', '));
+      throw new BadRequest(
+        "Unsupported authProvider, valid providers: " +
+          Object.keys(authProviderConfig(config.env)).join(", "),
+      );
     }
     this.redirectUri = config.redirectUri;
     this.authProvider = config.authProvider;
@@ -75,10 +88,10 @@ class OAuth {
   async handleOAuthCallback(): Promise<{ address: string }> {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    const code = urlParams.get('code');
+    const code = urlParams.get("code");
 
     if (code) {
-      logger.info('Authorization Code:' + code);
+      logger.info("Authorization Code:" + code);
       // exchange the authorization code for tokens
       await this.exchangeCodeForTokens(code);
 
@@ -92,20 +105,24 @@ class OAuth {
       this.jwtClient.setAddress(address);
       return { address };
     } else {
-      logger.warn('Authorization code not found.');
+      logger.warn("Authorization code not found.");
     }
   }
 
   async exchangeCodeForTokens(code: string) {
     try {
       if (!this.redirectUri) {
-        throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
+        throw new BadRequest(
+          "Missing redirect uri, please provide your app auth callback URL.",
+        );
       }
-      const { idToken, accessToken, refreshToken } = await new TuskyApi({ env: this.env }).generateJWT({
+      const { idToken, accessToken, refreshToken } = await new TuskyApi({
+        env: this.env,
+      }).generateJWT({
         authProvider: this.authProvider,
         grantType: "code",
         redirectUri: this.redirectUri,
-        authCode: code
+        authCode: code,
       });
 
       this.jwtClient.setAccessToken(accessToken);
@@ -129,7 +146,9 @@ class OAuth {
     });
 
     if (!this.redirectUri) {
-      throw new BadRequest("Missing redirect uri, please provide your app auth callback URL.");
+      throw new BadRequest(
+        "Missing redirect uri, please provide your app auth callback URL.",
+      );
     }
     const params = new URLSearchParams({
       nonce: createZkLoginResponse.nonce,
@@ -138,7 +157,7 @@ class OAuth {
       response_type: "code",
       scope: this.authProviderConfig.SCOPES,
       access_type: "offline",
-      prompt: "consent"
+      prompt: "consent",
     });
 
     const oauthUrl = `${this.authProviderConfig.AUTH_URL}?${params}`;
@@ -156,7 +175,7 @@ class OAuth {
         const result = await new TuskyApi({ env: this.env }).generateJWT({
           authProvider: this.authProvider,
           grantType: "refreshToken",
-          refreshToken: refreshToken
+          refreshToken: refreshToken,
         });
 
         if (!result || !result.accessToken || !result.idToken) {
@@ -175,9 +194,7 @@ class OAuth {
         throw new Unauthorized("Failed to refresh tokens.");
       }
     }
-  };
+  }
 }
 
-export {
-  OAuth
-}
+export { OAuth };

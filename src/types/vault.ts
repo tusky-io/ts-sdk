@@ -40,13 +40,13 @@ export class Vault extends Encryptable {
 }
 
 export type VaultCreateOptions = {
-  encrypted?: boolean,
-  description?: string,
-  tags?: string[]
-}
+  encrypted?: boolean;
+  description?: string;
+  tags?: string[];
+};
 
 export type VaultUpdateOptions = {
-  name?: string,
-  description?: string,
-  tags?: string[]
-}
+  name?: string;
+  description?: string;
+  tags?: string[];
+};

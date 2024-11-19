@@ -1,4 +1,3 @@
-
 /**
  * Service worker intercepting the HTTP requests and decrypting the response stream
  * Usage: 
@@ -20,67 +19,66 @@
       </video>
  */
 
-/* eslint-disable no-restricted-globals */
 if (!self) {
   global.self = global;
   global.window = {};
 }
 
 const DOWNLOAD_URL = /\/api\/proxy\/download\/(.+)$/;
-const SYMMETRIC_KEY_ALGORITHM = 'AES-GCM';
+const SYMMETRIC_KEY_ALGORITHM = "AES-GCM";
 const SYMMETRIC_KEY_LENGTH = 256;
 const AUTH_TAG_SIZE_IN_BYTES = 16;
 const IV_SIZE_IN_BYTES = 12;
 const DEFAUTL_CHUNK_SIZE = 5000000 + AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES; //5MB + encryption bytes
-const MODE_DECRYPT = 'decrypt';
+const MODE_DECRYPT = "decrypt";
 
 const files = new Map();
 
-self.addEventListener('install', event => {
+self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
 self.onmessage = (event) => {
-  if (event.data.type === 'init') {
+  if (event.data.type === "init") {
     files.set(event.data.id, { ...event.data, progress: 0 });
-  } else if (event.data.type === 'progress') {
+  } else if (event.data.type === "progress") {
     const file = files.get(event.data.id);
     if (!file) {
-      event.ports[0].postMessage({ error: 'cancelled' });
+      event.ports[0].postMessage({ error: "cancelled" });
     } else {
-      event.ports[0].postMessage({ type: 'progress', progress: file.progress });
+      event.ports[0].postMessage({ type: "progress", progress: file.progress });
     }
-  } else if (event.data.type === 'cancel') {
+  } else if (event.data.type === "cancel") {
     const file = files.get(event.data.id);
     if (file) {
       if (file.cancel) {
         try {
-          file.cancel.abort('client request');
+          file.cancel.abort("client request");
         } catch (e) {
-          console.log(e)
+          console.log(e);
         }
       }
       files.delete(event.data.id);
     }
   }
-}
+};
 
-self.addEventListener('fetch', event => {
+self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== 'GET') {
+  if (req.method !== "GET") {
     return;
   }
   const url = new URL(req.url);
   const dlmatch = DOWNLOAD_URL.exec(url.pathname);
   if (dlmatch) {
-    const range = req.headers.get('range');
+    const range = req.headers.get("range");
     event.respondWith(decryptStream(dlmatch[1], { range }));
   }
-})
+});
 
 async function decryptStream(id, options) {
   const file = files.get(id);
@@ -91,41 +89,51 @@ async function decryptStream(id, options) {
   if (options.range && file.key) {
     const internalRange = getChunkedFileRange(options.range, file);
     if (internalRange) {
-      requsetHeaders['Range'] = `bytes=${internalRange.start}-${internalRange.end}`
+      requsetHeaders["Range"] =
+        `bytes=${internalRange.start}-${internalRange.end}`;
     }
   } else {
-    requsetHeaders['Range'] = options.range;
+    requsetHeaders["Range"] = options.range;
   }
 
   const controller = new AbortController();
   files.set(file.id, { ...file, cancel: controller });
 
-  const response = await fetch(file.url, { headers: requsetHeaders, signal: controller.signal });
+  const response = await fetch(file.url, {
+    headers: requsetHeaders,
+    signal: controller.signal,
+  });
   const readableStream = response.body;
-  const contentRange = response.headers.get('Content-Range')
-  const externalRange = getExternalRange(contentRange, file)
-  const contentLength = response.headers.get('Content-Length');
+  const contentRange = response.headers.get("Content-Range");
+  const externalRange = getExternalRange(contentRange, file);
+  const contentLength = response.headers.get("Content-Length");
   if (!file.size && !file.chunkSize && contentLength) {
     file.chunkSize = parseInt(contentLength);
     files.set(file.id, file);
   }
   if (externalRange) {
     const headers = {
-      'Accept-Range': 'bytes',
-      'Content-Range': `bytes ${externalRange.start}-${externalRange.end}/${externalRange.size}`,
-      'Content-Type': response.headers.get('Content-Type'),
-      'Content-Length': externalRange.end - externalRange.start
+      "Accept-Range": "bytes",
+      "Content-Range": `bytes ${externalRange.start}-${externalRange.end}/${externalRange.size}`,
+      "Content-Type": response.headers.get("Content-Type"),
+      "Content-Length": externalRange.end - externalRange.start,
     };
-    const currentChunkIndex = Math.round(externalRange.start / (file.chunkSize ?? file.size))
-    return new Response(await getDecryptionStream(file, readableStream, currentChunkIndex), { headers, status: response.status });
-
+    const currentChunkIndex = Math.round(
+      externalRange.start / (file.chunkSize ?? file.size),
+    );
+    return new Response(
+      await getDecryptionStream(file, readableStream, currentChunkIndex),
+      { headers, status: response.status },
+    );
   } else {
     const headers = {
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(file.name)}"`,
-      'Content-Type': 'application/octet-stream',
-      'Content-Length': file.size
+      "Content-Disposition": `attachment; filename="${encodeURIComponent(file.name)}"`,
+      "Content-Type": "application/octet-stream",
+      "Content-Length": file.size,
     };
-    return new Response(await getDecryptionStream(file, readableStream), { headers });
+    return new Response(await getDecryptionStream(file, readableStream), {
+      headers,
+    });
   }
 }
 
@@ -133,88 +141,104 @@ async function getDecryptionStream(file, stream, startChunkIndex = 0) {
   const chunkSize = file.chunkSize || DEFAUTL_CHUNK_SIZE;
   const base64Key = file.key;
   const key = base64Key ? await getDecryptionKey(base64Key) : null;
-  const slicesStream = transformStream(stream, new StreamSlicer(chunkSize, MODE_DECRYPT))
-  return transformStream(slicesStream, new DecryptStreamController(key, startChunkIndex, file.id, files))
+  const slicesStream = transformStream(
+    stream,
+    new StreamSlicer(chunkSize, MODE_DECRYPT),
+  );
+  return transformStream(
+    slicesStream,
+    new DecryptStreamController(key, startChunkIndex, file.id, files),
+  );
 }
 
 async function getDecryptionKey(base64Key) {
   return await crypto.subtle.importKey(
-    'raw',
+    "raw",
     toByteArray(base64Key),
     {
       name: SYMMETRIC_KEY_ALGORITHM,
       length: SYMMETRIC_KEY_LENGTH,
     },
     true,
-    ['encrypt', 'decrypt'],
-  )
+    ["encrypt", "decrypt"],
+  );
 }
 
 async function getCleartext(key, ivBytes, bytes) {
   try {
     return await crypto.subtle.decrypt(
       {
-        name: 'AES-GCM',
-        iv: ivBytes
+        name: "AES-GCM",
+        iv: ivBytes,
       },
       key,
       bytes,
-    )
+    );
   } catch (e) {
-    console.log(e)
+    console.log(e);
   }
 }
 
 function toByteArray(b64) {
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
 function getExternalRange(range, file) {
   if (!range) {
     return null;
   }
-  const byteRangeWithTotalSize = range.split(' ')[1];
-  const byteRange = byteRangeWithTotalSize.split('/')[0];
-  const byteStartEnd = byteRange.split('-');
+  const byteRangeWithTotalSize = range.split(" ")[1];
+  const byteRange = byteRangeWithTotalSize.split("/")[0];
+  const byteStartEnd = byteRange.split("-");
   const byteStart = parseInt(byteStartEnd[0]);
   const byteEnd = byteStartEnd[1] ? parseInt(byteStartEnd[1]) : null;
   if (!file.key) {
-    return { start: byteStart, end: byteEnd, size: file.size }
+    return { start: byteStart, end: byteEnd, size: file.size };
   }
-  
+
   const chunkSize = file.chunkSize ?? DEFAUTL_CHUNK_SIZE;
-  
+
   let unencryptedFileSize;
   if (file.numberOfChunks && file.numberOfChunks > 0) {
-    unencryptedFileSize = file.size - file.numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
+    unencryptedFileSize =
+      file.size -
+      file.numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES);
   } else {
-    const numberOfChunks = Math.ceil(file.size / chunkSize)
-    unencryptedFileSize = file.size - numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
+    const numberOfChunks = Math.ceil(file.size / chunkSize);
+    unencryptedFileSize =
+      file.size - numberOfChunks * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES);
   }
-  const start = byteStart - Math.floor(byteStart / chunkSize) * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
-  const end = byteEnd ? byteEnd - Math.ceil(byteEnd / chunkSize) * (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES) : '';
-  return { start, end, size: unencryptedFileSize }
+  const start =
+    byteStart -
+    Math.floor(byteStart / chunkSize) *
+      (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES);
+  const end = byteEnd
+    ? byteEnd -
+      Math.ceil(byteEnd / chunkSize) *
+        (AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES)
+    : "";
+  return { start, end, size: unencryptedFileSize };
 }
 
 function getChunkedFileRange(range, file) {
-  if (!range || !range.includes('=') || !range.includes('-')) {
+  if (!range || !range.includes("=") || !range.includes("-")) {
     return null;
   }
-  const byteRange = range.split('=')[1];
-  const byteStartEnd = byteRange.split('-');
+  const byteRange = range.split("=")[1];
+  const byteStartEnd = byteRange.split("-");
   const byteStart = parseInt(byteStartEnd[0]);
   const byteEnd = byteStartEnd[1] ? parseInt(byteStartEnd[1]) : null;
   let requestRangeStart;
   let requestRangeEnd;
   let currnentByte = 0;
-  requestRangeStart = currnentByte
+  requestRangeStart = currnentByte;
   while (currnentByte < file.size) {
     if (currnentByte <= byteStart) {
       requestRangeStart = currnentByte;
     } else {
       break;
     }
-    currnentByte += (file.chunkSize ?? file.size);
+    currnentByte += file.chunkSize ?? file.size;
   }
   if (!byteEnd) {
     requestRangeEnd = "";
@@ -226,10 +250,10 @@ function getChunkedFileRange(range, file) {
       } else {
         break;
       }
-      currnentByte += (file.chunkSize ?? file.size);
+      currnentByte += file.chunkSize ?? file.size;
     }
   }
-  return { start: requestRangeStart, end: requestRangeEnd }
+  return { start: requestRangeStart, end: requestRangeEnd };
 }
 
 class DecryptStreamController {
@@ -249,15 +273,17 @@ class DecryptStreamController {
       ciphertextBytes = chunk.slice(IV_SIZE_IN_BYTES);
     }
     try {
-      const cleartext = this.key ? await getCleartext(this.key, ivBytes, ciphertextBytes) : chunk;
+      const cleartext = this.key
+        ? await getCleartext(this.key, ivBytes, ciphertextBytes)
+        : chunk;
       controller.enqueue(new Uint8Array(cleartext));
       if (this.file) {
-        this.file.progress += cleartext.byteLength
+        this.file.progress += cleartext.byteLength;
         files.set(this.file.id, this.file);
       }
       this.index += 1;
     } catch (e) {
-      console.log(e)
+      console.log(e);
     }
   }
 }
@@ -334,7 +360,7 @@ function transformStream(readable, transformer, oncancel) {
           enqueue(d) {
             enqueued = true;
             controller.enqueue(d);
-          }
+          },
         };
         while (!enqueued) {
           const data = await reader.read();
@@ -352,7 +378,7 @@ function transformStream(readable, transformer, oncancel) {
         if (oncancel) {
           oncancel(reason);
         }
-      }
+      },
     });
   }
 }

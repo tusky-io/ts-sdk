@@ -41,8 +41,8 @@ export class ApiClient {
   private _resourceId: string;
 
   // request body
-  private _name: string
-  private _status: string
+  private _name: string;
+  private _status: string;
   private _vaultId: string;
   private _parentId: string;
 
@@ -50,14 +50,14 @@ export class ApiClient {
   private _authProvider: string;
   private _redirectUri: string;
   private _refreshToken: string;
-  private _authCode: string
-  private _grantType: string
+  private _authCode: string;
+  private _grantType: string;
 
   // vault specific
-  private _encrypted: boolean
-  private _description: string
-  private _tags: Array<string>
-  private _keys: Array<EncryptedVaultKeyPair>
+  private _encrypted: boolean;
+  private _description: string;
+  private _tags: Array<string>;
+  private _keys: Array<EncryptedVaultKeyPair>;
 
   // member specific
   private _address: string;
@@ -77,13 +77,13 @@ export class ApiClient {
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
 
-  private _autoExecute: boolean
+  private _autoExecute: boolean;
 
-  private _signature: string
-  private _digest: string
+  private _signature: string;
+  private _digest: string;
 
-  private _userAgent: string
-  private _groupId: string
+  private _userAgent: string;
+  private _groupId: string;
 
   // axios
   private _httpClient: AxiosInstance;
@@ -94,7 +94,7 @@ export class ApiClient {
   private _progressHook: (
     percentageProgress: number,
     bytesProgress?: number,
-    id?: string
+    id?: string,
   ) => void;
   private _cancelHook: AbortController;
 
@@ -156,12 +156,9 @@ export class ApiClient {
     return clone;
   }
 
-  env(config: {
-    apiUrl: string;
-    cdnUrl: string;
-  }): ApiClient {
+  env(config: { apiUrl: string; cdnUrl: string }): ApiClient {
     this._apiUrl = config.apiUrl;
-    this._cdnUrl = config.cdnUrl
+    this._cdnUrl = config.cdnUrl;
     return this;
   }
 
@@ -333,7 +330,7 @@ export class ApiClient {
   queryParams(queryParams: any): ApiClient {
     if (queryParams) {
       const params = Object.fromEntries(
-        Object.entries(queryParams).filter(([_, value]) => value)
+        Object.entries(queryParams).filter(([_, value]) => value),
       );
       this._queryParams = { ...this._queryParams, ...params };
     } else {
@@ -356,9 +353,9 @@ export class ApiClient {
     hook: (
       percentageProgress: number,
       bytesProgress?: number,
-      id?: string
+      id?: string,
     ) => void,
-    id?: string
+    id?: string,
   ): ApiClient {
     this._progressHook = hook;
     this._progressId = id || uuidv4();
@@ -395,7 +392,13 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async updateMe(): Promise<User> {
-    if (!this._name && !this._picture && !this._termsAccepted && !this._encPrivateKey && !this._encPrivateKeyBackup) {
+    if (
+      !this._name &&
+      !this._picture &&
+      !this._termsAccepted &&
+      !this._encPrivateKey &&
+      !this._encPrivateKeyBackup
+    ) {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
@@ -403,7 +406,7 @@ export class ApiClient {
       picture: this._picture,
       termsAccepted: this._termsAccepted,
       encPrivateKey: this._encPrivateKey,
-      encPrivateKeyBackup: this._encPrivateKeyBackup
+      encPrivateKeyBackup: this._encPrivateKeyBackup,
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
@@ -427,7 +430,7 @@ export class ApiClient {
    */
   async getMembers(): Promise<Array<Membership>> {
     return this.get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`,
     );
   }
 
@@ -458,11 +461,8 @@ export class ApiClient {
    * @returns {Promise<Paginated<File>>}
    */
   async getFiles(): Promise<Paginated<File>> {
-    return this.get(
-      `${this._apiUrl}/files`
-    );
+    return this.get(`${this._apiUrl}/files`);
   }
-
 
   /**
    * Get folders for currently authenticated user
@@ -471,9 +471,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<Folder>>}
    */
   async getFolders(): Promise<Paginated<Folder>> {
-    return this.get(
-      `${this._apiUrl}/folders`
-    );
+    return this.get(`${this._apiUrl}/folders`);
   }
 
   /**
@@ -485,7 +483,7 @@ export class ApiClient {
    */
   async getMembershipsByVaultId(): Promise<Paginated<Membership>> {
     return this.get(
-      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`,
     );
   }
 
@@ -496,9 +494,7 @@ export class ApiClient {
    * @returns {Promise<File>}
    */
   async getFile(): Promise<File> {
-    return this.get(
-      `${this._apiUrl}/files/${this._resourceId}`
-    );
+    return this.get(`${this._apiUrl}/files/${this._resourceId}`);
   }
 
   /**
@@ -508,9 +504,7 @@ export class ApiClient {
    * @returns {Promise<Folder>}
    */
   async getFolder(): Promise<Folder> {
-    return this.get(
-      `${this._apiUrl}/folders/${this._resourceId}`
-    );
+    return this.get(`${this._apiUrl}/folders/${this._resourceId}`);
   }
 
   /**
@@ -521,7 +515,7 @@ export class ApiClient {
    */
   async getMembership(): Promise<Membership> {
     return this.get(
-      `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`
+      `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`,
     );
   }
 
@@ -533,9 +527,7 @@ export class ApiClient {
    * @returns {Promise<Vault>}
    */
   async getVault(): Promise<Vault> {
-    return this.get(
-      `${this._apiUrl}/${this._vaultUri}/${this._resourceId}`
-    );
+    return this.get(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
 
   /**
@@ -545,9 +537,7 @@ export class ApiClient {
    * @returns {Promise<Array<Transaction>>}
    */
   async getTransactions(): Promise<Array<Transaction>> {
-    return this.get(
-      `${this._apiUrl}/${this._transactionUri}`
-    );
+    return this.get(`${this._apiUrl}/${this._transactionUri}`);
   }
 
   /**
@@ -555,9 +545,7 @@ export class ApiClient {
    * @returns {Promise<Paginated<ApiKey>>}
    */
   async getApiKeys(): Promise<Paginated<ApiKey>> {
-    return this.get(
-      `${this._apiUrl}/${this._apiKeyUri}`
-    );
+    return this.get(`${this._apiUrl}/${this._apiKeyUri}`);
   }
 
   async getPaymentPlans(): Promise<PaymentPlan[]> {
@@ -571,11 +559,8 @@ export class ApiClient {
    * @returns {Promise<ApiKey>}
    */
   async generateApiKey(): Promise<ApiKey> {
-    return this.post(
-      `${this._apiUrl}/${this._apiKeyUri}`
-    );
+    return this.post(`${this._apiUrl}/${this._apiKeyUri}`);
   }
-
 
   /**
    * Revoke an existing api key
@@ -585,7 +570,7 @@ export class ApiClient {
    */
   async revokeApiKey(): Promise<ApiKey> {
     return this.delete(
-      `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`
+      `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`,
     );
   }
 
@@ -617,7 +602,9 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
-        ...(!this._publicRoute ? (await this._auth.getAuthorizationHeader()) : {})
+        ...(!this._publicRoute
+          ? await this._auth.getAuthorizationHeader()
+          : {}),
       },
     } as AxiosRequestConfig;
     if (this._data) {
@@ -657,14 +644,14 @@ export class ApiClient {
   async updateFile(): Promise<File> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
     this.data({
       name: this._name,
       parentId: this._parentId,
       status: this._status,
-      autoExecute: this._autoExecute
+      autoExecute: this._autoExecute,
     });
     return this.patch(`${this._apiUrl}/${this._fileUri}/${this._resourceId}`);
   }
@@ -680,7 +667,7 @@ export class ApiClient {
   async deleteFile(): Promise<void> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
     this.data({ autoExecute: this._autoExecute });
@@ -700,12 +687,12 @@ export class ApiClient {
   async createFolder(): Promise<Folder> {
     if (!this._vaultId) {
       throw new BadRequest(
-        "Missing vault id input. Use ApiClient#vaultId() to add it"
+        "Missing vault id input. Use ApiClient#vaultId() to add it",
       );
     }
     if (!this._name) {
       throw new BadRequest(
-        "Missing name input. Use ApiClient#name() to add it"
+        "Missing name input. Use ApiClient#name() to add it",
       );
     }
 
@@ -713,7 +700,7 @@ export class ApiClient {
       vaultId: this._vaultId,
       parentId: this._parentId,
       name: this._name,
-      autoExecute: this._autoExecute
+      autoExecute: this._autoExecute,
     });
 
     return this.post(`${this._apiUrl}/${this._folderUri}`);
@@ -728,12 +715,12 @@ export class ApiClient {
   async createAuthChallenge(): Promise<{ nonce: string }> {
     if (!this._address) {
       throw new BadRequest(
-        "Missing address input. Use ApiClient#address() to add it"
+        "Missing address input. Use ApiClient#address() to add it",
       );
     }
 
     this.data({
-      address: this._address
+      address: this._address,
     });
 
     return this.post(`${this._apiUrl}/auth/create-challenge`);
@@ -749,45 +736,45 @@ export class ApiClient {
   async verifyAuthChallenge(): Promise<GenerateJWTResponsePayload> {
     if (!this._address) {
       throw new BadRequest(
-        "Missing address input. Use ApiClient#address() to add it"
+        "Missing address input. Use ApiClient#address() to add it",
       );
     }
 
     if (!this._signature) {
       throw new BadRequest(
-        "Missing signature input. Use ApiClient#signature() to add it"
+        "Missing signature input. Use ApiClient#signature() to add it",
       );
     }
 
     this.data({
       address: this._address,
-      signature: this._signature
+      signature: this._signature,
     });
 
     return this.post(`${this._apiUrl}/auth/verify-challenge`);
   }
 
   /**
-  *
-  * @requires:
-  * - authProvider()
-  * - grantType()
-  * @uses:
-  * - redirectUri()
-  * - code()
-  * - refreshToken()
-  * @returns {Promise<string>}
-  */
+   *
+   * @requires:
+   * - authProvider()
+   * - grantType()
+   * @uses:
+   * - redirectUri()
+   * - code()
+   * - refreshToken()
+   * @returns {Promise<string>}
+   */
   async generateJWT(): Promise<GenerateJWTResponsePayload> {
     if (!this._authProvider) {
       throw new BadRequest(
-        "Missing authProvider input. Use ApiClient#authProvider() to add it"
+        "Missing authProvider input. Use ApiClient#authProvider() to add it",
       );
     }
 
     if (!this._grantType) {
       throw new BadRequest(
-        "Missing grantType input. Use ApiClient#grantType() to add it"
+        "Missing grantType input. Use ApiClient#grantType() to add it",
       );
     }
 
@@ -816,14 +803,14 @@ export class ApiClient {
   async updateFolder(): Promise<Folder> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
     this.data({
       name: this._name,
       parentId: this._parentId,
       status: this._status,
-      autoExecute: this._autoExecute
+      autoExecute: this._autoExecute,
     });
 
     return this.patch(`${this._apiUrl}/${this._folderUri}/${this._resourceId}`);
@@ -840,11 +827,13 @@ export class ApiClient {
   async deleteFolder(): Promise<void> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
     this.data({ autoExecute: this._autoExecute });
-    return this.delete(`${this._apiUrl}/${this._folderUri}/${this._resourceId}`);
+    return this.delete(
+      `${this._apiUrl}/${this._folderUri}/${this._resourceId}`,
+    );
   }
 
   /**
@@ -862,7 +851,7 @@ export class ApiClient {
   async createVault(): Promise<Vault> {
     if (!this._name) {
       throw new BadRequest(
-        "Missing name input. Use ApiClient#name() to add it"
+        "Missing name input. Use ApiClient#name() to add it",
       );
     }
 
@@ -872,27 +861,27 @@ export class ApiClient {
       encrypted: this._encrypted,
       tags: this._tags,
       keys: this._keys,
-      autoExecute: this._autoExecute
+      autoExecute: this._autoExecute,
     });
 
     return this.post(`${this._apiUrl}/${this._vaultUri}`);
   }
 
   /**
-  *
-  * @requires:
-  * - resourceId()
-  * @uses:
-  * - name()
-  * - description()
-  * - status()
-  * - autoExecute()
-  * @returns {Promise<Vault>}
-  */
+   *
+   * @requires:
+   * - resourceId()
+   * @uses:
+   * - name()
+   * - description()
+   * - status()
+   * - autoExecute()
+   * @returns {Promise<Vault>}
+   */
   async updateVault(): Promise<Vault> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
     this.data({
@@ -900,23 +889,23 @@ export class ApiClient {
       description: this._description,
       tags: this._tags,
       status: this._status,
-      autoExecute: this._autoExecute
+      autoExecute: this._autoExecute,
     });
     return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
 
   /**
-  *
-  * @requires:
-  * - resourceId()
-  * @uses:
-  * - autoExecute()
-  * @returns {Promise<void>}
-  */
+   *
+   * @requires:
+   * - resourceId()
+   * @uses:
+   * - autoExecute()
+   * @returns {Promise<void>}
+   */
   async deleteVault(): Promise<void> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
     this.data({ autoExecute: this._autoExecute });
@@ -951,17 +940,17 @@ export class ApiClient {
   async createMembership(): Promise<Membership> {
     if (!this._vaultId) {
       throw new BadRequest(
-        "Missing address input. Use ApiClient#vaultId() to add it"
+        "Missing address input. Use ApiClient#vaultId() to add it",
       );
     }
     if (!this._address) {
       throw new BadRequest(
-        "Missing address input. Use ApiClient#address() to add it"
+        "Missing address input. Use ApiClient#address() to add it",
       );
     }
     if (!this._role) {
       throw new BadRequest(
-        "Missing role input. Use ApiClient#role() to add it"
+        "Missing role input. Use ApiClient#role() to add it",
       );
     }
 
@@ -975,28 +964,30 @@ export class ApiClient {
       ownerAccess: this._ownerAccess,
       allowedStorage: this._allowedStorage,
       allowedPaths: this._allowedPaths,
-      autoExecute: this._autoExecute
+      autoExecute: this._autoExecute,
     });
 
-    return this.post(`${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`);
+    return this.post(
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}`,
+    );
   }
 
   /**
-  *
-  * @requires:
-  * - resourceId()
-  * @uses:
-  * - role()
-  * - expiresAt()
-  * - status()
-  * - keys()
-  * - autoExecute()
-  * @returns {Promise<Membership>}
-  */
+   *
+   * @requires:
+   * - resourceId()
+   * @uses:
+   * - role()
+   * - expiresAt()
+   * - status()
+   * - keys()
+   * - autoExecute()
+   * @returns {Promise<Membership>}
+   */
   async updateMembership(): Promise<Membership> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
     this.data({
@@ -1004,9 +995,11 @@ export class ApiClient {
       expiresAt: this._expiresAt,
       status: this._status,
       keys: this._keys,
-      autoExecute: this._autoExecute
+      autoExecute: this._autoExecute,
     });
-    return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`);
+    return this.patch(
+      `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`,
+    );
   }
 
   /**
@@ -1020,19 +1013,19 @@ export class ApiClient {
   async postTransaction(): Promise<any> {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it"
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
 
     if (!this._digest) {
       throw new BadRequest(
-        "Missing digest input. Use ApiClient#digest() to add it"
+        "Missing digest input. Use ApiClient#digest() to add it",
       );
     }
 
     if (!this._signature) {
       throw new BadRequest(
-        "Missing signature input. Use ApiClient#signature() to add it"
+        "Missing signature input. Use ApiClient#signature() to add it",
       );
     }
     return this.post(`${this._apiUrl}/${this._transactionUri}`);
@@ -1052,7 +1045,7 @@ export class ApiClient {
   async downloadFile() {
     if (!this._resourceId) {
       throw new BadRequest(
-        "Missing resource id to download. Use ApiClient#resourceId() to add it"
+        "Missing resource id to download. Use ApiClient#resourceId() to add it",
       );
     }
 
@@ -1062,7 +1055,7 @@ export class ApiClient {
     } as RequestInit;
 
     if (!this._encrypted) {
-      config.headers = (await this._auth.getAuthorizationHeader()) as any
+      config.headers = (await this._auth.getAuthorizationHeader()) as any;
     }
 
     const url = `${this._apiUrl}/files/${this._resourceId}/data`;
@@ -1096,7 +1089,7 @@ export async function retry<T>(
   fn: () => Promise<T>,
   force: boolean = false,
   retries: number = 5,
-  delayMs: number = 1000
+  delayMs: number = 1000,
 ): Promise<T> {
   let attempt = 0;
 

@@ -1,11 +1,15 @@
 import { Service, ServiceConfig } from "./service/service";
-import { PaymentPlan, PaymentSession, PaymentSessionOptions } from "../types/payment";
+import {
+  PaymentPlan,
+  PaymentSession,
+  PaymentSessionOptions,
+} from "../types/payment";
 
 class PaymentModule {
   protected service: Service;
 
   protected defaultSessionOptions = {
-    priceLookupKey: 'monthly',
+    priceLookupKey: "monthly",
     quantity: 1,
   } as PaymentSessionOptions;
 
@@ -20,11 +24,11 @@ class PaymentModule {
   /**
    * Create a new payment session
    */
-  public async session(options: PaymentSessionOptions = this.defaultSessionOptions): Promise<PaymentSession> {
+  public async session(
+    options: PaymentSessionOptions = this.defaultSessionOptions,
+  ): Promise<PaymentSession> {
     return await this.service.api.createSubscriptionPaymentSession(options);
   }
 }
 
-export {
-  PaymentModule
-}
+export { PaymentModule };

@@ -17,6 +17,4 @@ class TrashModule {
   }
 }
 
-export {
-  TrashModule
-}
+export { TrashModule };
