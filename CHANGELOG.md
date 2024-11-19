@@ -1,3 +1,10 @@
+# [0.24.0-dev.8](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.7...v0.24.0-dev.8) (2024-11-19)
+
+
+### Features
+
+* **upload:** pass onprogress when cloning xhr object ([24c1a0c](https://github.com/Akord-com/carmella-sdk/commit/24c1a0c94544ac006e86d7a98cb7da979ebf9905))
+
 # [0.24.0-dev.7](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.6...v0.24.0-dev.7) (2024-11-19)
 
 
