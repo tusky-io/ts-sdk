@@ -6,6 +6,11 @@ const WebpackBundleAnalyzer = require("webpack-bundle-analyzer")
 const nodeExternals = require('webpack-node-externals');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
+const webpack = require('webpack');
+
+const package = require('./package.json');
+const version = package.version;
+
 const commonNodeConfig = {
   mode: 'production',
   entry: './src/index.ts',
@@ -49,6 +54,11 @@ const commonNodeConfig = {
       },
     })],
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env.VERSION': JSON.stringify(version),
+    }),
+  ]
 };
 
 const cjsNodeConfig = {
@@ -121,6 +131,9 @@ const commonWebConfig = {
   plugins: [
     new WebpackBundleAnalyzer({
         analyzerMode: process.env.STATS || 'disabled',
+    }),
+    new webpack.DefinePlugin({
+      'process.env.VERSION': JSON.stringify(version),
     }),
     // new ProvidePlugin({
     //     Buffer: ['buffer', 'Buffer'],

@@ -82,7 +82,7 @@ export class ApiClient {
   private _signature: string;
   private _digest: string;
 
-  private _userAgent: string;
+  private _userAgent: string = `Tusky-SDK/${process.env.VERSION || "dev"}`;
   private _groupId: string;
 
   // axios
@@ -602,6 +602,7 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
+        "User-Agent": this._userAgent,
         ...(!this._publicRoute
           ? await this._auth.getAuthorizationHeader()
           : {}),
@@ -1052,6 +1053,9 @@ export class ApiClient {
     const config = {
       method: "get",
       signal: this._cancelHook ? this._cancelHook.signal : null,
+      headers: {
+        "User-Agent": this._userAgent,
+      },
     } as RequestInit;
 
     if (!this._encrypted) {

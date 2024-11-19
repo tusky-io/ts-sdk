@@ -1,3 +1,10 @@
+# [0.24.0-dev.5](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.4...v0.24.0-dev.5) (2024-11-19)
+
+
+### Features
+
+* set default user agent ([185f106](https://github.com/Akord-com/carmella-sdk/commit/185f1066a6260557a86c123ad51e0dc7253f4fce))
+
 # [0.24.0-dev.4](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.3...v0.24.0-dev.4) (2024-11-18)
 
 
