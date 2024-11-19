@@ -158,6 +158,7 @@ export class EncryptableHttpStack {
 
         // reinitialize the xhr
         if ((request as any)._xhr) {
+          const upload = (request as any)._xhr.upload;
           (request as any)._xhr.abort();
           (request as any)._xhr = new XMLHttpRequest();
           (request as any)._xhr.open(method, url, true);
@@ -167,6 +168,7 @@ export class EncryptableHttpStack {
               (request as any)._headers[headerName],
             );
           }
+          (request as any)._xhr.upload.onprogress = upload.onprogress;
         }
       }
 
