@@ -1,5 +1,5 @@
 require("dotenv").config();
-import { Tusky, DEFAULT_ENV, Env } from "../index";
+import { Tusky, Env } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
 import { EnokiSigner } from "./enoki/signer";
@@ -13,7 +13,7 @@ import { logger } from "../logger";
 // check if the encrypted flag is present
 export const isEncrypted = process.argv.includes('--encrypted');
 export const LOG_LEVEL = "error";
-export const ENV_TEST_RUN = (process.env.ENV || DEFAULT_ENV) as Env;
+export const ENV_TEST_RUN = (process.env.ENV || "dev") as Env;
 
 export async function initInstance(encrypted = true): Promise<Tusky> {
   let tusky: Tusky;
