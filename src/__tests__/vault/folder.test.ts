@@ -24,11 +24,13 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
   });
 
   it("should create root folder", async () => {
-    rootFolderId = await folderCreate(tusky, vaultId);
+    const rootFolder = await folderCreate(tusky, vaultId);
+    rootFolderId = rootFolder.id;
   });
 
   it("should create a sub folder", async () => {
-    subFolderId = await folderCreate(tusky, vaultId, rootFolderId);
+    const subFolder = await folderCreate(tusky, vaultId, rootFolderId);
+    subFolderId = subFolder.id;
   });
 
   it("should create files in different folder levels and list them correctly", async () => {
