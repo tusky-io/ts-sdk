@@ -1,3 +1,10 @@
+# [0.24.0-dev.6](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.5...v0.24.0-dev.6) (2024-11-19)
+
+
+### Bug Fixes
+
+* yarn registry ([a42d2e4](https://github.com/Akord-com/carmella-sdk/commit/a42d2e416948df8afa9c7ef4d2c6436887a30359))
+
 # [0.24.0-dev.5](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.4...v0.24.0-dev.5) (2024-11-19)
 
 
