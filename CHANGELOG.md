@@ -1,3 +1,10 @@
+# [0.24.0-dev.9](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.8...v0.24.0-dev.9) (2024-11-20)
+
+
+### Features
+
+* set custom SDK headers - SDK-Version & Client-Name ([c6289d5](https://github.com/Akord-com/carmella-sdk/commit/c6289d5ff3ca993496c392af7b76546d0f7cc2d4))
+
 # [0.24.0-dev.8](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.7...v0.24.0-dev.8) (2024-11-19)
 
 
