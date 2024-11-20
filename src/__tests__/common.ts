@@ -11,7 +11,7 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { logger } from "../logger";
 
 // check if the encrypted flag is present
-export const isEncrypted = process.argv.includes('--encrypted');
+export const isEncrypted = global.isEncrypted;
 export const LOG_LEVEL = "error";
 export const ENV_TEST_RUN = (process.env.ENV || "dev") as Env;
 
