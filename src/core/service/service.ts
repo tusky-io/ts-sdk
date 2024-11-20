@@ -32,7 +32,7 @@ class Service {
   object: Object;
   groupRef: string;
 
-  userAgent: string; // client name
+  clientName: string; // client name
 
   storage: Storage; // user session storage
   env: Env;
@@ -53,7 +53,7 @@ class Service {
     this.type = config.type;
     this.object = config.object;
     this.groupRef = config.groupRef;
-    this.userAgent = config.userAgent;
+    this.clientName = config.clientName;
     this.storage = config.storage;
     this.env = config.env;
   }
@@ -153,7 +153,7 @@ export type ServiceConfig = {
   actionRef?: string;
   groupRef?: string;
   contentType?: string;
-  userAgent?: string;
+  clientName?: string;
   storage?: Storage;
   env?: Env;
 };

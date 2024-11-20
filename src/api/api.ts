@@ -36,7 +36,7 @@ import {
 abstract class Api {
   config: ApiConfig;
   autoExecute: boolean; // if set to true, transactions will be admin signed & executed
-  userAgent: string; // client name
+  clientName: string; // name of the client consuming the API
 
   constructor() {}
 
