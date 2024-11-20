@@ -51,7 +51,7 @@ export default class TuskyApi extends Api {
   constructor(config: ApiConfig) {
     super();
     this.config = apiConfig(config.env);
-    this.userAgent = config.userAgent;
+    this.clientName = config.clientName;
     this.autoExecute = config.autoExecute;
     this.auth = config.auth;
   }
@@ -61,6 +61,7 @@ export default class TuskyApi extends Api {
   ): Promise<GenerateJWTResponsePayload> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .authProvider(payload.authProvider)
       .grantType(payload.grantType)
@@ -76,6 +77,7 @@ export default class TuskyApi extends Api {
   ): Promise<{ nonce: string }> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .address(payload.address)
       .publicRoute(true)
       .createAuthChallenge();
@@ -86,6 +88,7 @@ export default class TuskyApi extends Api {
   ): Promise<GenerateJWTResponsePayload> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .address(payload.address)
       .signature(payload.signature)
       .publicRoute(true)
@@ -95,6 +98,7 @@ export default class TuskyApi extends Api {
   public async createFolder(tx: CreateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .vaultId(tx.vaultId)
       .parentId(tx.parentId)
@@ -106,6 +110,7 @@ export default class TuskyApi extends Api {
   public async updateFolder(tx: UpdateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(tx.id)
       .name(tx.name)
@@ -118,6 +123,7 @@ export default class TuskyApi extends Api {
   public async deleteFolder(id: string): Promise<void> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .autoExecute(this.autoExecute)
@@ -127,6 +133,7 @@ export default class TuskyApi extends Api {
   public async updateFile(tx: UpdateFileTxPayload): Promise<File> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(tx.id)
       .name(tx.name)
@@ -139,6 +146,7 @@ export default class TuskyApi extends Api {
   public async deleteFile(id: string): Promise<void> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .autoExecute(this.autoExecute)
@@ -148,6 +156,7 @@ export default class TuskyApi extends Api {
   public async createVault(tx: CreateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .encrypted(tx.encrypted)
       .name(tx.name)
@@ -161,6 +170,7 @@ export default class TuskyApi extends Api {
   public async updateVault(tx: UpdateVaultTxPayload): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(tx.id)
       .name(tx.name)
@@ -174,6 +184,7 @@ export default class TuskyApi extends Api {
   public async deleteVault(id: string): Promise<void> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .autoExecute(this.autoExecute)
@@ -181,11 +192,19 @@ export default class TuskyApi extends Api {
   }
 
   public async getTrash(): Promise<Folder> {
-    return new ApiClient().env(this.config).auth(this.auth).getTrash();
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .getTrash();
   }
 
   public async emptyTrash(): Promise<Folder> {
-    return new ApiClient().env(this.config).auth(this.auth).emptyTrash();
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .emptyTrash();
   }
 
   public async createMembership(
@@ -193,6 +212,7 @@ export default class TuskyApi extends Api {
   ): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .vaultId(tx.vaultId)
       .address(tx.address)
@@ -213,6 +233,7 @@ export default class TuskyApi extends Api {
   ): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(tx.id)
       .role(tx.role)
@@ -229,6 +250,7 @@ export default class TuskyApi extends Api {
   ): Promise<any> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .digest(digest)
       .signature(signature)
@@ -238,6 +260,7 @@ export default class TuskyApi extends Api {
   public async getMembers(vaultId: string): Promise<Array<Membership>> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .vaultId(vaultId)
       .getMembers();
@@ -249,6 +272,7 @@ export default class TuskyApi extends Api {
   ): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
     const response = await new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .encrypted(options.encrypted)
@@ -272,11 +296,19 @@ export default class TuskyApi extends Api {
   }
 
   public async getStorage(): Promise<Storage> {
-    return new ApiClient().env(this.config).auth(this.auth).getStorage();
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .getStorage();
   }
 
   public async getPaymentPlans(): Promise<PaymentPlan[]> {
-    return new ApiClient().env(this.config).auth(this.auth).getPaymentPlans();
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .getPaymentPlans();
   }
 
   public async createSubscriptionPaymentSession(
@@ -284,6 +316,7 @@ export default class TuskyApi extends Api {
   ): Promise<PaymentSession> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .data(options)
       .createSubscriptionPaymentSession();
@@ -292,18 +325,24 @@ export default class TuskyApi extends Api {
   public async getUserPublicData(email: string): Promise<UserPublicInfo> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .queryParams({ email })
       .getUserPublicData();
   }
 
   public async getMe(): Promise<User> {
-    return new ApiClient().env(this.config).auth(this.auth).getMe();
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .getMe();
   }
 
   public async updateMe(input: UserMutable): Promise<User> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .name(input.name)
       .picture(input.picture)
@@ -316,6 +355,7 @@ export default class TuskyApi extends Api {
   public async getFile(id: string): Promise<File> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .getFile();
@@ -324,6 +364,7 @@ export default class TuskyApi extends Api {
   public async getFolder(id: string): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .getFolder();
@@ -332,6 +373,7 @@ export default class TuskyApi extends Api {
   public async getMembership(id: string): Promise<Membership> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .getMembership();
@@ -343,6 +385,7 @@ export default class TuskyApi extends Api {
   ): Promise<Vault> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
       .queryParams({
@@ -360,6 +403,7 @@ export default class TuskyApi extends Api {
   ): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .queryParams({
         limit: options.limit || DEFAULT_LIMIT,
@@ -371,6 +415,7 @@ export default class TuskyApi extends Api {
   public async getVaults(options: ListOptions = {}): Promise<Paginated<Vault>> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .queryParams({
         status: options.status,
@@ -385,6 +430,7 @@ export default class TuskyApi extends Api {
   ): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .queryParams({
         vaultId: options.vaultId,
@@ -401,6 +447,7 @@ export default class TuskyApi extends Api {
   ): Promise<Paginated<Folder>> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .queryParams({
         vaultId: options.vaultId,
@@ -418,6 +465,7 @@ export default class TuskyApi extends Api {
   ): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .vaultId(vaultId)
       .queryParams({
@@ -432,22 +480,32 @@ export default class TuskyApi extends Api {
   public async getTransactions(vaultId: string): Promise<Array<Transaction>> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .vaultId(vaultId)
       .getTransactions();
   }
 
   public async getApiKeys(): Promise<Paginated<ApiKey>> {
-    return new ApiClient().env(this.config).auth(this.auth).getApiKeys();
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .getApiKeys();
   }
 
   public async generateApiKey(): Promise<ApiKey> {
-    return new ApiClient().env(this.config).auth(this.auth).generateApiKey();
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .generateApiKey();
   }
 
   public async revokeApiKey(key: string): Promise<ApiKey> {
     return new ApiClient()
       .env(this.config)
+      .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(key)
       .revokeApiKey();

@@ -1,4 +1,4 @@
-import { AxiosInstance, AxiosRequestConfig } from "axios";
+import { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Membership } from "../types/membership";
 import { Transaction } from "../types/transaction";
@@ -82,7 +82,9 @@ export class ApiClient {
   private _signature: string;
   private _digest: string;
 
-  private _userAgent: string = `Tusky-SDK/${process.env.VERSION || "dev"}`;
+  private _sdkVersion: string = `Tusky-SDK/${process.env.VERSION || "dev"}`;
+  private _clientName: string;
+
   private _groupId: string;
 
   // axios
@@ -144,7 +146,8 @@ export class ApiClient {
     clone._autoExecute = this._autoExecute;
     clone._vaultId = this._vaultId;
     clone._parentId = this._parentId;
-    clone._userAgent = this._userAgent;
+    clone._sdkVersion = this._clientName;
+    clone._clientName = this._clientName;
     clone._groupId = this._groupId;
     clone._queryParams = this._queryParams;
     clone._progressId = this._progressId;
@@ -207,8 +210,8 @@ export class ApiClient {
     return this;
   }
 
-  userAgent(userAgent: string): ApiClient {
-    this._userAgent = userAgent;
+  clientName(clientName: string): ApiClient {
+    this._clientName = clientName;
     return this;
   }
 
@@ -602,7 +605,7 @@ export class ApiClient {
         : url,
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": this._userAgent,
+        ...this.getCustomHeaders(),
         ...(!this._publicRoute
           ? await this._auth.getAuthorizationHeader()
           : {}),
@@ -1053,9 +1056,7 @@ export class ApiClient {
     const config = {
       method: "get",
       signal: this._cancelHook ? this._cancelHook.signal : null,
-      headers: {
-        "User-Agent": this._userAgent,
-      },
+      headers: this.getCustomHeaders(),
     } as RequestInit;
 
     if (!this._encrypted) {
@@ -1082,6 +1083,16 @@ export class ApiClient {
   async createSubscriptionPaymentSession(): Promise<PaymentSession> {
     const data = await this.put(`${this._apiUrl}/${this._subscriptionUri}`);
     return new PaymentSession(data);
+  }
+
+  private getCustomHeaders(): AxiosRequestHeaders {
+    const headers = {
+      "SDK-Version": this._sdkVersion,
+    };
+    if (this._clientName) {
+      headers["Client-Name"] = this._clientName;
+    }
+    return headers;
   }
 }
 
