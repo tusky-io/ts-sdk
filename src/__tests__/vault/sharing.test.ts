@@ -127,6 +127,9 @@ describe("Testing airdrop actions", () => {
       const membership = await tusky.vault.revokeAccess(airdropeeMemberId);
       expect(membership).toBeTruthy();
       expect(membership.status).toEqual("revoked");
+      if (isEncrypted) {
+        expect(membership.keys?.length).toEqual(1);
+      }
     });
 
     it("should list all members of the vault with the revoked one", async () => {
@@ -135,6 +138,14 @@ describe("Testing airdrop actions", () => {
       expect(members).toBeTruthy();
       expect(members.length).toEqual(4);
       expect(members.map(member => member.status)).toContain("revoked");
+      if (isEncrypted) {
+        for (let member of members) {
+          if (member.status === "accepted") {
+            expect(member.keys).toBeTruthy();
+            expect(member.keys.length).toEqual(2);
+          }
+        }
+      }
     });
 
     it("should fail getting the vault from revoked member account", async () => {

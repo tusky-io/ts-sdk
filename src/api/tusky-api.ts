@@ -177,6 +177,7 @@ export default class TuskyApi extends Api {
       .description(tx.description)
       .tags(tx.tags)
       .status(tx.status)
+      .keys(tx.keys)
       .autoExecute(this.autoExecute)
       .updateVault();
   }

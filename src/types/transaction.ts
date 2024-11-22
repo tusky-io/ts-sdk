@@ -26,6 +26,7 @@ export interface UpdateVaultTxPayload {
   description?: string;
   tags?: string[];
   status?: string;
+  keys?: Array<EncryptedVaultKeyPair>;
 }
 
 export interface CreateFolderTxPayload {
@@ -74,5 +75,5 @@ export interface UpdateMembershipTxPayload {
   role?: string;
   status?: string;
   expiresAt?: number;
-  keys?: Map<string, EncryptedVaultKeyPair[]>;
+  keys?: { [key: string]: EncryptedVaultKeyPair[] };
 }

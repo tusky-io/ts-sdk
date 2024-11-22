@@ -55,6 +55,11 @@ class MembershipService extends Service {
 
     for (let [memberId, publicKey] of publicKeys) {
       try {
+        if (!publicKey) {
+          throw new IncorrectEncryptionKey(
+            new Error("Missing member public key: " + memberId),
+          );
+        }
         // encrypt private key with member's public key
         const memberEncPrivateKey = await encryptWithPublicKey(
           base64ToArray(publicKey),
