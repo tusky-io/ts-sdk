@@ -1,11 +1,11 @@
 {
-  "name": "react-starter",
+  "name": "tusky-react-starter",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
     "@mysten/dapp-kit": "^0.14.18",
     "@mysten/sui": "^1.3.0",
-    "@akord/carmella-sdk": "0.22.0-dev.26",
+    "@akord/carmella-sdk": "0.24.0-dev.9",
     "@tanstack/react-query": "^5.37.1",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
