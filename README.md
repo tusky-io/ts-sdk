@@ -90,12 +90,15 @@ await tusky.signIn();
 ```js
 // on the browser
 import { Tusky } from "@tusky/ts-sdk";
-import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSignPersonalMessage } from "@mysten/dapp-kit";
 
+// Sui wallet extension
+const account = useCurrentAccount();
 const { mutate: signPersonalMessage } = useSignPersonalMessage();
 
 const tusky = await Tusky.withWallet({
   walletSignFnClient: signPersonalMessage,
+  walletAccount: account,
 }).withLogger({ debug: true, logToFile: true });
 
 // sign-in to Tusky (this will prompt the wallet & ask for user signature)
@@ -106,9 +109,10 @@ await tusky.signIn();
 // on the server
 import { Tusky } from "@tusky/ts-sdk";
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+
 // generate new Sui Key Pair
- const keypair = new Ed25519Keypair();
- const tusky = await Tusky
+const keypair = new Ed25519Keypair();
+const tusky = await Tusky
       .withWallet({ walletSigner: keypair })
       .withLogger({ debug: true, logToFile: true });
       .signIn();
