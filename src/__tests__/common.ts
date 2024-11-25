@@ -57,28 +57,23 @@ export async function cleanup(tusky?: Tusky, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   stopServer();
   logger.debug("Post test cleanup");
-  try {
-    if (tusky && vaultId) {
-      const files = await tusky.file.listAll({ vaultId: vaultId });
-      for (const file of files) {
-        if (file.status !== status.DELETED) {
-          await tusky.file.delete(file.id);
-        }
-        await tusky.file.deletePermanently(file.id);
+  if (tusky && vaultId) {
+    const files = await tusky.file.listAll({ vaultId: vaultId });
+    for (const file of files) {
+      if (file.status !== status.DELETED) {
+        await tusky.file.delete(file.id);
       }
-      const folders = await tusky.folder.listAll({ vaultId: vaultId });
-      for (const folder of folders) {
-        if (folder.status !== status.DELETED) {
-          await tusky.folder.delete(folder.id);
-        }
-        await tusky.folder.deletePermanently(folder.id);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-      await tusky.vault.delete(vaultId);
+      await tusky.file.deletePermanently(file.id);
     }
-  } catch(error) {
-    logger.error("Post test cleanup failed");
-    logger.error(error);
+    const folders = await tusky.folder.listAll({ vaultId: vaultId });
+    for (const folder of folders) {
+      if (folder.status !== status.DELETED) {
+        await tusky.folder.delete(folder.id);
+      }
+      await tusky.folder.deletePermanently(folder.id);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+    await tusky.vault.delete(vaultId);
   }
 }
 
