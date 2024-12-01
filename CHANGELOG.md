@@ -1,3 +1,21 @@
+# [0.24.0-experimental.8](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.7...v0.24.0-experimental.8) (2024-12-01)
+
+
+### Bug Fixes
+
+* default to dev for tests ([c7b1f7d](https://github.com/Akord-com/carmella-sdk/commit/c7b1f7d764405b177d38c2849a845bbd67ead07d))
+* set env priority on input config ([16a492e](https://github.com/Akord-com/carmella-sdk/commit/16a492e784a77bf1a7491b0748b7f06a9d57234f))
+* yarn registry ([a42d2e4](https://github.com/Akord-com/carmella-sdk/commit/a42d2e416948df8afa9c7ef4d2c6436887a30359))
+
+
+### Features
+
+* add trash tests & fix api calls ([da3abb6](https://github.com/Akord-com/carmella-sdk/commit/da3abb60196dbaa3fe3954919a7befcb0d07353a))
+* allow maintaining sessions on upload ([ceba9fa](https://github.com/Akord-com/carmella-sdk/commit/ceba9fac68efa9421a649256636e8772a9a673fd))
+* set custom SDK headers - SDK-Version & Client-Name ([c6289d5](https://github.com/Akord-com/carmella-sdk/commit/c6289d5ff3ca993496c392af7b76546d0f7cc2d4))
+* set default user agent ([185f106](https://github.com/Akord-com/carmella-sdk/commit/185f1066a6260557a86c123ad51e0dc7253f4fce))
+* **upload:** pass onprogress when cloning xhr object ([24c1a0c](https://github.com/Akord-com/carmella-sdk/commit/24c1a0c94544ac006e86d7a98cb7da979ebf9905))
+
 # [0.24.0-dev.9](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-dev.8...v0.24.0-dev.9) (2024-11-20)
 
 
