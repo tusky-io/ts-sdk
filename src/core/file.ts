@@ -150,6 +150,14 @@ class FileModule {
         this.service.encrypter,
       ),
       removeFingerprintOnSuccess: true,
+      onBeforeRequest: (req: tus.HttpRequest) => {
+        if (req.getMethod() === "POST" || req.getMethod() === "PATCH") {
+          const xhr = req.getUnderlyingObject();
+          if (xhr) {
+            xhr.withCredentials = true;
+          }
+        }
+      },
       onError: options.onError,
       onProgress: options.onProgress,
       onSuccess: options.onSuccess,
