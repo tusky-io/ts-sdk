@@ -1,3 +1,10 @@
+# [0.24.0-experimental.9](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.8...v0.24.0-experimental.9) (2024-12-02)
+
+
+### Features
+
+* keep upload session on nodejs ([5f6a7f3](https://github.com/Akord-com/carmella-sdk/commit/5f6a7f36813cf58c812f2a67d7bc92eae18646dc))
+
 # [0.24.0-experimental.8](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.7...v0.24.0-experimental.8) (2024-12-01)
 
 
