@@ -38,6 +38,8 @@ export const ENCRYPTED_CHUNK_SIZE_IN_BYTES =
 export const UPLOADER_SERVER_MAX_CONNECTIONS_PER_CLIENT = 20;
 export const EMPTY_FILE_ERROR_MESSAGE = "Cannot upload an empty file";
 
+export const UPLOAD_COOKIE_SESSION_NAME = "tusky.upload.session.id";
+
 class FileModule {
   protected contentType = null as string;
   protected client: ApiClient;
@@ -125,6 +127,7 @@ class FileModule {
         throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
       }
     }
+    let uploadId = null;
 
     const upload = new tus.Upload(fileLike as any, {
       endpoint: `${this.service.api.config.apiUrl}/uploads`,
@@ -155,7 +158,17 @@ class FileModule {
           const xhr = req.getUnderlyingObject();
           if (xhr) {
             xhr.withCredentials = true;
+          } else if (uploadId) {
+            req.setHeader(
+              "Cookie",
+              `${UPLOAD_COOKIE_SESSION_NAME}=${uploadId}`,
+            );
           }
+        }
+      },
+      onAfterResponse: (req, res) => {
+        if (res.getHeader("Location")) {
+          uploadId = res.getHeader("Location").split("/").pop();
         }
       },
       onError: options.onError,

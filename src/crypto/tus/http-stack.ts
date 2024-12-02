@@ -158,19 +158,21 @@ export class EncryptableHttpStack {
 
         // reinitialize the xhr
         if ((request as any)._xhr) {
-          const upload = (request as any)._xhr.upload;
-          const withCredentials = upload.withCredentials;
-          (request as any)._xhr.abort();
-          (request as any)._xhr = new XMLHttpRequest();
-          (request as any)._xhr.open(method, url, true);
-          (request as any)._xhr.withCredentials = withCredentials;
-          for (const headerName of Object.keys((request as any)._headers)) {
-            (request as any)._xhr.setRequestHeader(
-              headerName,
-              (request as any)._headers[headerName],
-            );
-          }
-          (request as any)._xhr.upload.onprogress = upload.onprogress;
+          const xhr = (request as any)._xhr;
+          const { upload, withCredentials } = xhr;
+          xhr.abort();
+
+          const newXhr = new XMLHttpRequest();
+          newXhr.open(method, url, true);
+
+          Object.entries((request as any)._headers).forEach(([name, value]) => {
+            newXhr.setRequestHeader(name, value as string);
+          });
+
+          newXhr.upload.onprogress = upload.onprogress;
+          newXhr.withCredentials = withCredentials;
+
+          (request as any)._xhr = newXhr;
         }
       }
 
