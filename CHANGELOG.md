@@ -1,3 +1,10 @@
+# [0.24.0-experimental.11](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.10...v0.24.0-experimental.11) (2024-12-03)
+
+
+### Features
+
+* **payment:** add 2TB option ([2f3719f](https://github.com/Akord-com/carmella-sdk/commit/2f3719fbb4d9b5c185066abbb7a75a119d9df3f8))
+
 # [0.24.0-experimental.10](https://github.com/Akord-com/carmella-sdk/compare/v0.24.0-experimental.9...v0.24.0-experimental.10) (2024-12-03)
 
 
