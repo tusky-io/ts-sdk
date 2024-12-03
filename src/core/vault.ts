@@ -309,9 +309,9 @@ class VaultModule {
    * Revoke member access
    * If private vault, vault keys will be rotated & distributed to all valid members
    * @param  {string} id membership id
-   * @returns Promise with the updated membership
+   * @returns void
    */
-  public async revokeAccess(id: string): Promise<Membership> {
+  public async revokeAccess(id: string): Promise<void> {
     const memberService = new MembershipService(this.service);
     await memberService.setVaultContextFromMembershipId(id);
 
@@ -335,12 +335,10 @@ class VaultModule {
     //   keys = memberKeys;
     // }
 
-    const membership = await this.service.api.updateMembership({
+    await this.service.api.deleteMembership({
       id: id,
-      status: membershipStatus.REVOKED,
       // keys: keys
     });
-    return new Membership(membership);
   }
 
   /**

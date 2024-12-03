@@ -80,6 +80,8 @@ abstract class Api {
 
   abstract updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership>;
 
+  abstract deleteMembership(tx: UpdateMembershipTxPayload): Promise<void>;
+
   abstract postTransaction(digest: string, signature: string): Promise<any>;
 
   abstract downloadFile(

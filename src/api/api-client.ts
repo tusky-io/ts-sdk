@@ -1009,6 +1009,28 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - resourceId()
+   * @uses:
+   * - keys()
+   * @returns {Promise<void>}
+   */
+  async deleteMembership(): Promise<void> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
+      );
+    }
+    this.data({
+      keys: this._keys,
+    });
+    return this.delete(
+      `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`,
+    );
+  }
+
+  /**
+   *
+   * @requires:
    * - id()
    * - digest()
    * - signature()
