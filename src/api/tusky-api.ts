@@ -244,6 +244,17 @@ export default class TuskyApi extends Api {
       .updateMembership();
   }
 
+  public async deleteMembership(tx: UpdateMembershipTxPayload): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .resourceId(tx.id)
+      .keys(tx.keys as any)
+      .autoExecute(this.autoExecute)
+      .deleteMembership();
+  }
+
   public async postTransaction(
     digest: string,
     signature: string,

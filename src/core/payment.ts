@@ -10,7 +10,7 @@ class PaymentModule {
 
   protected defaultSessionOptions = {
     priceLookupKey: "monthly",
-    quantity: 1,
+    quantity: 50,
   } as PaymentSessionOptions;
 
   constructor(config?: ServiceConfig) {

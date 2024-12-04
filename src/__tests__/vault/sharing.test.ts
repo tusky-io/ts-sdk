@@ -3,6 +3,8 @@ import { Forbidden } from "../../errors/forbidden";
 import { cleanup, ENV_TEST_RUN, initInstance, isEncrypted, LOG_LEVEL, testDataPath, vaultCreate } from "../common";
 import faker from '@faker-js/faker';
 import { firstFileName, secondFileName } from "../data/content";
+import { NotFound } from "../../errors/not-found";
+import { Unauthorized } from "../../errors/unauthorized";
 
 let tusky: Tusky;
 
@@ -124,17 +126,14 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should revoke access", async () => {
-      const membership = await tusky.vault.revokeAccess(airdropeeMemberId);
-      expect(membership).toBeTruthy();
-      expect(membership.status).toEqual("revoked");
+      await tusky.vault.revokeAccess(airdropeeMemberId);
     });
 
-    it("should list all members of the vault with the revoked one", async () => {
+    it("should list all members of the vault without the revoked one", async () => {
       const members = await tusky.vault.members(vaultId);
 
       expect(members).toBeTruthy();
-      expect(members.length).toEqual(4);
-      expect(members.map(member => member.status)).toContain("revoked");
+      expect(members.length).toEqual(3);
     });
 
     it("should fail getting the vault from revoked member account", async () => {
@@ -146,7 +145,7 @@ describe("Testing airdrop actions", () => {
         const vault = await memberTusky.vault.get(vaultId);
         expect(vault).toBeTruthy();
         expect(vault.name).toBeTruthy();
-      }).rejects.toThrow(Forbidden);
+      }).rejects.toThrow(Unauthorized);
     });
   });
 
