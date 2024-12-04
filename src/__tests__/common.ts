@@ -58,22 +58,27 @@ export async function cleanup(tusky?: Tusky, vaultId?: string): Promise<void> {
   stopServer();
   logger.debug("Post test cleanup");
   if (tusky && vaultId) {
-    const files = await tusky.file.listAll({ vaultId: vaultId });
-    for (const file of files) {
-      if (file.status !== status.DELETED) {
-        await tusky.file.delete(file.id);
+    try {
+      const files = await tusky.file.listAll({ vaultId: vaultId });
+      for (const file of files) {
+        if (file.status !== status.DELETED) {
+          await tusky.file.delete(file.id);
+        }
+        await tusky.file.deletePermanently(file.id);
       }
-      await tusky.file.deletePermanently(file.id);
-    }
-    const folders = await tusky.folder.listAll({ vaultId: vaultId });
-    for (const folder of folders) {
-      if (folder.status !== status.DELETED) {
-        await tusky.folder.delete(folder.id);
+      const folders = await tusky.folder.listAll({ vaultId: vaultId });
+      for (const folder of folders) {
+        if (folder.status !== status.DELETED) {
+          await tusky.folder.delete(folder.id);
+        }
+        await tusky.folder.deletePermanently(folder.id);
       }
-      await tusky.folder.deletePermanently(folder.id);
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+      await tusky.vault.delete(vaultId);
+    } catch (error) {
+      console.log("Post test cleanup failed");
+      console.log(error);
     }
-    await new Promise((resolve) => setTimeout(resolve, 10000));
-    await tusky.vault.delete(vaultId);
   }
 }
 
