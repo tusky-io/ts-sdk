@@ -1,5 +1,6 @@
 node_modules
 lib
+.npmrc
 
 # misc
 .DS_Store
