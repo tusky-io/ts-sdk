@@ -5,7 +5,11 @@ import { importDynamic } from "../util/import";
 import { BadRequest } from "../errors/bad-request";
 import { logger } from "../logger";
 import { FileModule } from "./file";
-import { GetOptions, ListOptions, validateListPaginatedApiOptions } from "../types/query-options";
+import {
+  GetOptions,
+  ListOptions,
+  validateListPaginatedApiOptions,
+} from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
 import { FolderService } from "./service/folder";
@@ -19,15 +23,15 @@ class FolderModule {
   protected parentId?: string;
 
   protected defaultListOptions = {
-    shouldDecrypt: true
+    shouldDecrypt: true,
   } as ListOptions;
 
   protected defaultGetOptions = {
-    shouldDecrypt: true
+    shouldDecrypt: true,
   } as GetOptions;
 
   protected defaultCreateOptions = {
-    parentId: undefined
+    parentId: undefined,
   } as any;
 
   constructor(config?: ServiceConfig) {
@@ -40,20 +44,32 @@ class FolderModule {
    * @param  {NodeCreateOptions} [options] parent id, etc.
    * @returns Promise with new folder id & corresponding transaction id
    */
-  public async create(vaultId: string, name: string, options: any = this.defaultCreateOptions): Promise<Folder> {
+  public async create(
+    vaultId: string,
+    name: string,
+    options: any = this.defaultCreateOptions,
+  ): Promise<Folder> {
     await this.service.setVaultContext(vaultId);
 
     await this.service.setName(name);
     this.service.setParentId(options.parentId);
 
-    const folder = await this.service.api.createFolder({ vaultId: vaultId, name: this.service.name, parentId: this.service.parentId });
+    const folder = await this.service.api.createFolder({
+      vaultId: vaultId,
+      name: this.service.name,
+      parentId: this.service.parentId,
+    });
 
     // if (!this.service.api.autoExecute) {
     //   const signature = await this.service.signer.sign(bytes);
     //   await this.service.api.postTransaction(digest, signature);
     // }
 
-    return this.service.processFolder(folder, !this.service.isPublic, this.service.keys);
+    return this.service.processFolder(
+      folder,
+      this.service.encrypted,
+      this.service.keys,
+    );
   }
 
   /**
@@ -65,7 +81,7 @@ class FolderModule {
   public async upload(
     vaultId: string,
     folder: FolderSource,
-    options: FolderUploadOptions = {}
+    options: FolderUploadOptions = {},
   ): Promise<any> {
     if (typeof folder === "string") {
       if (!isServer()) {
@@ -78,15 +94,22 @@ class FolderModule {
         const fullPath = path.join(folder, file);
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
-          const { folderId } = await this.create(vaultId, file, { parentId: options.parentId });
+          const { folderId } = await this.create(vaultId, file, {
+            parentId: options.parentId,
+          });
           logger.info("Created folder: " + file);
           // recursively process the subdirectory
-          await this.upload(vaultId, fullPath, { ...options, parentId: folderId });
+          await this.upload(vaultId, fullPath, {
+            ...options,
+            parentId: folderId,
+          });
         } else {
           // upload file
           const fileModule = new FileModule(this.service);
           //await fileModule.upload(fullPath, options);
-          logger.info("Uploaded file: " + fullPath + " to folder: " + options.parentId);
+          logger.info(
+            "Uploaded file: " + fullPath + " to folder: " + options.parentId,
+          );
         }
       }
     }
@@ -97,11 +120,14 @@ class FolderModule {
    * @param  {string} id
    * @returns Promise with the folder object
    */
-  public async get(id: string, options: GetOptions = this.defaultGetOptions): Promise<Folder> {
+  public async get(
+    id: string,
+    options: GetOptions = this.defaultGetOptions,
+  ): Promise<Folder> {
     const getOptions = {
       ...this.defaultGetOptions,
-      ...options
-    }
+      ...options,
+    };
     const nodeProto = await this.service.api.getFolder(id);
     return this.service.processFolder(nodeProto, getOptions.shouldDecrypt);
   }
@@ -110,43 +136,47 @@ class FolderModule {
    * @param  {ListOptions} options
    * @returns Promise with paginated user folders
    */
-  public async list(options: ListOptions = this.defaultListOptions): Promise<Paginated<Folder>> {
+  public async list(
+    options: ListOptions = this.defaultListOptions,
+  ): Promise<Paginated<Folder>> {
     validateListPaginatedApiOptions(options);
-    if (!options.hasOwnProperty('parentId')) {
-      // if parent id not present default to root - vault id
-      options.parentId = options.vaultId;
-    }
+
     const listOptions = {
       ...this.defaultListOptions,
-      ...options
-    }
+      ...options,
+    };
     const response = await this.service.api.getFolders(listOptions);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
       try {
-        const node = await this.service.processFolder(nodeProto, listOptions.shouldDecrypt);
+        const node = await this.service.processFolder(
+          nodeProto,
+          listOptions.shouldDecrypt,
+        );
         items.push(node);
       } catch (error) {
         errors.push({ id: nodeProto.id, error });
-      };
-    }
+      }
+    };
     await processListItems(response.items, processItem);
     return {
       items,
       nextToken: response.nextToken,
-      errors
-    }
+      errors,
+    };
   }
 
   /**
    * @param  {ListOptions} options
    * @returns Promise with all user folders
    */
-  public async listAll(options: ListOptions = this.defaultListOptions): Promise<Array<Folder>> {
+  public async listAll(
+    options: ListOptions = this.defaultListOptions,
+  ): Promise<Array<Folder>> {
     const list = async (options: ListOptions) => {
       return this.list(options);
-    }
+    };
     return paginate<Folder>(list, options);
   }
 
@@ -158,7 +188,11 @@ class FolderModule {
   public async rename(id: string, name: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
     await this.service.setName(name);
-    return this.service.api.updateFolder({ id: id, name: this.service.name });
+    const folderProto = await this.service.api.updateFolder({
+      id: id,
+      name: this.service.name,
+    });
+    return this.service.processFolder(folderProto, true);
   }
 
   /**
@@ -168,7 +202,11 @@ class FolderModule {
    */
   public async move(id: string, parentId?: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
-    return this.service.api.updateFolder({ id: id, parentId: parentId ? parentId : this.service.vaultId });
+    const folderProto = await this.service.api.updateFolder({
+      id: id,
+      parentId: parentId ? parentId : this.service.vaultId,
+    });
+    return this.service.processFolder(folderProto, true);
   }
 
   /**
@@ -200,14 +238,12 @@ class FolderModule {
   public async deletePermanently(id: string): Promise<void> {
     return this.service.api.deleteFolder(id);
   }
-};
+}
 
-export type FolderSource = string | FileSystemEntry
+export type FolderSource = string | FileSystemEntry;
 
 export type FolderUploadOptions = {
-  parentId?: string,
-}
+  parentId?: string;
+};
 
-export {
-  FolderModule
-}
+export { FolderModule };

@@ -23,7 +23,7 @@ export class File extends Encryptable {
   parentId?: string;
 
   // vault context
-  __public__?: boolean;
+  __encrypted__?: boolean;
 
   constructor(file: any, keys?: Array<EncryptedVaultKeyPair>) {
     super(keys ? keys : file.__keys__);
@@ -45,14 +45,16 @@ export class File extends Encryptable {
     this.vaultId = file.vaultId;
     this.parentId = file.parentId;
     this.tags = file.tags;
-    this.__public__ = file.__public__;
+    this.__encrypted__ = file.__encrypted__;
   }
 }
 
-export type FileUploadOptions = Hooks & FileLocationOptions & FileMetadataOptions
+export type FileUploadOptions = Hooks &
+  FileLocationOptions &
+  FileMetadataOptions;
 
 export type FileDownloadOptions = Hooks & {
-  path?: string,
-  skipSave?: boolean,
-  public?: boolean,
-}
+  path?: string;
+  skipSave?: boolean;
+  encrypted?: boolean;
+};

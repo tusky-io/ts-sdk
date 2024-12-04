@@ -2,31 +2,31 @@ export enum objects {
   VAULT = "Vault",
   MEMBERSHIP = "Membership",
   FILE = "File",
-  FOLDER = "Folder"
-};
+  FOLDER = "Folder",
+}
 
 export enum status {
   ACTIVE = "active",
-  DELETED = "deleted"
-};
+  DELETED = "deleted",
+}
 
 export enum membershipStatus {
   PENDING = "pending",
   ACCEPTED = "accepted",
   REJECTED = "rejected",
-  REVOKED = "revoked"
-};
+  REVOKED = "revoked",
+}
 
 export enum apiKeyStatus {
   ACTIVE = "active",
-  REVOKED = "revoked"
-};
+  REVOKED = "revoked",
+}
 
 export enum role {
   OWNER = "owner",
   CONTRIBUTOR = "contributor",
-  VIEWER = "viewer"
-};
+  VIEWER = "viewer",
+}
 
 export enum actions {
   VAULT_CREATE = "vault:init",
@@ -50,4 +50,4 @@ export enum actions {
   FOLDER_DELETE = "folder:delete",
   FOLDER_RESTORE = "folder:restore",
   FOLDER_UPDATE = "folder:update",
-};
+}

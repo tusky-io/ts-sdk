@@ -1,5 +1,5 @@
 require("dotenv").config();
-import { Akord } from "../index";
+import { Tusky, Env } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
 import { EnokiSigner } from "./enoki/signer";
@@ -7,82 +7,96 @@ import { status } from "../constants";
 import { stopServer } from "./server";
 import { createWriteStream } from "fs";
 import { PNG } from "pngjs";
-import { DEFAULT_STORAGE } from "../auth/jwt";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { logger } from "../logger";
 
-export const TESTING_ENV = "testnet";
+// check if the encrypted flag is present
+export const isEncrypted = global.isEncrypted;
+export const LOG_LEVEL = "error";
+export const ENV_TEST_RUN = (process.env.ENV || "dev") as Env;
 
-export async function initInstance(isPublic = true): Promise<Akord> {
-  let akord: Akord;
+export async function initInstance(encrypted = true): Promise<Tusky> {
+  let tusky: Tusky;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
-    akord = Akord
+    tusky = Tusky
       .withApiKey({ apiKey: process.env.API_KEY })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any })
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .withApi({ env: ENV_TEST_RUN })
   } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
-    akord = Akord
+    tusky = Tusky
       .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
-      .withLogger({ logLevel: "debug", logToFile: true })
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
-      .withApi({ env: process.env.ENV as any })
-
-    DEFAULT_STORAGE.setItem(`akord_testnet_access_token`, tokens.accessToken);
-    DEFAULT_STORAGE.setItem(`akord_testnet_id_token`, tokens.idToken);
-    if (tokens.refreshToken) {
-      DEFAULT_STORAGE.setItem(`akord_testnet_refresh_token`, tokens.refreshToken);
-    }
+      .withApi({ env: ENV_TEST_RUN });
   } else {
     const keypair = new Ed25519Keypair();
-    akord = Akord
+    tusky = Tusky
       .withWallet({ walletSigner: keypair })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any })
-    await akord.signIn();
+      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .withApi({ env: ENV_TEST_RUN })
+    await tusky.signIn();
   }
-  if (!isPublic) {
+  if (encrypted) {
     const password = faker.random.word();
-    await akord.me.setupPassword(password);
-    await akord.withEncrypter({ password: password, keystore: true });
+    await tusky.me.setupPassword(password);
+    await tusky.withEncrypter({ password: password, keystore: true });
   }
-  return akord;
+  return tusky;
 }
 
-export async function setupVault(isPublic = false): Promise<string> {
-  const akord = await initInstance(isPublic);
-  const vault = await vaultCreate(akord, isPublic);
+export async function setupVault(isEncrypted = true): Promise<string> {
+  const tusky = await initInstance(isEncrypted);
+  const vault = await vaultCreate(tusky, isEncrypted);
   return vault.id;
 }
 
-export async function cleanup(akord?: Akord, vaultId?: string): Promise<void> {
+export async function cleanup(tusky?: Tusky, vaultId?: string): Promise<void> {
   jest.clearAllTimers();
   stopServer();
-  if (akord && vaultId) {
-    await akord.vault.deletePermanently(vaultId);
+  logger.debug("Post test cleanup");
+  if (tusky && vaultId) {
+    try {
+      const files = await tusky.file.listAll({ vaultId: vaultId });
+      for (const file of files) {
+        if (file.status !== status.DELETED) {
+          await tusky.file.delete(file.id);
+        }
+        await tusky.file.deletePermanently(file.id);
+      }
+      const folders = await tusky.folder.listAll({ vaultId: vaultId });
+      for (const folder of folders) {
+        if (folder.status !== status.DELETED) {
+          await tusky.folder.delete(folder.id);
+        }
+        await tusky.folder.deletePermanently(folder.id);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+      await tusky.vault.delete(vaultId);
+    } catch (error) {
+      console.log("Post test cleanup failed");
+      console.log(error);
+    }
   }
 }
 
-export const vaultCreate = async (akord: Akord, isPublic: boolean = false) => {
+export const vaultCreate = async (tusky: Tusky, encrypted: boolean = true) => {
   const name = faker.random.words();
-  const { id } = await akord.vault.create(name, { public: isPublic });
+  const { id } = await tusky.vault.create(name, { encrypted: encrypted });
 
-  // const membership = await akord.membership.get(membershipId);
-  // expect(membership.status).toEqual("ACCEPTED");
-  // expect(membership.role).toEqual("OWNER");
-
-  const vault = await akord.vault.get(id);
+  const vault = await tusky.vault.get(id);
   expect(vault.status).toEqual(status.ACTIVE);
   expect(vault.name).toEqual(name);
   return vault;
 }
 
-export const folderCreate = async (akord: Akord, vaultId: string, parentId?: string) => {
+export const folderCreate = async (tusky: Tusky, vaultId: string, parentId?: string) => {
   const name = faker.random.words();
-  const { id } = await akord.folder.create(vaultId, name, { parentId: parentId });
+  const { id } = await tusky.folder.create(vaultId, name, { parentId: parentId });
 
-  const folder = await akord.folder.get(id);
+  const folder = await tusky.folder.get(id);
   expect(folder.status).toEqual(status.ACTIVE);
   if (parentId) {
     expect(folder.parentId).toEqual(parentId);
@@ -90,7 +104,7 @@ export const folderCreate = async (akord: Akord, vaultId: string, parentId?: str
     expect(folder.parentId).toEqual(vaultId);
   }
   expect(folder.name).toEqual(name);
-  return id;
+  return folder;
 }
 
 export const generateAndSavePixelFile = async (fileSizeMB: number, filePath: string) => {

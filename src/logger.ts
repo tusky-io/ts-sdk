@@ -2,7 +2,7 @@ import { LoggerConfig } from "./config";
 import { importDynamic } from "./util/import";
 import { isServer } from "./util/platform";
 
-const LOG_FILE = 'akord.log';
+const LOG_FILE = "tusky.log";
 
 export interface Logger {
   info(message: any, ...params: any[]): void;
@@ -11,14 +11,14 @@ export interface Logger {
   debug(message: any, ...params: any[]): void;
 }
 
-export type LogLevel = 'none' | 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = "none" | "debug" | "info" | "warn" | "error";
 
 enum LogLevelNumber {
-  DEBUG = 1,   // debugging level
-  INFO = 2,    // informational level
-  WARN = 3,    // warning level
-  ERROR = 4,   // error level
-  NONE = 5,    // no logging
+  DEBUG = 1, // debugging level
+  INFO = 2, // informational level
+  WARN = 3, // warning level
+  ERROR = 4, // error level
+  NONE = 5, // no logging
 }
 
 export class ConsoleLogger implements Logger {
@@ -26,15 +26,17 @@ export class ConsoleLogger implements Logger {
   private _logToFile: boolean;
 
   private static logLevelMap: { [key in LogLevel]: LogLevelNumber } = {
-    "none": LogLevelNumber.NONE,
-    "debug": LogLevelNumber.DEBUG,
-    "info": LogLevelNumber.INFO,
-    "warn": LogLevelNumber.WARN,
-    "error": LogLevelNumber.ERROR
+    none: LogLevelNumber.NONE,
+    debug: LogLevelNumber.DEBUG,
+    info: LogLevelNumber.INFO,
+    warn: LogLevelNumber.WARN,
+    error: LogLevelNumber.ERROR,
   };
 
   constructor(config: LoggerConfig) {
-    this.currentLogLevel = ConsoleLogger.logLevelMap[config?.logLevel?.toLowerCase()] ?? LogLevelNumber.NONE;
+    this.currentLogLevel =
+      ConsoleLogger.logLevelMap[config?.logLevel?.toLowerCase()] ??
+      LogLevelNumber.NONE;
     this._logToFile = config.logToFile;
   }
 
@@ -55,7 +57,7 @@ export class ConsoleLogger implements Logger {
 
   info(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.INFO)) {
-      console.info(`[INFO] ${message}`, ...params);
+      console.info(`[INFO] ${stringify(message)}`, ...params);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -64,8 +66,7 @@ export class ConsoleLogger implements Logger {
 
   warn(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.WARN)) {
-      console.warn(`[WARN] ${message}`, ...params);
-      console.debug(message);
+      console.warn(`[WARN] ${stringify(message)}`, ...params);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -75,7 +76,6 @@ export class ConsoleLogger implements Logger {
   error(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.ERROR)) {
       console.error(`[ERROR] ${message}`, ...params);
-      console.debug(message);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
@@ -84,13 +84,18 @@ export class ConsoleLogger implements Logger {
 
   debug(message: any, ...params: any[]): void {
     if (this.shouldLog(LogLevelNumber.DEBUG)) {
-      console.debug(`[DEBUG] ${message}`, ...params);
-      console.debug(message);
+      console.debug(`[DEBUG] ${stringify(message)}`, ...params);
       if (this.shouldLogToFile()) {
         this.logToFile(message);
       }
     }
   }
+}
+
+function stringify(message: any) {
+  return message && typeof message === "object"
+    ? JSON.stringify(message)
+    : message;
 }
 
 let logger: Logger = new ConsoleLogger({ logLevel: "none" });

@@ -1,15 +1,28 @@
-import { membershipStatus, role, status } from "../constants";
+import { membershipStatus, role } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
-import { ListOptions, VaultGetOptions, validateListPaginatedApiOptions } from "../types/query-options";
+import {
+  ListOptions,
+  VaultGetOptions,
+  validateListPaginatedApiOptions,
+} from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
 import { MembershipService } from "./service/membership";
 import { VaultService } from "./service/vault";
 import { ServiceConfig } from ".";
 import { arrayToBase64, generateKeyPair, jsonToBase64 } from "../crypto";
-import { EncryptedVaultKeyPair, Membership, MembershipAirdropOptions, OwnerAccess, RoleType, VaultUpdateOptions } from "../types";
+import {
+  EncryptedVaultKeyPair,
+  Membership,
+  MembershipAirdropOptions,
+  OwnerAccess,
+  RoleType,
+  VaultUpdateOptions,
+} from "../types";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
+import * as pwd from "micro-key-producer/password.js";
+import { randomBytes } from "@noble/hashes/utils";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -26,11 +39,11 @@ class VaultModule {
 
   protected defaultGetOptions = {
     shouldDecrypt: true,
-    deep: false
+    deep: false,
   } as VaultGetOptions;
 
   protected defaultCreateOptions = {
-    public: false,
+    encrypted: true,
     description: undefined,
   } as VaultCreateOptions;
 
@@ -38,52 +51,67 @@ class VaultModule {
    * @param  {string} vaultId
    * @returns Promise with the decrypted vault
    */
-  public async get(vaultId: string, options: VaultGetOptions = this.defaultGetOptions): Promise<Vault> {
+  public async get(
+    vaultId: string,
+    options: VaultGetOptions = this.defaultGetOptions,
+  ): Promise<Vault> {
     const getOptions = {
       ...this.defaultGetOptions,
-      ...options
-    }
+      ...options,
+    };
     const result = await this.service.api.getVault(vaultId, getOptions);
-    return this.service.processVault(result, !result.public && getOptions.shouldDecrypt, result.__keys__);
+    return this.service.processVault(
+      result,
+      result.encrypted && getOptions.shouldDecrypt,
+      result.__keys__,
+    );
   }
 
   /**
    * @param  {ListOptions} options
    * @returns Promise with paginated user vaults
    */
-  public async list(options: ListOptions = this.defaultListOptions): Promise<Paginated<Vault>> {
+  public async list(
+    options: ListOptions = this.defaultListOptions,
+  ): Promise<Paginated<Vault>> {
     validateListPaginatedApiOptions(options);
     const listOptions = {
       ...this.defaultListOptions,
-      ...options
-    }
+      ...options,
+    };
     const response = await this.service.api.getVaults(listOptions);
     const items = [];
     const errors = [];
     const processVault = async (vaultProto: Vault) => {
       try {
-        const node = await this.service.processVault(vaultProto, listOptions.shouldDecrypt, vaultProto.keys);
+        const node = await this.service.processVault(
+          vaultProto,
+          listOptions.shouldDecrypt,
+          vaultProto.keys,
+        );
         items.push(node);
       } catch (error) {
         errors.push({ id: vaultProto.id, error });
-      };
-    }
+      }
+    };
     await processListItems(response.items, processVault);
     return {
       items,
       nextToken: response.nextToken,
-      errors
-    }
+      errors,
+    };
   }
 
   /**
    * @param  {ListOptions} options
    * @returns Promise with currently authenticated user vaults
    */
-  public async listAll(options: ListOptions = this.defaultListOptions): Promise<Array<Vault>> {
+  public async listAll(
+    options: ListOptions = this.defaultListOptions,
+  ): Promise<Array<Vault>> {
     const list = async (listOptions: ListOptions) => {
       return this.list(listOptions);
-    }
+    };
     return paginate<Vault>(list, options);
   }
 
@@ -92,29 +120,38 @@ class VaultModule {
    * @param  {VaultCreateOptions} options public/private, description, tags, etc.
    * @returns Promise with newly created vault
    */
-  public async create(name: string, options: VaultCreateOptions = this.defaultCreateOptions): Promise<Vault> {
+  public async create(
+    name: string,
+    options: VaultCreateOptions = this.defaultCreateOptions,
+  ): Promise<Vault> {
     const createOptions = {
       ...this.defaultCreateOptions,
-      ...options
-    }
+      ...options,
+    };
 
-    this.service.setIsPublic(createOptions.public);
+    this.service.setEncrypted(createOptions.encrypted);
 
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
 
-    if (!this.service.isPublic) {
+    if (this.service.encrypted) {
       const vaultKeyPair = await generateKeyPair();
-      this.service.setDecryptedKeys([{
-        publicKey: vaultKeyPair.publicKey,
-        privateKey: vaultKeyPair.privateKey
-      }]);
+      this.service.setDecryptedKeys([
+        {
+          publicKey: vaultKeyPair.publicKey,
+          privateKey: vaultKeyPair.privateKey,
+        },
+      ]);
       // encrypt vault private key to user public key
-      const encryptedVaultPrivateKey = await this.service.encrypter.encrypt(vaultKeyPair.privateKey)
-      const keys = [{
-        publicKey: arrayToBase64(vaultKeyPair.publicKey),
-        encPrivateKey: encryptedVaultPrivateKey
-      }];
+      const encryptedVaultPrivateKey = await this.service.encrypter.encrypt(
+        vaultKeyPair.privateKey,
+      );
+      const keys = [
+        {
+          publicKey: arrayToBase64(vaultKeyPair.publicKey),
+          encPrivateKey: encryptedVaultPrivateKey,
+        },
+      ];
       this.service.setKeys(keys);
     }
 
@@ -126,9 +163,9 @@ class VaultModule {
     const vault = await this.service.api.createVault({
       name: this.service.name,
       description: this.service.description,
-      public: this.service.isPublic,
+      encrypted: this.service.encrypted,
       tags: createOptions.tags,
-      keys: this.service.keys
+      keys: this.service.keys,
     });
 
     // if (!this.service.api.autoExecute) {
@@ -147,7 +184,10 @@ class VaultModule {
     await this.service.setVaultContext(id);
     await this.service.setName(name);
 
-    const vault = await this.service.api.updateVault({ id: id, name: this.service.name });
+    const vault = await this.service.api.updateVault({
+      id: id,
+      name: this.service.name,
+    });
     return this.service.processVault(vault, true, this.service.keys);
   }
 
@@ -178,34 +218,12 @@ class VaultModule {
   }
 
   /**
-   * The vault will be moved to the trash. All vault data will be permanently deleted within 30 days.
-   * To undo this action, call vault.restore() within the 30-day period.
+   * Delete the vault
+   * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
    * @param id vault id
-   * @returns Promise with the updated vault
-   */
-  public async delete(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.DELETED });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * Restores the vault from the trash, recovering all vault data.
-   * This action must be performed within 30 days of the vault being moved to the trash to prevent permanent deletion.
-   * @param  {string} id
-   * @returns Promise with the updated vault
-   */
-  public async restore(id: string): Promise<Vault> {
-    const vault = await this.service.api.updateVault({ id: id, status: status.ACTIVE });
-    return this.service.processVault(vault, true, this.service.keys);
-  }
-
-  /**
-   * The vault and all its contents will be permanently deleted.
-   * This action is irrevocable and can only be performed if the vault is already in trash.
-   * @param  {string} id vault id
    * @returns {Promise<void>}
    */
-  public async deletePermanently(id: string): Promise<void> {
+  public async delete(id: string): Promise<void> {
     return this.service.api.deleteVault(id);
   }
 
@@ -215,9 +233,16 @@ class VaultModule {
    * @param  {MembershipAirdropOptions} options airdrop options
    * @returns Promise with new membership
    */
-  public async airdropAccess(vaultId: string, options: MembershipAirdropOptions = {
-    role: DEFAULT_AIRDROP_ACCESS_ROLE
-  }): Promise<{ identityPrivateKey: string, password: string, membership: Membership }> {
+  public async airdropAccess(
+    vaultId: string,
+    options: MembershipAirdropOptions = {
+      role: DEFAULT_AIRDROP_ACCESS_ROLE,
+    },
+  ): Promise<{
+    identityPrivateKey: string;
+    password: string;
+    membership: Membership;
+  }> {
     await this.service.setVaultContext(vaultId);
 
     const memberService = new MembershipService(this.service);
@@ -230,24 +255,29 @@ class VaultModule {
     let userEncPrivateKey: string;
     let password: string;
     let ownerAccessJson = {
-      identityPrivateKey: memberKeyPair.getSecretKey()
+      identityPrivateKey: memberKeyPair.getSecretKey(),
     } as OwnerAccess;
     let ownerAccess: string;
 
-    if (!this.service.isPublic) {
+    if (this.service.encrypted) {
       if (options.password) {
         password = options.password;
       } else {
         // generate password & add it for owner access
-        password = generateRandomPassword(16);
+        password = generateRandomPassword();
         ownerAccessJson.password = password;
       }
       // encrypt owner access
-      ownerAccess = await this.service.encrypter.encrypt(jsonToBase64(ownerAccessJson));
+      ownerAccess = await this.service.encrypter.encrypt(
+        jsonToBase64(ownerAccessJson),
+      );
 
-      const { encPrivateKey, keyPair } = await new UserEncryption().setupPassword(password, false);
+      const { encPrivateKey, keyPair } =
+        await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
-      keys = await memberService.prepareMemberKeys(arrayToBase64(keyPair.publicKey));
+      keys = await memberService.prepareMemberKeys(
+        arrayToBase64(keyPair.publicKey),
+      );
     } else {
       ownerAccess = jsonToBase64(ownerAccessJson);
     }
@@ -262,16 +292,18 @@ class VaultModule {
       role: options.role || DEFAULT_AIRDROP_ACCESS_ROLE,
       keys: keys,
       encPrivateKey: userEncPrivateKey,
-      ownerAccess: ownerAccess
+      ownerAccess: ownerAccess,
     });
 
     return {
       identityPrivateKey: memberKeyPair.getSecretKey(),
       password: password,
-      membership: await memberService.processMembership(membership, this.service.vault.owner === this.service.address)
-    }
+      membership: await memberService.processMembership(
+        membership,
+        this.service.vault.owner === this.service.address,
+      ),
+    };
   }
-
 
   /**
    * Revoke member access
@@ -319,33 +351,34 @@ class VaultModule {
   public async changeAccess(id: string, role: RoleType): Promise<Membership> {
     const membership = await this.service.api.updateMembership({
       id: id,
-      role: role
+      role: role,
     });
     return new Membership(membership);
   }
 
   /**
-  * Retrieve all vault members
-  * @param  {string} vaultId
-  * @returns Promise with members array
-  */
+   * Retrieve all vault members
+   * @param  {string} vaultId
+   * @returns Promise with members array
+   */
   public async members(vaultId: string): Promise<Array<Membership>> {
-    const memberships = await this.service.api.getMembers(vaultId) as any;
+    const memberships = (await this.service.api.getMembers(vaultId)) as any;
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
-    return Promise.all(memberships.items?.map(async (member: Membership) => memberService.processMembership(member, this.service.vault.owner === this.service.address)));
+    return Promise.all(
+      memberships.items?.map(async (member: Membership) =>
+        memberService.processMembership(
+          member,
+          this.service.vault.owner === this.service.address,
+        ),
+      ),
+    );
   }
-};
-
-function generateRandomPassword(length: number) {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
-  const password = Array.from(crypto.getRandomValues(new Uint8Array(length)))
-    .map(value => charset[value % charset.length])
-    .join('');
-
-  return password;
 }
 
-export {
-  VaultModule
+function generateRandomPassword() {
+  const seed = randomBytes(32);
+  return pwd.secureMask.apply(seed).password;
 }
+
+export { VaultModule };

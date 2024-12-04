@@ -22,7 +22,7 @@ class MeModule {
 
   /**
    * Update currently authenticated user
-   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://akord.com/terms-of-service-consumer
+   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
    */
   public async update(input: UserMutable): Promise<User> {
     return await this.service.api.updateMe(input);
@@ -36,7 +36,10 @@ class MeModule {
     if (me.encPrivateKey) {
       throw new BadRequest("User encryption context is already setup");
     }
-    const { encPrivateKey } = await this.userEncryption.setupPassword(password, true);
+    const { encPrivateKey } = await this.userEncryption.setupPassword(
+      password,
+      true,
+    );
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }
 
@@ -45,13 +48,22 @@ class MeModule {
    * Decrypt user private key with the old password
    * Encrypt user private key with the new password
    */
-  public async changePassword(oldPassword: string, newPassword: string): Promise<User> {
+  public async changePassword(
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<User> {
     const me = await this.get();
     if (!me.encPrivateKey) {
-      throw new BadRequest("Missing user encryption context, setup the user password first.");
+      throw new BadRequest(
+        "Missing user encryption context, setup the user password first.",
+      );
     }
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
-    const { encPrivateKey } = await this.userEncryption.changePassword(oldPassword, newPassword, true);
+    const { encPrivateKey } = await this.userEncryption.changePassword(
+      oldPassword,
+      newPassword,
+      true,
+    );
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }
 
@@ -59,15 +71,22 @@ class MeModule {
    * Backup user password
    * Generate fresh backup phrase & use it as a backup
    */
-  public async backupPassword(password: string): Promise<{ backupPhrase: string }> {
+  public async backupPassword(
+    password: string,
+  ): Promise<{ backupPhrase: string; user: User }> {
     const me = await this.get();
     if (!me.encPrivateKey) {
-      throw new BadRequest("Missing user encryption context, setup the user password first.");
+      throw new BadRequest(
+        "Missing user encryption context, setup the user password first.",
+      );
     }
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
-    const { backupPhrase, encPrivateKeyBackup } = await this.userEncryption.backupPassword(password);
-    await this.service.api.updateMe({ encPrivateKeyBackup: encPrivateKeyBackup });
-    return { backupPhrase };
+    const { backupPhrase, encPrivateKeyBackup } =
+      await this.userEncryption.backupPassword(password);
+    const user = await this.service.api.updateMe({
+      encPrivateKeyBackup: encPrivateKeyBackup,
+    });
+    return { user, backupPhrase };
   }
 
   /**
@@ -75,13 +94,19 @@ class MeModule {
    * Recover user private key using the backup phrase
    * Encrypt user private key with the new password
    */
-  public async resetPassword(backupPhrase: string, newPassword: string): Promise<User> {
+  public async resetPassword(
+    backupPhrase: string,
+    newPassword: string,
+  ): Promise<User> {
     const me = await this.get();
     if (!me.encPrivateKeyBackup) {
       throw new BadRequest("Missing user backup.");
     }
     this.userEncryption.setEncryptedPrivateKeyBackup(me.encPrivateKeyBackup);
-    const { encPrivateKey } = await this.userEncryption.resetPassword(backupPhrase, newPassword);
+    const { encPrivateKey } = await this.userEncryption.resetPassword(
+      backupPhrase,
+      newPassword,
+    );
     return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
   }
 
@@ -89,11 +114,10 @@ class MeModule {
    * Check whether the user has ongoing encryption session
    */
   public async hasEncryptionSession(): Promise<boolean> {
-    const hasEncryptionSession = await this.userEncryption.hasEncryptionSession();
+    const hasEncryptionSession =
+      await this.userEncryption.hasEncryptionSession();
     return hasEncryptionSession ? true : false;
   }
 }
 
-export {
-  MeModule
-}
+export { MeModule };

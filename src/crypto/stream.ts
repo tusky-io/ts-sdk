@@ -1,8 +1,8 @@
 import { ReadableStream, TransformStream } from "web-streams-polyfill/ponyfill";
-import { IV_LENGTH_IN_BYTES } from './lib';
-import { logger } from '../logger';
+import { decryptAes, IV_LENGTH_IN_BYTES } from "./lib";
+import { logger } from "../logger";
 
-const MODE_DECRYPT = 'decrypt';
+const MODE_DECRYPT = "decrypt";
 
 export class DecryptStreamController {
   private key: CryptoKey;
@@ -11,7 +11,12 @@ export class DecryptStreamController {
   private file?: any;
   private files?: Map<any, any>;
 
-  constructor(key: CryptoKey, index: number = 0, id?: string, files?: Map<any, any>) {
+  constructor(
+    key: CryptoKey,
+    index: number = 0,
+    id?: string,
+    files?: Map<any, any>,
+  ) {
     this.key = key;
     this.index = index;
     this.files = files;
@@ -25,7 +30,10 @@ export class DecryptStreamController {
     const ciphertextBytes = chunk.slice(IV_LENGTH_IN_BYTES);
 
     try {
-      const cleartext = await getCleartext(this.key, ivBytes, ciphertextBytes);
+      const cleartext = await decryptAes(
+        { iv: ivBytes, ciphertext: ciphertextBytes },
+        this.key,
+      );
       controller.enqueue(new Uint8Array(cleartext));
       if (this.file) {
         this.file.progress += cleartext.byteLength;
@@ -102,12 +110,14 @@ export class StreamSlicer {
 export function transformStream(
   readable: ReadableStream<Uint8Array>,
   transformer: Transformer<Uint8Array, Uint8Array>,
-  oncancel?: (reason: any) => void
+  oncancel?: (reason: any) => void,
 ): ReadableStream<Uint8Array> {
   try {
     return readable.pipeThrough(new TransformStream(transformer));
   } catch (e) {
-    const reader = readable.getReader ? readable.getReader() : readable as any;
+    const reader = readable.getReader
+      ? readable.getReader()
+      : (readable as any);
 
     return new ReadableStream({
       start(controller) {
@@ -121,7 +131,7 @@ export function transformStream(
           enqueue(d: Uint8Array) {
             enqueued = true;
             controller.enqueue(d);
-          }
+          },
         } as any;
         while (!enqueued) {
           const data = await reader.read();
@@ -139,27 +149,7 @@ export function transformStream(
         if (oncancel) {
           oncancel(reason);
         }
-      }
+      },
     });
   }
-}
-
-async function getCleartext(key: CryptoKey, ivBytes: Uint8Array, bytes: Uint8Array): Promise<ArrayBuffer> {
-  try {
-    return await crypto.subtle.decrypt(
-      {
-        name: 'AES-GCM',
-        iv: ivBytes
-      },
-      key,
-      bytes,
-    );
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-function toByteArray(b64: string): Uint8Array {
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }

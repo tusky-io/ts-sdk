@@ -1,3 +1,5 @@
 import { FileLocationOptions, FileMetadataOptions, Hooks } from "../core/file";
 
-export type ZipUploadOptions = Hooks & FileLocationOptions & FileMetadataOptions
+export type ZipUploadOptions = Hooks &
+  FileLocationOptions &
+  FileMetadataOptions;

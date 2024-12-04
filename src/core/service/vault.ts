@@ -4,7 +4,6 @@ import { EncryptedVaultKeyPair, Vault } from "../../types";
 import { objects } from "../../constants";
 
 class VaultService extends Service {
-
   name: string;
   description: string;
 
@@ -27,9 +26,13 @@ class VaultService extends Service {
     this.setObject(this.vault);
   }
 
-  async processVault(object: Vault, shouldDecrypt: boolean, keys?: EncryptedVaultKeyPair[]): Promise<Vault> {
+  async processVault(
+    object: Vault,
+    shouldDecrypt: boolean,
+    keys?: EncryptedVaultKeyPair[],
+  ): Promise<Vault> {
     const vault = new Vault(object, keys);
-    if (shouldDecrypt && !vault.public) {
+    if (shouldDecrypt && vault.encrypted) {
       try {
         await vault.decrypt(this.encrypter);
       } catch (error) {
@@ -40,6 +43,4 @@ class VaultService extends Service {
   }
 }
 
-export {
-  VaultService
-}
+export { VaultService };
