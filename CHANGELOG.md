@@ -1,3 +1,49 @@
+# [0.24.0](https://github.com/Akord-com/carmella-sdk/compare/v0.23.1...v0.24.0) (2024-12-04)
+
+
+### Bug Fixes
+
+* default to dev for tests ([c7b1f7d](https://github.com/Akord-com/carmella-sdk/commit/c7b1f7d764405b177d38c2849a845bbd67ead07d))
+* encrypt/decrypt streamed chunks ([e730913](https://github.com/Akord-com/carmella-sdk/commit/e73091379320fde0adaab0732ce1417b52536ead))
+* error log message ([d8f79b1](https://github.com/Akord-com/carmella-sdk/commit/d8f79b1cbb6a5319ed79068a7e401fec1b9ec288))
+* micro-key-producer import ([4d84940](https://github.com/Akord-com/carmella-sdk/commit/4d8494008f5c3b561fd073abb3443011dffecdf8))
+* post merge & refactor issues with crypto lib ([9c1da97](https://github.com/Akord-com/carmella-sdk/commit/9c1da97310e03ee51cef5debdb0d1355fb8716d8))
+* safe key export ([ada6e3a](https://github.com/Akord-com/carmella-sdk/commit/ada6e3aae2706953abea724ca2ac3c98767cd31d))
+* set env priority on input config ([16a492e](https://github.com/Akord-com/carmella-sdk/commit/16a492e784a77bf1a7491b0748b7f06a9d57234f))
+* storage config in akord instance ([5b84048](https://github.com/Akord-com/carmella-sdk/commit/5b8404856b654741e0f190ae495d561c0da22b47))
+* use encrypted flag instead of public ([59566a5](https://github.com/Akord-com/carmella-sdk/commit/59566a568bacfd78db46cafae702bb1347bdda08))
+* use extractable aes key ([a9b6698](https://github.com/Akord-com/carmella-sdk/commit/a9b6698c3aeb3366d6629277d1feb4ad61708388))
+* vault deletion ([73352ab](https://github.com/Akord-com/carmella-sdk/commit/73352ab61bc7a5b962045daa1f2742f56f13269c))
+* worker aes key ([a085bc7](https://github.com/Akord-com/carmella-sdk/commit/a085bc7fd1a450b6f3fe491014fba73f5a23945c))
+* yarn registry ([a42d2e4](https://github.com/Akord-com/carmella-sdk/commit/a42d2e416948df8afa9c7ef4d2c6436887a30359))
+
+
+### Features
+
+* /payments -> /subscriptions ([a7042df](https://github.com/Akord-com/carmella-sdk/commit/a7042df9d75983fc56bf3ee1fc9f80238dde439c))
+* add trash tests & fix api calls ([da3abb6](https://github.com/Akord-com/carmella-sdk/commit/da3abb60196dbaa3fe3954919a7befcb0d07353a))
+* encryption cleanup ([5711dd3](https://github.com/Akord-com/carmella-sdk/commit/5711dd33103ec0a4cba3fea99d716b5f498f9f7c))
+* generate 24-word mnemonic & derive 256-bit AES key from it for user backup ([cb94a1a](https://github.com/Akord-com/carmella-sdk/commit/cb94a1a9bf00180b5d4b3acfde52d14712c76a46))
+* list by vault id by default, and use parentId to list root level in vault ([1cedda9](https://github.com/Akord-com/carmella-sdk/commit/1cedda9b1da7921ebd08f68d6cd212566931fff8))
+* more crypto cleanup ([7cf9f2e](https://github.com/Akord-com/carmella-sdk/commit/7cf9f2e6c29aefe75f45947d26efa5e52ded442f))
+* move crypto logic to lib ([59d7bcd](https://github.com/Akord-com/carmella-sdk/commit/59d7bcd7aea8a1894586d1da0c0f9b7f5ec9130f))
+* **payment:** set 1 as default quantity ([1b15375](https://github.com/Akord-com/carmella-sdk/commit/1b15375a1fcc663ec9e06b5c88d491ef6870311c))
+* private/public vault tests ([a8b9b18](https://github.com/Akord-com/carmella-sdk/commit/a8b9b182706e9209b8e6458e3df3ef7d3e2d1025))
+* refactor vault encryption ([9a72d4c](https://github.com/Akord-com/carmella-sdk/commit/9a72d4c78489cf8c9e7c8269dce2ba981b540779))
+* remove batch module ([7d40f76](https://github.com/Akord-com/carmella-sdk/commit/7d40f76b71a5bb5745bfbb985b293638dcdb6810))
+* rename akord to tusky ([fbe9317](https://github.com/Akord-com/carmella-sdk/commit/fbe9317c48855029381434a8e6f21471169e88f9))
+* run SDK test on pull request ([d8f15b6](https://github.com/Akord-com/carmella-sdk/commit/d8f15b645dc3929dfa601624d95af9f0c852a3de))
+* set custom SDK headers - SDK-Version & Client-Name ([c6289d5](https://github.com/Akord-com/carmella-sdk/commit/c6289d5ff3ca993496c392af7b76546d0f7cc2d4))
+* set default user agent ([185f106](https://github.com/Akord-com/carmella-sdk/commit/185f1066a6260557a86c123ad51e0dc7253f4fce))
+* support experimental releases ([5174b7d](https://github.com/Akord-com/carmella-sdk/commit/5174b7d66446231d79a9e8936ee60a2a75d56cdc))
+* **upload:** pass onprogress when cloning xhr object ([24c1a0c](https://github.com/Akord-com/carmella-sdk/commit/24c1a0c94544ac006e86d7a98cb7da979ebf9905))
+* use encrypted flag instead of public ([2502799](https://github.com/Akord-com/carmella-sdk/commit/2502799f224e1707327507f8b2f5799807933ba3))
+* use micro key producer to generate password for sharing the vault ([1cfd844](https://github.com/Akord-com/carmella-sdk/commit/1cfd84457da641ef87bff2661930df13902e9d10))
+* use prod/dev/local env ([dafa8f8](https://github.com/Akord-com/carmella-sdk/commit/dafa8f88dbed31776dce0a9d473b3622fc28d584))
+* use testnet network for enoki ([2757597](https://github.com/Akord-com/carmella-sdk/commit/2757597726645c86e4aabd33824bffc79f82f595))
+* use tusky auth challenge prefix ([f23687e](https://github.com/Akord-com/carmella-sdk/commit/f23687e2b17a7f9a78ebde8dba0e432f55da5bd7))
+* use tusky:connect as auth challenge prefix ([a9a7b64](https://github.com/Akord-com/carmella-sdk/commit/a9a7b64b3914357f5b6f0666011faa2bb43c273f))
+
 ## [0.23.1](https://github.com/Akord-com/carmella-sdk/compare/v0.23.0...v0.23.1) (2024-11-12)
 
 ### Bug Fixes
