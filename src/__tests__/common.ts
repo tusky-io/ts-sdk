@@ -12,37 +12,44 @@ import { logger } from "../logger";
 
 // check if the encrypted flag is present
 export const isEncrypted = global.isEncrypted;
-export const LOG_LEVEL = "error";
+export const LOG_LEVEL = "debug" //"error";
 export const ENV_TEST_RUN = (process.env.ENV || "dev") as Env;
 
 export async function initInstance(encrypted = true): Promise<Tusky> {
   let tusky: Tusky;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
-    tusky = Tusky
-      .withApiKey({ apiKey: process.env.API_KEY })
-      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
-      .withApi({ env: ENV_TEST_RUN })
+      tusky = await Tusky
+      .init()
+      .useApiKey({ apiKey: process.env.API_KEY })
+      .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .useEnv(ENV_TEST_RUN)
+      .build();
   } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
-    tusky = Tusky
-      .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
-      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
-      .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
-      .withApi({ env: ENV_TEST_RUN });
+
+      tusky = await Tusky
+      .init()
+      .useOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
+      .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .useEnv(ENV_TEST_RUN)
+      .useSigner(new EnokiSigner({ address: address, keypair: keyPair }))
+      .build();
   } else {
     const keypair = new Ed25519Keypair();
-    tusky = Tusky
-      .withWallet({ walletSigner: keypair })
-      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
-      .withApi({ env: ENV_TEST_RUN })
-    await tusky.signIn();
+    tusky = await Tusky
+      .init()
+      .useWallet({ walletSigner: keypair })
+      .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .useEnv(ENV_TEST_RUN)
+      .build();
+    await tusky.auth.signIn();
   }
   if (encrypted) {
     const password = faker.random.word();
     await tusky.me.setupPassword(password);
-    await tusky.withEncrypter({ password: password, keystore: true });
+    await tusky.setEncrypter({ password: password, keystore: true });
   }
   return tusky;
 }

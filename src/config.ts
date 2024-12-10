@@ -10,6 +10,8 @@ export interface ClientConfig {
   env?: Env;
   signer?: Signer;
   encrypter?: Encrypter;
+  logger?: Logger;
+  auth?: Auth;
   logLevel?: LogLevel;
   logToFile?: boolean;
   cache?: boolean;

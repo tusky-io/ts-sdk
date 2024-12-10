@@ -3,6 +3,7 @@ import { User, UserMutable } from "../types/user";
 import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
 import { ClientConfig } from "../config";
+import { X25519KeyPair } from "../crypto";
 
 class MeModule {
   protected service: Service;
@@ -31,16 +32,21 @@ class MeModule {
   /**
    * Setup user password
    */
-  public async setupPassword(password: string): Promise<User> {
+  public async setupPassword(
+    password: string,
+  ): Promise<{ keyPair: X25519KeyPair; user: User }> {
     const me = await this.get();
     if (me.encPrivateKey) {
       throw new BadRequest("User encryption context is already setup");
     }
-    const { encPrivateKey } = await this.userEncryption.setupPassword(
+    const { encPrivateKey, keyPair } = await this.userEncryption.setupPassword(
       password,
       true,
     );
-    return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
+    return {
+      user: await this.service.api.updateMe({ encPrivateKey: encPrivateKey }),
+      keyPair,
+    };
   }
 
   /**
@@ -117,6 +123,40 @@ class MeModule {
     const hasEncryptionSession =
       await this.userEncryption.hasEncryptionSession();
     return hasEncryptionSession ? true : false;
+  }
+
+  /**
+   * Clear encryption session from the client storage
+   */
+  public async clearEncryptionSession(): Promise<void> {
+    await this.userEncryption.clear();
+  }
+
+  /**
+   * Clear encryption session from the client storage
+   */
+  public async importEncryptionSessionFromPassword(
+    password: string,
+  ): Promise<{ keyPair: X25519KeyPair }> {
+    const me = await this.get();
+    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
+    const { keyPair } = await this.userEncryption.importFromPassword(
+      password,
+      true,
+    );
+    return { keyPair };
+  }
+
+  /**
+   * Clear encryption session from the client storage
+   */
+  public async importEncryptionSessionFromKeystore(): Promise<{
+    keyPair: X25519KeyPair;
+  }> {
+    const me = await this.get();
+    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
+    const { keyPair } = await this.userEncryption.importFromKeystore();
+    return { keyPair };
   }
 }
 

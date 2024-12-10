@@ -1,18 +1,7 @@
 import { Api } from "./api/api";
 import { TuskyApi } from "./api/tusky-api";
-import {
-  ApiConfig,
-  ClientConfig,
-  EncrypterConfig,
-  LoggerConfig,
-} from "./config";
-import {
-  ApiKeyConfig,
-  AuthTokenProviderConfig,
-  OAuthConfig,
-  WalletConfig,
-} from "./types/auth";
-import { ConsoleLogger, logger, setLogger } from "./logger";
+import { ClientConfig, EncrypterConfig } from "./config";
+import { logger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
@@ -31,11 +20,11 @@ import { Conflict } from "./errors/conflict";
 import { UserEncryption } from "./crypto/user-encryption";
 import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
+import { TuskyBuilder } from "./tusky-builder";
 
 export class Tusky {
   public api: Api;
   public pubsub: PubSub;
-  public address: string;
   private _signer: Signer;
   private _encrypter: Encrypter;
   private _userEncryption: UserEncryption;
@@ -70,92 +59,38 @@ export class Tusky {
   get payment(): PaymentModule {
     return new PaymentModule(this.getConfig());
   }
-
-  static withOAuth(config: OAuthConfig): Tusky {
-    const instance = new Tusky({ ...config, authType: "OAuth" });
-    return instance;
+  get auth(): Auth {
+    return this._auth;
   }
 
-  static withWallet(config: WalletConfig): Tusky {
-    const instance = new Tusky({ ...config, authType: "Wallet" });
-    return instance;
-  }
-
-  static withApiKey(config: ApiKeyConfig): Tusky {
-    const instance = new Tusky({ ...config, authType: "ApiKey" });
-    return instance;
-  }
-
-  static withAuthTokenProvider(config: AuthTokenProviderConfig): Tusky {
-    const instance = new Tusky({ ...config, authType: "AuthTokenProvider" });
-    return instance;
-  }
-
-  async signIn(): Promise<this> {
-    const { address } = await this._auth.signIn();
-    this.setCurrentSession(address);
-    return this;
+  static init(): TuskyBuilder {
+    return new TuskyBuilder();
   }
 
   async signOut(): Promise<this> {
-    await this._userEncryption.clear();
+    await this.me.clearEncryptionSession();
     this._auth.signOut();
-    this.setAddress(undefined);
     return this;
   }
 
-  async initOAuthFlow(): Promise<this> {
-    await this._auth.initOAuthFlow();
-    return this;
-  }
-
-  async handleOAuthCallback(): Promise<this> {
-    const { address } = await this._auth.handleOAuthCallback();
-    this.setCurrentSession(address);
-    return this;
-  }
-
-  withLogger(config: LoggerConfig): this {
-    const logger = config.logger ? config.logger : new ConsoleLogger(config);
-    setLogger(logger);
-    return this;
-  }
-
-  withStorage(storage: Storage): this {
-    this._storage = storage;
-    if (this._auth) {
-      this._auth.setStorage(storage);
+  async setEncrypter(config: EncrypterConfig): Promise<this> {
+    if (!config) {
+      return;
     }
-    return this;
-  }
-
-  withSigner(signer: Signer): this {
-    this._signer = signer;
-    return this;
-  }
-
-  async withEncrypter(config: EncrypterConfig): Promise<this> {
     if (config.encrypter) {
       this._encrypter = config.encrypter;
     } else if (config.password) {
       const user = await this.me.get();
       if (!user.encPrivateKey) {
         logger.info("Generate new user encryption context");
-        const { encPrivateKey, keyPair } =
-          await this._userEncryption.setupPassword(
-            config.password,
-            config.keystore,
-          );
-        await this.me.update({ encPrivateKey: encPrivateKey });
+        const { keyPair } = await this.me.setupPassword(config.password);
         this._encrypter = new Encrypter({ keypair: keyPair });
       } else {
         logger.info(
           "Retrieve and decrypt existing user encryption content with password",
         );
-        this._userEncryption.setEncryptedPrivateKey(user.encPrivateKey);
-        const { keyPair } = await this._userEncryption.importFromPassword(
+        const { keyPair } = await this.me.importEncryptionSessionFromPassword(
           config.password,
-          config.keystore,
         );
         this._encrypter = new Encrypter({ keypair: keyPair });
       }
@@ -170,23 +105,13 @@ export class Tusky {
         logger.info(
           "Retrieve and decrypt existing user encryption content from keystore",
         );
-        this._userEncryption.setEncryptedPrivateKey(user.encPrivateKey);
-        const { keyPair } = await this._userEncryption.importFromKeystore();
+        const { keyPair } = await this.me.importEncryptionSessionFromKeystore();
         this._encrypter = new Encrypter({ keypair: keyPair });
       } catch (error) {
         logger.error(error);
         throw new Conflict("The user needs to provide the password again.");
       }
     }
-    return this;
-  }
-
-  withApi(config: ApiConfig): this {
-    this.api = config.api
-      ? config.api
-      : new TuskyApi({ ...config, auth: this._auth });
-    this._env = config.env;
-    this._auth.setEnv(this._env);
     return this;
   }
 
@@ -203,15 +128,6 @@ export class Tusky {
     };
   }
 
-  private setAddress(address: string) {
-    this.address = address;
-  }
-
-  private setCurrentSession(address?: string) {
-    this.setAddress(address || this._auth.getAddress());
-    this._userEncryption = new UserEncryption(this.getConfig());
-  }
-
   /**
    * @param  {ClientConfig} config
    */
@@ -220,10 +136,11 @@ export class Tusky {
     this._encrypter = config.encrypter;
     this._env = { ...this.getConfig(), ...config }.env || DEFAULT_ENV;
     this._storage = config.storage || defaultStorage();
-    this._auth = new Auth({ ...config, ...this.getConfig() });
+    this._auth = config.auth
+      ? config.auth
+      : new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());
     this.pubsub = new PubSub({ env: this._env });
-    this.setCurrentSession();
     CacheBusters.cache = config?.cache;
   }
 }
