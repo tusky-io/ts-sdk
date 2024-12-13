@@ -17,7 +17,6 @@ import { Encrypter } from "./crypto/encrypter";
 import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
-import { UserEncryption } from "./crypto/user-encryption";
 import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
@@ -27,7 +26,6 @@ export class Tusky {
   public pubsub: PubSub;
   private _signer: Signer;
   private _encrypter: Encrypter;
-  private _userEncryption: UserEncryption;
   private _env: Env;
   private _storage: Storage;
   private _auth: Auth;

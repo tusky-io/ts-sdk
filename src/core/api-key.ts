@@ -12,6 +12,7 @@ class ApiKeyModule {
 
   /**
    * List all user api keys
+   * @returns {Promise<Array<ApiKey>>}
    */
   public async listAll(): Promise<Array<ApiKey>> {
     const list = async () => {
@@ -23,6 +24,7 @@ class ApiKeyModule {
 
   /**
    * List paginated user api keys
+   * @returns {Promise<Paginated<ApiKey>>}
    */
   public async list(): Promise<Paginated<ApiKey>> {
     const result = await this.service.api.getApiKeys();
@@ -35,6 +37,7 @@ class ApiKeyModule {
 
   /**
    * Generate new api key
+   * @returns {Promise<ApiKey>}
    */
   public async generate(): Promise<ApiKey> {
     return new ApiKey(await this.service.api.generateApiKey());
@@ -42,6 +45,13 @@ class ApiKeyModule {
 
   /**
    * Revoke existing api key
+   * @param {string} key existing api key value
+   * @returns {Promise<ApiKey>}
+   * @example
+   * // list all user api keys
+   * const apiKeys = await tuksy.apiKey.listAll();
+   * // revoke the first one
+   * await tusky.apiKey.revoke(apiKeys[0].key);
    */
   public async revoke(key: string): Promise<ApiKey> {
     return new ApiKey(await this.service.api.revokeApiKey(key));

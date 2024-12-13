@@ -1,72 +1,120 @@
+<p align="center">
+<img src="./og-image.png" alt="Logo">
+</p>
+
 # Tusky SDK
 
 The Tusky TypeScript SDK is the official client for [Tusky API](https://docs.tusky.io/).\
 Compatible with both Node.js and web browsers.
 
 - [Usage](#usage)
-  - [Import](#import)
-  - [Quick Start](#quick-start)
-  - [Examples](#examples)
-  - [Auth](#authentication)
-- [Development](#development)
+- [Import](#import)
+- [Quick Start](#quick-start)
+- [Authentication](#authentication)
+  - [Sui wallet](#use-sui-wallet)
+  - [OAuth](#use-oauth-google-twitch)
+  - [Api key](#use-api-key)
+- [Examples](#examples)
 
 ## Usage
 
 > requires Node.js >= 18
 
-### Import
+<CodeGroup>
+  <CodeGroupItem title="yarn">
+
+```console:no-line-numbers
+yarn add @tusky/ts-sdk
+```
+
+  </CodeGroupItem>
+  <CodeGroupItem title="npm">
+
+```console:no-line-numbers
+npm install @tusky/ts-sdk
+```
+
+  </CodeGroupItem>
+</CodeGroup>
+
+## Import
+
+<CodeGroup>
+  <CodeGroupItem title="ES Modules">
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
 ```
 
-or
+  </CodeGroupItem>
+  <CodeGroupItem title="CommonJS">
 
 ```js
 const { Tusky } = require("@tusky/ts-sdk");
 ```
 
-### Quick start
+  </CodeGroupItem>
+</CodeGroup>
 
-#### Init Tusky
+## Quick start
+
+### Init Tusky
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
 
-const tusky = Tusky.use({
-  authProvider: "Google",
-  redirectUri: "http://localhost:3000",
-});
+const tusky = Tusky
+  .init()
+  .useOAuth({
+    authProvider: "Google",
+    redirectUri: "http://localhost:3000",
+  });
 ```
 
-#### Upload file with Tusky
+### Upload file with Tusky
 
 ```js
 const path = "/path/to/my/file.jpg";
-const { uri, fileId } = await tusky.file.upload(path);
+const uploadId = await tusky.file.upload(path);
 ```
 
-#### Download the file
+### Download the file
 
 ```js
-const file = await tusky.file.download(uri);
+const fileBuffer = await tusky.file.download(uploadId);
 ```
 
-#### List all user files
+### List all user files
 
 ```js
 const files = await tusky.file.listAll();
 ```
 
-### Examples
-
-- See example flows under [tests](src/__tests__).
-
-- See different setups under [examples](examples).
-
 ## Authentication
 
-##### use Sui Wallet
+### use OAuth (Google, Twitch)
+
+```js
+import { Tusky } from "@tusky/ts-sdk";
+const tusky = await Tusky
+  .init()
+  .useOAuth({
+    authProvider: "Google",
+    redirectUri: "http://localhost:3000",
+  })
+  .build();
+
+// init OAuth flow
+await tusky.auth.initOAuthFlow();
+
+// handle OAuth callback
+await tusky.auth.handleOAuthCallback();
+
+// or perform the entire flow in one go
+await tusky.auth.signIn();
+```
+
+### use Sui Wallet
 
 ```js
 // on the browser
@@ -75,106 +123,65 @@ import { useSignPersonalMessage } from "@mysten/dapp-kit";
 
 const { mutate: signPersonalMessage } = useSignPersonalMessage();
 
-const tusky = await Tusky.withWallet({
-  walletSignFnClient: signPersonalMessage,
-}).withLogger({ debug: true, logToFile: true });
+const tusky = await Tusky
+  .init()
+  .useWallet({ walletSignFnClient: signPersonalMessage })
+  .useLogger({ debug: true, logToFile: true });
 
 // sign-in to Tusky (this will prompt the wallet & ask for user signature)
-await tusky.signIn();
+await tusky.auth.signIn();
 ```
 
 ```js
 // on the server
 import { Tusky } from "@tusky/ts-sdk";
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 // generate new Sui Key Pair
- const keypair = new Ed25519Keypair();
- const tusky = await Tusky
-      .withWallet({ walletSigner: keypair })
-      .withLogger({ debug: true, logToFile: true });
-      .signIn();
+const keypair = new Ed25519Keypair();
+const tusky = await Tusky
+  .init()
+  .useWallet({ walletSigner: keypair })
+  .useLogger({ debug: true, logToFile: true })
+  .build();
+
+await tusky.auth.signIn();
 ```
 
 ##### use API key
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
-const tusky = Tusky.init().useApiKey({ apiKey: "you-api-key" });
+const tusky = await Tusky
+  .init()
+  .useApiKey({ apiKey: "you-api-key" })
+  .build();
 ```
 
-##### use self-managed auth token provider
+### use self-managed auth token provider
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
-const tusky = Tusky.withAuthTokenProvider({
-  authTokenProvider: async () => "your-self-managed-jwt",
-});
-```
-
-##### use OAuth (Google, Twitch, Facebook)
-
-```js
-import { Tusky } from "@tusky/ts-sdk";
-const tusky = Tusky.withOAuth({
-  authProvider: "Google",
-  redirectUri: "http://localhost:3000/redirect",
-});
-
-// init OAuth flow
-await tusky.initOAuthFlow();
-
-// handle OAuth callback on redirect page
-await tusky.handleOAuthCallback();
-```
-
-```js
-// or perform the entire flow in one go
-import { Tusky } from "@tusky/ts-sdk";
-const tusky = await Tusky.init()
-  .useOAuth({
-    authProvider: "Google",
-    redirectUri: "http://localhost:3000",
+const tusky = await Tusky
+  .init()
+  .useAuthTokenProvider({
+    authTokenProvider: async () => "your-self-managed-jwt",
   })
   .build();
-
-await tusky.signIn();
 ```
 
-##### clear current auth session
+### clear current auth session
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
 Tusky.signOut();
 ```
 
-### Development
+## Examples
 
-```
-yarn install
-yarn build
-```
+- See example flows under [tests](src/__tests__).
 
-To run all tests:
+- See different setups under [examples](examples).
 
-```
-yarn test
-```
+## Documentation
 
-To run test groups:
-
-```
-yarn test:user
-
-yarn test:vault
-
-yarn test:vault:private
-```
-
-To run single test file with direct log output:
-
-```
-node --inspect node_modules/.bin/jest <path-to-test-file>
-
-node --inspect node_modules/.bin/jest ./src/__tests__/vault/folder.test.ts
-node --inspect node_modules/.bin/jest ./src/__tests__/vault/folder.test.ts -- --encrypted
-```
+- See all SDK modules & methods documented [here](DOCS.md)

@@ -16,6 +16,7 @@ class MeModule {
 
   /**
    * Get currently authenticated user
+   * @returns {Promise<User>}
    */
   public async get(): Promise<User> {
     return await this.service.api.getMe();
@@ -24,6 +25,8 @@ class MeModule {
   /**
    * Update currently authenticated user
    * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
+   * @param {UserMutable} input
+   * @returns {Promise<User>}
    */
   public async update(input: UserMutable): Promise<User> {
     return await this.service.api.updateMe(input);
@@ -31,6 +34,8 @@ class MeModule {
 
   /**
    * Setup user password
+   * @param {string} password
+   * @returns {Promise<{ keyPair: X25519KeyPair; user: User }>}
    */
   public async setupPassword(
     password: string,
@@ -53,6 +58,9 @@ class MeModule {
    * Change user password
    * Decrypt user private key with the old password
    * Encrypt user private key with the new password
+   * @param {string} oldPassword
+   * @param {string} newPassword
+   * @returns {Promise<User>}
    */
   public async changePassword(
     oldPassword: string,
@@ -76,6 +84,8 @@ class MeModule {
   /**
    * Backup user password
    * Generate fresh backup phrase & use it as a backup
+   * @param {string} password
+   * @returns {Promise<{ backupPhrase: string; user: User }>}
    */
   public async backupPassword(
     password: string,
@@ -99,6 +109,9 @@ class MeModule {
    * Reset user password
    * Recover user private key using the backup phrase
    * Encrypt user private key with the new password
+   * @param {string} backupPhrase
+   * @param {string} newPassword
+   * @returns {Promise<User>}
    */
   public async resetPassword(
     backupPhrase: string,
@@ -118,6 +131,7 @@ class MeModule {
 
   /**
    * Check whether the user has ongoing encryption session
+   * @returns {Promise<boolean>}
    */
   public async hasEncryptionSession(): Promise<boolean> {
     const hasEncryptionSession =
@@ -133,7 +147,9 @@ class MeModule {
   }
 
   /**
-   * Clear encryption session from the client storage
+   * Import encryption session from password
+   * @param {string} password
+   * @returns {Promise<{ keyPair: X25519KeyPair }>}
    */
   public async importEncryptionSessionFromPassword(
     password: string,
@@ -148,7 +164,8 @@ class MeModule {
   }
 
   /**
-   * Clear encryption session from the client storage
+   * Import encryption session from keystore, if present
+   * @returns {Promise<{ keyPair: X25519KeyPair }>}
    */
   public async importEncryptionSessionFromKeystore(): Promise<{
     keyPair: X25519KeyPair;

@@ -4,3 +4,6 @@ src/__tests__
 examples
 jest.config.js
 webpack.config.js
+README.md
+DEVELOPMENT.md
+DOCS.md
