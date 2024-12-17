@@ -108,7 +108,7 @@ abstract class Api {
 
   abstract getFolders(options?: ListApiOptions): Promise<Paginated<Folder>>;
 
-  abstract getMembers(vaultId: string): Promise<Array<Membership>>;
+  abstract getMembers(vaultId: string): Promise<Paginated<Membership>>;
 
   abstract getApiKeys(): Promise<Paginated<ApiKey>>;
 

@@ -408,9 +408,9 @@ export class ApiClient {
    *
    * @uses:
    * - vaultId()
-   * @returns {Promise<Array<Membership>>}
+   * @returns {Promise<Paginated<Membership>>}
    */
-  async getMembers(): Promise<Array<Membership>> {
+  async getMembers(): Promise<Paginated<Membership>> {
     return this.get(
       `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`,
     );

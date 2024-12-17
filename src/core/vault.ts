@@ -356,11 +356,16 @@ class VaultModule {
    * @returns {Promise<Array<Membership>>}
    */
   public async members(vaultId: string): Promise<Array<Membership>> {
-    const memberships = (await this.service.api.getMembers(vaultId)) as any;
+    const list = async (listOptions: ListOptions) => {
+      return this.service.api.getMembers(listOptions.vaultId);
+    };
+    const members = await paginate<Membership>(list, {
+      vaultId: vaultId,
+    });
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
     return Promise.all(
-      memberships.items?.map(async (member: Membership) =>
+      members?.map(async (member: Membership) =>
         memberService.processMembership(
           member,
           this.service.vault.owner === this.service.address,
