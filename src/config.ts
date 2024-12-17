@@ -20,7 +20,6 @@ export interface ClientConfig {
   authTokenProvider?: AuthTokenProvider;
   apiKey?: string;
   clientName?: string; // name of the client consuming the API
-  autoExecute?: boolean; // if set to true, transactions will be admin signed & executed,
   authType?: AuthType;
 }
 
@@ -40,7 +39,6 @@ export interface ApiConfig {
   api?: Api;
   env?: Env;
   clientName?: string;
-  autoExecute?: boolean;
   auth?: Auth;
 }
 

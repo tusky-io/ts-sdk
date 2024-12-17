@@ -41,7 +41,7 @@ class FolderModule {
   /**
    * @param {string} vaultId
    * @param {string} name folder name
-   * @returns {Promise<Folder>} Promise with new folder id & corresponding transaction id
+   * @returns {Promise<Folder>} Promise with new folder
    */
   public async create(
     vaultId: string,
@@ -59,11 +59,6 @@ class FolderModule {
       parentId: this.service.parentId,
     });
 
-    // if (!this.service.api.autoExecute) {
-    //   const signature = await this.service.signer.sign(bytes);
-    //   await this.service.api.postTransaction(digest, signature);
-    // }
-
     return this.service.processFolder(
       folder,
       this.service.encrypted,
@@ -76,7 +71,7 @@ class FolderModule {
    * @param {string} vaultId
    * @param {FolderSource} folder folder source: folder path, file system entry
    * @param  {FolderCreateOptions} [options] parent id, etc.
-   * @returns {Promise<Folder>} Promise with new folder id
+   * @returns {Promise<Folder>} Promise with new folder
    */
   public async upload(
     vaultId: string,

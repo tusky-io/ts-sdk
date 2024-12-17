@@ -15,7 +15,7 @@ import {
   ListOptions,
   VaultApiGetOptions,
 } from "../types/query-options";
-import { User, UserMutable, UserPublicInfo } from "../types/user";
+import { User, UserMutable } from "../types/user";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";
@@ -35,7 +35,6 @@ import {
 
 abstract class Api {
   config: ApiConfig;
-  autoExecute: boolean; // if set to true, transactions will be admin signed & executed
   clientName: string; // name of the client consuming the API
 
   constructor() {}
@@ -82,8 +81,6 @@ abstract class Api {
 
   abstract deleteMembership(tx: UpdateMembershipTxPayload): Promise<void>;
 
-  abstract postTransaction(digest: string, signature: string): Promise<any>;
-
   abstract downloadFile(
     id: string,
     options?: FileGetOptions,
@@ -97,8 +94,6 @@ abstract class Api {
     options: PaymentSessionOptions,
   ): Promise<PaymentSession>;
 
-  abstract getUserPublicData(email: string): Promise<UserPublicInfo>;
-
   abstract getFile(id: string): Promise<File>;
 
   abstract getFolder(id: string): Promise<Folder>;
@@ -109,18 +104,9 @@ abstract class Api {
 
   abstract getVaults(options?: ListOptions): Promise<Paginated<Vault>>;
 
-  abstract getMemberships(
-    options?: ListOptions,
-  ): Promise<Paginated<Membership>>;
-
   abstract getFiles(options?: ListApiOptions): Promise<Paginated<File>>;
 
   abstract getFolders(options?: ListApiOptions): Promise<Paginated<Folder>>;
-
-  abstract getMembershipsByVaultId(
-    vaultId: string,
-    options?: ListOptions,
-  ): Promise<Paginated<Membership>>;
 
   abstract getMembers(vaultId: string): Promise<Array<Membership>>;
 

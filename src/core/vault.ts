@@ -168,10 +168,6 @@ class VaultModule {
       keys: this.service.keys,
     });
 
-    // if (!this.service.api.autoExecute) {
-    //   const signature = await this.service.signer.sign(bytes);
-    //   await this.service.api.postTransaction(digest, signature);
-    // }
     return this.service.processVault(vault, true, this.service.keys);
   }
 
