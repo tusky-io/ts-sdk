@@ -12,12 +12,14 @@ describe("Testing auth functions", () => {
 
   it("should authenticate with Sui wallet", async () => {
     const keypair = new Ed25519Keypair();
-    tusky = Tusky
-      .withWallet({ walletSigner: keypair })
-      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
-      .withApi({ env: ENV_TEST_RUN })
+    tusky = await Tusky
+      .init()
+      .useWallet({ walletSigner: keypair })
+      .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .useEnv(ENV_TEST_RUN)
+      .build();
 
-    await tusky.signIn();
+    await tusky.auth.signIn();
   });
 
   it("should create vault", async () => {
