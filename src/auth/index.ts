@@ -3,11 +3,9 @@ import { Unauthorized } from "../errors/unauthorized";
 import { logger } from "../logger";
 import {
   AuthProvider,
-  AuthTokenProvider,
   AuthType,
   OAuthConfig,
   WalletConfig,
-  WalletType,
 } from "../types/auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
@@ -18,7 +16,7 @@ import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
 
-export type SignPersonalMessageClient = (
+export type SignPersonalMessage = (
   message: { message: Uint8Array },
   callbacks: {
     onSuccess: (data: { signature: string }) => void;
@@ -26,7 +24,7 @@ export type SignPersonalMessageClient = (
   },
 ) => void;
 
-export type WalletAccount = {
+export type Account = {
   address: string;
   publicKey: Uint8Array;
 };
@@ -35,8 +33,6 @@ const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
 export class Auth {
   private env: Env;
-
-  public authTokenProvider: AuthTokenProvider;
 
   private authType: AuthType;
 
@@ -49,10 +45,9 @@ export class Auth {
   private storage: Storage; // tokens storage
 
   // Wallet-based auth
-  private walletType: WalletType;
-  private walletSignFnClient: SignPersonalMessageClient | null;
-  private walletAccount: WalletAccount | null;
-  private walletSigner: Ed25519Keypair | null;
+  private signPersonalMessage: SignPersonalMessage | null;
+  private account: Account | null;
+  private keypair: Ed25519Keypair | null;
 
   // API key auth
   private apiKey: string;
@@ -62,16 +57,14 @@ export class Auth {
     this.authType = options.authType;
     this.apiKey = options.apiKey;
     this.env = options.env;
-    this.authTokenProvider = options.authTokenProvider;
     // walet-based auth
-    this.walletType = options.walletType;
-    this.walletSignFnClient = options.walletSignFnClient;
-    this.walletAccount = options.walletAccount;
-    this.walletSigner =
-      options.walletSigner ||
-      (options.walletPrivateKey &&
+    this.signPersonalMessage = options.signPersonalMessage;
+    this.account = options.account;
+    this.keypair =
+      options.keypair ||
+      (options.privateKey &&
         Ed25519Keypair.fromSecretKey(
-          decodeSuiPrivateKey(options.walletPrivateKey).secretKey,
+          decodeSuiPrivateKey(options.privateKey).secretKey,
         ));
     // Oauth
     this.authProvider = options.authProvider;
@@ -95,10 +88,10 @@ export class Auth {
     switch (this.authType) {
       case "Wallet": {
         let address: string;
-        if (this.walletSignFnClient && this.walletAccount) {
-          address = this.walletAccount.address;
-        } else if (this.walletSigner) {
-          address = this.walletSigner.toSuiAddress();
+        if (this.signPersonalMessage && this.account) {
+          address = this.account.address;
+        } else if (this.keypair) {
+          address = this.keypair.toSuiAddress();
         } else {
           throw new Unauthorized(
             "Missing wallet signing function for Wallet based auth.",
@@ -110,9 +103,9 @@ export class Auth {
         const message = new TextEncoder().encode(AUTH_MESSAGE_PREFIX + nonce);
 
         let signature: string;
-        if (this.walletSignFnClient) {
+        if (this.signPersonalMessage) {
           const res = await new Promise<string>((resolve, reject) => {
-            this.walletSignFnClient(
+            this.signPersonalMessage(
               {
                 message: message,
               },
@@ -129,9 +122,9 @@ export class Auth {
             );
           });
           signature = res;
-        } else if (this.walletSigner) {
+        } else if (this.keypair) {
           const { signature: res } =
-            await this.walletSigner.signPersonalMessage(message);
+            await this.keypair.signPersonalMessage(message);
           signature = res;
         } else {
           throw new Unauthorized(
@@ -267,20 +260,6 @@ export class Auth {
           Authorization: `Bearer ${idToken}`,
         };
       }
-      case "AuthTokenProvider": {
-        try {
-          const token = this.authTokenProvider();
-          if (token) {
-            return {
-              Authorization: `Bearer ${token}`,
-            };
-          }
-          throw new Unauthorized("Please add authTokenProvider into config.");
-        } catch (e) {
-          logger.error(e);
-          throw new Unauthorized("Invalid authorization.");
-        }
-      }
       default:
         throw new Unauthorized(
           `Missing or unsupported auth type: ${this.authType}`,
@@ -294,25 +273,15 @@ export class Auth {
       case "Wallet": {
         return this.jwtClient.getAddress();
       }
-      case "AuthTokenProvider": {
-        const token = this.authTokenProvider();
-        if (token) {
-          const address = decode(token).address;
-          return address;
-        }
-        break;
-      }
       default:
         return undefined;
     }
-    return undefined;
   }
 }
 
 export type AuthOptions = {
   authType?: AuthType;
   env?: Env;
-  authTokenProvider?: AuthTokenProvider;
   apiKey?: string;
 } & OAuthConfig &
   WalletConfig;

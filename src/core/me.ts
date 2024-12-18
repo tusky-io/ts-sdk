@@ -3,6 +3,7 @@ import { User, UserMutable } from "../types/user";
 import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
 import { ClientConfig } from "../config";
+import { X25519KeyPair } from "../crypto";
 
 class MeModule {
   protected service: Service;
@@ -15,6 +16,7 @@ class MeModule {
 
   /**
    * Get currently authenticated user
+   * @returns {Promise<User>}
    */
   public async get(): Promise<User> {
     return await this.service.api.getMe();
@@ -23,6 +25,8 @@ class MeModule {
   /**
    * Update currently authenticated user
    * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
+   * @param {UserMutable} input
+   * @returns {Promise<User>}
    */
   public async update(input: UserMutable): Promise<User> {
     return await this.service.api.updateMe(input);
@@ -30,23 +34,33 @@ class MeModule {
 
   /**
    * Setup user password
+   * @param {string} password
+   * @returns {Promise<{ keypair: X25519KeyPair; user: User }>}
    */
-  public async setupPassword(password: string): Promise<User> {
+  public async setupPassword(
+    password: string,
+  ): Promise<{ keypair: X25519KeyPair; user: User }> {
     const me = await this.get();
     if (me.encPrivateKey) {
       throw new BadRequest("User encryption context is already setup");
     }
-    const { encPrivateKey } = await this.userEncryption.setupPassword(
+    const { encPrivateKey, keypair } = await this.userEncryption.setupPassword(
       password,
       true,
     );
-    return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
+    return {
+      user: await this.service.api.updateMe({ encPrivateKey: encPrivateKey }),
+      keypair,
+    };
   }
 
   /**
    * Change user password
    * Decrypt user private key with the old password
    * Encrypt user private key with the new password
+   * @param {string} oldPassword
+   * @param {string} newPassword
+   * @returns {Promise<User>}
    */
   public async changePassword(
     oldPassword: string,
@@ -70,6 +84,8 @@ class MeModule {
   /**
    * Backup user password
    * Generate fresh backup phrase & use it as a backup
+   * @param {string} password
+   * @returns {Promise<{ backupPhrase: string; user: User }>}
    */
   public async backupPassword(
     password: string,
@@ -93,6 +109,9 @@ class MeModule {
    * Reset user password
    * Recover user private key using the backup phrase
    * Encrypt user private key with the new password
+   * @param {string} backupPhrase
+   * @param {string} newPassword
+   * @returns {Promise<User>}
    */
   public async resetPassword(
     backupPhrase: string,
@@ -112,11 +131,49 @@ class MeModule {
 
   /**
    * Check whether the user has ongoing encryption session
+   * @returns {Promise<boolean>}
    */
   public async hasEncryptionSession(): Promise<boolean> {
     const hasEncryptionSession =
       await this.userEncryption.hasEncryptionSession();
     return hasEncryptionSession ? true : false;
+  }
+
+  /**
+   * Clear encryption session from the client storage
+   */
+  public async clearEncryptionSession(): Promise<void> {
+    await this.userEncryption.clear();
+  }
+
+  /**
+   * Import encryption session from password
+   * @param {string} password
+   * @returns {Promise<{ keypair: X25519KeyPair }>}
+   */
+  public async importEncryptionSessionFromPassword(
+    password: string,
+  ): Promise<{ keypair: X25519KeyPair }> {
+    const me = await this.get();
+    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
+    const { keypair } = await this.userEncryption.importFromPassword(
+      password,
+      true,
+    );
+    return { keypair };
+  }
+
+  /**
+   * Import encryption session from keystore, if present
+   * @returns {Promise<{ keypair: X25519KeyPair }>}
+   */
+  public async importEncryptionSessionFromKeystore(): Promise<{
+    keypair: X25519KeyPair;
+  }> {
+    const me = await this.get();
+    this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
+    const { keypair } = await this.userEncryption.importFromKeystore();
+    return { keypair };
   }
 }
 

@@ -7,7 +7,6 @@ import {
   CreateFolderTxPayload,
   CreateMembershipTxPayload,
   CreateVaultTxPayload,
-  Transaction,
   UpdateFileTxPayload,
   UpdateFolderTxPayload,
   UpdateMembershipTxPayload,
@@ -19,7 +18,7 @@ import {
   ListOptions,
   VaultApiGetOptions,
 } from "../types/query-options";
-import { User, UserMutable, UserPublicInfo } from "../types/user";
+import { User, UserMutable } from "../types/user";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
@@ -52,7 +51,6 @@ export default class TuskyApi extends Api {
     super();
     this.config = apiConfig(config.env);
     this.clientName = config.clientName;
-    this.autoExecute = config.autoExecute;
     this.auth = config.auth;
   }
 
@@ -103,7 +101,6 @@ export default class TuskyApi extends Api {
       .vaultId(tx.vaultId)
       .parentId(tx.parentId)
       .name(tx.name)
-      .autoExecute(this.autoExecute)
       .createFolder();
   }
 
@@ -116,7 +113,6 @@ export default class TuskyApi extends Api {
       .name(tx.name)
       .parentId(tx.parentId)
       .status(tx.status)
-      .autoExecute(this.autoExecute)
       .updateFolder();
   }
 
@@ -126,7 +122,6 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
-      .autoExecute(this.autoExecute)
       .deleteFolder();
   }
 
@@ -139,7 +134,6 @@ export default class TuskyApi extends Api {
       .name(tx.name)
       .parentId(tx.parentId)
       .status(tx.status)
-      .autoExecute(this.autoExecute)
       .updateFile();
   }
 
@@ -149,7 +143,6 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
-      .autoExecute(this.autoExecute)
       .deleteFile();
   }
 
@@ -163,7 +156,6 @@ export default class TuskyApi extends Api {
       .description(tx.description)
       .tags(tx.tags)
       .keys(tx.keys)
-      .autoExecute(this.autoExecute)
       .createVault();
   }
 
@@ -177,7 +169,6 @@ export default class TuskyApi extends Api {
       .description(tx.description)
       .tags(tx.tags)
       .status(tx.status)
-      .autoExecute(this.autoExecute)
       .updateVault();
   }
 
@@ -187,7 +178,6 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
-      .autoExecute(this.autoExecute)
       .deleteVault();
   }
 
@@ -224,7 +214,6 @@ export default class TuskyApi extends Api {
       .ownerAccess(tx.ownerAccess)
       .allowedStorage(tx.allowedStorage)
       .allowedPaths(tx.allowedPaths)
-      .autoExecute(this.autoExecute)
       .createMembership();
   }
 
@@ -240,7 +229,6 @@ export default class TuskyApi extends Api {
       .status(tx.status)
       .expiresAt(tx.expiresAt)
       .keys(tx.keys as any)
-      .autoExecute(this.autoExecute)
       .updateMembership();
   }
 
@@ -251,24 +239,10 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .resourceId(tx.id)
       .keys(tx.keys as any)
-      .autoExecute(this.autoExecute)
       .deleteMembership();
   }
 
-  public async postTransaction(
-    digest: string,
-    signature: string,
-  ): Promise<any> {
-    return new ApiClient()
-      .env(this.config)
-      .clientName(this.clientName)
-      .auth(this.auth)
-      .digest(digest)
-      .signature(signature)
-      .postTransaction();
-  }
-
-  public async getMembers(vaultId: string): Promise<Array<Membership>> {
+  public async getMembers(vaultId: string): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
@@ -331,15 +305,6 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .data(options)
       .createSubscriptionPaymentSession();
-  }
-
-  public async getUserPublicData(email: string): Promise<UserPublicInfo> {
-    return new ApiClient()
-      .env(this.config)
-      .clientName(this.clientName)
-      .auth(this.auth)
-      .queryParams({ email })
-      .getUserPublicData();
   }
 
   public async getMe(): Promise<User> {
@@ -409,20 +374,6 @@ export default class TuskyApi extends Api {
       .getVault();
   }
 
-  public async getMemberships(
-    options: ListOptions = {},
-  ): Promise<Paginated<Membership>> {
-    return new ApiClient()
-      .env(this.config)
-      .clientName(this.clientName)
-      .auth(this.auth)
-      .queryParams({
-        limit: options.limit || DEFAULT_LIMIT,
-        nextToken: options.nextToken,
-      })
-      .getMemberships();
-  }
-
   public async getVaults(options: ListOptions = {}): Promise<Paginated<Vault>> {
     return new ApiClient()
       .env(this.config)
@@ -468,33 +419,6 @@ export default class TuskyApi extends Api {
         nextToken: options.nextToken,
       })
       .getFolders();
-  }
-
-  public async getMembershipsByVaultId(
-    vaultId: string,
-    options: ListOptions = {},
-  ): Promise<Paginated<Membership>> {
-    return new ApiClient()
-      .env(this.config)
-      .clientName(this.clientName)
-      .auth(this.auth)
-      .vaultId(vaultId)
-      .queryParams({
-        vaultId: vaultId,
-        status: options.status,
-        limit: options.limit || DEFAULT_LIMIT,
-        nextToken: options.nextToken,
-      })
-      .getMembershipsByVaultId();
-  }
-
-  public async getTransactions(vaultId: string): Promise<Array<Transaction>> {
-    return new ApiClient()
-      .env(this.config)
-      .clientName(this.clientName)
-      .auth(this.auth)
-      .vaultId(vaultId)
-      .getTransactions();
   }
 
   public async getApiKeys(): Promise<Paginated<ApiKey>> {

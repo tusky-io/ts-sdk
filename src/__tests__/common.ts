@@ -2,47 +2,50 @@ require("dotenv").config();
 import { Tusky, Env } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
-import { EnokiSigner } from "./enoki/signer";
 import { status } from "../constants";
 import { stopServer } from "./server";
 import { createWriteStream } from "fs";
 import { PNG } from "pngjs";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { logger } from "../logger";
+import { TuskyBuilder } from "../tusky-builder";
 
 // check if the encrypted flag is present
 export const isEncrypted = global.isEncrypted;
-export const LOG_LEVEL = "error";
+export const LOG_LEVEL = "debug" //"error";
 export const ENV_TEST_RUN = (process.env.ENV || "dev") as Env;
 
 export async function initInstance(encrypted = true): Promise<Tusky> {
   let tusky: Tusky;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
-    tusky = Tusky
-      .withApiKey({ apiKey: process.env.API_KEY })
-      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
-      .withApi({ env: ENV_TEST_RUN })
+      tusky = await new TuskyBuilder()
+      .useApiKey(process.env.API_KEY)
+      .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .useEnv(ENV_TEST_RUN)
+      .build();
   } else if (process.env.AUTH_PROVIDER) {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
-    tusky = Tusky
-      .withOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
-      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
-      .withSigner(new EnokiSigner({ address: address, keypair: keyPair }))
-      .withApi({ env: ENV_TEST_RUN });
+
+      tusky = await new TuskyBuilder()
+      .useOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
+      .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .useEnv(ENV_TEST_RUN)
+      .build();
   } else {
     const keypair = new Ed25519Keypair();
-    tusky = Tusky
-      .withWallet({ walletSigner: keypair })
-      .withLogger({ logLevel: LOG_LEVEL, logToFile: true })
-      .withApi({ env: ENV_TEST_RUN })
-    await tusky.signIn();
+    tusky = await new TuskyBuilder()
+      .useWallet({ keypair: keypair })
+      .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
+      .useEnv(ENV_TEST_RUN)
+      .build();
+    await tusky.auth.signIn();
   }
   if (encrypted) {
     const password = faker.random.word();
     await tusky.me.setupPassword(password);
-    await tusky.withEncrypter({ password: password, keystore: true });
+    await tusky.addEncrypter({ password: password, keystore: true });
   }
   return tusky;
 }

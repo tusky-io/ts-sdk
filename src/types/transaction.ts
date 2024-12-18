@@ -1,16 +1,4 @@
 import { AllowedPaths, EncryptedVaultKeyPair } from ".";
-import { actions, objects } from "../constants";
-
-export interface Transaction {
-  id: string;
-  action: actions;
-  owner: string;
-  vaultId: string;
-  objectId: string;
-  objectType: objects;
-  status: string;
-  timestamp: string;
-}
 
 export interface CreateVaultTxPayload {
   name?: string;

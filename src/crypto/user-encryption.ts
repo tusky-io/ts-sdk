@@ -66,7 +66,7 @@ export class UserEncryption {
   public async setupPassword(
     password: string,
     keystore: boolean = false,
-  ): Promise<{ keyPair: X25519KeyPair; encPrivateKey: string }> {
+  ): Promise<{ keypair: X25519KeyPair; encPrivateKey: string }> {
     const userKeyPair = await generateKeyPair();
 
     this.encPrivateKey = await this.encryptWithPassword(
@@ -75,7 +75,7 @@ export class UserEncryption {
       keystore,
     );
     return {
-      keyPair: new X25519KeyPair(userKeyPair.privateKey),
+      keypair: new X25519KeyPair(userKeyPair.privateKey),
       encPrivateKey: this.encPrivateKey,
     };
   }
@@ -137,7 +137,7 @@ export class UserEncryption {
     return { encPrivateKey: this.encPrivateKey };
   }
 
-  public async importFromKeystore(): Promise<{ keyPair: X25519KeyPair }> {
+  public async importFromKeystore(): Promise<{ keypair: X25519KeyPair }> {
     if (!this.encPrivateKey) {
       throw new IncorrectEncryptionKey(
         new Error("Missing encrypted private key data."),
@@ -167,13 +167,13 @@ export class UserEncryption {
       parsedEncPrivateKey.encryptedPayload,
       passwordKey,
     );
-    return { keyPair: new X25519KeyPair(new Uint8Array(privateKey)) };
+    return { keypair: new X25519KeyPair(new Uint8Array(privateKey)) };
   }
 
   public async importFromPassword(
     password: string,
     keystore: boolean = false,
-  ): Promise<{ keyPair: X25519KeyPair }> {
+  ): Promise<{ keypair: X25519KeyPair }> {
     if (!password) {
       throw new IncorrectEncryptionKey(
         new Error("Missing password to decrypt user keys."),
@@ -191,12 +191,12 @@ export class UserEncryption {
       keystore,
     );
 
-    return { keyPair: new X25519KeyPair(privateKey) };
+    return { keypair: new X25519KeyPair(privateKey) };
   }
 
   public async importFromBackupPhrase(
     backupPhrase: string,
-  ): Promise<{ keyPair: X25519KeyPair }> {
+  ): Promise<{ keypair: X25519KeyPair }> {
     if (!backupPhrase) {
       throw new IncorrectEncryptionKey(
         new Error("Missing backup phrase to decrypt user keys."),
@@ -213,7 +213,7 @@ export class UserEncryption {
       this.encPrivateKeyBackup,
     );
 
-    return { keyPair: new X25519KeyPair(privateKey) };
+    return { keypair: new X25519KeyPair(privateKey) };
   }
 
   /**

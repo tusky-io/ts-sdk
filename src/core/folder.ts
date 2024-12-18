@@ -32,22 +32,21 @@ class FolderModule {
 
   protected defaultCreateOptions = {
     parentId: undefined,
-  } as any;
+  } as FolderCreateOptions;
 
   constructor(config?: ServiceConfig) {
     this.service = new FolderService(config);
   }
 
   /**
-   * @param  {string} vaultId
-   * @param  {string} name folder name
-   * @param  {NodeCreateOptions} [options] parent id, etc.
-   * @returns Promise with new folder id & corresponding transaction id
+   * @param {string} vaultId
+   * @param {string} name folder name
+   * @returns {Promise<Folder>} Promise with new folder
    */
   public async create(
     vaultId: string,
     name: string,
-    options: any = this.defaultCreateOptions,
+    options: FolderCreateOptions = this.defaultCreateOptions,
   ): Promise<Folder> {
     await this.service.setVaultContext(vaultId);
 
@@ -60,11 +59,6 @@ class FolderModule {
       parentId: this.service.parentId,
     });
 
-    // if (!this.service.api.autoExecute) {
-    //   const signature = await this.service.signer.sign(bytes);
-    //   await this.service.api.postTransaction(digest, signature);
-    // }
-
     return this.service.processFolder(
       folder,
       this.service.encrypted,
@@ -73,16 +67,17 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} vaultId
-   * @param  {FolderSource} folder folder source: folder path, file system entry
-   * @param  {FolderUploadOptions} [options] parent id, etc.
-   * @returns Promise with new folder id
+   * Upload folder with its content from given source
+   * @param {string} vaultId
+   * @param {FolderSource} folder folder source: folder path, file system entry
+   * @param  {FolderCreateOptions} [options] parent id, etc.
+   * @returns {Promise<Folder>} Promise with new folder
    */
   public async upload(
     vaultId: string,
     folder: FolderSource,
-    options: FolderUploadOptions = {},
-  ): Promise<any> {
+    options: FolderCreateOptions = this.defaultCreateOptions,
+  ): Promise<Folder> {
     if (typeof folder === "string") {
       if (!isServer()) {
         throw new BadRequest("Folder path supported only for node.");
@@ -117,8 +112,8 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} id
-   * @returns Promise with the folder object
+   * @param {string} id
+   * @returns {Promise<Folder>} Promise with the folder object
    */
   public async get(
     id: string,
@@ -133,8 +128,8 @@ class FolderModule {
   }
 
   /**
-   * @param  {ListOptions} options
-   * @returns Promise with paginated user folders
+   * @param {ListOptions} options
+   * @returns {Promise<Paginated<Folder>>} Promise with paginated user folders
    */
   public async list(
     options: ListOptions = this.defaultListOptions,
@@ -168,8 +163,8 @@ class FolderModule {
   }
 
   /**
-   * @param  {ListOptions} options
-   * @returns Promise with all user folders
+   * @param {ListOptions} options
+   * @returns {Promise<Array<Folder>>} Promise with all user folders
    */
   public async listAll(
     options: ListOptions = this.defaultListOptions,
@@ -181,9 +176,9 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} id folder id
-   * @param  {string} name new name
-   * @returns Promise with corresponding transaction id
+   * @param {string} id folder id
+   * @param {string} name new name
+   * @returns {Promise<Folder>}
    */
   public async rename(id: string, name: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
@@ -196,9 +191,9 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} id
-   * @param  {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
-   * @returns Promise with corresponding transaction id
+   * @param {string} id
+   * @param {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
+   * @returns {Promise<Folder>}
    */
   public async move(id: string, parentId?: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
@@ -212,8 +207,8 @@ class FolderModule {
   /**
    * The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.
    * To undo this action, call folder.restore() within the 30-day period.
-   * @param  {string} id folder id
-   * @returns Promise with the updated folder
+   * @param {string} id folder id
+   * @returns {Promise<Folder>}
    */
   public async delete(id: string): Promise<Folder> {
     return this.service.api.updateFolder({ id: id, status: status.DELETED });
@@ -222,8 +217,8 @@ class FolderModule {
   /**
    * Restores the folder from the trash, recovering all folder contents.
    * This action must be performed within 30 days of the folder being moved to the trash to prevent permanent deletion.
-   * @param  {string} id folder id
-   * @returns Promise with the updated folder
+   * @param {string} id folder id
+   * @returns {Promise<Folder>}
    */
   public async restore(id: string): Promise<Folder> {
     return this.service.api.updateFolder({ id: id, status: status.ACTIVE });
@@ -232,7 +227,7 @@ class FolderModule {
   /**
    * The folder and all its contents will be permanently deleted.
    * This action is irrevocable and can only be performed if the folder is already in trash.
-   * @param  {string} id folder id
+   * @param {string} id folder id
    * @returns {Promise<void>}
    */
   public async deletePermanently(id: string): Promise<void> {
@@ -242,7 +237,7 @@ class FolderModule {
 
 export type FolderSource = string | FileSystemEntry;
 
-export type FolderUploadOptions = {
+export type FolderCreateOptions = {
   parentId?: string;
 };
 

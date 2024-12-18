@@ -1,13 +1,12 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Membership } from "../types/membership";
-import { Transaction } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { Vault } from "../types/vault";
 import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
-import { User, UserPublicInfo } from "../types/user";
+import { User } from "../types/user";
 import { AllowedPaths, EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
@@ -31,8 +30,6 @@ export class ApiClient {
   private _folderUri: string = "folders";
   private _trashUri: string = "trash";
   private _membershipUri: string = "members";
-  private _transactionUri: string = "transactions";
-  private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
   private _subscriptionUri: string = "subscriptions";
@@ -76,8 +73,6 @@ export class ApiClient {
   private _trashExpiration: number;
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
-
-  private _autoExecute: boolean;
 
   private _signature: string;
   private _digest: string;
@@ -143,7 +138,6 @@ export class ApiClient {
     clone._grantType = this._grantType;
 
     clone._status = this._status;
-    clone._autoExecute = this._autoExecute;
     clone._vaultId = this._vaultId;
     clone._parentId = this._parentId;
     clone._sdkVersion = this._clientName;
@@ -320,11 +314,6 @@ export class ApiClient {
     return this;
   }
 
-  autoExecute(autoExecute: boolean): ApiClient {
-    this._autoExecute = autoExecute;
-    return this;
-  }
-
   data(data: any): ApiClient {
     this._data = data;
     return this;
@@ -418,20 +407,10 @@ export class ApiClient {
   /**
    *
    * @uses:
-   * - queryParams() - email
-   * @returns {Promise<UserPublicInfo>}
-   */
-  async getUserPublicData(): Promise<UserPublicInfo> {
-    return this.get(`${this._apiUrl}/${this._userUri}`);
-  }
-
-  /**
-   *
-   * @uses:
    * - vaultId()
-   * @returns {Promise<Array<Membership>>}
+   * @returns {Promise<Paginated<Membership>>}
    */
-  async getMembers(): Promise<Array<Membership>> {
+  async getMembers(): Promise<Paginated<Membership>> {
     return this.get(
       `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`,
     );
@@ -534,16 +513,6 @@ export class ApiClient {
   }
 
   /**
-   * Get transactions by vault id
-   * @uses:
-   * - vaultId()
-   * @returns {Promise<Array<Transaction>>}
-   */
-  async getTransactions(): Promise<Array<Transaction>> {
-    return this.get(`${this._apiUrl}/${this._transactionUri}`);
-  }
-
-  /**
    * Get user api keys
    * @returns {Promise<Paginated<ApiKey>>}
    */
@@ -642,7 +611,6 @@ export class ApiClient {
    * - name()
    * - parentId()
    * - status()
-   * - autoExecute()
    * @returns {Promise<File>}
    */
   async updateFile(): Promise<File> {
@@ -655,7 +623,6 @@ export class ApiClient {
       name: this._name,
       parentId: this._parentId,
       status: this._status,
-      autoExecute: this._autoExecute,
     });
     return this.patch(`${this._apiUrl}/${this._fileUri}/${this._resourceId}`);
   }
@@ -664,8 +631,6 @@ export class ApiClient {
    *
    * @requires:
    * - resourceId()
-   * @uses:
-   * - autoExecute()
    * @returns {Promise<void>}
    */
   async deleteFile(): Promise<void> {
@@ -674,7 +639,6 @@ export class ApiClient {
         "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
-    this.data({ autoExecute: this._autoExecute });
     return this.delete(`${this._apiUrl}/${this._fileUri}/${this._resourceId}`);
   }
 
@@ -684,7 +648,6 @@ export class ApiClient {
    * - vaultId()
    * - name()
    * @uses:
-   * - autoExecute()
    * - parentId()
    * @returns {Promise<Folder>}
    */
@@ -704,7 +667,6 @@ export class ApiClient {
       vaultId: this._vaultId,
       parentId: this._parentId,
       name: this._name,
-      autoExecute: this._autoExecute,
     });
 
     return this.post(`${this._apiUrl}/${this._folderUri}`);
@@ -801,7 +763,6 @@ export class ApiClient {
    * - name()
    * - parentId()
    * - status()
-   * - autoExecute()
    * @returns {Promise<Folder>}
    */
   async updateFolder(): Promise<Folder> {
@@ -814,7 +775,6 @@ export class ApiClient {
       name: this._name,
       parentId: this._parentId,
       status: this._status,
-      autoExecute: this._autoExecute,
     });
 
     return this.patch(`${this._apiUrl}/${this._folderUri}/${this._resourceId}`);
@@ -824,8 +784,6 @@ export class ApiClient {
    *
    * @requires:
    * - resourceId()
-   * @uses:
-   * - autoExecute()
    * @returns {Promise<void>}
    */
   async deleteFolder(): Promise<void> {
@@ -834,7 +792,6 @@ export class ApiClient {
         "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
-    this.data({ autoExecute: this._autoExecute });
     return this.delete(
       `${this._apiUrl}/${this._folderUri}/${this._resourceId}`,
     );
@@ -849,7 +806,6 @@ export class ApiClient {
    * - encrypted()
    * - tags()
    * - keys()
-   * - autoExecute()
    * @returns {Promise<Vault>}
    */
   async createVault(): Promise<Vault> {
@@ -865,7 +821,6 @@ export class ApiClient {
       encrypted: this._encrypted,
       tags: this._tags,
       keys: this._keys,
-      autoExecute: this._autoExecute,
     });
 
     return this.post(`${this._apiUrl}/${this._vaultUri}`);
@@ -879,7 +834,6 @@ export class ApiClient {
    * - name()
    * - description()
    * - status()
-   * - autoExecute()
    * @returns {Promise<Vault>}
    */
   async updateVault(): Promise<Vault> {
@@ -893,7 +847,6 @@ export class ApiClient {
       description: this._description,
       tags: this._tags,
       status: this._status,
-      autoExecute: this._autoExecute,
     });
     return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
@@ -902,8 +855,6 @@ export class ApiClient {
    *
    * @requires:
    * - resourceId()
-   * @uses:
-   * - autoExecute()
    * @returns {Promise<void>}
    */
   async deleteVault(): Promise<void> {
@@ -912,7 +863,6 @@ export class ApiClient {
         "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
-    this.data({ autoExecute: this._autoExecute });
     return this.delete(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
 
@@ -938,7 +888,6 @@ export class ApiClient {
    * - encPrivateKey()
    * - allowedStorage()
    * - allowedPaths()
-   * - autoExecute()
    * @returns {Promise<Membership>}
    */
   async createMembership(): Promise<Membership> {
@@ -968,7 +917,6 @@ export class ApiClient {
       ownerAccess: this._ownerAccess,
       allowedStorage: this._allowedStorage,
       allowedPaths: this._allowedPaths,
-      autoExecute: this._autoExecute,
     });
 
     return this.post(
@@ -985,7 +933,6 @@ export class ApiClient {
    * - expiresAt()
    * - status()
    * - keys()
-   * - autoExecute()
    * @returns {Promise<Membership>}
    */
   async updateMembership(): Promise<Membership> {
@@ -999,7 +946,6 @@ export class ApiClient {
       expiresAt: this._expiresAt,
       status: this._status,
       keys: this._keys,
-      autoExecute: this._autoExecute,
     });
     return this.patch(
       `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`,
@@ -1026,35 +972,6 @@ export class ApiClient {
     return this.delete(
       `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`,
     );
-  }
-
-  /**
-   *
-   * @requires:
-   * - id()
-   * - digest()
-   * - signature()
-   * @returns {Promise<any>}
-   */
-  async postTransaction(): Promise<any> {
-    if (!this._resourceId) {
-      throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it",
-      );
-    }
-
-    if (!this._digest) {
-      throw new BadRequest(
-        "Missing digest input. Use ApiClient#digest() to add it",
-      );
-    }
-
-    if (!this._signature) {
-      throw new BadRequest(
-        "Missing signature input. Use ApiClient#signature() to add it",
-      );
-    }
-    return this.post(`${this._apiUrl}/${this._transactionUri}`);
   }
 
   /**
