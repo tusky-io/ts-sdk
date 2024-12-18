@@ -3,7 +3,6 @@ import { Unauthorized } from "../errors/unauthorized";
 import { logger } from "../logger";
 import {
   AuthProvider,
-  AuthTokenProvider,
   AuthType,
   OAuthConfig,
   WalletConfig,
@@ -35,8 +34,6 @@ const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 export class Auth {
   private env: Env;
 
-  public authTokenProvider: AuthTokenProvider;
-
   private authType: AuthType;
 
   private jwtClient: JWTClient;
@@ -60,7 +57,6 @@ export class Auth {
     this.authType = options.authType;
     this.apiKey = options.apiKey;
     this.env = options.env;
-    this.authTokenProvider = options.authTokenProvider;
     // walet-based auth
     this.signPersonalMessage = options.signPersonalMessage;
     this.account = options.account;
@@ -264,20 +260,6 @@ export class Auth {
           Authorization: `Bearer ${idToken}`,
         };
       }
-      case "AuthTokenProvider": {
-        try {
-          const token = this.authTokenProvider();
-          if (token) {
-            return {
-              Authorization: `Bearer ${token}`,
-            };
-          }
-          throw new Unauthorized("Please add authTokenProvider into config.");
-        } catch (e) {
-          logger.error(e);
-          throw new Unauthorized("Invalid authorization.");
-        }
-      }
       default:
         throw new Unauthorized(
           `Missing or unsupported auth type: ${this.authType}`,
@@ -291,25 +273,15 @@ export class Auth {
       case "Wallet": {
         return this.jwtClient.getAddress();
       }
-      case "AuthTokenProvider": {
-        const token = this.authTokenProvider();
-        if (token) {
-          const address = decode(token).address;
-          return address;
-        }
-        break;
-      }
       default:
         return undefined;
     }
-    return undefined;
   }
 }
 
 export type AuthOptions = {
   authType?: AuthType;
   env?: Env;
-  authTokenProvider?: AuthTokenProvider;
   apiKey?: string;
 } & OAuthConfig &
   WalletConfig;

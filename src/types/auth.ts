@@ -2,11 +2,9 @@ import { SignPersonalMessage, Account } from "../auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Env } from "../types/env";
 
-export type AuthType = "OAuth" | "Wallet" | "ApiKey" | "AuthTokenProvider";
+export type AuthType = "OAuth" | "Wallet" | "ApiKey";
 
 export type AuthProvider = "Google" | "Twitch";
-
-export type WalletType = "Sui";
 
 export interface OAuthConfig {
   authProvider?: AuthProvider;
@@ -22,8 +20,6 @@ export interface WalletConfig {
   keypair?: Ed25519Keypair;
   privateKey?: string; // private key in hex format
 }
-
-export type AuthTokenProvider = () => string;
 
 export type CreateChallengeRequestPayload = {
   address: string;

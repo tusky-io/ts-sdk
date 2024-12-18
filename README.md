@@ -99,7 +99,7 @@ import { useSignPersonalMessage, useCurrentAccount } from "@mysten/dapp-kit";
 const { mutate: signPersonalMessage } = useSignPersonalMessage();
 const account = useCurrentAccount();
 
-const tusky = await Tusky.init({ wallet: { signPersonalMessage: signPersonalMessage, account: account } });
+const tusky = await Tusky.init({ wallet: { signPersonalMessage, account } });
 
 // sign-in to Tusky (this will prompt the wallet & ask for user signature)
 await tusky.auth.signIn();
@@ -111,7 +111,7 @@ import { Tusky } from "@tusky/ts-sdk";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 // generate new Sui Key Pair
 const keypair = new Ed25519Keypair();
-const tusky = await Tusky.init({ wallet: { keypair: keypair } });
+const tusky = await Tusky.init({ wallet: { keypair } });
 
 await tusky.auth.signIn();
 ```
@@ -137,14 +137,6 @@ await tusky.auth.signIn();
 ```js
 import { Tusky } from "@tusky/ts-sdk";
 const tusky = await Tusky.init({ apiKey: "your-api-key" });
-```
-
-### use self-managed auth token provider
-
-```js
-import { Tusky } from "@tusky/ts-sdk";
-
-const tusky = await Tusky.init({ authTokenProvider: async () => "your-self-managed-jwt-provider" });
 ```
 
 ### clear current auth session

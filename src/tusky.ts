@@ -79,9 +79,6 @@ export class Tusky {
     if (config.apiKey) {
       builder.useApiKey(config.apiKey);
     }
-    if (config.authTokenProvider) {
-      builder.useAuthTokenProvider(config.authTokenProvider);
-    }
     if (config.oauth) {
       builder.useOAuth(config.oauth);
     }

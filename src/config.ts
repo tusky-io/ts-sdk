@@ -2,12 +2,7 @@ import { Api } from "./api/api";
 import { Env } from "./types/env";
 import { Encrypter } from "./crypto/encrypter";
 import { Logger, LogLevel } from "./logger";
-import {
-  AuthTokenProvider,
-  AuthType,
-  OAuthConfig,
-  WalletConfig,
-} from "./types/auth";
+import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
 import { Auth } from "./auth";
 import { X25519KeyPair } from "./crypto";
 
@@ -15,10 +10,9 @@ export interface TuskyConfig {
   env?: Env;
   encrypter?: EncrypterConfig;
   logger?: LoggerConfig;
-  wallet?: WalletConfig;
-  oauth?: OAuthConfig;
-  apiKey?: string;
-  authTokenProvider?: AuthTokenProvider;
+  wallet?: WalletConfig; // Wallet-based auth
+  oauth?: OAuthConfig; // OAuth
+  apiKey?: string; // Api key auth
   clientName?: string; // name of the client consuming the API
 }
 
@@ -32,7 +26,6 @@ export interface ClientConfig {
   cache?: boolean;
   api?: Api;
   storage?: Storage;
-  authTokenProvider?: AuthTokenProvider;
   apiKey?: string;
   clientName?: string; // name of the client consuming the API
   authType?: AuthType;

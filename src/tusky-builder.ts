@@ -1,9 +1,4 @@
-import {
-  AuthTokenProvider,
-  AuthType,
-  OAuthConfig,
-  WalletConfig,
-} from "./types/auth";
+import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
 import { Tusky } from "./tusky";
 import { UserEncryption } from "./crypto/user-encryption";
 import { Encrypter } from "./crypto/encrypter";
@@ -42,12 +37,6 @@ export class TuskyBuilder {
   useApiKey(apiKey: string): TuskyBuilder {
     this._authType = "ApiKey";
     this._authConfig = { apiKey: apiKey };
-    return this;
-  }
-
-  useAuthTokenProvider(authTokenProvider: AuthTokenProvider): TuskyBuilder {
-    this._authType = "AuthTokenProvider";
-    this._authConfig = { authTokenProvider: authTokenProvider };
     return this;
   }
 
