@@ -1,14 +1,28 @@
 import { Api } from "./api/api";
-import { Signer } from "./signer";
 import { Env } from "./types/env";
 import { Encrypter } from "./crypto/encrypter";
 import { Logger, LogLevel } from "./logger";
-import { AuthTokenProvider, AuthType } from "./types/auth";
+import {
+  AuthTokenProvider,
+  AuthType,
+  OAuthConfig,
+  WalletConfig,
+} from "./types/auth";
 import { Auth } from "./auth";
+
+export interface TuskyConfig {
+  env?: Env;
+  encrypter?: EncrypterConfig;
+  logger?: LoggerConfig;
+  wallet?: WalletConfig;
+  oauth?: OAuthConfig;
+  apiKey?: string;
+  authTokenProvider?: AuthTokenProvider;
+  clientName?: string; // name of the client consuming the API
+}
 
 export interface ClientConfig {
   env?: Env;
-  signer?: Signer;
   encrypter?: Encrypter;
   logger?: Logger;
   auth?: Auth;

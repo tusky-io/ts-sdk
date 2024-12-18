@@ -501,7 +501,7 @@ Returns **Subscription**&#x20;
 *   `name` **[string][21]** folder name
 *   `options`   (optional, default `this.defaultCreateOptions`)
 
-Returns **[Promise][22]\<Folder>** Promise with new folder id & corresponding transaction id
+Returns **[Promise][22]\<Folder>** Promise with new folder
 
 ## upload
 
@@ -513,7 +513,7 @@ Upload folder with its content from given source
 *   `folder` **FolderSource** folder source: folder path, file system entry
 *   `options` **FolderCreateOptions?** parent id, etc. (optional, default `this.defaultCreateOptions`)
 
-Returns **[Promise][22]\<Folder>** Promise with new folder id
+Returns **[Promise][22]\<Folder>** Promise with new folder
 
 ## get
 

@@ -4,13 +4,13 @@ import { cleanup, ENV_TEST_RUN, initInstance, isEncrypted, LOG_LEVEL, testDataPa
 import faker from '@faker-js/faker';
 import { firstFileName, secondFileName } from "../data/content";
 import { Unauthorized } from "../../errors/unauthorized";
+import { TuskyBuilder } from "../../tusky-builder";
 
 let tusky: Tusky;
 
 const initTuskyFromPrivateKey = async (privateKey: string) => {
-  const tusky = await Tusky
-    .init()
-    .useWallet({ walletPrivateKey: privateKey })
+  const tusky = await new TuskyBuilder()
+    .useWallet({ privateKey: privateKey })
     .useEnv(ENV_TEST_RUN)
     .useLogger({ logLevel: LOG_LEVEL })
     .build();

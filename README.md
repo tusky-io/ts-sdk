@@ -63,12 +63,9 @@ const { Tusky } = require("@tusky/ts-sdk");
 ```js
 import { Tusky } from "@tusky/ts-sdk";
 
-const tusky = Tusky
-  .init()
-  .useOAuth({
-    authProvider: "Google",
-    redirectUri: "http://localhost:3000",
-  });
+// You can generate fresh api key here: https://app.tusky.io/account/api-keys
+
+const tusky = await Tusky.init({ apiKey: "your-api-key" });
 ```
 
 ### Upload file with Tusky
@@ -92,41 +89,17 @@ const files = await tusky.file.listAll();
 
 ## Authentication
 
-### use OAuth (Google, Twitch)
-
-```js
-import { Tusky } from "@tusky/ts-sdk";
-const tusky = await Tusky
-  .init()
-  .useOAuth({
-    authProvider: "Google",
-    redirectUri: "http://localhost:3000",
-  })
-  .build();
-
-// init OAuth flow
-await tusky.auth.initOAuthFlow();
-
-// handle OAuth callback
-await tusky.auth.handleOAuthCallback();
-
-// or perform the entire flow in one go
-await tusky.auth.signIn();
-```
-
 ### use Sui Wallet
 
 ```js
 // on the browser
 import { Tusky } from "@tusky/ts-sdk";
-import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { useSignPersonalMessage, useCurrentAccount } from "@mysten/dapp-kit";
 
 const { mutate: signPersonalMessage } = useSignPersonalMessage();
+const account = useCurrentAccount();
 
-const tusky = await Tusky
-  .init()
-  .useWallet({ walletSignFnClient: signPersonalMessage })
-  .useLogger({ debug: true, logToFile: true });
+const tusky = await Tusky.init({ wallet: { signPersonalMessage: signPersonalMessage, account: account } });
 
 // sign-in to Tusky (this will prompt the wallet & ask for user signature)
 await tusky.auth.signIn();
@@ -138,12 +111,24 @@ import { Tusky } from "@tusky/ts-sdk";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 // generate new Sui Key Pair
 const keypair = new Ed25519Keypair();
-const tusky = await Tusky
-  .init()
-  .useWallet({ walletSigner: keypair })
-  .useLogger({ debug: true, logToFile: true })
-  .build();
+const tusky = await Tusky.init({ wallet: { keypair: keypair } });
 
+await tusky.auth.signIn();
+```
+
+### use OAuth (Google, Twitch)
+
+```js
+import { Tusky } from "@tusky/ts-sdk";
+const tusky = await Tusky.init({ oauth: { authProvider: "Google", redirectUri: "http://localhost:3000" } });
+
+// init OAuth flow
+await tusky.auth.initOAuthFlow();
+
+// handle OAuth callback
+await tusky.auth.handleOAuthCallback();
+
+// or perform the entire flow in one go
 await tusky.auth.signIn();
 ```
 
@@ -151,22 +136,15 @@ await tusky.auth.signIn();
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
-const tusky = await Tusky
-  .init()
-  .useApiKey({ apiKey: "you-api-key" })
-  .build();
+const tusky = await Tusky.init({ apiKey: "your-api-key" });
 ```
 
 ### use self-managed auth token provider
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
-const tusky = await Tusky
-  .init()
-  .useAuthTokenProvider({
-    authTokenProvider: async () => "your-self-managed-jwt",
-  })
-  .build();
+
+const tusky = await Tusky.init({ authTokenProvider: async () => "your-self-managed-jwt-provider" });
 ```
 
 ### clear current auth session

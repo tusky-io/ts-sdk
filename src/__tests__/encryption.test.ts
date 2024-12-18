@@ -5,6 +5,7 @@ import { promises as fs } from 'fs';
 import { firstFileName } from './data/content';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { status } from '../constants';
+import { TuskyBuilder } from '../tusky-builder';
 
 describe("Testing encryption functions", () => {
   afterAll(async () => {
@@ -62,11 +63,10 @@ describe("Testing encryption functions", () => {
 
   it("should set user encryption context", async () => {
     const keypair = new Ed25519Keypair();
-    tusky = await Tusky
-    .init()
-    .useEnv(ENV_TEST_RUN)
-    .useLogger({logLevel: LOG_LEVEL })
-      .useWallet({ walletSigner: keypair })
+    tusky = await new TuskyBuilder()
+      .useEnv(ENV_TEST_RUN)
+      .useLogger({ logLevel: LOG_LEVEL })
+      .useWallet({ keypair: keypair })
       .build();
 
     await tusky.auth.signIn();
@@ -81,12 +81,11 @@ describe("Testing encryption functions", () => {
   });
 
   it("should retrieve user context from session", async () => {
-    tusky = await Tusky
-    .init()
-    .useEnv(ENV_TEST_RUN)
-    .useLogger({logLevel: LOG_LEVEL })
-    .useEncrypter({ keystore: true })
-    .build();
+    tusky = await new TuskyBuilder()
+      .useEnv(ENV_TEST_RUN)
+      .useLogger({ logLevel: LOG_LEVEL })
+      .useEncrypter({ keystore: true })
+      .build();
   });
 
   it("should create a private vault", async () => {

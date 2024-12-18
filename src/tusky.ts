@@ -1,6 +1,6 @@
 import { Api } from "./api/api";
 import { TuskyApi } from "./api/tusky-api";
-import { ClientConfig, EncrypterConfig } from "./config";
+import { ClientConfig, EncrypterConfig, TuskyConfig } from "./config";
 import { logger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { VaultModule } from "./core/vault";
@@ -8,7 +8,6 @@ import { CacheBusters } from "./types/cacheable";
 import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
 import { StorageModule } from "./core/storage";
-import { Signer } from "./signer";
 import { DEFAULT_ENV, Env } from "./types/env";
 import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
@@ -24,7 +23,6 @@ import { TuskyBuilder } from "./tusky-builder";
 export class Tusky {
   public api: Api;
   public pubsub: PubSub;
-  private _signer: Signer;
   private _encrypter: Encrypter;
   private _env: Env;
   private _storage: Storage;
@@ -61,8 +59,33 @@ export class Tusky {
     return this._auth;
   }
 
-  static init(): TuskyBuilder {
-    return new TuskyBuilder();
+  static async init(config: TuskyConfig): Promise<Tusky> {
+    const builder = new TuskyBuilder();
+    if (config.env) {
+      builder.useEnv(config.env);
+    }
+    if (config.encrypter) {
+      builder.useEncrypter(config.encrypter);
+    }
+    if (config.logger) {
+      builder.useLogger(config.logger);
+    }
+    if (config.clientName) {
+      builder.useClientName(config.clientName);
+    }
+    if (config.wallet) {
+      builder.useWallet(config.wallet);
+    }
+    if (config.apiKey) {
+      builder.useApiKey(config.apiKey);
+    }
+    if (config.authTokenProvider) {
+      builder.useAuthTokenProvider(config.authTokenProvider);
+    }
+    if (config.oauth) {
+      builder.useOAuth(config.oauth);
+    }
+    return builder.build();
   }
 
   async signOut(): Promise<this> {
@@ -118,7 +141,6 @@ export class Tusky {
       api: this.api,
       pubsub: this.pubsub,
       auth: this._auth,
-      signer: this._signer,
       encrypter: this._encrypter,
       env: this._env,
       storage: this._storage,
@@ -130,7 +152,6 @@ export class Tusky {
    * @param  {ClientConfig} config
    */
   constructor(config: ClientConfig & AuthOptions = {}) {
-    this._signer = config.signer;
     this._encrypter = config.encrypter;
     this._env = { ...this.getConfig(), ...config }.env || DEFAULT_ENV;
     this._storage = config.storage || defaultStorage();

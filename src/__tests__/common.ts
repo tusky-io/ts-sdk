@@ -2,13 +2,13 @@ require("dotenv").config();
 import { Tusky, Env } from "../index";
 import faker from '@faker-js/faker';
 import { mockEnokiFlow } from "./auth";
-import { EnokiSigner } from "./enoki/signer";
 import { status } from "../constants";
 import { stopServer } from "./server";
 import { createWriteStream } from "fs";
 import { PNG } from "pngjs";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { logger } from "../logger";
+import { TuskyBuilder } from "../tusky-builder";
 
 // check if the encrypted flag is present
 export const isEncrypted = global.isEncrypted;
@@ -19,9 +19,8 @@ export async function initInstance(encrypted = true): Promise<Tusky> {
   let tusky: Tusky;
   if (process.env.API_KEY) {
     console.log("--- API key flow");
-      tusky = await Tusky
-      .init()
-      .useApiKey({ apiKey: process.env.API_KEY })
+      tusky = await new TuskyBuilder()
+      .useApiKey(process.env.API_KEY)
       .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .useEnv(ENV_TEST_RUN)
       .build();
@@ -29,18 +28,15 @@ export async function initInstance(encrypted = true): Promise<Tusky> {
     console.log("--- mock Enoki flow");
     const { tokens, address, keyPair } = await mockEnokiFlow();
 
-      tusky = await Tusky
-      .init()
+      tusky = await new TuskyBuilder()
       .useOAuth({ authProvider: process.env.AUTH_PROVIDER as any, redirectUri: "http://localhost:3000" })
       .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .useEnv(ENV_TEST_RUN)
-      .useSigner(new EnokiSigner({ address: address, keypair: keyPair }))
       .build();
   } else {
     const keypair = new Ed25519Keypair();
-    tusky = await Tusky
-      .init()
-      .useWallet({ walletSigner: keypair })
+    tusky = await new TuskyBuilder()
+      .useWallet({ keypair: keypair })
       .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .useEnv(ENV_TEST_RUN)
       .build();

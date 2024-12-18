@@ -1,6 +1,5 @@
 import {
-  ApiKeyConfig,
-  AuthTokenProviderConfig,
+  AuthTokenProvider,
   AuthType,
   OAuthConfig,
   WalletConfig,
@@ -8,7 +7,6 @@ import {
 import { Tusky } from "./tusky";
 import { UserEncryption } from "./crypto/user-encryption";
 import { Encrypter } from "./crypto/encrypter";
-import { Signer } from "./signer";
 import { Env } from "./types";
 import { Auth, AuthOptions } from "./auth";
 import { ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
@@ -18,7 +16,6 @@ import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 
 export class TuskyBuilder {
-  private _signer: Signer;
   private _encrypterConfig: EncrypterConfig;
   private _encrypter: Encrypter;
   private _userEncryption: UserEncryption;
@@ -26,30 +23,31 @@ export class TuskyBuilder {
   private _storage: Storage;
   private _auth: Auth;
   private _authType: AuthType;
-  private _authOptions: AuthOptions;
+  private _authConfig: AuthOptions;
   private _logger: Logger;
+  private _clientName: string;
 
   useOAuth(config: OAuthConfig): TuskyBuilder {
     this._authType = "OAuth";
-    this._authOptions = config;
+    this._authConfig = config;
     return this;
   }
 
   useWallet(config: WalletConfig): TuskyBuilder {
     this._authType = "Wallet";
-    this._authOptions = config;
+    this._authConfig = config;
     return this;
   }
 
-  useApiKey(config: ApiKeyConfig): TuskyBuilder {
+  useApiKey(apiKey: string): TuskyBuilder {
     this._authType = "ApiKey";
-    this._authOptions = config;
+    this._authConfig = { apiKey: apiKey };
     return this;
   }
 
-  useAuthTokenProvider(config: AuthTokenProviderConfig): TuskyBuilder {
+  useAuthTokenProvider(authTokenProvider: AuthTokenProvider): TuskyBuilder {
     this._authType = "AuthTokenProvider";
-    this._authOptions = config;
+    this._authConfig = { authTokenProvider: authTokenProvider };
     return this;
   }
 
@@ -66,13 +64,13 @@ export class TuskyBuilder {
     return this;
   }
 
-  useSigner(signer: Signer): this {
-    this._signer = signer;
+  useEncrypter(config: EncrypterConfig): this {
+    this._encrypterConfig = config;
     return this;
   }
 
-  useEncrypter(config: EncrypterConfig): this {
-    this._encrypterConfig = config;
+  useClientName(clientName: string): this {
+    this._clientName = clientName;
     return this;
   }
 
@@ -85,11 +83,11 @@ export class TuskyBuilder {
   private getConfig(): ClientConfig {
     return {
       auth: this._auth,
-      signer: this._signer,
       encrypter: this._encrypter,
       env: this._env,
       logger: this._logger,
       storage: this._storage,
+      clientName: this._clientName,
     };
   }
 
@@ -98,7 +96,7 @@ export class TuskyBuilder {
     this._userEncryption = new UserEncryption(this.getConfig());
     const auth = new Auth({
       ...this.getConfig(),
-      ...this._authOptions,
+      ...this._authConfig,
       authType: this._authType,
     });
     const tusky = new Tusky({
