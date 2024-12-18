@@ -94,10 +94,11 @@ const files = await tusky.file.listAll();
 ```js
 // on the browser
 import { Tusky } from "@tusky/ts-sdk";
-import { useSignPersonalMessage, useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSignPersonalMessage } from "@mysten/dapp-kit";
 
-const { mutate: signPersonalMessage } = useSignPersonalMessage();
+// Sui wallet extension
 const account = useCurrentAccount();
+const { mutate: signPersonalMessage } = useSignPersonalMessage();
 
 const tusky = await Tusky.init({ wallet: { signPersonalMessage, account } });
 

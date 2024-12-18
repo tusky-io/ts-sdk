@@ -4,12 +4,11 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import { useCurrentAccount, useSignPersonalMessage, useCurrentWallet } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Akord } from "@akord/carmella-sdk";
-window.Buffer = window.Buffer || require("buffer").Buffer;
+import { Tusky } from "@akord/carmella-sdk";
 
 function App() {
 
-  const [akord, setAkord] = useState<Akord | null>()
+  const [tusky, setTusky] = useState<Tusky | null>()
 
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
 
@@ -41,81 +40,87 @@ function App() {
   }
 
   const handleSignInWithWallet = async () => {
-    const akord = Akord
+    const tusky = Tusky
       .withWallet({ walletSignFnClient: signPersonalMessage, walletAccount: account })
       .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any });
+      .withApi({ env: "dev" });
 
-    await akord.signIn();
-    console.log("ADDRESS: " + akord.address);
+    await tusky.signIn();
+    console.log("ADDRESS: " + tusky.address);
 
-    console.log("setting encryption context from password");
-    await handleEncryptionContext(akord);
+    // setting encryption context from password
+    await handleEncryptionContext(tusky);
 
-    console.log("setting encryption context from keystore");
-    await akord.withEncrypter({ keystore: true });
+    // setting encryption context from keystore
+    await tusky.withEncrypter({ keystore: true });
 
-    setAkord(akord);
+    setTusky(tusky);
   };
 
   const handleSignInWithOAuth = async (authProvider: string) => {
-    const akord = Akord
+    const tusky = Tusky
       .withOAuth({ authProvider: authProvider as any, redirectUri: "http://localhost:3000" })
       .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: process.env.ENV as any });
+      .withApi({ env: "dev" });
 
-    await akord.signIn();
-    console.log("ADDRESS: " + akord.address);
+    await tusky.signIn();
+    console.log("ADDRESS: " + tusky.address);
 
-    await handleEncryptionContext(akord);
+    await handleEncryptionContext(tusky);
 
-    setAkord(akord);
+    setTusky(tusky);
   };
 
 
   const handleSignOut = async () => {
-    if (akord) {
-      akord.signOut();
-      console.log("ADDRESS: " + akord.address);
+    if (tusky) {
+      tusky.signOut();
+      console.log("ADDRESS: " + tusky.address);
     }
-    setAkord(null)
+    setTusky(null)
   };
 
-  const handleEncryptionContext = async (akord: Akord) => {
+  const handleEncryptionContext = async (tusky: Tusky) => {
     // prompt the user for a password
     const password = window.prompt("Please enter your password:");
     if (!password) {
       throw new Error("Password input canceled.");
     }
     // set encryption context from password & use keystore to persist encryption session
-    await akord.withEncrypter({ password: password, keystore: true });
+    await tusky.withEncrypter({ password: password, keystore: true });
   };
 
   const handleUpload = async (files: FileList | null) => {
-    if (!akord) {
-      throw new Error('Carmella SDK not initialized')
+    if (!tusky) {
+      throw new Error('Tusky SDK not initialized')
     }
     if (!files || !files.length) {
       throw new Error('Failed uploading the file')
     }
     const file = files[0]
-    const vaultName = "Sui wallet demo"
-    alert("Creating vault: " + vaultName)
+    const vaultName = "from React starter"
     try {
-      const { id } = await akord.vault.create(vaultName, { public: false });
-      alert("Uploading file to vault: " + id)
-      console.log(file)
-      const fileId = await akord.file.upload(id, file)
+      const vaults = await tusky.vault.listAll();
+      const starterVault = vaults.find(vault => vault.name === vaultName);
+      let vaultId = starterVault?.id as string;
+      if (!starterVault) {
+        alert("Creating starter vault: " + vaultName)
+        const { id } = await tusky.vault.create(vaultName, { encrypted: true });
+        vaultId = id;
+      }
+      alert("Uploading file to vault: " + vaultId);
+      console.log(file);
+      const fileId = await tusky.file.upload(vaultId, file);
       alert("Uploaded file: " + fileId)
       alert("Downloading file: " + fileId)
       console.log("Downloading file: " + fileId)
-      await akord.file.download(fileId);
-      setAkord(null)
+      await tusky.file.download(fileId);
+      setTusky(null)
     } catch (error) {
       console.error(error);
       alert();
     } finally {
-      setAkord(null)
+      setTusky(null)
     }
   }
 
@@ -134,12 +139,12 @@ function App() {
   return (
     <><div className="App">
       <header>
-        <title>Carmella SDK &lt;&gt; Sui wallet starter</title><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="icon" href="/favicon.ico" />
+        <title>Tusky SDK &lt;&gt; React starter</title><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="icon" href="/favicon.ico" />
       </header>
       <main className="vh-100 d-flex justify-content-center align-items-center">
         <ConnectButton id="connect_button" />
-        {akord ? uploadForm() : signInWithWalletForm()}
-        {akord ? signOut() : signInWithGoogleForm()}
+        {tusky ? uploadForm() : signInWithWalletForm()}
+        {tusky ? signOut() : signInWithGoogleForm()}
       </main>
     </div>
     </>
