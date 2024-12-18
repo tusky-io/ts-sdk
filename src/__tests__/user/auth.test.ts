@@ -13,7 +13,7 @@ describe("Testing auth functions", () => {
 
   it("should authenticate with Sui wallet", async () => {
     const keypair = new Ed25519Keypair();
-    const tusky = await new TuskyBuilder()
+    tusky = await new TuskyBuilder()
       .useWallet({ keypair: keypair })
       .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .useEnv(ENV_TEST_RUN)
