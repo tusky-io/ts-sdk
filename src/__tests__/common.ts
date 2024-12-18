@@ -45,7 +45,7 @@ export async function initInstance(encrypted = true): Promise<Tusky> {
   if (encrypted) {
     const password = faker.random.word();
     await tusky.me.setupPassword(password);
-    await tusky.setEncrypter({ password: password, keystore: true });
+    await tusky.addEncrypter({ password: password, keystore: true });
   }
   return tusky;
 }

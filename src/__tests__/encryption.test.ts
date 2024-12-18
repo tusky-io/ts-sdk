@@ -77,7 +77,7 @@ describe("Testing encryption functions", () => {
   });
 
   it("should set user encryption context from password & persist encryption session with keystore", async () => {
-    await tusky.setEncrypter({ password: password, keystore: true });
+    await tusky.addEncrypter({ password: password, keystore: true });
   });
 
   it("should retrieve user context from session", async () => {

@@ -94,26 +94,26 @@ export class Tusky {
     return this;
   }
 
-  async setEncrypter(config: EncrypterConfig): Promise<this> {
+  async addEncrypter(config: EncrypterConfig): Promise<this> {
     if (!config) {
       return;
     }
-    if (config.encrypter) {
-      this._encrypter = config.encrypter;
+    if (config.keypair) {
+      this._encrypter = new Encrypter({ keypair: config.keypair });
     } else if (config.password) {
       const user = await this.me.get();
       if (!user.encPrivateKey) {
         logger.info("Generate new user encryption context");
-        const { keyPair } = await this.me.setupPassword(config.password);
-        this._encrypter = new Encrypter({ keypair: keyPair });
+        const { keypair } = await this.me.setupPassword(config.password);
+        this._encrypter = new Encrypter({ keypair: keypair });
       } else {
         logger.info(
           "Retrieve and decrypt existing user encryption content with password",
         );
-        const { keyPair } = await this.me.importEncryptionSessionFromPassword(
+        const { keypair } = await this.me.importEncryptionSessionFromPassword(
           config.password,
         );
-        this._encrypter = new Encrypter({ keypair: keyPair });
+        this._encrypter = new Encrypter({ keypair: keypair });
       }
     } else if (config.keystore) {
       const user = await this.me.get();
@@ -126,8 +126,8 @@ export class Tusky {
         logger.info(
           "Retrieve and decrypt existing user encryption content from keystore",
         );
-        const { keyPair } = await this.me.importEncryptionSessionFromKeystore();
-        this._encrypter = new Encrypter({ keypair: keyPair });
+        const { keypair } = await this.me.importEncryptionSessionFromKeystore();
+        this._encrypter = new Encrypter({ keypair: keypair });
       } catch (error) {
         logger.error(error);
         throw new Conflict("The user needs to provide the password again.");

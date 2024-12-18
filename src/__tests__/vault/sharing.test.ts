@@ -108,7 +108,7 @@ describe("Testing airdrop actions", () => {
 
       expect(memberTusky.auth.getAddress()).toEqual(airdropeeAddress);
 
-      await memberTusky.setEncrypter({ password: airdropeePassword });
+      await memberTusky.addEncrypter({ password: airdropeePassword });
 
       const vault = await memberTusky.vault.get(vaultId);
       expect(vault).toBeTruthy();
@@ -143,7 +143,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberTusky = await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
 
-        await memberTusky.setEncrypter({ password: airdropeePassword });
+        await memberTusky.addEncrypter({ password: airdropeePassword });
 
         const vault = await memberTusky.vault.get(vaultId);
         expect(vault).toBeTruthy();
@@ -201,7 +201,7 @@ describe("Testing airdrop actions", () => {
     it("should get the file metadata by the viewer member", async () => {
       const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-      await memberTusky.setEncrypter({ password: viewerPassword });
+      await memberTusky.addEncrypter({ password: viewerPassword });
 
       const file = await memberTusky.file.get(fileId);
       expect(file).toBeTruthy();
@@ -211,7 +211,7 @@ describe("Testing airdrop actions", () => {
     it("should download the file by the viewer member", async () => {
       const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-      await memberTusky.setEncrypter({ password: viewerPassword });
+      await memberTusky.addEncrypter({ password: viewerPassword });
 
       const response = await memberTusky.file.arrayBuffer(fileId);
       expect(response).toBeTruthy();
@@ -221,7 +221,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-        await memberTusky.setEncrypter({ password: viewerPassword });
+        await memberTusky.addEncrypter({ password: viewerPassword });
 
         await memberTusky.file.rename(fileId, faker.random.word());
       }).rejects.toThrow(Forbidden);
@@ -231,7 +231,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-        await memberTusky.setEncrypter({ password: viewerPassword });
+        await memberTusky.addEncrypter({ password: viewerPassword });
 
         await memberTusky.folder.get(folderId);
       }).rejects.toThrow(Forbidden);
@@ -240,7 +240,7 @@ describe("Testing airdrop actions", () => {
     it("should download the file by the contributor member", async () => {
       const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-      await memberTusky.setEncrypter({ password: contributorPassword });
+      await memberTusky.addEncrypter({ password: contributorPassword });
 
       const response = await memberTusky.file.arrayBuffer(fileId);
       expect(response).toBeTruthy();
@@ -249,7 +249,7 @@ describe("Testing airdrop actions", () => {
     it("should rename the file by the contributor member", async () => {
       const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-      await memberTusky.setEncrypter({ password: contributorPassword });
+      await memberTusky.addEncrypter({ password: contributorPassword });
 
       const name = faker.random.word();
       const file = await memberTusky.file.rename(fileId, name);
@@ -261,7 +261,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-        await memberTusky.setEncrypter({ password: contributorPassword });
+        await memberTusky.addEncrypter({ password: contributorPassword });
 
         await memberTusky.folder.rename(folderId, faker.random.word());
       }).rejects.toThrow(Forbidden);
@@ -275,7 +275,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberTusky = await initTuskyFromPrivateKey(viewerIdentityPrivateKey);
 
-        await memberTusky.setEncrypter({ password: viewerPassword });
+        await memberTusky.addEncrypter({ password: viewerPassword });
 
         await memberTusky.file.get(ownerFileId);
       }).rejects.toThrow(Forbidden);
@@ -285,7 +285,7 @@ describe("Testing airdrop actions", () => {
       await expect(async () => {
         const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-        await memberTusky.setEncrypter({ password: contributorPassword });
+        await memberTusky.addEncrypter({ password: contributorPassword });
 
         await memberTusky.file.arrayBuffer(ownerFileId);
       }).rejects.toThrow(Forbidden);

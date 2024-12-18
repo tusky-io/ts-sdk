@@ -106,7 +106,7 @@ export class TuskyBuilder {
       api: new TuskyApi({ ...this.getConfig(), auth: auth }),
     });
     tusky.pubsub = new PubSub({ env: this._env });
-    await tusky.setEncrypter(this._encrypterConfig);
+    await tusky.addEncrypter(this._encrypterConfig);
     setLogger(this._logger);
     return tusky;
   }

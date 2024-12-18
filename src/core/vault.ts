@@ -268,11 +268,11 @@ class VaultModule {
         jsonToBase64(ownerAccessJson),
       );
 
-      const { encPrivateKey, keyPair } =
+      const { encPrivateKey, keypair } =
         await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
       keys = await memberService.prepareMemberKeys(
-        arrayToBase64(keyPair.publicKey),
+        arrayToBase64(keypair.publicKey),
       );
     } else {
       ownerAccess = jsonToBase64(ownerAccessJson);

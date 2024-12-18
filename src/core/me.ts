@@ -35,22 +35,22 @@ class MeModule {
   /**
    * Setup user password
    * @param {string} password
-   * @returns {Promise<{ keyPair: X25519KeyPair; user: User }>}
+   * @returns {Promise<{ keypair: X25519KeyPair; user: User }>}
    */
   public async setupPassword(
     password: string,
-  ): Promise<{ keyPair: X25519KeyPair; user: User }> {
+  ): Promise<{ keypair: X25519KeyPair; user: User }> {
     const me = await this.get();
     if (me.encPrivateKey) {
       throw new BadRequest("User encryption context is already setup");
     }
-    const { encPrivateKey, keyPair } = await this.userEncryption.setupPassword(
+    const { encPrivateKey, keypair } = await this.userEncryption.setupPassword(
       password,
       true,
     );
     return {
       user: await this.service.api.updateMe({ encPrivateKey: encPrivateKey }),
-      keyPair,
+      keypair,
     };
   }
 
@@ -149,31 +149,31 @@ class MeModule {
   /**
    * Import encryption session from password
    * @param {string} password
-   * @returns {Promise<{ keyPair: X25519KeyPair }>}
+   * @returns {Promise<{ keypair: X25519KeyPair }>}
    */
   public async importEncryptionSessionFromPassword(
     password: string,
-  ): Promise<{ keyPair: X25519KeyPair }> {
+  ): Promise<{ keypair: X25519KeyPair }> {
     const me = await this.get();
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
-    const { keyPair } = await this.userEncryption.importFromPassword(
+    const { keypair } = await this.userEncryption.importFromPassword(
       password,
       true,
     );
-    return { keyPair };
+    return { keypair };
   }
 
   /**
    * Import encryption session from keystore, if present
-   * @returns {Promise<{ keyPair: X25519KeyPair }>}
+   * @returns {Promise<{ keypair: X25519KeyPair }>}
    */
   public async importEncryptionSessionFromKeystore(): Promise<{
-    keyPair: X25519KeyPair;
+    keypair: X25519KeyPair;
   }> {
     const me = await this.get();
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
-    const { keyPair } = await this.userEncryption.importFromKeystore();
-    return { keyPair };
+    const { keypair } = await this.userEncryption.importFromKeystore();
+    return { keypair };
   }
 }
 

@@ -9,6 +9,7 @@ import {
   WalletConfig,
 } from "./types/auth";
 import { Auth } from "./auth";
+import { X25519KeyPair } from "./crypto";
 
 export interface TuskyConfig {
   env?: Env;
@@ -44,9 +45,9 @@ export interface LoggerConfig {
 }
 
 export interface EncrypterConfig {
-  encrypter?: Encrypter;
   password?: string; // password to decrypt user's encryption key
   keystore?: boolean; // indicate whether should import the key from the keystore
+  keypair?: X25519KeyPair; // encryption key pair
 }
 
 export interface ApiConfig {
