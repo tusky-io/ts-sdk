@@ -108,13 +108,13 @@ Import encryption session from password
 
 *   `password` **[string][19]**&#x20;
 
-Returns **[Promise][17]<{keyPair: X25519KeyPair}>**&#x20;
+Returns **[Promise][17]<{keypair: X25519KeyPair}>**&#x20;
 
 ## importEncryptionSessionFromKeystore
 
 Import encryption session from keystore, if present
 
-Returns **[Promise][17]<{keyPair: X25519KeyPair}>**&#x20;
+Returns **[Promise][17]<{keypair: X25519KeyPair}>**&#x20;
 
 [1]: #get
 
@@ -407,7 +407,7 @@ Subscribe to file create/update events.
 
 ```javascript
 // To unsubscribe:
-const subscription = subscribe(vaultId, onSuccess, onError);
+const subscription = await tusky.file.subscribe(vaultId, onSuccess, onError);
 subscription.unsubscribe();
 ```
 

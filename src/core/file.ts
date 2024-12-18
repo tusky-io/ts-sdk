@@ -370,7 +370,7 @@ class FileModule {
    * @returns {Subscription}
    * @example
    * // To unsubscribe:
-   * const subscription = subscribe(vaultId, onSuccess, onError);
+   * const subscription = await tusky.file.subscribe(vaultId, onSuccess, onError);
    * subscription.unsubscribe();
    */
   public async subscribe(
