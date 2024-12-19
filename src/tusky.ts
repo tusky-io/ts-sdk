@@ -3,6 +3,7 @@ import { TuskyApi } from "./api/tusky-api";
 import { ClientConfig, EncrypterConfig, TuskyConfig } from "./config";
 import { logger } from "./logger";
 import { FolderModule } from "./core/folder";
+import { NFTModule } from "./core/nft";
 import { VaultModule } from "./core/vault";
 import { CacheBusters } from "./types/cacheable";
 import { FileModule } from "@env/core/file";
@@ -33,6 +34,9 @@ export class Tusky {
   }
   get folder(): FolderModule {
     return new FolderModule(this.getConfig());
+  }
+  get nft(): NFTModule {
+    return new NFTModule(this.getConfig());
   }
   get vault(): VaultModule {
     return new VaultModule(this.getConfig());
