@@ -14,6 +14,7 @@ Compatible with both Node.js and web browsers.
   - [Sui wallet](#use-sui-wallet)
   - [OAuth](#use-oauth-google-twitch)
   - [Api key](#use-api-key)
+- [Encryption](#encryption)
 - [Examples](#examples)
 
 ## Usage
@@ -147,12 +148,69 @@ import { Tusky } from "@tusky/ts-sdk";
 Tusky.signOut();
 ```
 
+## Encryption
+
+All data within private vaults is end-to-end encrypted, you can learn more about encryption in Tusky from our [docs](https://docs.tusky.io/end-to-end-encryption).\
+The SDK provides two options for managing user keys:
+
+### Self hosted keys
+
+Manage and store your encryption keys entirely on your own. This approach provides the highest level of control. However, it also requires you to securely store and back up your keys, as losing them will result in permanent loss of access to your encrypted data.
+
+```js
+import { X25519KeyPair } from "@tusky/ts-sdk";
+
+// generate fresh set of encryption keys
+const keypair = new X25519KeyPair();
+
+// configure Tusky encrypter with the generated keypair
+await tusky.addEncrypter({ keypair: keypair });
+
+// export private key from the keypair & store it securely
+const privateKeyHex = await keypair.privateKeyHex();
+
+// configure Tusky encrypter from the private key
+await tusky.addEncrypter({ keypair: X25519KeyPair.fromPrivateKeyHex() });
+```
+
+### Password protected keys
+
+Your encryption keys are still generated on your device, ensuring they are never visible to our servers in an unencrypted form. However, for convenience, you can encrypt your keys with a password of your choice and store them securely on our servers. Only you can decrypt the keys using your password.
+
+```js
+// this method will generate a fresh set of encryption keys
+// encrypt it on the client with a kye derived from user password
+// and save the encrypted set of keys on Tusky for easier retrieval
+const { user, keypair } = await tusky.me.setupPassword("your-strong-password");
+
+// configure Tusky encrypter with the newly generated keypair
+await tusky.addEncrypter({ keypair });
+
+// the next time you log in, you can simply do
+await tusky.addEncrypter({ password: "your-strong-password" });
+```
+
+#### Password backup
+
+In addition to your password, you can back up your keys using a 24-word backup phrase. If you lose your password, the backup phrase allows you to regain access to your encrypted data.
+
+```js
+// this method will generate a fresh backup phrase
+// retrieve your keys using the password
+// re-encrypt the keys with a recovery key derived from a backup phrase
+// and save the new encrypted set of keys on Tusky as a backup
+const { backupPhrase } = await tusky.me.backupPassword(password);
+
+// in case of password loss, you can reset the password using the backup phrase
+await tusky.me.resetPassword(backupPhrase, newPassword);
+```
+
 ## Examples
 
 - See example flows under [tests](src/__tests__).
 
-- See different setups under [examples](examples).
+- See different app setups under [examples](examples).
 
 ## Documentation
 
-- See all SDK modules & methods documented [here](DOCS.md)
+- See all SDK modules & methods documented [here](DOCS.md).
