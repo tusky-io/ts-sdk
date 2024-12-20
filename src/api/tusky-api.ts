@@ -25,11 +25,6 @@ import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
 import {
-  PaymentPlan,
-  PaymentSession,
-  PaymentSessionOptions,
-} from "../types/payment";
-import {
   CreateChallengeRequestPayload,
   GenerateJWTRequestPayload,
   GenerateJWTResponsePayload,
@@ -286,25 +281,6 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .getStorage();
-  }
-
-  public async getPaymentPlans(): Promise<PaymentPlan[]> {
-    return new ApiClient()
-      .env(this.config)
-      .clientName(this.clientName)
-      .auth(this.auth)
-      .getPaymentPlans();
-  }
-
-  public async createSubscriptionPaymentSession(
-    options: PaymentSessionOptions,
-  ): Promise<PaymentSession> {
-    return new ApiClient()
-      .env(this.config)
-      .clientName(this.clientName)
-      .auth(this.auth)
-      .data(options)
-      .createSubscriptionPaymentSession();
   }
 
   public async getMe(): Promise<User> {
