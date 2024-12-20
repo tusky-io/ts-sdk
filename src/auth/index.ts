@@ -74,16 +74,6 @@ export class Auth {
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
-  public setEnv(env: Env) {
-    this.env = env;
-    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
-  }
-
-  public setStorage(storage: Storage) {
-    this.storage = storage;
-    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
-  }
-
   public async signIn(): Promise<{ address?: string }> {
     switch (this.authType) {
       case "Wallet": {
