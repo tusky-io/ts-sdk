@@ -23,7 +23,7 @@ class MeModule {
   }
 
   /**
-   * Update currently authenticated user
+   * Update currently authenticated user\
    * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
    * @param {UserMutable} input
    * @returns {Promise<User>}
@@ -55,8 +55,8 @@ class MeModule {
   }
 
   /**
-   * Change user password
-   * Decrypt user private key with the old password
+   * Change user password\
+   * Decrypt user private key with the old password\
    * Encrypt user private key with the new password
    * @param {string} oldPassword
    * @param {string} newPassword
@@ -82,7 +82,7 @@ class MeModule {
   }
 
   /**
-   * Backup user password
+   * Backup user password\
    * Generate fresh backup phrase & use it as a backup
    * @param {string} password
    * @returns {Promise<{ backupPhrase: string; user: User }>}
@@ -106,8 +106,8 @@ class MeModule {
   }
 
   /**
-   * Reset user password
-   * Recover user private key using the backup phrase
+   * Reset user password\
+   * Recover user private key using the backup phrase\
    * Encrypt user private key with the new password
    * @param {string} backupPhrase
    * @param {string} newPassword

@@ -214,7 +214,7 @@ class VaultModule {
   }
 
   /**
-   * Delete the vault
+   * Delete the vault\
    * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
    * @param id vault id
    * @returns {Promise<void>}
@@ -302,7 +302,7 @@ class VaultModule {
   }
 
   /**
-   * Revoke member access
+   * Revoke member access\
    * If private vault, vault keys will be rotated & distributed to all valid members
    * @param  {string} id membership id
    * @returns {Promise<void>}
