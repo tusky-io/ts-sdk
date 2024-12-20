@@ -1,6 +1,5 @@
 import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
 import { Tusky } from "./tusky";
-import { UserEncryption } from "./crypto/user-encryption";
 import { Encrypter } from "./crypto/encrypter";
 import { Env } from "./types";
 import { Auth, AuthOptions } from "./auth";
@@ -13,7 +12,6 @@ import { defaultStorage } from "./auth/jwt";
 export class TuskyBuilder {
   private _encrypterConfig: EncrypterConfig;
   private _encrypter: Encrypter;
-  private _userEncryption: UserEncryption;
   private _env: Env;
   private _storage: Storage;
   private _auth: Auth;
@@ -47,9 +45,6 @@ export class TuskyBuilder {
 
   useStorage(storage: Storage): this {
     this._storage = storage;
-    if (this._auth) {
-      this._auth.setStorage(storage);
-    }
     return this;
   }
 
@@ -65,7 +60,6 @@ export class TuskyBuilder {
 
   useEnv(env: Env): this {
     this._env = env;
-    this._auth?.setEnv(this._env);
     return this;
   }
 
@@ -82,7 +76,6 @@ export class TuskyBuilder {
 
   async build(): Promise<Tusky> {
     this._storage = this._storage || defaultStorage();
-    this._userEncryption = new UserEncryption(this.getConfig());
     const auth = new Auth({
       ...this.getConfig(),
       ...this._authConfig,

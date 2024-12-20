@@ -38,7 +38,7 @@ Returns **[Promise][17]\<User>**&#x20;
 
 ## update
 
-Update currently authenticated user
+Update currently authenticated user\
 NOTE: by setting termsAccepted to true, the user accepts the following terms: [https://tusky.com/terms-of-service-consumer][18]
 
 ### Parameters
@@ -57,8 +57,8 @@ Setup user password
 
 ## changePassword
 
-Change user password
-Decrypt user private key with the old password
+Change user password\
+Decrypt user private key with the old password\
 Encrypt user private key with the new password
 
 ### Parameters
@@ -70,7 +70,7 @@ Returns **[Promise][17]\<User>**&#x20;
 
 ## backupPassword
 
-Backup user password
+Backup user password\
 Generate fresh backup phrase & use it as a backup
 
 ### Parameters
@@ -79,8 +79,8 @@ Generate fresh backup phrase & use it as a backup
 
 ## resetPassword
 
-Reset user password
-Recover user private key using the backup phrase
+Reset user password\
+Recover user private key using the backup phrase\
 Encrypt user private key with the new password
 
 ### Parameters
@@ -560,7 +560,7 @@ Returns **[Promise][22]\<Folder>**&#x20;
 
 ## delete
 
-The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.
+The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.\
 To undo this action, call folder.restore() within the 30-day period.
 
 ### Parameters
@@ -571,7 +571,7 @@ Returns **[Promise][22]\<Folder>**&#x20;
 
 ## restore
 
-Restores the folder from the trash, recovering all folder contents.
+Restores the folder from the trash, recovering all folder contents.\
 This action must be performed within 30 days of the folder being moved to the trash to prevent permanent deletion.
 
 ### Parameters
@@ -582,7 +582,7 @@ Returns **[Promise][22]\<Folder>**&#x20;
 
 ## deletePermanently
 
-The folder and all its contents will be permanently deleted.
+The folder and all its contents will be permanently deleted.\
 This action is irrevocable and can only be performed if the folder is already in trash.
 
 ### Parameters
@@ -721,7 +721,7 @@ Returns **any** Promise with vault object
 
 ## delete
 
-Delete the vault
+Delete the vault\
 This action must be performed only for vault with no contents, it will fail if the vault is not empty.
 
 ### Parameters
@@ -743,7 +743,7 @@ Returns **Promsise\<Membership>** Promise with new membership
 
 ## revokeAccess
 
-Revoke member access
+Revoke member access\
 If private vault, vault keys will be rotated & distributed to all valid members
 
 ### Parameters

@@ -13,7 +13,6 @@ import { Auth, AuthOptions } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./crypto/encrypter";
-import { PaymentModule } from "./core/payment";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
 import PubSub from "./api/pubsub";
@@ -51,9 +50,6 @@ export class Tusky {
   }
   get storage(): StorageModule {
     return new StorageModule(this.getConfig());
-  }
-  get payment(): PaymentModule {
-    return new PaymentModule(this.getConfig());
   }
   get auth(): Auth {
     return this._auth;

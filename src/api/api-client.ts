@@ -13,7 +13,6 @@ import { Storage } from "../types/storage";
 import { logger } from "../logger";
 import { httpClient } from "./http";
 import { ApiKey } from "../types/api-key";
-import { PaymentPlan, PaymentSession } from "../types/payment";
 import { GenerateJWTResponsePayload } from "../types/auth";
 import { InternalError } from "../errors/internal-error";
 
@@ -520,10 +519,6 @@ export class ApiClient {
     return this.get(`${this._apiUrl}/${this._apiKeyUri}`);
   }
 
-  async getPaymentPlans(): Promise<PaymentPlan[]> {
-    return this.get(`${this._apiUrl}/${this._subscriptionUri}`);
-  }
-
   /**
    * Generate new api key
    * @uses:
@@ -1017,11 +1012,6 @@ export class ApiClient {
   async getStorage(): Promise<Storage> {
     const data = await this.get(`${this._apiUrl}/${this._storageUri}`);
     return new Storage(data);
-  }
-
-  async createSubscriptionPaymentSession(): Promise<PaymentSession> {
-    const data = await this.put(`${this._apiUrl}/${this._subscriptionUri}`);
-    return new PaymentSession(data);
   }
 
   private getCustomHeaders(): AxiosRequestHeaders {

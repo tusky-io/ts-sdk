@@ -205,7 +205,7 @@ class FolderModule {
   }
 
   /**
-   * The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.
+   * The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.\
    * To undo this action, call folder.restore() within the 30-day period.
    * @param {string} id folder id
    * @returns {Promise<Folder>}
@@ -215,7 +215,7 @@ class FolderModule {
   }
 
   /**
-   * Restores the folder from the trash, recovering all folder contents.
+   * Restores the folder from the trash, recovering all folder contents.\
    * This action must be performed within 30 days of the folder being moved to the trash to prevent permanent deletion.
    * @param {string} id folder id
    * @returns {Promise<Folder>}
@@ -225,7 +225,7 @@ class FolderModule {
   }
 
   /**
-   * The folder and all its contents will be permanently deleted.
+   * The folder and all its contents will be permanently deleted.\
    * This action is irrevocable and can only be performed if the folder is already in trash.
    * @param {string} id folder id
    * @returns {Promise<void>}

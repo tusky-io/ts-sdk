@@ -11,7 +11,7 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
 import { TuskyApi } from "../api/tusky-api";
 import { Env } from "../types/env";
-import { decode, defaultStorage, JWTClient } from "./jwt";
+import { defaultStorage, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
@@ -71,16 +71,6 @@ export class Auth {
     this.clientId = options.clientId;
     this.redirectUri = options.redirectUri;
     this.storage = options.storage || defaultStorage();
-    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
-  }
-
-  public setEnv(env: Env) {
-    this.env = env;
-    this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
-  }
-
-  public setStorage(storage: Storage) {
-    this.storage = storage;
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 

@@ -22,11 +22,6 @@ import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
 import {
-  PaymentPlan,
-  PaymentSession,
-  PaymentSessionOptions,
-} from "../types/payment";
-import {
   CreateChallengeRequestPayload,
   GenerateJWTRequestPayload,
   GenerateJWTResponsePayload,
@@ -87,12 +82,6 @@ abstract class Api {
   ): Promise<ArrayBuffer | ReadableStream<Uint8Array>>;
 
   abstract getStorage(): Promise<Storage>;
-
-  abstract getPaymentPlans(): Promise<PaymentPlan[]>;
-
-  abstract createSubscriptionPaymentSession(
-    options: PaymentSessionOptions,
-  ): Promise<PaymentSession>;
 
   abstract getFile(id: string): Promise<File>;
 
