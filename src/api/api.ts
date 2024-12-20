@@ -27,6 +27,8 @@ import {
   GenerateJWTResponsePayload,
   VerifyChallengeRequestPayload,
 } from "../types/auth";
+import { NFT } from "../types/nft";
+import { Collection } from "../types/collection";
 
 abstract class Api {
   config: ApiConfig;
@@ -104,6 +106,20 @@ abstract class Api {
   abstract generateApiKey(): Promise<ApiKey>;
 
   abstract revokeApiKey(key: string): Promise<ApiKey>;
+
+  abstract mintNft(tx: CreateVaultTxPayload): Promise<NFT>;
+
+  abstract mintCollection(tx: CreateVaultTxPayload): Promise<Collection>;
+
+  abstract getCollection(id: string): Promise<Collection>;
+
+  abstract getNft(id: string, options?: VaultApiGetOptions): Promise<NFT>;
+
+  abstract getCollections(
+    options?: ListOptions,
+  ): Promise<Paginated<Collection>>;
+
+  abstract getNfts(options?: ListOptions): Promise<Paginated<NFT>>;
 }
 
 export { Api };

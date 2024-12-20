@@ -32,6 +32,9 @@ import {
 } from "../types/auth";
 import { Auth } from "../auth";
 import { ApiConfig } from "../config";
+import { Collection } from "../types/collection";
+import { NFT } from "../types/nft";
+import { CollectionMetadata, NFTMetadata } from "../core/nft";
 
 export const defaultFileUploadOptions = {
   encrypted: true,
@@ -420,6 +423,85 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .resourceId(key)
       .revokeApiKey();
+  }
+
+  public async getCollection(id: string): Promise<Collection> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .resourceId(id)
+      .getCollection();
+  }
+
+  public async getNft(id: string): Promise<NFT> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .resourceId(id)
+      .getNft();
+  }
+
+  public async getNfts(options: ListOptions = {}): Promise<Paginated<NFT>> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .queryParams({
+        status: options.status,
+        parentId: options.parentId,
+        limit: options.limit || DEFAULT_LIMIT,
+        nextToken: options.nextToken,
+      })
+      .getNfts();
+  }
+
+  public async getCollections(
+    options: ListOptions = {},
+  ): Promise<Paginated<Collection>> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .queryParams({
+        status: options.status,
+        parentId: options.parentId,
+        limit: options.limit || DEFAULT_LIMIT,
+        nextToken: options.nextToken,
+      })
+      .getCollections();
+  }
+
+  public async mintNft(tx: NFTMetadata): Promise<NFT> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .name(tx.name)
+      .description(tx.description)
+      .recipient(tx.recipient)
+      .creator(tx.creator)
+      .thumbnailUrl(tx.thumbnailUrl)
+      .link(tx.link)
+      .projectUrl(tx.projectUrl)
+      .resourceId(tx.fileId)
+      .mintNft();
+  }
+
+  public async mintCollection(tx: CollectionMetadata): Promise<Collection> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .description(tx.description)
+      .recipient(tx.recipient)
+      .creator(tx.creator)
+      .thumbnailUrl(tx.thumbnailUrl)
+      .link(tx.link)
+      .projectUrl(tx.projectUrl)
+      .resourceId(tx.folderId)
+      .mintCollection();
   }
 }
 

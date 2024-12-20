@@ -15,6 +15,8 @@ import { httpClient } from "./http";
 import { ApiKey } from "../types/api-key";
 import { GenerateJWTResponsePayload } from "../types/auth";
 import { InternalError } from "../errors/internal-error";
+import { Collection } from "../types/collection";
+import { NFT } from "../types/nft";
 
 export class ApiClient {
   private _apiUrl: string;
@@ -32,6 +34,8 @@ export class ApiClient {
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
   private _subscriptionUri: string = "subscriptions";
+  private _collectionUri: string = "collections";
+  private _nftUri: string = "nfts";
 
   // path params
   private _resourceId: string;
@@ -72,6 +76,13 @@ export class ApiClient {
   private _trashExpiration: number;
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
+
+  // nft specific
+  private _recipient: string;
+  private _thumbnailUrl: string;
+  private _projectUrl: string;
+  private _creator: string;
+  private _link: string;
 
   private _signature: string;
   private _digest: string;
@@ -116,6 +127,11 @@ export class ApiClient {
     clone._digest = this._digest;
     clone._name = this._name;
     clone._description = this._description;
+    clone._recipient = this._recipient;
+    clone._thumbnailUrl = this._thumbnailUrl;
+    clone._projectUrl = this._projectUrl;
+    clone._creator = this._creator;
+    clone._link = this._link;
     clone._tags = this._tags;
     clone._keys = this._keys;
     clone._address = this._address;
@@ -190,6 +206,31 @@ export class ApiClient {
 
   description(description: string): ApiClient {
     this._description = description;
+    return this;
+  }
+
+  recipient(recipient: string): ApiClient {
+    this._recipient = recipient;
+    return this;
+  }
+
+  thumbnailUrl(thumbnailUrl: string): ApiClient {
+    this._thumbnailUrl = thumbnailUrl;
+    return this;
+  }
+
+  projectUrl(projectUrl: string): ApiClient {
+    this._projectUrl = projectUrl;
+    return this;
+  }
+
+  creator(creator: string): ApiClient {
+    this._creator = creator;
+    return this;
+  }
+
+  link(link: string): ApiClient {
+    this._link = link;
     return this;
   }
 
@@ -539,6 +580,98 @@ export class ApiClient {
     return this.delete(
       `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`,
     );
+  }
+
+  /**
+   * Get nft collections for currently authenticated user
+   * @uses:
+   * - queryParams() - limit, nextToken
+   * @returns {Promise<Paginated<Collection>>}
+   */
+  async getCollections(): Promise<Paginated<Collection>> {
+    return this.get(`${this._apiUrl}/${this._collectionUri}`);
+  }
+
+  /**
+   * Get nfts for currently authenticated user
+   * @uses:
+   * - queryParams() - status, limit, nextToken
+   * @returns {Promise<Paginated<NFT>>}
+   */
+  async getNfts(): Promise<Paginated<NFT>> {
+    return this.get(`${this._apiUrl}/${this._nftUri}`);
+  }
+
+  /**
+   * Get nft by id
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<NFT>}
+   */
+  async getNft(): Promise<NFT> {
+    return this.get(`${this._apiUrl}/${this._nftUri}/${this._resourceId}`);
+  }
+
+  /**
+   * Get collection by id
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<Collection>}
+   */
+  async getCollection(): Promise<Collection> {
+    return this.get(
+      `${this._apiUrl}/${this._collectionUri}/${this._resourceId}`,
+    );
+  }
+
+  /**
+   *
+   * @requires:
+   * - name()
+   * @uses:
+   * - description()
+   * @returns {Promise<NFT>}
+   */
+  async mintNft(): Promise<NFT> {
+    if (!this._name) {
+      throw new BadRequest(
+        "Missing name input. Use ApiClient#name() to add it",
+      );
+    }
+
+    this.data({
+      name: this._name,
+      description: this._description,
+      fileId: this._resourceId,
+      recipient: this._recipient,
+      link: this._link,
+      creator: this._creator,
+      thumbnailUrl: this._thumbnailUrl,
+      projectUrl: this._projectUrl,
+    });
+
+    return this.post(`${this._apiUrl}/${this._nftUri}`);
+  }
+
+  /**
+   *
+   * @requires:
+   * @uses:
+   * - description()
+   * @returns {Promise<NFT>}
+   */
+  async mintCollection(): Promise<Collection> {
+    this.data({
+      description: this._description,
+      folderId: this._resourceId,
+      recipient: this._recipient,
+      link: this._link,
+      creator: this._creator,
+      thumbnailUrl: this._thumbnailUrl,
+      projectUrl: this._projectUrl,
+    });
+
+    return this.post(`${this._apiUrl}/${this._collectionUri}`);
   }
 
   async post(url: string): Promise<any> {
