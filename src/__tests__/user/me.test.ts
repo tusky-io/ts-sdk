@@ -39,7 +39,7 @@ describe("Testing me functions", () => {
 
   it("should setup password", async () => {
     password = faker.random.word();
-    const user = await tusky.me.setupPassword(password);
+    const { user } = await tusky.me.setupPassword(password);
     expect(user).toBeTruthy();
     expect(user.encPrivateKey).toBeTruthy();
   });

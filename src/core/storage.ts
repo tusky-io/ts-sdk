@@ -10,6 +10,7 @@ class StorageModule {
 
   /**
    * Get currenlty authenticated user storage balance
+   * @returns {Promise<Storage>}
    */
   public async get(): Promise<Storage> {
     return await this.service.api.getStorage();

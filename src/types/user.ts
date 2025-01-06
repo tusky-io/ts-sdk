@@ -34,9 +34,3 @@ export type UserMutable = {
   encPrivateKey?: string; // encrypted user private key using user password
   encPrivateKeyBackup?: string; // encrypted user private key using user backup phrase
 };
-
-export type UserPublicInfo = {
-  address: string;
-  publicSigningKey: string;
-  publicKey: string;
-};

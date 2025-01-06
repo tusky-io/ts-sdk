@@ -1,12 +1,10 @@
-import { SignPersonalMessageClient, WalletAccount } from "../auth";
+import { SignPersonalMessage, Account } from "../auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Env } from "../types/env";
 
-export type AuthType = "OAuth" | "Wallet" | "ApiKey" | "AuthTokenProvider";
+export type AuthType = "OAuth" | "Wallet" | "ApiKey";
 
 export type AuthProvider = "Google" | "Twitch";
-
-export type WalletType = "Sui";
 
 export interface OAuthConfig {
   authProvider?: AuthProvider;
@@ -17,22 +15,11 @@ export interface OAuthConfig {
 }
 
 export interface WalletConfig {
-  walletType?: "Sui";
-  walletSignFnClient?: SignPersonalMessageClient;
-  walletAccount?: WalletAccount | null;
-  walletSigner?: Ed25519Keypair;
-  walletPrivateKey?: string; // private key in hex format
+  signPersonalMessage?: SignPersonalMessage; // mutation hook for prompting the user to sign a message
+  account?: Account | null;
+  keypair?: Ed25519Keypair;
+  privateKey?: string; // private key in hex format
 }
-
-export interface ApiKeyConfig {
-  apiKey: string;
-}
-
-export interface AuthTokenProviderConfig {
-  authTokenProvider: AuthTokenProvider;
-}
-
-export type AuthTokenProvider = () => string;
 
 export type CreateChallengeRequestPayload = {
   address: string;

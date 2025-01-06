@@ -57,7 +57,8 @@ describe("Testing trash functions", () => {
   });
 
   it("should empty trash", async () => {
-    const trash = await tusky.trash.empty();
+    await tusky.trash.empty();
+    const trash = await tusky.trash.get();
     expect(trash).toBeTruthy();
     expect(trash.id).toBeTruthy();
     expect(trash.size).toEqual(0);

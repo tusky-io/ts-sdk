@@ -15,27 +15,23 @@ import {
   ListOptions,
   VaultApiGetOptions,
 } from "../types/query-options";
-import { User, UserMutable, UserPublicInfo } from "../types/user";
+import { User, UserMutable } from "../types/user";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";
 import { Storage } from "../types/storage";
 import { ApiKey } from "../types/api-key";
 import {
-  PaymentPlan,
-  PaymentSession,
-  PaymentSessionOptions,
-} from "../types/payment";
-import {
   CreateChallengeRequestPayload,
   GenerateJWTRequestPayload,
   GenerateJWTResponsePayload,
   VerifyChallengeRequestPayload,
 } from "../types/auth";
+import { NFT } from "../types/nft";
+import { Collection } from "../types/collection";
 
 abstract class Api {
   config: ApiConfig;
-  autoExecute: boolean; // if set to true, transactions will be admin signed & executed
   clientName: string; // name of the client consuming the API
 
   constructor() {}
@@ -80,7 +76,7 @@ abstract class Api {
 
   abstract updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership>;
 
-  abstract postTransaction(digest: string, signature: string): Promise<any>;
+  abstract deleteMembership(tx: UpdateMembershipTxPayload): Promise<void>;
 
   abstract downloadFile(
     id: string,
@@ -88,14 +84,6 @@ abstract class Api {
   ): Promise<ArrayBuffer | ReadableStream<Uint8Array>>;
 
   abstract getStorage(): Promise<Storage>;
-
-  abstract getPaymentPlans(): Promise<PaymentPlan[]>;
-
-  abstract createSubscriptionPaymentSession(
-    options: PaymentSessionOptions,
-  ): Promise<PaymentSession>;
-
-  abstract getUserPublicData(email: string): Promise<UserPublicInfo>;
 
   abstract getFile(id: string): Promise<File>;
 
@@ -107,26 +95,31 @@ abstract class Api {
 
   abstract getVaults(options?: ListOptions): Promise<Paginated<Vault>>;
 
-  abstract getMemberships(
-    options?: ListOptions,
-  ): Promise<Paginated<Membership>>;
-
   abstract getFiles(options?: ListApiOptions): Promise<Paginated<File>>;
 
   abstract getFolders(options?: ListApiOptions): Promise<Paginated<Folder>>;
 
-  abstract getMembershipsByVaultId(
-    vaultId: string,
-    options?: ListOptions,
-  ): Promise<Paginated<Membership>>;
-
-  abstract getMembers(vaultId: string): Promise<Array<Membership>>;
+  abstract getMembers(vaultId: string): Promise<Paginated<Membership>>;
 
   abstract getApiKeys(): Promise<Paginated<ApiKey>>;
 
   abstract generateApiKey(): Promise<ApiKey>;
 
   abstract revokeApiKey(key: string): Promise<ApiKey>;
+
+  abstract mintNft(tx: CreateVaultTxPayload): Promise<NFT>;
+
+  abstract mintCollection(tx: CreateVaultTxPayload): Promise<Collection>;
+
+  abstract getCollection(id: string): Promise<Collection>;
+
+  abstract getNft(id: string, options?: VaultApiGetOptions): Promise<NFT>;
+
+  abstract getCollections(
+    options?: ListOptions,
+  ): Promise<Paginated<Collection>>;
+
+  abstract getNfts(options?: ListOptions): Promise<Paginated<NFT>>;
 }
 
 export { Api };
