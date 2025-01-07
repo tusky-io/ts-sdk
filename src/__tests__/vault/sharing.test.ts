@@ -137,6 +137,9 @@ describe("Testing airdrop actions", () => {
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(3);
+      for (let member of members) {
+        isEncrypted ? expect(member.keys.length).toEqual(2) : expect(member.keys).toBeFalsy();
+      }
     });
 
     it("should fail getting the vault from revoked member account", async () => {
@@ -149,6 +152,19 @@ describe("Testing airdrop actions", () => {
         expect(vault).toBeTruthy();
         expect(vault.name).toBeTruthy();
       }).rejects.toThrow(Unauthorized);
+    });
+
+    it("should get the vault by the owner", async () => {
+      const vault = await tusky.vault.get(vaultId);
+      expect(vault).toBeTruthy();
+      expect(vault.name).toBeTruthy();
+    });
+
+    it("should create new folder in the vault", async () => {
+      const name = faker.random.words();
+      const folder = await tusky.folder.create(vaultId, name);
+      expect(folder).toBeTruthy();
+      expect(folder.name).toEqual(name);
     });
   });
 
