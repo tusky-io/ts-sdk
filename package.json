@@ -1,7 +1,7 @@
 {
-  "name": "@akord/carmella-sdk",
+  "name": "@tusky/ts-sdk",
   "version": "0.26.0-dev.3",
-  "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
+  "description": "Tusky TypeScript SDK, the official client for Tusky API: https://docs.tusky.io",
   "main": "./lib/web/cjs/index.js",
   "module": "./lib/web/esm/index.esm.js",
   "types": "./lib/web/types/index.d.ts",
@@ -25,7 +25,7 @@
       "types": "./lib/web/types/index.d.ts"
     }
   },
-  "repository": "git@github.com:Akord-com/carmella-sdk.git",
+  "repository": "git@github.com:tusky-io/ts-sdk.git",
   "scripts": {
     "test": "jest --verbose --collectCoverage=false",
     "test:user": "jest --verbose --collectCoverage=false --selectProjects \"user tests\"",
@@ -46,17 +46,18 @@
     "lib/node/types/index.d.ts"
   ],
   "keywords": [
-    "akord",
+    "tusky",
     "storage",
-    "web3",
+    "blockchain",
+    "filesystem",
     "encryption",
-    "e2ee"
+    "sui"
   ],
   "bugs": {
-    "url": "https://github.com/Akord-com/carmella-sdk/issues"
+    "url": "https://github.com/tusky-io/ts-sdk/issues"
   },
-  "homepage": "https://github.com/Akord-com/carmella-sdk#readme",
-  "author": "Akord Team",
+  "homepage": "https://github.com/tusky-io/ts-sdk/issues#readme",
+  "author": "Tusky Team",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

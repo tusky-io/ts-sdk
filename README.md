@@ -134,7 +134,7 @@ await tusky.auth.handleOAuthCallback();
 await tusky.auth.signIn();
 ```
 
-##### use API key
+### use API key
 
 ```js
 import { Tusky } from "@tusky/ts-sdk";
@@ -170,7 +170,7 @@ await tusky.addEncrypter({ keypair: keypair });
 const privateKeyHex = await keypair.privateKeyHex();
 
 // configure Tusky encrypter from the private key
-await tusky.addEncrypter({ keypair: X25519KeyPair.fromPrivateKeyHex() });
+await tusky.addEncrypter({ keypair: X25519KeyPair.fromPrivateKeyHex(privateKeyHex) });
 ```
 
 ### Password protected keys
