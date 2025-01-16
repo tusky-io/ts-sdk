@@ -1,4 +1,4 @@
-import { Tusky } from "../../index";
+import { ApiKey, Tusky } from "../../index";
 import { cleanup, initInstance } from '../common';
 import { apiKeyStatus } from '../../constants';
 
@@ -29,9 +29,10 @@ describe("Testing api key functions", () => {
     expect(apiKeys.length).toBeGreaterThan(0);
     const apiKeyToRevoke = apiKeys[0].key;
     expect(apiKeyToRevoke).toBeTruthy();
-    const revokedKey = await tusky.apiKey.revoke(apiKeyToRevoke);
-
+    await tusky.apiKey.revoke(apiKeyToRevoke);
+    const apiKeysWithRevokedKey = await tusky.apiKey.listAll();
+    const revokedKey = apiKeysWithRevokedKey.find((apiKey: ApiKey) => apiKey.key === apiKeyToRevoke);
     expect(revokedKey).toBeTruthy();
-    expect(revokedKey.status).toEqual(apiKeyStatus.REVOKED);
+    expect(revokedKey!.status).toEqual(apiKeyStatus.REVOKED);
   });
 });

@@ -7,7 +7,6 @@ import { status } from "../../constants";
 import { pathToReadable } from "../../types/node/file";
 
 let tusky: Tusky;
-
 describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, () => {
 
   let vaultId: string;

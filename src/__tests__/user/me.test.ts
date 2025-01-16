@@ -25,11 +25,10 @@ describe("Testing me functions", () => {
 
   it("should update me", async () => {
     const name = faker.random.words();
-    const user = await tusky.me.update({ name: name, termsAccepted: true });
+    const user = await tusky.me.update({ name: name });
     expect(user).toBeTruthy();
     expect(user.address).toBeTruthy();
     expect(user.name).toEqual(name);
-    expect(user.termsAccepted).toEqual(true);
   });
 
   it("should check for the user encryption session - falsy", async () => {

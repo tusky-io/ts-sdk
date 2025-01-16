@@ -1130,7 +1130,7 @@ export class ApiClient {
       config.headers = (await this._auth.getAuthorizationHeader()) as any;
     }
 
-    const url = `${this._apiUrl}/files/${this._resourceId}/data`;
+    const url = `${this._cdnUrl}/${this._resourceId}`;
 
     logger.info(`Request ${config.method}: ` + url);
 

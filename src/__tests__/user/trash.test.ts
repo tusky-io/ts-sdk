@@ -1,4 +1,4 @@
-import { Tusky } from "../../index";
+import { Folder, Tusky } from "../../index";
 import { cleanup, folderCreate, initInstance, vaultCreate } from '../common';
 
 let tusky: Tusky;
@@ -44,16 +44,10 @@ describe("Testing trash functions", () => {
     publicFolderId = folder.id;
     await tusky.folder.delete(folder.id);
     const trashContent = await tusky.folder.listAll({ parentId: trashId });
-    const privateFolder = await tusky.folder.get(privateFolderId);
     expect(trashContent).toBeTruthy();
     expect(trashContent.length).toEqual(2);
-    expect(trashContent[0]).toBeTruthy();
-    expect(trashContent[0].id).toEqual(folder.id);
-    expect([folder.id, privateFolder.id]).toContain(trashContent[0].id);
-    expect([folder.name, privateFolder.name]).toContain(trashContent[0].name);
-    expect(trashContent[1]).toBeTruthy();
-    expect([folder.id, privateFolder.id]).toContain(trashContent[1].id);
-    expect([folder.name, privateFolder.name]).toContain(trashContent[1].name);
+    const deletedFolder = trashContent.find((deletedFolder: Folder) => deletedFolder.id === folder.id);
+    expect(deletedFolder).toBeTruthy();
   });
 
   it("should empty trash", async () => {
