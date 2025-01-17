@@ -258,7 +258,6 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
-      .encrypted(options.encrypted)
       // .progressHook(options.progressHook)
       // .cancelHook(options.cancelHook)
       .downloadFile();
