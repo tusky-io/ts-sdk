@@ -56,5 +56,4 @@ export type FileUploadOptions = Hooks &
 export type FileDownloadOptions = Hooks & {
   path?: string;
   skipSave?: boolean;
-  encrypted?: boolean;
 };

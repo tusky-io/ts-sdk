@@ -1126,11 +1126,7 @@ export class ApiClient {
       headers: this.getCustomHeaders(),
     } as RequestInit;
 
-    if (!this._encrypted) {
-      config.headers = (await this._auth.getAuthorizationHeader()) as any;
-    }
-
-    const url = `${this._apiUrl}/files/${this._resourceId}/data`;
+    const url = `${this._cdnUrl}/${this._resourceId}`;
 
     logger.info(`Request ${config.method}: ` + url);
 
