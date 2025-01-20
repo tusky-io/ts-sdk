@@ -102,6 +102,16 @@ export default class TuskyApi extends Api {
       .createFolder();
   }
 
+  public async createFolderTree(tx: any): Promise<any> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .vaultId(tx.vaultId)
+      .data(tx.folderData)
+      .createFolderTree();
+  }
+
   public async updateFolder(tx: UpdateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
       .env(this.config)

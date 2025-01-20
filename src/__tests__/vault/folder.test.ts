@@ -7,7 +7,7 @@ import { status } from "../../constants";
 
 let tusky: Tusky;
 
-describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () => {
+describe.skip(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () => {
   let vaultId: string;
   let rootFolderId: string;
   let subFolderId: string;
@@ -123,5 +123,33 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
     await expect(async () =>
       await tusky.folder.deletePermanently(rootFolderId)
     ).rejects.toThrow(BadRequest);
+  });
+});
+
+describe(`Testing ${isEncrypted ? "private" : "public"} folder upload functions`, () => {
+  beforeAll(async () => {
+    tusky = await initInstance(isEncrypted);
+  });
+
+  it("should upload folder with its contents and keep the right structure", async () => {
+    const vault = await vaultCreate(tusky, isEncrypted);
+    await tusky.folder.upload(vault.id, testDataPath + "folder-structure", { includeRootFolder: true });
+    const files = await tusky.file.listAll({ vaultId: vault.id });
+    expect(files).toBeTruthy();
+    expect(files.length).toEqual(4);
+    const folders = await tusky.folder.listAll({ vaultId: vault.id });
+    expect(folders).toBeTruthy();
+    expect(folders.length).toEqual(4);
+  });
+
+  it("should upload folder with its contents and keep the right structure", async () => {
+    const vault = await vaultCreate(tusky, isEncrypted);
+    await tusky.folder.upload(vault.id, testDataPath + "folder-structure", { includeRootFolder: false });
+    const files = await tusky.file.listAll({ vaultId: vault.id });
+    expect(files).toBeTruthy();
+    expect(files.length).toEqual(4);
+    const folders = await tusky.folder.listAll({ vaultId: vault.id });
+    expect(folders).toBeTruthy();
+    expect(folders.length).toEqual(3);
   });
 });

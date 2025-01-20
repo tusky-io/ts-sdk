@@ -58,6 +58,8 @@ abstract class Api {
 
   abstract createFolder(tx: CreateFolderTxPayload): Promise<Folder>;
 
+  abstract createFolderTree(tx: any): Promise<any>;
+
   abstract updateFolder(tx: UpdateFolderTxPayload): Promise<Folder>;
 
   abstract deleteFolder(id: string): Promise<void>;

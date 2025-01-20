@@ -26,6 +26,8 @@ import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { onUpdateFile } from "@akord/carmella-gql/dist/types/subscriptions";
 import { Subscription } from "rxjs";
 import { VaultEncryption } from "../crypto/vault-encryption";
+import { FolderModule } from "./folder";
+import { uniqueId } from "lodash";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -62,6 +64,8 @@ class FileModule {
   };
 
   protected auth: Auth;
+
+  protected folderIdMap: Record<string, string>;
 
   constructor(config?: ServiceConfig) {
     this.service = new FileService(config);
@@ -114,7 +118,7 @@ class FileModule {
    */
   public async uploader(
     vaultId: string,
-    file: FileSource = null,
+    file: FileSource | any = null,
     options: FileUploadOptions = {},
   ): Promise<tus.Upload> {
     const vault = await this.service.api.getVault(vaultId);
@@ -153,7 +157,7 @@ class FileModule {
         this.service.encrypter,
       ),
       removeFingerprintOnSuccess: true,
-      onBeforeRequest: (req: tus.HttpRequest) => {
+      onBeforeRequest: async (req: tus.HttpRequest) => {
         if (req.getMethod() === "POST" || req.getMethod() === "PATCH") {
           const xhr = req.getUnderlyingObject();
           if (xhr) {
