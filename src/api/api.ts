@@ -8,6 +8,7 @@ import {
   UpdateMembershipTxPayload,
   CreateMembershipTxPayload,
   UpdateFileTxPayload,
+  CreateFolderTreeTxPayload,
 } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import {
@@ -58,7 +59,9 @@ abstract class Api {
 
   abstract createFolder(tx: CreateFolderTxPayload): Promise<Folder>;
 
-  abstract createFolderTree(tx: any): Promise<any>;
+  abstract createFolderTree(
+    tx: CreateFolderTreeTxPayload,
+  ): Promise<Record<string, string>>;
 
   abstract updateFolder(tx: UpdateFolderTxPayload): Promise<Folder>;
 

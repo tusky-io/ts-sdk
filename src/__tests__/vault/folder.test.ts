@@ -152,4 +152,34 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder upload functions`
     expect(folders).toBeTruthy();
     expect(folders.length).toEqual(3);
   });
+
+  it("should upload folder to parent folder with its contents and keep the right structure", async () => {
+    const vault = await vaultCreate(tusky, isEncrypted);
+    const parentFolder = await folderCreate(tusky, vault.id);
+    await tusky.folder.upload(vault.id, testDataPath + "folder-structure", { includeRootFolder: false, parentId: parentFolder.id });
+    const files = await tusky.file.listAll({ vaultId: vault.id });
+    expect(files).toBeTruthy();
+    expect(files.length).toEqual(4);
+    expect(files.map((file) => file.parentId)).toContain(parentFolder.id);
+
+    const folders = await tusky.folder.listAll({ vaultId: vault.id });
+    expect(folders).toBeTruthy();
+    expect(folders.length).toEqual(4);
+    expect(files.map((folder) => folder.parentId)).toContain(parentFolder.id);
+  });
+
+  it("should upload folder to parent folder with its contents including hidden files", async () => {
+    const vault = await vaultCreate(tusky, isEncrypted);
+    const parentFolder = await folderCreate(tusky, vault.id);
+    await tusky.folder.upload(vault.id, testDataPath + "folder-structure", { skipHidden: false, parentId: parentFolder.id });
+    const files = await tusky.file.listAll({ vaultId: vault.id });
+    expect(files).toBeTruthy();
+    expect(files.length).toEqual(5);
+    expect(files.map((file) => file.parentId)).toContain(parentFolder.id);
+
+    const folders = await tusky.folder.listAll({ vaultId: vault.id });
+    expect(folders).toBeTruthy();
+    expect(folders.length).toEqual(4);
+    expect(files.map((folder) => folder.parentId)).toContain(parentFolder.id);
+  });
 });

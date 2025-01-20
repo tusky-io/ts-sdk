@@ -4,6 +4,7 @@ import { ApiClient } from "./api-client";
 import { Membership } from "../types/membership";
 import { Vault } from "../types/vault";
 import {
+  CreateFolderTreeTxPayload,
   CreateFolderTxPayload,
   CreateMembershipTxPayload,
   CreateVaultTxPayload,
@@ -102,13 +103,16 @@ export default class TuskyApi extends Api {
       .createFolder();
   }
 
-  public async createFolderTree(tx: any): Promise<any> {
+  public async createFolderTree(
+    tx: CreateFolderTreeTxPayload,
+  ): Promise<Record<string, string>> {
     return new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
       .auth(this.auth)
       .vaultId(tx.vaultId)
-      .data(tx.folderData)
+      .parentId(tx.parentId)
+      .data(tx.folderPaths)
       .createFolderTree();
   }
 
@@ -268,7 +272,6 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
-      .encrypted(options.encrypted)
       // .progressHook(options.progressHook)
       // .cancelHook(options.cancelHook)
       .downloadFile();
@@ -311,7 +314,6 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .name(input.name)
       .picture(input.picture)
-      .termsAccepted(input.termsAccepted)
       .encPrivateKey(input.encPrivateKey)
       .encPrivateKeyBackup(input.encPrivateKeyBackup)
       .updateMe();

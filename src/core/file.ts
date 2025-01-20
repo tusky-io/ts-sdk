@@ -341,7 +341,6 @@ class FileModule {
   public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
     const file = await this.service.api.downloadFile(id, {
       responseType: "stream",
-      encrypted: true,
     });
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));

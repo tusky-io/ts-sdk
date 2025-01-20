@@ -72,7 +72,6 @@ export class ApiClient {
 
   // user specific
   private _picture: string;
-  private _termsAccepted: boolean;
   private _trashExpiration: number;
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
@@ -141,7 +140,6 @@ export class ApiClient {
     clone._allowedPaths = this._allowedPaths;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
-    clone._termsAccepted = this._termsAccepted;
     clone._encPrivateKey = this._encPrivateKey;
     clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
     clone._ownerAccess = this._ownerAccess;
@@ -294,11 +292,6 @@ export class ApiClient {
     return this;
   }
 
-  termsAccepted(termsAccepted: boolean): ApiClient {
-    this._termsAccepted = termsAccepted;
-    return this;
-  }
-
   trashExpiration(trashExpiration: number): ApiClient {
     this._trashExpiration = trashExpiration;
     return this;
@@ -418,7 +411,6 @@ export class ApiClient {
    * @uses:
    * - name()
    * - picture()
-   * - termsAccepted()
    * - encPrivateKey()
    * - encPrivateKeyBackup()
    * @returns {Promise<User>}
@@ -427,7 +419,6 @@ export class ApiClient {
     if (
       !this._name &&
       !this._picture &&
-      !this._termsAccepted &&
       !this._encPrivateKey &&
       !this._encPrivateKeyBackup
     ) {
@@ -436,7 +427,6 @@ export class ApiClient {
     this.data({
       name: this._name,
       picture: this._picture,
-      termsAccepted: this._termsAccepted,
       encPrivateKey: this._encPrivateKey,
       encPrivateKeyBackup: this._encPrivateKeyBackup,
     });
@@ -1155,11 +1145,7 @@ export class ApiClient {
       headers: this.getCustomHeaders(),
     } as RequestInit;
 
-    if (!this._encrypted) {
-      config.headers = (await this._auth.getAuthorizationHeader()) as any;
-    }
-
-    const url = `${this._apiUrl}/files/${this._resourceId}/data`;
+    const url = `${this._cdnUrl}/${this._resourceId}`;
 
     logger.info(`Request ${config.method}: ` + url);
 

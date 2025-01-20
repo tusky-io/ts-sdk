@@ -1,8 +1,5 @@
 import { status } from "../constants";
 import { Folder } from "../types/folder";
-import { isServer } from "../util/platform";
-import { importDynamic } from "../util/import";
-import { BadRequest } from "../errors/bad-request";
 import { FileModule } from "./file";
 import {
   GetOptions,
@@ -16,6 +13,7 @@ import { ServiceConfig } from ".";
 import pLimit from "p-limit";
 import { Auth } from "../auth";
 import { File } from "../types";
+import { FolderSource, traverse } from "@env/core/folder";
 
 const CONCURRENCY_LIMIT = 10;
 
@@ -92,44 +90,36 @@ class FolderModule {
     folder: FolderSource,
     options: FolderUploadOptions = this.defaultUploadOptions,
   ): Promise<{
-    folderData: FileOrFolderInfo[];
+    folderTreeData: FileOrFolderInfo[];
     folderIdMap: Record<string, string>;
   }> {
-    if (!isServer()) {
-      const folderData = await traverseFolderBrowser(folder as FileSystemEntry);
-      return { folderData, folderIdMap: {} };
-    } else {
-      if (typeof folder !== "string") {
-        throw new BadRequest("Only string folder path supported for node.");
-      }
+    const { folderIdMap, folderTreeData } = await this.createTree(
+      vaultId,
+      folder,
+      options,
+    );
 
-      const { folderIdMap, folderData } = await this.createTree(
-        vaultId,
-        folder,
-        options,
+    const limit = pLimit(CONCURRENCY_LIMIT);
+
+    // upload files
+    const uploadPromises = folderTreeData
+      .filter((item) => !item.isFolder)
+      .map((file) =>
+        limit(() => {
+          const fileModule = new FileModule({
+            ...this.service,
+            auth: this.auth,
+          });
+          return fileModule.upload(vaultId, file.fullPath as any, {
+            name: file.name,
+            parentId:
+              folderIdMap[file.parentPath] || options.parentId || vaultId,
+          });
+        }),
       );
 
-      const limit = pLimit(CONCURRENCY_LIMIT);
-
-      // upload files
-      const uploadPromises = folderData
-        .filter((item) => !item.isFolder)
-        .map((file) =>
-          limit(() => {
-            const fileModule = new FileModule({
-              ...this.service,
-              auth: this.auth,
-            });
-            return fileModule.upload(vaultId, file.fullPath as any, {
-              name: file.name,
-              parentId: folderIdMap[file.parentPath] || vaultId,
-            });
-          }),
-        );
-
-      await Promise.all(uploadPromises);
-      return { folderData, folderIdMap };
-    }
+    await Promise.all(uploadPromises);
+    return { folderTreeData, folderIdMap };
   }
 
   /**
@@ -144,24 +134,19 @@ class FolderModule {
     folder: FolderSource,
     options: FolderUploadOptions = this.defaultUploadOptions,
   ): Promise<{
-    folderData: FileOrFolderInfo[];
+    folderTreeData: FileOrFolderInfo[];
     folderIdMap: Record<string, string>;
   }> {
-    let folderData: FileOrFolderInfo[];
+    // let folderTreeData: FileOrFolderInfo[];
     const folderIdMap: Record<string, string> = {}; // map relativePath to folder id
-    if (!isServer()) {
-      folderData = await traverseFolderBrowser(folder as FileSystemEntry);
-    } else {
-      if (typeof folder !== "string") {
-        throw new BadRequest("Only string folder path supported for node.");
-      }
-      folderData = traverseFolder(folder, options.includeRootFolder);
 
-      // const folderPaths = folderData
-      //   .filter((item) => item.isFolder)
-      //   .map((folder) => folder.relativePath);
-    }
-    const sortedFolders = folderData
+    // NOTE: keep await for browser implementation
+    const folderTreeData = await traverse(
+      folder,
+      options.includeRootFolder,
+      options.skipHidden,
+    );
+    const sortedFolders = folderTreeData
       .filter((item) => item.isFolder)
       .sort((folder1, folder2) => {
         return (
@@ -171,16 +156,31 @@ class FolderModule {
       });
 
     // TODO: send folder structure to the backend and get the folder id map
+    // await this.service.setVaultContext(vaultId);
+    // this.service.setParentId(options.parentId);
+
+    // const folderPaths: { name: string; parentPath: string, relativePath: string }[] = [];
+    // for (let folder of sortedFolders) {
+    //   folderPaths.push({
+    //     name: await this.service.processWriteString(folder.name),
+    //     parentPath: await digest(
+    //       await this.service.processWriteString(folder.parentPath),
+    //     ),
+    //     relativePath: await digest(
+    //       await this.service.processWriteString(folder.relativePath),
+    //     ),
+    //   });
+    // }
     // const folderIdMap = await this.service.api.createFolderTree({
     //   vaultId: vaultId,
-    //   folderData: sortedFolders,
+    //   parentId: parentId,
+    //   folderPaths: folderPaths,
     // });
 
     for (const folder of sortedFolders) {
-      console.log("creating folder");
       const parentId = folder.parentPath
         ? folderIdMap[folder.parentPath]
-        : vaultId;
+        : options.parentId || vaultId;
       const folderModule = new FolderModule({
         ...this.service,
         auth: this.auth,
@@ -190,7 +190,7 @@ class FolderModule {
       });
       folderIdMap[folder.relativePath] = id;
     }
-    return { folderIdMap, folderData };
+    return { folderIdMap, folderTreeData };
   }
 
   /**
@@ -317,139 +317,7 @@ class FolderModule {
   }
 }
 
-const traverseFolderBrowser = async (
-  rootEntry: FileSystemEntry,
-  rootPath = "",
-  includeRootFolder = false,
-  skipHidden = true,
-): Promise<FileOrFolderInfo[]> => {
-  const result: FileOrFolderInfo[] = [];
-
-  const traverse = async (
-    entry: FileSystemEntry,
-    currentPath: string,
-    rootPath = currentPath,
-  ): Promise<void> => {
-    // skip hidden files or directories (those starting with a dot)
-    if (skipHidden && entry.name.startsWith(".")) {
-      return;
-    }
-    const fullPath = currentPath.endsWith("/")
-      ? currentPath + entry.name
-      : currentPath + "/" + entry.name;
-
-    if (entry.isFile) {
-      const file = await new Promise<any>((resolve) => {
-        (entry as FileSystemFileEntry).file((file) => {
-          resolve(file);
-        });
-      });
-      result.push({
-        fullPath,
-        relativePath: fullPath.replace(rootPath + "/", ""),
-        parentPath:
-          currentPath === rootPath
-            ? null
-            : currentPath.replace(rootPath + "/", ""),
-        name: entry.name,
-        isFolder: false,
-        file: file,
-      });
-    } else if (entry.isDirectory) {
-      if (includeRootFolder || currentPath !== rootPath) {
-        result.push({
-          fullPath,
-          relativePath: fullPath.replace(rootPath + "/", ""),
-          parentPath:
-            currentPath === rootPath
-              ? null
-              : currentPath.replace(rootPath + "/", ""),
-          name: entry.name,
-          isFolder: true,
-        });
-      }
-
-      const reader = (entry as FileSystemDirectoryEntry).createReader();
-      await new Promise<void>((resolve) => {
-        reader.readEntries(async (entries) => {
-          for (const child of entries) {
-            // await traverse(child, fullPath + "/", rootPath);
-            await traverse(child, fullPath, rootPath);
-          }
-          resolve();
-        });
-      });
-    }
-  };
-
-  await traverse(rootEntry, rootPath);
-
-  return result;
-};
-
-const traverseFolder = (
-  folderPath: string,
-  includeRootFolder = false,
-  skipHidden = true,
-  basePath = folderPath,
-) => {
-  const fs = importDynamic("fs");
-  const path = importDynamic("path");
-
-  const result: FileOrFolderInfo[] = [];
-
-  const items = fs.readdirSync(folderPath);
-
-  if (includeRootFolder) {
-    result.push({
-      fullPath: folderPath,
-      relativePath: path.basename(folderPath),
-      parentPath: null,
-      name: path.basename(folderPath),
-      isFolder: true,
-    });
-  }
-
-  for (const item of items) {
-    console.log(item);
-    const fullPath = path.join(folderPath, item);
-    const relativePath = path.relative(basePath, fullPath);
-    const name = path.basename(relativePath);
-    // skip hidden files or directories (those starting with a dot)
-    if (skipHidden && name.startsWith(".")) {
-      return;
-    }
-    const parentPath =
-      includeRootFolder && path.dirname(relativePath) === "."
-        ? path.basename(folderPath)
-        : path.dirname(relativePath);
-    const stat = fs.lstatSync(fullPath);
-
-    if (stat.isDirectory()) {
-      result.push({
-        fullPath,
-        relativePath,
-        parentPath,
-        name,
-        isFolder: true,
-      });
-
-      // recursively traverse folder contents
-      result.push(...traverseFolder(fullPath, false, skipHidden, basePath));
-    } else {
-      result.push({
-        fullPath,
-        relativePath,
-        parentPath,
-        name,
-        isFolder: false,
-      });
-    }
-  }
-  return result;
-};
-
-type FileOrFolderInfo = {
+export type FileOrFolderInfo = {
   fullPath: string;
   relativePath: string;
   parentPath: string;
@@ -458,8 +326,6 @@ type FileOrFolderInfo = {
   id?: string;
   file?: File;
 };
-
-export type FolderSource = string | FileSystemEntry;
 
 export type FolderCreateOptions = {
   parentId?: string;
