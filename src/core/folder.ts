@@ -1,9 +1,5 @@
 import { status } from "../constants";
 import { Folder } from "../types/folder";
-import { isServer } from "../util/platform";
-import { importDynamic } from "../util/import";
-import { BadRequest } from "../errors/bad-request";
-import { logger } from "../logger";
 import { FileModule } from "./file";
 import {
   GetOptions,
@@ -14,6 +10,12 @@ import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
 import { FolderService } from "./service/folder";
 import { ServiceConfig } from ".";
+import pLimit from "p-limit";
+import { Auth } from "../auth";
+import { File } from "../types";
+import { FolderSource, traverse } from "@env/core/folder";
+
+const CONCURRENCY_LIMIT = 10;
 
 class FolderModule {
   protected type: "Folder";
@@ -21,6 +23,17 @@ class FolderModule {
   protected service: FolderService;
 
   protected parentId?: string;
+
+  protected defaultCreateOptions = {
+    parentId: undefined,
+  } as FolderCreateOptions;
+
+  protected defaultUploadOptions = {
+    parentId: undefined,
+    includeRootFolder: false,
+    withFiles: false,
+    skipHidden: true,
+  } as FolderUploadOptions;
 
   protected defaultListOptions = {
     shouldDecrypt: true,
@@ -30,12 +43,11 @@ class FolderModule {
     shouldDecrypt: true,
   } as GetOptions;
 
-  protected defaultCreateOptions = {
-    parentId: undefined,
-  } as FolderCreateOptions;
+  protected auth: Auth;
 
   constructor(config?: ServiceConfig) {
     this.service = new FolderService(config);
+    this.auth = config.auth;
   }
 
   /**
@@ -70,45 +82,115 @@ class FolderModule {
    * Upload folder with its content from given source
    * @param {string} vaultId
    * @param {FolderSource} folder folder source: folder path, file system entry
-   * @param  {FolderCreateOptions} [options] parent id, etc.
+   * @param  {FolderUploadOptions} [options] parent id, includeRootFolder flag etc.
    * @returns {Promise<Folder>} Promise with new folder
    */
   public async upload(
     vaultId: string,
     folder: FolderSource,
-    options: FolderCreateOptions = this.defaultCreateOptions,
-  ): Promise<Folder> {
-    if (typeof folder === "string") {
-      if (!isServer()) {
-        throw new BadRequest("Folder path supported only for node.");
-      }
-      const fs = importDynamic("fs");
-      const path = importDynamic("path");
-      const files = fs.readdirSync(folder);
-      for (let file of files) {
-        const fullPath = path.join(folder, file);
-        const stat = fs.statSync(fullPath);
-        if (stat.isDirectory()) {
-          const { folderId } = await this.create(vaultId, file, {
-            parentId: options.parentId,
+    options: FolderUploadOptions = this.defaultUploadOptions,
+  ): Promise<{
+    folderTreeData: FileOrFolderInfo[];
+    folderIdMap: Record<string, string>;
+  }> {
+    const { folderIdMap, folderTreeData } = await this.createTree(
+      vaultId,
+      folder,
+      options,
+    );
+
+    const limit = pLimit(CONCURRENCY_LIMIT);
+
+    // upload files
+    const uploadPromises = folderTreeData
+      .filter((item) => !item.isFolder)
+      .map((file) =>
+        limit(() => {
+          const fileModule = new FileModule({
+            ...this.service,
+            auth: this.auth,
           });
-          logger.info("Created folder: " + file);
-          // recursively process the subdirectory
-          await this.upload(vaultId, fullPath, {
-            ...options,
-            parentId: folderId,
+          return fileModule.upload(vaultId, file.fullPath as any, {
+            name: file.name,
+            parentId:
+              folderIdMap[file.parentPath] || options.parentId || vaultId,
           });
-        } else {
-          // upload file
-          const fileModule = new FileModule(this.service);
-          //await fileModule.upload(fullPath, options);
-          logger.info(
-            "Uploaded file: " + fullPath + " to folder: " + options.parentId,
-          );
-        }
-      }
+        }),
+      );
+
+    await Promise.all(uploadPromises);
+    return { folderTreeData, folderIdMap };
+  }
+
+  /**
+   * Create folder structure
+   * @param {string} vaultId
+   * @param {FolderSource} folder folder source: folder path, file system entry
+   * @param  {FolderUploadOptions} [options] parent id, includeRootFolder flag etc.
+   * @returns {Promise<Folder>} Promise with new folder
+   */
+  public async createTree(
+    vaultId: string,
+    folder: FolderSource,
+    options: FolderUploadOptions = this.defaultUploadOptions,
+  ): Promise<{
+    folderTreeData: FileOrFolderInfo[];
+    folderIdMap: Record<string, string>;
+  }> {
+    // let folderTreeData: FileOrFolderInfo[];
+    const folderIdMap: Record<string, string> = {}; // map relativePath to folder id
+
+    // NOTE: keep await for browser implementation
+    const folderTreeData = await traverse(
+      folder,
+      options.includeRootFolder,
+      options.skipHidden,
+    );
+    const sortedFolders = folderTreeData
+      .filter((item) => item.isFolder)
+      .sort((folder1, folder2) => {
+        return (
+          folder1.relativePath.split("/").length -
+          folder2.relativePath.split("/").length
+        );
+      });
+
+    // TODO: send folder structure to the backend and get the folder id map
+    // await this.service.setVaultContext(vaultId);
+    // this.service.setParentId(options.parentId);
+
+    // const folderPaths: { name: string; parentPath: string, relativePath: string }[] = [];
+    // for (let folder of sortedFolders) {
+    //   folderPaths.push({
+    //     name: await this.service.processWriteString(folder.name),
+    //     parentPath: await digest(
+    //       await this.service.processWriteString(folder.parentPath),
+    //     ),
+    //     relativePath: await digest(
+    //       await this.service.processWriteString(folder.relativePath),
+    //     ),
+    //   });
+    // }
+    // const folderIdMap = await this.service.api.createFolderTree({
+    //   vaultId: vaultId,
+    //   parentId: parentId,
+    //   folderPaths: folderPaths,
+    // });
+
+    for (const folder of sortedFolders) {
+      const parentId = folder.parentPath
+        ? folderIdMap[folder.parentPath]
+        : options.parentId || vaultId;
+      const folderModule = new FolderModule({
+        ...this.service,
+        auth: this.auth,
+      });
+      const { id } = await folderModule.create(vaultId, folder.name, {
+        parentId,
+      });
+      folderIdMap[folder.relativePath] = id;
     }
-    return {} as any;
+    return { folderIdMap, folderTreeData };
   }
 
   /**
@@ -235,10 +317,25 @@ class FolderModule {
   }
 }
 
-export type FolderSource = string | FileSystemEntry;
+export type FileOrFolderInfo = {
+  fullPath: string;
+  relativePath: string;
+  parentPath: string;
+  name: string;
+  isFolder: boolean;
+  id?: string;
+  file?: File;
+};
 
 export type FolderCreateOptions = {
   parentId?: string;
+};
+
+export type FolderUploadOptions = {
+  parentId?: string;
+  includeRootFolder?: boolean;
+  withFiles?: boolean;
+  skipHidden?: boolean;
 };
 
 export { FolderModule };

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
-import { Akord } from "@akord/carmella-sdk";
+import { Tusky } from "@tusky/ts-sdk";
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import Uppy from '@uppy/core';
 import { Dashboard, DashboardModal, DragDrop } from '@uppy/react';
 import Tus from '@uppy/tus';
@@ -24,11 +25,11 @@ function Page1({ uppy }: { uppy: Uppy }) {
   return (
     <div className="d-flex justify-content-center align-items-center h-100">
 
-      <Dashboard 
+      <Dashboard
         uppy={uppy}
 
         //those attributes are optional of course, they are added here just to show quickly what you can do easily
-        proudlyDisplayPoweredByUppy={false} 
+        proudlyDisplayPoweredByUppy={false}
         showSelectedFiles={true} //put false if you don't want to show selected files in the uploader
         showRemoveButtonAfterComplete={true}
         showProgressDetails={true}
@@ -45,7 +46,7 @@ function Page1({ uppy }: { uppy: Uppy }) {
         theme="light"
         fileManagerSelectionType="files"
         disableLocalFiles={false}
-        
+
       />
     </div>
   )
@@ -76,7 +77,7 @@ function Page3({ uppy }: { uppy: Uppy }) {
         uppy={uppy}
         locale={{
           strings: {
-            dropHereOr: 'Drop files to Akord or %{browse}',
+            dropHereOr: 'Drop files to Tusky or %{browse}',
             browse: 'browse',
           },
           pluralize: (count: number) => count,
@@ -84,6 +85,65 @@ function Page3({ uppy }: { uppy: Uppy }) {
       />
     </div>
   )
+}
+
+const handleDrop = async (event: React.DragEvent<HTMLDivElement>, uppy: Uppy) => {
+  event.preventDefault();
+
+  const items = event.dataTransfer.items;
+  const files: { file: File; relativePath: string }[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const entry = items[i].webkitGetAsEntry();
+    if (entry) {
+      console.log(entry)
+      const keypair = Ed25519Keypair.fromSecretKey("suiprivkey1qz7za6kntduuvaqmyayz2nd79mkxn8w8eepl28xtlrh9xkh2z79fk2crcfn");
+      const tusky = await Tusky.init({ env: "dev", wallet: { keypair } });
+      console.log(tusky)
+      await tusky.auth.signIn();
+      const vaultId = "200ef4a3-5074-4856-b163-1a5d70eb2896";
+
+      // create folder tree
+      const { folderTreeData, folderIdMap } = await tusky.folder.createTree(vaultId, entry);
+      console.log(folderTreeData)
+      console.log(folderIdMap)
+
+      const uploader = await tusky.file.uploader(vaultId);
+      uppy
+        .getPlugin('Tus')!
+        .setOptions(uploader.options)
+      uppy.setMeta({ vaultId: vaultId })
+
+      for (let entry of folderTreeData) {
+        if (!entry.isFolder) {
+          // add file to Uppy with parent id
+          uppy.addFile({ name: entry.name, data: entry?.file, ...entry?.file, meta: { parentId: folderIdMap[entry.parentPath] || vaultId } } as any);
+        }
+      }
+      // trigger file uploads
+      uppy.upload();
+    }
+  }
+
+  console.log("Files and folders:", files);
+};
+
+function Page4({ uppy }: { uppy: Uppy }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <div
+      onDrop={(e) => handleDrop(e, uppy)}
+      onDragOver={(e) => e.preventDefault()}
+      style={{
+        border: "2px dashed #ccc",
+        padding: "20px",
+        textAlign: "center",
+        cursor: "pointer",
+      }}
+    >
+      <h2>Drag and Drop a Folder Here</h2>
+    </div>);
 }
 
 function UploadeManager({ uppy }: { uppy: Uppy }) {
@@ -148,7 +208,7 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
 
     const onStateChanged = (prevState: any, nextState: any) => {
       console.log("state chagned", prevState, nextState)
-      const resumedFiles = Object.values(nextState.files).filter((file: any) => 
+      const resumedFiles = Object.values(nextState.files).filter((file: any) =>
         prevState.files[file.id]?.isPaused && !file.isPaused
       );
       console.log("resumed files", resumedFiles)
@@ -156,6 +216,7 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
       resumedFiles.forEach((file: any) => {
         setPausedFiles(prev => prev.filter(f => f.id !== file.id));
       });
+
     };
 
     const onCancelAll = () => {
@@ -282,12 +343,12 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
                           </div>
                         </div>
                         <div className="progress" style={{ height: '5px' }}>
-                          <div 
-                            className="progress-bar" 
-                            role="progressbar" 
-                            style={{ width: `${file.progress.percentage}%` }} 
-                            aria-valuenow={parseFloat(file.progress.percentage)} 
-                            aria-valuemin={0} 
+                          <div
+                            className="progress-bar"
+                            role="progressbar"
+                            style={{ width: `${file.progress.percentage}%` }}
+                            aria-valuenow={parseFloat(file.progress.percentage)}
+                            aria-valuemin={0}
                             aria-valuemax={100}
                           ></div>
                         </div>
@@ -302,12 +363,12 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
                           </div>
                         </div>
                         <div className="progress" style={{ height: '10px' }}>
-                          <div 
-                            className="progress-bar bg-success" 
-                            role="progressbar" 
-                            style={{ width: '100%' }} 
-                            aria-valuenow={100} 
-                            aria-valuemin={0} 
+                          <div
+                            className="progress-bar bg-success"
+                            role="progressbar"
+                            style={{ width: '100%' }}
+                            aria-valuenow={100}
+                            aria-valuemin={0}
                             aria-valuemax={100}
                           ></div>
                         </div>
@@ -338,12 +399,12 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
                       </div>
                     </div>
                     <div className="progress" style={{ height: '5px' }}>
-                      <div 
-                        className="progress-bar" 
-                        role="progressbar" 
-                        style={{ width: `${file.progress.percentage}%` }} 
-                        aria-valuenow={parseFloat(file.progress.percentage)} 
-                        aria-valuemin={0} 
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: `${file.progress.percentage}%` }}
+                        aria-valuenow={parseFloat(file.progress.percentage)}
+                        aria-valuemin={0}
                         aria-valuemax={100}
                       ></div>
                     </div>
@@ -363,12 +424,12 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
                       </div>
                     </div>
                     <div className="progress" style={{ height: '10px' }}>
-                      <div 
-                        className="progress-bar bg-success" 
-                        role="progressbar" 
-                        style={{ width: '100%' }} 
-                        aria-valuenow={100} 
-                        aria-valuemin={0} 
+                      <div
+                        className="progress-bar bg-success"
+                        role="progressbar"
+                        style={{ width: '100%' }}
+                        aria-valuenow={100}
+                        aria-valuemin={0}
                         aria-valuemax={100}
                       ></div>
                     </div>
@@ -382,8 +443,8 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
                   <li key={item.file.id} className="list-group-item d-flex justify-content-between align-items-center">
                     <span>{item.file.name} - {item.error.message === 'Cancelled' ? 'Cancelled' : 'Failed'}</span>
                     <button className="btn btn-sm btn-link text-secondary" onClick={() => retryUpload(item.file.id)} title="Retry">
-                        <i className="bi bi-arrow-clockwise"></i>
-                      </button>
+                      <i className="bi bi-arrow-clockwise"></i>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -396,40 +457,42 @@ function UploadeManager({ uppy }: { uppy: Uppy }) {
 }
 
 function App() {
-  const [akord] = useState<Akord>(new Akord({ debug: true, logToFile: true, env: 'testnet' as any, apiKey: API_KEY }));
+  const [tusky] = useState<Tusky>({} as any);
   const [vaultId] = useState<string>("a5d42a41-d4de-48b7-a85d-50880a8a9102");
   const [uppy] = useState<Uppy>(
     new Uppy({
-        autoProceed: false, //put this to true if you want to upload files automatically without mid-step
-      }) // keep this in app context so it doesn't get recreated on every page
+      autoProceed: false, //put this to true if you want to upload files automatically without mid-step
+    }) // keep this in app context so it doesn't get recreated on every page
       .use(Webcam)
       .use(Audio)
       .use(ScreenCapture)
       .use(Compressor)
       .use(Informer)
       .use(Tus, { endpoint: '/' }) //put anything as endpoint, it will be overridden with proper API url over uploader.options
-      
+
   );
-  const [activeTab, setActiveTab] = useState<'page1' | 'page2' | 'page3'>('page1');
-  
+  const [activeTab, setActiveTab] = useState<'page1' | 'page2' | 'page3' | 'page4'>('page1');
+
   useEffect(() => {
     const configureUploaderForCurrentVault = async () => {
-      const uploader = await akord.file.uploader(vaultId);
-      uppy  // update this for every vault
-        .getPlugin('Tus')!
-        .setOptions(uploader.options)
-      uppy.setMeta({ vaultId: vaultId }) 
+      // const uploader = await tusky.file.uploader(vaultId);
+      // uppy  // update this for every vault
+      //   .getPlugin('Tus')!
+      //   .setOptions(uploader.options)
+      // uppy.setMeta({ vaultId: vaultId })
     }
-    
-    if (akord && vaultId && uppy) {
+
+    if (tusky && vaultId && uppy) {
+      console.log("conifgurign uploader")
       configureUploaderForCurrentVault();
     }
-  }, [akord, vaultId, uppy]);
+  }, [tusky, vaultId, uppy]);
+
 
   return (
     <div className="App">
       <header>
-        <title>Carmella SDK &lt;&gt; Uppy uploads starter</title>
+        <title>Tusky SDK &lt;&gt; Uppy uploads starter</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </header>
@@ -438,11 +501,13 @@ function App() {
           <button className={`nav-link ${activeTab === 'page1' ? 'active' : ''}`} onClick={() => setActiveTab('page1')}>Page 1</button>
           <button className={`nav-link ${activeTab === 'page2' ? 'active' : ''}`} onClick={() => setActiveTab('page2')}>Page 2</button>
           <button className={`nav-link ${activeTab === 'page3' ? 'active' : ''}`} onClick={() => setActiveTab('page3')}>Page 3</button>
+          <button className={`nav-link ${activeTab === 'page4' ? 'active' : ''}`} onClick={() => setActiveTab('page4')}>Page 4</button>
         </nav>
         <div className="flex-grow-1 position-relative">
           {activeTab === 'page1' && <Page1 uppy={uppy} />}
           {activeTab === 'page2' && <Page2 uppy={uppy} />}
           {activeTab === 'page3' && <Page3 uppy={uppy} />}
+          {activeTab === 'page4' && <Page4 uppy={uppy} />}
         </div>
         <UploadeManager uppy={uppy} />
         <div id="informer"></div>
