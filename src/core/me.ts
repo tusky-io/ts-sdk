@@ -23,8 +23,7 @@ class MeModule {
   }
 
   /**
-   * Update currently authenticated user\
-   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
+   * Update currently authenticated user
    * @param {UserMutable} input
    * @returns {Promise<User>}
    */
