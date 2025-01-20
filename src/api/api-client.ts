@@ -76,6 +76,7 @@ export class ApiClient {
   private _trashExpiration: number;
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
+  private _publicKey: string;
 
   // nft specific
   private _recipient: string;
@@ -142,6 +143,7 @@ export class ApiClient {
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
     clone._termsAccepted = this._termsAccepted;
+    clone._publicKey = this._publicKey;
     clone._encPrivateKey = this._encPrivateKey;
     clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
     clone._ownerAccess = this._ownerAccess;
@@ -304,6 +306,11 @@ export class ApiClient {
     return this;
   }
 
+  publicKey(publicKey: string): ApiClient {
+    this._publicKey = publicKey;
+    return this;
+  }
+
   encPrivateKey(encPrivateKey: string): ApiClient {
     this._encPrivateKey = encPrivateKey;
     return this;
@@ -429,7 +436,8 @@ export class ApiClient {
       !this._picture &&
       !this._termsAccepted &&
       !this._encPrivateKey &&
-      !this._encPrivateKeyBackup
+      !this._encPrivateKeyBackup &&
+      !this._publicKey
     ) {
       throw new BadRequest("Nothing to update.");
     }
@@ -437,6 +445,7 @@ export class ApiClient {
       name: this._name,
       picture: this._picture,
       termsAccepted: this._termsAccepted,
+      publicKey: this._publicKey,
       encPrivateKey: this._encPrivateKey,
       encPrivateKeyBackup: this._encPrivateKeyBackup,
     });
@@ -1043,6 +1052,7 @@ export class ApiClient {
       keys: this._keys,
       encPrivateKey: this._encPrivateKey,
       ownerAccess: this._ownerAccess,
+      publicKey: this._publicKey,
       allowedStorage: this._allowedStorage,
       allowedPaths: this._allowedPaths,
     });

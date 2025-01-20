@@ -167,6 +167,7 @@ export default class TuskyApi extends Api {
       .description(tx.description)
       .tags(tx.tags)
       .status(tx.status)
+      .keys(tx.keys)
       .updateVault();
   }
 
@@ -208,6 +209,7 @@ export default class TuskyApi extends Api {
       .expiresAt(tx.expiresAt)
       .keys(tx.keys)
       .name(tx.name)
+      .publicKey(tx.publicKey)
       .encPrivateKey(tx.encPrivateKey)
       .ownerAccess(tx.ownerAccess)
       .allowedStorage(tx.allowedStorage)
@@ -302,6 +304,7 @@ export default class TuskyApi extends Api {
       .name(input.name)
       .picture(input.picture)
       .termsAccepted(input.termsAccepted)
+      .publicKey(input.publicKey)
       .encPrivateKey(input.encPrivateKey)
       .encPrivateKeyBackup(input.encPrivateKeyBackup)
       .updateMe();

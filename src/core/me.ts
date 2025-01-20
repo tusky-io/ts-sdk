@@ -3,7 +3,7 @@ import { User, UserMutable } from "../types/user";
 import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
 import { ClientConfig } from "../config";
-import { X25519KeyPair } from "../crypto";
+import { arrayToBase64, X25519KeyPair } from "../crypto";
 
 class MeModule {
   protected service: Service;
@@ -49,7 +49,10 @@ class MeModule {
       true,
     );
     return {
-      user: await this.service.api.updateMe({ encPrivateKey: encPrivateKey }),
+      user: await this.service.api.updateMe({
+        encPrivateKey: encPrivateKey,
+        publicKey: arrayToBase64(keypair.getPublicKey()),
+      }),
       keypair,
     };
   }
