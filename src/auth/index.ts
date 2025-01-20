@@ -74,6 +74,9 @@ export class Auth {
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
   }
 
+  /*
+   * NOTE: by signing in to Tusky, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
+   */
   public async signIn(): Promise<{ address?: string }> {
     switch (this.authType) {
       case "Wallet": {
