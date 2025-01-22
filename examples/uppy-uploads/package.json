@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@tusky/ts-sdk": "0.26.0-experimental.1",
+    "@tusky/ts-sdk": "file:../../",
     "@tanstack/react-query": "^5.37.1",
     "@uppy/audio": "^2.0.1",
     "@uppy/compressor": "^2.1.0",

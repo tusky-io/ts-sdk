@@ -122,6 +122,71 @@ class FolderModule {
     return { folderTreeData, folderIdMap };
   }
 
+  public async createTreeFromPaths(
+    vaultId: string,
+    paths: Array<string>,
+    options: FolderUploadOptions = this.defaultUploadOptions,
+  ): Promise<Record<string, string>> {
+    // let folderTreeData: FileOrFolderInfo[];
+    const folderIdMap: Record<string, string> = {}; // map relativePath to folder id
+
+    function getUniqueSortedFolderPaths(paths: string[]): string[] {
+      const folderSet = new Set<string>();
+
+      for (const path of paths) {
+        const folderPath = path?.substring(0, path?.lastIndexOf("/")); // remove file name
+        if (folderPath) {
+          folderSet.add(folderPath); // add only folders to the set
+        }
+      }
+
+      // convert the Set to an array and sort the paths
+      return Array.from(folderSet).sort((a, b) => a.localeCompare(b));
+    }
+
+    const folderTreeData = getUniqueSortedFolderPaths(paths);
+
+    const sortedFolders = folderTreeData
+      .map((relativePath) => {
+        const lastSlashIndex = relativePath.lastIndexOf("/");
+        const parentPath =
+          lastSlashIndex !== -1
+            ? relativePath.substring(0, lastSlashIndex)
+            : null;
+
+        return {
+          relativePath,
+          parentPath,
+        };
+      })
+      .sort((folder1, folder2) => {
+        return (
+          folder1.relativePath.split("/").length -
+          folder2.relativePath.split("/").length
+        );
+      });
+
+    for (const folder of sortedFolders) {
+      const parentId = folder.parentPath
+        ? folderIdMap[folder.parentPath]
+        : options.parentId || vaultId;
+      const folderModule = new FolderModule({
+        ...this.service,
+        auth: this.auth,
+      });
+      const folderName = getFolderName(folder.relativePath);
+      // skip hidden files or directories (those starting with a dot)
+      if (options.skipHidden && folderName.startsWith(".")) {
+        continue;
+      }
+      const { id } = await folderModule.create(vaultId, folderName, {
+        parentId,
+      });
+      folderIdMap[folder.relativePath] = id;
+    }
+    return folderIdMap;
+  }
+
   /**
    * Create folder structure
    * @param {string} vaultId
@@ -337,5 +402,12 @@ export type FolderUploadOptions = {
   withFiles?: boolean;
   skipHidden?: boolean;
 };
+
+function getFolderName(relativePath: string): string {
+  const lastSlashIndex = relativePath.lastIndexOf("/");
+  return lastSlashIndex !== -1
+    ? relativePath.substring(lastSlashIndex + 1) // Everything after the last "/"
+    : relativePath; // If no "/" exists, the relativePath itself is the folder name
+}
 
 export { FolderModule };
