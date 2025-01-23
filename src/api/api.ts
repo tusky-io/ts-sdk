@@ -15,7 +15,7 @@ import {
   ListOptions,
   VaultApiGetOptions,
 } from "../types/query-options";
-import { User, UserMutable } from "../types/user";
+import { User, UserEncryptionKeys, UserMutable } from "../types/user";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";
@@ -51,6 +51,12 @@ abstract class Api {
   abstract getMe(): Promise<User>;
 
   abstract updateMe(input: UserMutable): Promise<User>;
+
+  abstract createEncryptionKeys(input: UserEncryptionKeys): Promise<User>;
+
+  abstract updateEncryptionKeys(input: UserEncryptionKeys): Promise<User>;
+
+  abstract deleteEncryptionKeys(): Promise<void>;
 
   abstract updateFile(tx: UpdateFileTxPayload): Promise<File>;
 

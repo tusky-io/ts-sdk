@@ -18,7 +18,7 @@ import {
   ListOptions,
   VaultApiGetOptions,
 } from "../types/query-options";
-import { User, UserMutable } from "../types/user";
+import { User, UserEncryptionKeys, UserMutable } from "../types/user";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
@@ -300,9 +300,37 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .name(input.name)
       .picture(input.picture)
+      .updateMe();
+  }
+
+  public async createEncryptionKeys(input: UserEncryptionKeys): Promise<User> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .publicKey(input.publicKey)
       .encPrivateKey(input.encPrivateKey)
       .encPrivateKeyBackup(input.encPrivateKeyBackup)
-      .updateMe();
+      .createEncryptionKeys();
+  }
+
+  public async updateEncryptionKeys(input: UserEncryptionKeys): Promise<User> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .publicKey(input.publicKey)
+      .encPrivateKey(input.encPrivateKey)
+      .encPrivateKeyBackup(input.encPrivateKeyBackup)
+      .updateEncryptionKeys();
+  }
+
+  public async deleteEncryptionKeys(): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .deleteEncryptionKeys();
   }
 
   public async getFile(id: string): Promise<File> {

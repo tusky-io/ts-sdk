@@ -26,6 +26,7 @@ export class ApiClient {
 
   // API endpoints
   private _meUri: string = "me";
+  private _keysUri: string = "keys";
   private _vaultUri: string = "vaults";
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
@@ -73,6 +74,9 @@ export class ApiClient {
   // user specific
   private _picture: string;
   private _trashExpiration: number;
+
+  // user encryption specific
+  private _publicKey: string;
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
 
@@ -140,6 +144,7 @@ export class ApiClient {
     clone._allowedPaths = this._allowedPaths;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
+    clone._publicKey = this._publicKey;
     clone._encPrivateKey = this._encPrivateKey;
     clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
     clone._ownerAccess = this._ownerAccess;
@@ -297,6 +302,11 @@ export class ApiClient {
     return this;
   }
 
+  publicKey(publicKey: string): ApiClient {
+    this._publicKey = publicKey;
+    return this;
+  }
+
   encPrivateKey(encPrivateKey: string): ApiClient {
     this._encPrivateKey = encPrivateKey;
     return this;
@@ -432,6 +442,60 @@ export class ApiClient {
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
+  }
+
+  /**
+   * Create user encryption keys backup
+   * @uses:
+   * - publicKey()
+   * - encPrivateKey()
+   * - encPrivateKeyBackup()
+   * @returns {Promise<User>}
+   */
+  async createEncryptionKeys(): Promise<User> {
+    if (!this._publicKey && !this._encPrivateKey) {
+      throw new BadRequest("Nothing to create.");
+    }
+    this.data({
+      publicKey: this._publicKey,
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup,
+    });
+
+    return this.post(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
+  }
+
+  /**
+   * Update currently authenticated user encryption keys backup
+   * @uses:
+   * - publicKey()
+   * - encPrivateKey()
+   * - encPrivateKeyBackup()
+   * @returns {Promise<User>}
+   */
+  async updateEncryptionKeys(): Promise<User> {
+    if (
+      !this._publicKey &&
+      !this._encPrivateKey &&
+      !this._encPrivateKeyBackup
+    ) {
+      throw new BadRequest("Nothing to update.");
+    }
+    this.data({
+      publicKey: this._publicKey,
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup,
+    });
+
+    return this.patch(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
+  }
+
+  /**
+   * Deletes currently authenticated user encryption keys
+   * @returns {Promise<void>}
+   */
+  async deleteEncryptionKeys(): Promise<void> {
+    return this.delete(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
   }
 
   /**

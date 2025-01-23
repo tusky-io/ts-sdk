@@ -3,7 +3,7 @@ import { User, UserMutable } from "../types/user";
 import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
 import { ClientConfig } from "../config";
-import { X25519KeyPair } from "../crypto";
+import { arrayToBase64, X25519KeyPair } from "../crypto";
 
 class MeModule {
   protected service: Service;
@@ -48,7 +48,10 @@ class MeModule {
       true,
     );
     return {
-      user: await this.service.api.updateMe({ encPrivateKey: encPrivateKey }),
+      user: await this.service.api.createEncryptionKeys({
+        encPrivateKey: encPrivateKey,
+        publicKey: arrayToBase64(keypair.getPublicKey()),
+      }),
       keypair,
     };
   }
@@ -77,7 +80,9 @@ class MeModule {
       newPassword,
       true,
     );
-    return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
+    return await this.service.api.updateEncryptionKeys({
+      encPrivateKey: encPrivateKey,
+    });
   }
 
   /**
@@ -98,7 +103,7 @@ class MeModule {
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
     const { backupPhrase, encPrivateKeyBackup } =
       await this.userEncryption.backupPassword(password);
-    const user = await this.service.api.updateMe({
+    const user = await this.service.api.updateEncryptionKeys({
       encPrivateKeyBackup: encPrivateKeyBackup,
     });
     return { user, backupPhrase };
@@ -125,7 +130,18 @@ class MeModule {
       backupPhrase,
       newPassword,
     );
-    return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
+    return await this.service.api.updateEncryptionKeys({
+      encPrivateKey: encPrivateKey,
+    });
+  }
+
+  /**
+   * Reset user encryption context
+   * WARNING: It will reset user keys & will delete all private content created by the user
+   * @returns {Promise<void>}
+   */
+  public async resetEncryptionKeys(): Promise<void> {
+    return this.service.api.deleteEncryptionKeys();
   }
 
   /**
