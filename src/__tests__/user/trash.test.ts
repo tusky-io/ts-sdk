@@ -45,6 +45,7 @@ describe("Testing trash functions", () => {
     await tusky.folder.delete(folder.id);
     const trashContent = await tusky.folder.listAll({ parentId: trashId });
     const privateFolder = await tusky.folder.get(privateFolderId);
+    // ensure that the trash content is decrypted correctly
     expect(trashContent).toBeTruthy();
     expect(trashContent.length).toEqual(2);
     expect(trashContent[0]).toBeTruthy();
