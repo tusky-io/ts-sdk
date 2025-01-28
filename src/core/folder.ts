@@ -14,6 +14,7 @@ import pLimit from "p-limit";
 import { Auth } from "../auth";
 import { File } from "../types";
 import { FolderSource, traverse } from "@env/core/folder";
+import { digest } from "../crypto";
 
 const CONCURRENCY_LIMIT = 10;
 
@@ -83,19 +84,27 @@ class FolderModule {
    * @param {string} vaultId
    * @param {FolderSource} folder folder source: folder path, file system entry
    * @param  {FolderUploadOptions} [options] parent id, includeRootFolder flag etc.
-   * @returns {Promise<Folder>} Promise with new folder
+   * @returns {Promise<{folderIdMap: Record<string, string>}>} Promise with new folder id map
    */
   public async upload(
     vaultId: string,
     folder: FolderSource,
     options: FolderUploadOptions = this.defaultUploadOptions,
-  ): Promise<{
-    folderTreeData: FileOrFolderInfo[];
-    folderIdMap: Record<string, string>;
-  }> {
-    const { folderIdMap, folderTreeData } = await this.createTree(
-      vaultId,
+  ): Promise<{ folderIdMap: Record<string, string> }> {
+    // NOTE: keep await for browser implementation
+    const folderTreeData = await traverse(
       folder,
+      options.includeRootFolder,
+      options.skipHidden,
+    );
+
+    const relativePaths = folderTreeData
+      .filter((node) => node.isFolder)
+      .map((node) => node.relativePath);
+
+    const { folderIdMap } = await this.createTree(
+      vaultId,
+      relativePaths,
       options,
     );
 
@@ -119,143 +128,72 @@ class FolderModule {
       );
 
     await Promise.all(uploadPromises);
-    return { folderTreeData, folderIdMap };
-  }
-
-  public async createTreeFromPaths(
-    vaultId: string,
-    paths: Array<string>,
-    options: FolderUploadOptions = this.defaultUploadOptions,
-  ): Promise<Record<string, string>> {
-    // let folderTreeData: FileOrFolderInfo[];
-    const folderIdMap: Record<string, string> = {}; // map relativePath to folder id
-
-    function getUniqueSortedFolderPaths(paths: string[]): string[] {
-      const folderSet = new Set<string>();
-
-      for (const path of paths) {
-        const folderPath = path?.substring(0, path?.lastIndexOf("/")); // remove file name
-        if (folderPath) {
-          folderSet.add(folderPath); // add only folders to the set
-        }
-      }
-
-      // convert the Set to an array and sort the paths
-      return Array.from(folderSet).sort((a, b) => a.localeCompare(b));
-    }
-
-    const folderTreeData = getUniqueSortedFolderPaths(paths);
-
-    const sortedFolders = folderTreeData
-      .map((relativePath) => {
-        const lastSlashIndex = relativePath.lastIndexOf("/");
-        const parentPath =
-          lastSlashIndex !== -1
-            ? relativePath.substring(0, lastSlashIndex)
-            : null;
-
-        return {
-          relativePath,
-          parentPath,
-        };
-      })
-      .sort((folder1, folder2) => {
-        return (
-          folder1.relativePath.split("/").length -
-          folder2.relativePath.split("/").length
-        );
-      });
-
-    for (const folder of sortedFolders) {
-      const parentId = folder.parentPath
-        ? folderIdMap[folder.parentPath]
-        : options.parentId || vaultId;
-      const folderModule = new FolderModule({
-        ...this.service,
-        auth: this.auth,
-      });
-      const folderName = getFolderName(folder.relativePath);
-      // skip hidden files or directories (those starting with a dot)
-      if (options.skipHidden && folderName.startsWith(".")) {
-        continue;
-      }
-      const { id } = await folderModule.create(vaultId, folderName, {
-        parentId,
-      });
-      folderIdMap[folder.relativePath] = id;
-    }
-    return folderIdMap;
+    return { folderIdMap };
   }
 
   /**
    * Create folder structure
    * @param {string} vaultId
-   * @param {FolderSource} folder folder source: folder path, file system entry
+   * @param {Array<string>} paths relative paths array
    * @param  {FolderUploadOptions} [options] parent id, includeRootFolder flag etc.
-   * @returns {Promise<Folder>} Promise with new folder
+   * @returns {Promise<{folderIdMap: Record<string, string>}>} Promise with new folder id map
    */
   public async createTree(
     vaultId: string,
-    folder: FolderSource,
+    paths: Array<string>,
     options: FolderUploadOptions = this.defaultUploadOptions,
-  ): Promise<{
-    folderTreeData: FileOrFolderInfo[];
-    folderIdMap: Record<string, string>;
-  }> {
-    // let folderTreeData: FileOrFolderInfo[];
-    const folderIdMap: Record<string, string> = {}; // map relativePath to folder id
+  ): Promise<{ folderIdMap: Record<string, string> }> {
+    await this.service.setVaultContext(vaultId);
+    this.service.setParentId(options.parentId);
 
-    // NOTE: keep await for browser implementation
-    const folderTreeData = await traverse(
-      folder,
-      options.includeRootFolder,
-      options.skipHidden,
+    const sortedPaths = await Promise.all(
+      paths
+        .map((relativePath) => ({
+          relativePath,
+          parentPath: getParentPath(relativePath),
+          name: getFolderName(relativePath),
+        }))
+        // sort paths by length
+        .sort((folder1, folder2) => {
+          return (
+            folder1.relativePath.split("/").length -
+            folder2.relativePath.split("/").length
+          );
+        })
+        // filter out hidden paths if skipHidden option present
+        .filter((path) => !options.skipHidden || !path.name.startsWith("."))
+        // encrypt if encrypted vault
+        .map(async (path) => ({
+          name: await this.service.processWriteString(path.name),
+          // TODO: encrypt
+          parentPath: this.service.encrypted
+            ? await digest(path.parentPath)
+            : path.parentPath,
+          // TODO: encrypt
+          relativePath: this.service.encrypted
+            ? await digest(path.relativePath)
+            : path.relativePath,
+        })),
     );
-    const sortedFolders = folderTreeData
-      .filter((item) => item.isFolder)
-      .sort((folder1, folder2) => {
-        return (
-          folder1.relativePath.split("/").length -
-          folder2.relativePath.split("/").length
-        );
-      });
 
-    // TODO: send folder structure to the backend and get the folder id map
-    // await this.service.setVaultContext(vaultId);
-    // this.service.setParentId(options.parentId);
+    let folderIdMap = (
+      await this.service.api.createFolderTree({
+        vaultId: vaultId,
+        parentId: options.parentId,
+        paths: sortedPaths,
+      })
+    ).folderIdMap;
 
-    // const folderPaths: { name: string; parentPath: string, relativePath: string }[] = [];
-    // for (let folder of sortedFolders) {
-    //   folderPaths.push({
-    //     name: await this.service.processWriteString(folder.name),
-    //     parentPath: await digest(
-    //       await this.service.processWriteString(folder.parentPath),
-    //     ),
-    //     relativePath: await digest(
-    //       await this.service.processWriteString(folder.relativePath),
-    //     ),
-    //   });
-    // }
-    // const folderIdMap = await this.service.api.createFolderTree({
-    //   vaultId: vaultId,
-    //   parentId: parentId,
-    //   folderPaths: folderPaths,
-    // });
-
-    for (const folder of sortedFolders) {
-      const parentId = folder.parentPath
-        ? folderIdMap[folder.parentPath]
-        : options.parentId || vaultId;
-      const folderModule = new FolderModule({
-        ...this.service,
-        auth: this.auth,
-      });
-      const { id } = await folderModule.create(vaultId, folder.name, {
-        parentId,
-      });
-      folderIdMap[folder.relativePath] = id;
+    if (this.service.encrypted) {
+      // map back to cleartext relativePath
+      const remappedfolderIdMap: Record<string, string> = {}; // map relativePath to folder id
+      for (let folder of sortedPaths) {
+        const hashedPath = await digest(folder.relativePath);
+        remappedfolderIdMap[folder.relativePath] = folderIdMap[hashedPath];
+      }
+      folderIdMap = remappedfolderIdMap;
     }
-    return { folderIdMap, folderTreeData };
+    return { folderIdMap };
   }
 
   /**
@@ -406,8 +344,15 @@ export type FolderUploadOptions = {
 function getFolderName(relativePath: string): string {
   const lastSlashIndex = relativePath.lastIndexOf("/");
   return lastSlashIndex !== -1
-    ? relativePath.substring(lastSlashIndex + 1) // Everything after the last "/"
-    : relativePath; // If no "/" exists, the relativePath itself is the folder name
+    ? relativePath.substring(lastSlashIndex + 1) // everything after the last "/"
+    : relativePath; // if no "/" exists, the relativePath itself is the folder name
+}
+
+function getParentPath(relativePath: string): string {
+  const lastSlashIndex = relativePath.lastIndexOf("/");
+  return lastSlashIndex !== -1
+    ? relativePath.substring(0, lastSlashIndex) // everything before the last "/"
+    : null; // if no "/" exists, the relativePath is root
 }
 
 export { FolderModule };

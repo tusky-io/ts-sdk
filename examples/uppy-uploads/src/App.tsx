@@ -17,7 +17,6 @@ import '@uppy/dashboard/dist/style.min.css';
 import '@uppy/webcam/dist/style.min.css';
 import '@uppy/status-bar/dist/style.css';
 import '@uppy/drag-drop/dist/style.css';
-import { Upload } from 'tus-js-client';
 
 let uploads: Record<string, string>;
 
@@ -127,6 +126,7 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
 
       uppy.setOptions({
         onBeforeUpload: (files) => {
+          console.log(files)
           // before upload update parentId in file meta
           const updatedFiles = Object.assign({}, files)
           for (let fileId of Object.keys(updatedFiles)) {
@@ -148,8 +148,9 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
         },
       });
       // create folder tree on the backend
-      const folderIdMap = await tusky.folder.createTreeFromPaths(vaultId, e.map((file: any) => file.meta.relativePath))
-      uploads = folderIdMap
+      const folderPaths = e.map((file: any) => file.meta.relativePath?.substring(0, file.meta.relativePath?.lastIndexOf("/")))
+      const { folderIdMap } = await tusky.folder.createTree(vaultId, folderPaths)
+      uploads = folderIdMap;
       // trigger upload manually once the tree is created
       uppy.upload().then((result) => {
         console.log('Upload result:', result);
@@ -192,12 +193,12 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
     };
 
     const onStateChanged = (prevState: any, nextState: any) => {
-      console.log("state chagned", prevState, nextState)
+      // console.log("state chagned", prevState, nextState)
       const resumedFiles = Object.values(nextState.files).filter((file: any) =>
         prevState.files[file.id]?.isPaused && !file.isPaused
       );
-      console.log("resumed files", resumedFiles)
-      console.log("paused files", pausedFiles)
+      // console.log("resumed files", resumedFiles)
+      // console.log("paused files", pausedFiles)
       resumedFiles.forEach((file: any) => {
         setPausedFiles(prev => prev.filter(f => f.id !== file.id));
       });
@@ -229,6 +230,7 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
       uppy.off('upload-pause', onFilePaused);
       uppy.off('state-update', onStateChanged);
       uppy.off('cancel-all', onCancelAll);
+      uppy.off('files-added', onFilesAdded);
     };
   }, [uppy]);
 
@@ -445,7 +447,7 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
 
 function App() {
   const [tusky, setTusky] = useState<Tusky>(null as any);
-  const [vaultId] = useState<string>("aef2e407-1b82-45c8-989d-8090d29f9203");
+  const [vaultId] = useState<string>("712700d0-0059-444e-8cab-7fc5d18a6ad2");
   const [uppy] = useState<Uppy>(
     new Uppy({
       autoProceed: false, //put this to true if you want to upload files automatically without mid-step
@@ -458,19 +460,18 @@ function App() {
       .use(Tus, { endpoint: '/' }) //put anything as endpoint, it will be overridden with proper API url over uploader.options
 
   );
-  const [uploader, setUploader] = useState<Upload>(null as any);
   const [activeTab, setActiveTab] = useState<'page1' | 'page2' | 'page3'>('page1');
 
   useEffect(() => {
     const configureUploaderForCurrentVault = async () => {
       const tusky = await Tusky.init({ env: "dev", apiKey: API_KEY });
       setTusky(tusky)
-      const uploader = await tusky.file.uploader(vaultId);
-      uppy  // update this for every vault
-        .getPlugin('Tus')!
-        .setOptions(uploader.options)
-      uppy.setMeta({ vaultId: vaultId })
-      setUploader(uploader as any)
+      // const uploader = await tusky.file.uploader(vaultId);
+      // uppy  // update this for every vault
+      //   .getPlugin('Tus')!
+      //   .setOptions(uploader.options)
+      // uppy.setMeta({ vaultId: vaultId })
+      // setUploader(uploader as any)
     }
 
     if (tusky && vaultId && uppy) {

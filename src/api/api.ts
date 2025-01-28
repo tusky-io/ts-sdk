@@ -61,7 +61,7 @@ abstract class Api {
 
   abstract createFolderTree(
     tx: CreateFolderTreeTxPayload,
-  ): Promise<Record<string, string>>;
+  ): Promise<{ folderIdMap: Record<string, string> }>;
 
   abstract updateFolder(tx: UpdateFolderTxPayload): Promise<Folder>;
 

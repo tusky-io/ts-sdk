@@ -25,7 +25,7 @@ export interface CreateFolderTxPayload {
 
 export interface CreateFolderTreeTxPayload {
   vaultId: string;
-  folderPaths: FileOrFolderInfo[];
+  paths: { name: string; relativePath: string; parentPath: string }[];
   parentId?: string;
 }
 

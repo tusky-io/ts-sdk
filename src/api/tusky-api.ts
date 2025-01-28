@@ -105,14 +105,14 @@ export default class TuskyApi extends Api {
 
   public async createFolderTree(
     tx: CreateFolderTreeTxPayload,
-  ): Promise<Record<string, string>> {
+  ): Promise<{ folderIdMap: Record<string, string> }> {
     return new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
       .auth(this.auth)
       .vaultId(tx.vaultId)
       .parentId(tx.parentId)
-      .data(tx.folderPaths)
+      .data(tx.paths)
       .createFolderTree();
   }
 

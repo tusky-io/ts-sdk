@@ -1,13 +1,14 @@
-import { Tusky } from "../../index";
+import { Folder, Tusky } from "../../index";
 import faker from '@faker-js/faker';
 import { initInstance, folderCreate, cleanup, testDataPath, vaultCreate, isEncrypted } from '../common';
 import { BadRequest } from "../../errors/bad-request";
 import { firstFileName } from '../data/content';
 import { status } from "../../constants";
+import { createReadStream, promises as fs } from 'fs';
 
 let tusky: Tusky;
 
-describe.skip(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () => {
+describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () => {
   let vaultId: string;
   let rootFolderId: string;
   let subFolderId: string;
@@ -161,11 +162,18 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder upload functions`
     expect(files).toBeTruthy();
     expect(files.length).toEqual(4);
     expect(files.map((file) => file.parentId)).toContain(parentFolder.id);
+    for (let file of files) {
+      const response = await tusky.file.arrayBuffer(file.id);
+      const buffer = await fs.readFile(testDataPath + firstFileName);
+      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+      expect(response).toEqual(arrayBuffer);
+      expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);
+    }
 
     const folders = await tusky.folder.listAll({ vaultId: vault.id });
     expect(folders).toBeTruthy();
     expect(folders.length).toEqual(4);
-    expect(files.map((folder) => folder.parentId)).toContain(parentFolder.id);
+    expect(folders.map((folder) => folder.parentId)).toContain(parentFolder.id);
   });
 
   it("should upload folder to parent folder with its contents including hidden files", async () => {
@@ -180,6 +188,6 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder upload functions`
     const folders = await tusky.folder.listAll({ vaultId: vault.id });
     expect(folders).toBeTruthy();
     expect(folders.length).toEqual(4);
-    expect(files.map((folder) => folder.parentId)).toContain(parentFolder.id);
+    expect(folders.map((folder) => folder.parentId)).toContain(parentFolder.id);
   });
 });
