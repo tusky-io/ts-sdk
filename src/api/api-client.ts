@@ -857,6 +857,35 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - vaultId()
+   * @uses:
+   * - parentId()
+   * @returns {Promise<Folder>}
+   */
+  async createFolderTree(): Promise<{ folderIdMap: Record<string, string> }> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing vault id input. Use ApiClient#vaultId() to add it",
+      );
+    }
+    if (!this._data) {
+      throw new BadRequest(
+        "Missing name input. Use ApiClient#data() to add it",
+      );
+    }
+
+    this.data({
+      vaultId: this._vaultId,
+      parentId: this._parentId,
+      paths: this._data,
+    });
+
+    return this.post(`${this._apiUrl}/${this._folderUri}/tree`);
+  }
+
+  /**
+   *
+   * @requires:
    * - address()
    * @returns {Promise<string>}
    */

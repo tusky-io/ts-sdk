@@ -4,6 +4,7 @@ import { ApiClient } from "./api-client";
 import { Membership } from "../types/membership";
 import { Vault } from "../types/vault";
 import {
+  CreateFolderTreeTxPayload,
   CreateFolderTxPayload,
   CreateMembershipTxPayload,
   CreateVaultTxPayload,
@@ -100,6 +101,19 @@ export default class TuskyApi extends Api {
       .parentId(tx.parentId)
       .name(tx.name)
       .createFolder();
+  }
+
+  public async createFolderTree(
+    tx: CreateFolderTreeTxPayload,
+  ): Promise<{ folderIdMap: Record<string, string> }> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .vaultId(tx.vaultId)
+      .parentId(tx.parentId)
+      .data(tx.paths)
+      .createFolderTree();
   }
 
   public async updateFolder(tx: UpdateFolderTxPayload): Promise<Folder> {
