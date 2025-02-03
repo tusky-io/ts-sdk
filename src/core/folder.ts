@@ -148,6 +148,7 @@ class FolderModule {
 
     const sortedPaths = await Promise.all(
       paths
+        .filter((path) => path)
         .map((relativePath) => ({
           relativePath,
           parentPath: getParentPath(relativePath),
@@ -161,26 +162,29 @@ class FolderModule {
           );
         })
         // filter out hidden paths if skipHidden option present
-        .filter((path) => !options.skipHidden || !path.name.startsWith("."))
-        // encrypt if encrypted vault
-        .map(async (path) => ({
-          name: await this.service.processWriteString(path.name),
-          // TODO: encrypt
-          parentPath: this.service.encrypted
-            ? await digest(path.parentPath)
-            : path.parentPath,
-          // TODO: encrypt
-          relativePath: this.service.encrypted
-            ? await digest(path.relativePath)
-            : path.relativePath,
-        })),
+        .filter((path) => !options.skipHidden || !path.name.startsWith(".")),
+    );
+
+    const processedPaths = await Promise.all(
+      // encrypt if encrypted vault
+      sortedPaths.map(async (path) => ({
+        name: await this.service.processWriteString(path.name),
+        // TODO: encrypt
+        parentPath: this.service.encrypted
+          ? await digest(path.parentPath)
+          : path.parentPath,
+        // TODO: encrypt
+        relativePath: this.service.encrypted
+          ? await digest(path.relativePath)
+          : path.relativePath,
+      })),
     );
 
     let folderIdMap = (
       await this.service.api.createFolderTree({
         vaultId: vaultId,
         parentId: options.parentId,
-        paths: sortedPaths,
+        paths: processedPaths,
       })
     ).folderIdMap;
 
@@ -191,7 +195,7 @@ class FolderModule {
         const hashedPath = await digest(folder.relativePath);
         remappedfolderIdMap[folder.relativePath] = folderIdMap[hashedPath];
       }
-      folderIdMap = remappedfolderIdMap;
+      return { folderIdMap: remappedfolderIdMap };
     }
     return { folderIdMap };
   }
