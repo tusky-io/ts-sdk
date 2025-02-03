@@ -25,7 +25,7 @@
       "types": "./lib/web/types/index.d.ts"
     }
   },
-  "repository": "git@github.com:Akord-com/carmella-sdk.git",
+  "repository": "git@github.com:tusky-io/ts-sdk.git",
   "scripts": {
     "test": "jest --verbose --collectCoverage=false",
     "test:user": "jest --verbose --collectCoverage=false --selectProjects \"user tests\"",
