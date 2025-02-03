@@ -235,16 +235,16 @@ export class UserEncryption {
 
       const passwordKey = await deriveAesKey(password, salt);
 
-      if (keystore) {
-        await this.saveSessionInKeystore(passwordKey);
-      }
-
       const encryptedPayload = await encryptAes(plaintext, passwordKey);
 
       const payload = {
         encryptedPayload: encryptedPayload,
         salt: arrayToBase64(salt),
       };
+
+      if (keystore) {
+        await this.saveSessionInKeystore(passwordKey);
+      }
       return jsonToBase64(payload);
     } catch (err) {
       logger.error(err);
@@ -279,14 +279,13 @@ export class UserEncryption {
 
       const passwordKey = await deriveAesKey(password, salt);
 
-      if (keystore) {
-        await this.saveSessionInKeystore(passwordKey);
-      }
-
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
         passwordKey,
       );
+      if (keystore) {
+        await this.saveSessionInKeystore(passwordKey);
+      }
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);
