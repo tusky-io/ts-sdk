@@ -240,10 +240,6 @@ export class UserEncryption {
         KEY_DERIVATION_ITERATION_COUNT,
       );
 
-      if (keystore) {
-        await this.saveSessionInKeystore(passwordKey);
-      }
-
       const encryptedPayload = await encryptAes(plaintext, passwordKey);
 
       const payload = {
@@ -251,6 +247,10 @@ export class UserEncryption {
         salt: arrayToBase64(salt),
         iterationCount: KEY_DERIVATION_ITERATION_COUNT,
       };
+
+      if (keystore) {
+        await this.saveSessionInKeystore(passwordKey);
+      }
       return jsonToBase64(payload);
     } catch (err) {
       logger.error(err);
@@ -289,14 +289,13 @@ export class UserEncryption {
         parsedPayload.iterationCount || 150000, // support legacy
       );
 
-      if (keystore) {
-        await this.saveSessionInKeystore(passwordKey);
-      }
-
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
         passwordKey,
       );
+      if (keystore) {
+        await this.saveSessionInKeystore(passwordKey);
+      }
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);
