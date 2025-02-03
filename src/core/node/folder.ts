@@ -14,54 +14,67 @@ export const traverse = (
   }
   const result: FileOrFolderInfo[] = [];
 
-  const items = readdirSync(folderPath);
+  const stat = lstatSync(folderPath);
 
-  if (includeRootFolder) {
+  if (stat.isFile()) {
     result.push({
       fullPath: folderPath,
       relativePath: basename(folderPath),
       parentPath: null,
       name: basename(folderPath),
-      isFolder: true,
+      isFolder: false,
     });
-  }
+    return result;
+  } else {
+    const items = readdirSync(folderPath);
 
-  for (const item of items) {
-    const fullPath = join(folderPath, item);
-    const relativePath = relative(basePath, fullPath);
-    const name = basename(relativePath);
-    // skip hidden files or directories (those starting with a dot)
-    if (skipHidden && name.startsWith(".")) {
-      continue;
-    }
-    const parentPath =
-      includeRootFolder && dirname(relativePath) === "."
-        ? basename(folderPath)
-        : dirname(relativePath);
-    const stat = lstatSync(fullPath);
-
-    if (stat.isDirectory()) {
+    if (includeRootFolder) {
       result.push({
-        fullPath,
-        relativePath,
-        parentPath,
-        name,
+        fullPath: folderPath,
+        relativePath: basename(folderPath),
+        parentPath: null,
+        name: basename(folderPath),
         isFolder: true,
       });
-
-      // recursively traverse folder contents
-      result.push(...traverse(fullPath, false, skipHidden, basePath));
-    } else {
-      result.push({
-        fullPath,
-        relativePath,
-        parentPath,
-        name,
-        isFolder: false,
-      });
     }
+
+    for (const item of items) {
+      const fullPath = join(folderPath, item);
+      const relativePath = relative(basePath, fullPath);
+      const name = basename(relativePath);
+      // skip hidden files or directories (those starting with a dot)
+      if (skipHidden && name.startsWith(".")) {
+        continue;
+      }
+      const parentPath =
+        includeRootFolder && dirname(relativePath) === "."
+          ? basename(folderPath)
+          : dirname(relativePath);
+      const stat = lstatSync(fullPath);
+
+      if (stat.isDirectory()) {
+        result.push({
+          fullPath,
+          relativePath,
+          parentPath,
+          name,
+          isFolder: true,
+        });
+
+        // recursively traverse folder contents
+        result.push(...traverse(fullPath, false, skipHidden, basePath));
+      } else {
+        result.push({
+          fullPath,
+          relativePath,
+          parentPath,
+          name,
+          isFolder: false,
+        });
+      }
+    }
+    return result;
   }
-  return result;
 };
 
 export type FolderSource = string;

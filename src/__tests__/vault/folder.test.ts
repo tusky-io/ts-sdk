@@ -190,4 +190,18 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder upload functions`
     expect(folders.length).toEqual(4);
     expect(folders.map((folder) => folder.parentId)).toContain(parentFolder.id);
   });
+
+  it("should upload single file from folder upload flow", async () => {
+    const vault = await vaultCreate(tusky, isEncrypted);
+    await tusky.folder.upload(vault.id, testDataPath + firstFileName, { skipHidden: true });
+    const files = await tusky.file.listAll({ vaultId: vault.id });
+    expect(files).toBeTruthy();
+    expect(files.length).toEqual(1);
+    expect(files[0]).toBeTruthy();
+    expect(files[0].name).toEqual(firstFileName);
+
+    const folders = await tusky.folder.listAll({ vaultId: vault.id });
+    expect(folders).toBeTruthy();
+    expect(folders.length).toEqual(0);
+  });
 });

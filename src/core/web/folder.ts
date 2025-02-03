@@ -14,7 +14,7 @@ export const traverse = async (
     rootPath = currentPath,
   ): Promise<void> => {
     // skip hidden files or directories (those starting with a dot)
-    if (skipHidden && entry.name.startsWith(".")) {
+    if (skipHidden && entry.name?.startsWith(".")) {
       return;
     }
     const fullPath = currentPath.endsWith("/")
@@ -64,7 +64,9 @@ export const traverse = async (
     }
   };
 
-  await traverseRecursive(entry, rootPath);
+  if (entry.isDirectory) {
+    await traverseRecursive(entry, rootPath);
+  }
 
   return result;
 };
