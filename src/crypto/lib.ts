@@ -33,7 +33,7 @@ const SYMMETRIC_KEY_ALGORITHM = "AES-GCM";
 const SYMMETRIC_KEY_LENGTH = 256;
 
 const KEY_DERIVATION_FUNCTION = "PBKDF2";
-const KEY_DERIVATION_ITERATION_COUNT = 150000;
+export const KEY_DERIVATION_ITERATION_COUNT = 1000000;
 
 export const AUTH_TAG_LENGTH_IN_BYTES = 16;
 export const IV_LENGTH_IN_BYTES = 12;
@@ -274,7 +274,7 @@ function decodeAesPayload(payload: string): AESEncryptedPayload {
 
 /**
  * Key derivation using WebCrypto
- * - PBKDF2 with 150000 iterations of SHA-256
+ * - PBKDF2 with iterations of SHA-256
  * @param {string} password
  * @param {BufferSource} salt
  * @returns {Promise.<CryptoKey>} Promise of CryptoKey object with AES 256-bit symmetric key
@@ -282,6 +282,7 @@ function decodeAesPayload(payload: string): AESEncryptedPayload {
 async function deriveAesKey(
   password: string,
   salt: Uint8Array,
+  iterationCount: number = KEY_DERIVATION_ITERATION_COUNT,
 ): Promise<CryptoKey> {
   try {
     const keyBase = await crypto.subtle.importKey(
@@ -296,7 +297,7 @@ async function deriveAesKey(
       {
         name: KEY_DERIVATION_FUNCTION,
         salt: salt,
-        iterations: KEY_DERIVATION_ITERATION_COUNT,
+        iterations: iterationCount,
         hash: HASH_ALGORITHM,
       },
       keyBase,

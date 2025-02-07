@@ -1,9 +1,5 @@
 import { status } from "../constants";
 import { Folder } from "../types/folder";
-import { isServer } from "../util/platform";
-import { importDynamic } from "../util/import";
-import { BadRequest } from "../errors/bad-request";
-import { logger } from "../logger";
 import { FileModule } from "./file";
 import {
   GetOptions,
@@ -14,6 +10,13 @@ import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
 import { FolderService } from "./service/folder";
 import { ServiceConfig } from ".";
+import pLimit from "p-limit";
+import { Auth } from "../auth";
+import { File } from "../types";
+import { FolderSource, traverse } from "@env/core/folder";
+import { digest } from "../crypto";
+
+const CONCURRENCY_LIMIT = 10;
 
 class FolderModule {
   protected type: "Folder";
@@ -21,6 +24,17 @@ class FolderModule {
   protected service: FolderService;
 
   protected parentId?: string;
+
+  protected defaultCreateOptions = {
+    parentId: undefined,
+  } as FolderCreateOptions;
+
+  protected defaultUploadOptions = {
+    parentId: undefined,
+    includeRootFolder: false,
+    withFiles: false,
+    skipHidden: true,
+  } as FolderUploadOptions;
 
   protected defaultListOptions = {
     shouldDecrypt: true,
@@ -30,24 +44,22 @@ class FolderModule {
     shouldDecrypt: true,
   } as GetOptions;
 
-  protected defaultCreateOptions = {
-    parentId: undefined,
-  } as any;
+  protected auth: Auth;
 
   constructor(config?: ServiceConfig) {
     this.service = new FolderService(config);
+    this.auth = config.auth;
   }
 
   /**
-   * @param  {string} vaultId
-   * @param  {string} name folder name
-   * @param  {NodeCreateOptions} [options] parent id, etc.
-   * @returns Promise with new folder id & corresponding transaction id
+   * @param {string} vaultId
+   * @param {string} name folder name
+   * @returns {Promise<Folder>} Promise with new folder
    */
   public async create(
     vaultId: string,
     name: string,
-    options: any = this.defaultCreateOptions,
+    options: FolderCreateOptions = this.defaultCreateOptions,
   ): Promise<Folder> {
     await this.service.setVaultContext(vaultId);
 
@@ -60,11 +72,6 @@ class FolderModule {
       parentId: this.service.parentId,
     });
 
-    // if (!this.service.api.autoExecute) {
-    //   const signature = await this.service.signer.sign(bytes);
-    //   await this.service.api.postTransaction(digest, signature);
-    // }
-
     return this.service.processFolder(
       folder,
       this.service.encrypted,
@@ -73,52 +80,129 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} vaultId
-   * @param  {FolderSource} folder folder source: folder path, file system entry
-   * @param  {FolderUploadOptions} [options] parent id, etc.
-   * @returns Promise with new folder id
+   * Upload folder with its content from given source
+   * @param {string} vaultId
+   * @param {FolderSource} folder folder source: folder path, file system entry
+   * @param  {FolderUploadOptions} [options] parent id, includeRootFolder flag etc.
+   * @returns {Promise<{folderIdMap: Record<string, string>}>} Promise with new folder id map
    */
   public async upload(
     vaultId: string,
     folder: FolderSource,
-    options: FolderUploadOptions = {},
-  ): Promise<any> {
-    if (typeof folder === "string") {
-      if (!isServer()) {
-        throw new BadRequest("Folder path supported only for node.");
-      }
-      const fs = importDynamic("fs");
-      const path = importDynamic("path");
-      const files = fs.readdirSync(folder);
-      for (let file of files) {
-        const fullPath = path.join(folder, file);
-        const stat = fs.statSync(fullPath);
-        if (stat.isDirectory()) {
-          const { folderId } = await this.create(vaultId, file, {
-            parentId: options.parentId,
+    options: FolderUploadOptions = this.defaultUploadOptions,
+  ): Promise<{ folderIdMap: Record<string, string> }> {
+    // NOTE: keep await for browser implementation
+    const folderTreeData = await traverse(
+      folder,
+      options.includeRootFolder,
+      options.skipHidden,
+    );
+
+    const relativePaths = folderTreeData
+      .filter((node) => node.isFolder)
+      .map((node) => node.relativePath);
+
+    const { folderIdMap } = await this.createTree(
+      vaultId,
+      relativePaths,
+      options,
+    );
+
+    const limit = pLimit(CONCURRENCY_LIMIT);
+
+    // upload files
+    const uploadPromises = folderTreeData
+      .filter((item) => !item.isFolder)
+      .map((file) =>
+        limit(() => {
+          const fileModule = new FileModule({
+            ...this.service,
+            auth: this.auth,
           });
-          logger.info("Created folder: " + file);
-          // recursively process the subdirectory
-          await this.upload(vaultId, fullPath, {
-            ...options,
-            parentId: folderId,
+          return fileModule.upload(vaultId, file.fullPath as any, {
+            name: file.name,
+            parentId:
+              folderIdMap[file.parentPath] || options.parentId || vaultId,
           });
-        } else {
-          // upload file
-          const fileModule = new FileModule(this.service);
-          //await fileModule.upload(fullPath, options);
-          logger.info(
-            "Uploaded file: " + fullPath + " to folder: " + options.parentId,
-          );
-        }
-      }
-    }
-    return {} as any;
+        }),
+      );
+
+    await Promise.all(uploadPromises);
+    return { folderIdMap };
   }
 
   /**
-   * @param  {string} id
-   * @returns Promise with the folder object
+   * Create folder structure
+   * @param {string} vaultId
+   * @param {Array<string>} paths relative paths array
+   * @param  {FolderUploadOptions} [options] parent id, includeRootFolder flag etc.
+   * @returns {Promise<{folderIdMap: Record<string, string>}>} Promise with new folder id map
+   */
+  public async createTree(
+    vaultId: string,
+    paths: Array<string>,
+    options: FolderUploadOptions = this.defaultUploadOptions,
+  ): Promise<{ folderIdMap: Record<string, string> }> {
+    await this.service.setVaultContext(vaultId);
+    this.service.setParentId(options.parentId);
+
+    const sortedPaths = await Promise.all(
+      paths
+        .filter((path) => path)
+        .map((relativePath) => ({
+          relativePath,
+          parentPath: getParentPath(relativePath),
+          name: getFolderName(relativePath),
+        }))
+        // sort paths by length
+        .sort((folder1, folder2) => {
+          return (
+            folder1.relativePath.split("/").length -
+            folder2.relativePath.split("/").length
+          );
+        })
+        // filter out hidden paths if skipHidden option present
+        .filter((path) => !options.skipHidden || !path.name.startsWith(".")),
+    );
+
+    const processedPaths = await Promise.all(
+      // encrypt if encrypted vault
+      sortedPaths.map(async (path) => ({
+        name: await this.service.processWriteString(path.name),
+        // TODO: encrypt
+        parentPath: this.service.encrypted
+          ? await digest(path.parentPath)
+          : path.parentPath,
+        // TODO: encrypt
+        relativePath: this.service.encrypted
+          ? await digest(path.relativePath)
+          : path.relativePath,
+      })),
+    );
+
+    let folderIdMap = (
+      await this.service.api.createFolderTree({
+        vaultId: vaultId,
+        parentId: options.parentId,
+        paths: processedPaths,
+      })
+    ).folderIdMap;
+
+    if (this.service.encrypted) {
+      // map back to cleartext relativePath
+      const remappedfolderIdMap: Record<string, string> = {}; // map relativePath to folder id
+      for (let folder of sortedPaths) {
+        const hashedPath = await digest(folder.relativePath);
+        remappedfolderIdMap[folder.relativePath] = folderIdMap[hashedPath];
+      }
+      return { folderIdMap: remappedfolderIdMap };
+    }
+    return { folderIdMap };
+  }
+
+  /**
+   * @param {string} id
+   * @returns {Promise<Folder>} Promise with the folder object
    */
   public async get(
     id: string,
@@ -133,8 +217,8 @@ class FolderModule {
   }
 
   /**
-   * @param  {ListOptions} options
-   * @returns Promise with paginated user folders
+   * @param {ListOptions} options
+   * @returns {Promise<Paginated<Folder>>} Promise with paginated user folders
    */
   public async list(
     options: ListOptions = this.defaultListOptions,
@@ -168,8 +252,8 @@ class FolderModule {
   }
 
   /**
-   * @param  {ListOptions} options
-   * @returns Promise with all user folders
+   * @param {ListOptions} options
+   * @returns {Promise<Array<Folder>>} Promise with all user folders
    */
   public async listAll(
     options: ListOptions = this.defaultListOptions,
@@ -181,9 +265,9 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} id folder id
-   * @param  {string} name new name
-   * @returns Promise with corresponding transaction id
+   * @param {string} id folder id
+   * @param {string} name new name
+   * @returns {Promise<Folder>}
    */
   public async rename(id: string, name: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
@@ -196,9 +280,9 @@ class FolderModule {
   }
 
   /**
-   * @param  {string} id
-   * @param  {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
-   * @returns Promise with corresponding transaction id
+   * @param {string} id
+   * @param {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
+   * @returns {Promise<Folder>}
    */
   public async move(id: string, parentId?: string): Promise<Folder> {
     await this.service.setVaultContextFromNodeId(id);
@@ -210,29 +294,29 @@ class FolderModule {
   }
 
   /**
-   * The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.
+   * The folder will be moved to the trash. All folder contents will be permanently deleted within 30 days.\
    * To undo this action, call folder.restore() within the 30-day period.
-   * @param  {string} id folder id
-   * @returns Promise with the updated folder
+   * @param {string} id folder id
+   * @returns {Promise<Folder>}
    */
   public async delete(id: string): Promise<Folder> {
     return this.service.api.updateFolder({ id: id, status: status.DELETED });
   }
 
   /**
-   * Restores the folder from the trash, recovering all folder contents.
+   * Restores the folder from the trash, recovering all folder contents.\
    * This action must be performed within 30 days of the folder being moved to the trash to prevent permanent deletion.
-   * @param  {string} id folder id
-   * @returns Promise with the updated folder
+   * @param {string} id folder id
+   * @returns {Promise<Folder>}
    */
   public async restore(id: string): Promise<Folder> {
     return this.service.api.updateFolder({ id: id, status: status.ACTIVE });
   }
 
   /**
-   * The folder and all its contents will be permanently deleted.
+   * The folder and all its contents will be permanently deleted.\
    * This action is irrevocable and can only be performed if the folder is already in trash.
-   * @param  {string} id folder id
+   * @param {string} id folder id
    * @returns {Promise<void>}
    */
   public async deletePermanently(id: string): Promise<void> {
@@ -240,10 +324,39 @@ class FolderModule {
   }
 }
 
-export type FolderSource = string | FileSystemEntry;
+export type FileOrFolderInfo = {
+  fullPath: string;
+  relativePath: string;
+  parentPath: string;
+  name: string;
+  isFolder: boolean;
+  id?: string;
+  file?: File;
+};
+
+export type FolderCreateOptions = {
+  parentId?: string;
+};
 
 export type FolderUploadOptions = {
   parentId?: string;
+  includeRootFolder?: boolean;
+  withFiles?: boolean;
+  skipHidden?: boolean;
 };
+
+function getFolderName(relativePath: string): string {
+  const lastSlashIndex = relativePath.lastIndexOf("/");
+  return lastSlashIndex !== -1
+    ? relativePath.substring(lastSlashIndex + 1) // everything after the last "/"
+    : relativePath; // if no "/" exists, the relativePath itself is the folder name
+}
+
+function getParentPath(relativePath: string): string {
+  const lastSlashIndex = relativePath.lastIndexOf("/");
+  return lastSlashIndex !== -1
+    ? relativePath.substring(0, lastSlashIndex) // everything before the last "/"
+    : null; // if no "/" exists, the relativePath is root
+}
 
 export { FolderModule };

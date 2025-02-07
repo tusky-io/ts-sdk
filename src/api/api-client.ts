@@ -1,22 +1,22 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Membership } from "../types/membership";
-import { Transaction } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import { Vault } from "../types/vault";
 import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
-import { User, UserPublicInfo } from "../types/user";
+import { User } from "../types/user";
 import { AllowedPaths, EncryptedVaultKeyPair, File, Folder } from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
 import { logger } from "../logger";
 import { httpClient } from "./http";
 import { ApiKey } from "../types/api-key";
-import { PaymentPlan, PaymentSession } from "../types/payment";
 import { GenerateJWTResponsePayload } from "../types/auth";
 import { InternalError } from "../errors/internal-error";
+import { Collection } from "../types/collection";
+import { NFT } from "../types/nft";
 
 export class ApiClient {
   private _apiUrl: string;
@@ -26,16 +26,17 @@ export class ApiClient {
 
   // API endpoints
   private _meUri: string = "me";
+  private _keysUri: string = "keys";
   private _vaultUri: string = "vaults";
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
   private _trashUri: string = "trash";
   private _membershipUri: string = "members";
-  private _transactionUri: string = "transactions";
-  private _userUri: string = "users";
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
   private _subscriptionUri: string = "subscriptions";
+  private _collectionUri: string = "collections";
+  private _nftUri: string = "nfts";
 
   // path params
   private _resourceId: string;
@@ -72,12 +73,19 @@ export class ApiClient {
 
   // user specific
   private _picture: string;
-  private _termsAccepted: boolean;
   private _trashExpiration: number;
+
+  // user encryption specific
+  private _publicKey: string;
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
 
-  private _autoExecute: boolean;
+  // nft specific
+  private _recipient: string;
+  private _thumbnailUrl: string;
+  private _projectUrl: string;
+  private _creator: string;
+  private _link: string;
 
   private _signature: string;
   private _digest: string;
@@ -122,6 +130,11 @@ export class ApiClient {
     clone._digest = this._digest;
     clone._name = this._name;
     clone._description = this._description;
+    clone._recipient = this._recipient;
+    clone._thumbnailUrl = this._thumbnailUrl;
+    clone._projectUrl = this._projectUrl;
+    clone._creator = this._creator;
+    clone._link = this._link;
     clone._tags = this._tags;
     clone._keys = this._keys;
     clone._address = this._address;
@@ -131,7 +144,7 @@ export class ApiClient {
     clone._allowedPaths = this._allowedPaths;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
-    clone._termsAccepted = this._termsAccepted;
+    clone._publicKey = this._publicKey;
     clone._encPrivateKey = this._encPrivateKey;
     clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
     clone._ownerAccess = this._ownerAccess;
@@ -143,7 +156,6 @@ export class ApiClient {
     clone._grantType = this._grantType;
 
     clone._status = this._status;
-    clone._autoExecute = this._autoExecute;
     clone._vaultId = this._vaultId;
     clone._parentId = this._parentId;
     clone._sdkVersion = this._clientName;
@@ -197,6 +209,31 @@ export class ApiClient {
 
   description(description: string): ApiClient {
     this._description = description;
+    return this;
+  }
+
+  recipient(recipient: string): ApiClient {
+    this._recipient = recipient;
+    return this;
+  }
+
+  thumbnailUrl(thumbnailUrl: string): ApiClient {
+    this._thumbnailUrl = thumbnailUrl;
+    return this;
+  }
+
+  projectUrl(projectUrl: string): ApiClient {
+    this._projectUrl = projectUrl;
+    return this;
+  }
+
+  creator(creator: string): ApiClient {
+    this._creator = creator;
+    return this;
+  }
+
+  link(link: string): ApiClient {
+    this._link = link;
     return this;
   }
 
@@ -260,13 +297,13 @@ export class ApiClient {
     return this;
   }
 
-  termsAccepted(termsAccepted: boolean): ApiClient {
-    this._termsAccepted = termsAccepted;
+  trashExpiration(trashExpiration: number): ApiClient {
+    this._trashExpiration = trashExpiration;
     return this;
   }
 
-  trashExpiration(trashExpiration: number): ApiClient {
-    this._trashExpiration = trashExpiration;
+  publicKey(publicKey: string): ApiClient {
+    this._publicKey = publicKey;
     return this;
   }
 
@@ -317,11 +354,6 @@ export class ApiClient {
 
   digest(digest: string): ApiClient {
     this._digest = digest;
-    return this;
-  }
-
-  autoExecute(autoExecute: boolean): ApiClient {
-    this._autoExecute = autoExecute;
     return this;
   }
 
@@ -389,7 +421,6 @@ export class ApiClient {
    * @uses:
    * - name()
    * - picture()
-   * - termsAccepted()
    * - encPrivateKey()
    * - encPrivateKeyBackup()
    * @returns {Promise<User>}
@@ -398,7 +429,6 @@ export class ApiClient {
     if (
       !this._name &&
       !this._picture &&
-      !this._termsAccepted &&
       !this._encPrivateKey &&
       !this._encPrivateKeyBackup
     ) {
@@ -407,7 +437,6 @@ export class ApiClient {
     this.data({
       name: this._name,
       picture: this._picture,
-      termsAccepted: this._termsAccepted,
       encPrivateKey: this._encPrivateKey,
       encPrivateKeyBackup: this._encPrivateKeyBackup,
     });
@@ -416,22 +445,66 @@ export class ApiClient {
   }
 
   /**
-   *
+   * Create user encryption keys backup
    * @uses:
-   * - queryParams() - email
-   * @returns {Promise<UserPublicInfo>}
+   * - publicKey()
+   * - encPrivateKey()
+   * - encPrivateKeyBackup()
+   * @returns {Promise<User>}
    */
-  async getUserPublicData(): Promise<UserPublicInfo> {
-    return this.get(`${this._apiUrl}/${this._userUri}`);
+  async createEncryptionKeys(): Promise<User> {
+    if (!this._publicKey && !this._encPrivateKey) {
+      throw new BadRequest("Nothing to create.");
+    }
+    this.data({
+      publicKey: this._publicKey,
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup,
+    });
+
+    return this.post(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
+  }
+
+  /**
+   * Update currently authenticated user encryption keys backup
+   * @uses:
+   * - publicKey()
+   * - encPrivateKey()
+   * - encPrivateKeyBackup()
+   * @returns {Promise<User>}
+   */
+  async updateEncryptionKeys(): Promise<User> {
+    if (
+      !this._publicKey &&
+      !this._encPrivateKey &&
+      !this._encPrivateKeyBackup
+    ) {
+      throw new BadRequest("Nothing to update.");
+    }
+    this.data({
+      publicKey: this._publicKey,
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup,
+    });
+
+    return this.patch(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
+  }
+
+  /**
+   * Deletes currently authenticated user encryption keys
+   * @returns {Promise<void>}
+   */
+  async deleteEncryptionKeys(): Promise<void> {
+    return this.delete(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
   }
 
   /**
    *
    * @uses:
    * - vaultId()
-   * @returns {Promise<Array<Membership>>}
+   * @returns {Promise<Paginated<Membership>>}
    */
-  async getMembers(): Promise<Array<Membership>> {
+  async getMembers(): Promise<Paginated<Membership>> {
     return this.get(
       `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/members`,
     );
@@ -534,25 +607,11 @@ export class ApiClient {
   }
 
   /**
-   * Get transactions by vault id
-   * @uses:
-   * - vaultId()
-   * @returns {Promise<Array<Transaction>>}
-   */
-  async getTransactions(): Promise<Array<Transaction>> {
-    return this.get(`${this._apiUrl}/${this._transactionUri}`);
-  }
-
-  /**
    * Get user api keys
    * @returns {Promise<Paginated<ApiKey>>}
    */
   async getApiKeys(): Promise<Paginated<ApiKey>> {
     return this.get(`${this._apiUrl}/${this._apiKeyUri}`);
-  }
-
-  async getPaymentPlans(): Promise<PaymentPlan[]> {
-    return this.get(`${this._apiUrl}/${this._subscriptionUri}`);
   }
 
   /**
@@ -575,6 +634,98 @@ export class ApiClient {
     return this.delete(
       `${this._apiUrl}/${this._apiKeyUri}/${this._resourceId}`,
     );
+  }
+
+  /**
+   * Get nft collections for currently authenticated user
+   * @uses:
+   * - queryParams() - limit, nextToken
+   * @returns {Promise<Paginated<Collection>>}
+   */
+  async getCollections(): Promise<Paginated<Collection>> {
+    return this.get(`${this._apiUrl}/${this._collectionUri}`);
+  }
+
+  /**
+   * Get nfts for currently authenticated user
+   * @uses:
+   * - queryParams() - status, limit, nextToken
+   * @returns {Promise<Paginated<NFT>>}
+   */
+  async getNfts(): Promise<Paginated<NFT>> {
+    return this.get(`${this._apiUrl}/${this._nftUri}`);
+  }
+
+  /**
+   * Get nft by id
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<NFT>}
+   */
+  async getNft(): Promise<NFT> {
+    return this.get(`${this._apiUrl}/${this._nftUri}/${this._resourceId}`);
+  }
+
+  /**
+   * Get collection by id
+   * @uses:
+   * - resourceId()
+   * @returns {Promise<Collection>}
+   */
+  async getCollection(): Promise<Collection> {
+    return this.get(
+      `${this._apiUrl}/${this._collectionUri}/${this._resourceId}`,
+    );
+  }
+
+  /**
+   *
+   * @requires:
+   * - name()
+   * @uses:
+   * - description()
+   * @returns {Promise<NFT>}
+   */
+  async mintNft(): Promise<NFT> {
+    if (!this._name) {
+      throw new BadRequest(
+        "Missing name input. Use ApiClient#name() to add it",
+      );
+    }
+
+    this.data({
+      name: this._name,
+      description: this._description,
+      fileId: this._resourceId,
+      recipient: this._recipient,
+      link: this._link,
+      creator: this._creator,
+      thumbnailUrl: this._thumbnailUrl,
+      projectUrl: this._projectUrl,
+    });
+
+    return this.post(`${this._apiUrl}/${this._nftUri}`);
+  }
+
+  /**
+   *
+   * @requires:
+   * @uses:
+   * - description()
+   * @returns {Promise<NFT>}
+   */
+  async mintCollection(): Promise<Collection> {
+    this.data({
+      description: this._description,
+      folderId: this._resourceId,
+      recipient: this._recipient,
+      link: this._link,
+      creator: this._creator,
+      thumbnailUrl: this._thumbnailUrl,
+      projectUrl: this._projectUrl,
+    });
+
+    return this.post(`${this._apiUrl}/${this._collectionUri}`);
   }
 
   async post(url: string): Promise<any> {
@@ -642,7 +793,6 @@ export class ApiClient {
    * - name()
    * - parentId()
    * - status()
-   * - autoExecute()
    * @returns {Promise<File>}
    */
   async updateFile(): Promise<File> {
@@ -655,7 +805,6 @@ export class ApiClient {
       name: this._name,
       parentId: this._parentId,
       status: this._status,
-      autoExecute: this._autoExecute,
     });
     return this.patch(`${this._apiUrl}/${this._fileUri}/${this._resourceId}`);
   }
@@ -664,8 +813,6 @@ export class ApiClient {
    *
    * @requires:
    * - resourceId()
-   * @uses:
-   * - autoExecute()
    * @returns {Promise<void>}
    */
   async deleteFile(): Promise<void> {
@@ -674,7 +821,6 @@ export class ApiClient {
         "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
-    this.data({ autoExecute: this._autoExecute });
     return this.delete(`${this._apiUrl}/${this._fileUri}/${this._resourceId}`);
   }
 
@@ -684,7 +830,6 @@ export class ApiClient {
    * - vaultId()
    * - name()
    * @uses:
-   * - autoExecute()
    * - parentId()
    * @returns {Promise<Folder>}
    */
@@ -704,10 +849,38 @@ export class ApiClient {
       vaultId: this._vaultId,
       parentId: this._parentId,
       name: this._name,
-      autoExecute: this._autoExecute,
     });
 
     return this.post(`${this._apiUrl}/${this._folderUri}`);
+  }
+
+  /**
+   *
+   * @requires:
+   * - vaultId()
+   * @uses:
+   * - parentId()
+   * @returns {Promise<Folder>}
+   */
+  async createFolderTree(): Promise<{ folderIdMap: Record<string, string> }> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing vault id input. Use ApiClient#vaultId() to add it",
+      );
+    }
+    if (!this._data) {
+      throw new BadRequest(
+        "Missing name input. Use ApiClient#data() to add it",
+      );
+    }
+
+    this.data({
+      vaultId: this._vaultId,
+      parentId: this._parentId,
+      paths: this._data,
+    });
+
+    return this.post(`${this._apiUrl}/${this._folderUri}/tree`);
   }
 
   /**
@@ -801,7 +974,6 @@ export class ApiClient {
    * - name()
    * - parentId()
    * - status()
-   * - autoExecute()
    * @returns {Promise<Folder>}
    */
   async updateFolder(): Promise<Folder> {
@@ -814,7 +986,6 @@ export class ApiClient {
       name: this._name,
       parentId: this._parentId,
       status: this._status,
-      autoExecute: this._autoExecute,
     });
 
     return this.patch(`${this._apiUrl}/${this._folderUri}/${this._resourceId}`);
@@ -824,8 +995,6 @@ export class ApiClient {
    *
    * @requires:
    * - resourceId()
-   * @uses:
-   * - autoExecute()
    * @returns {Promise<void>}
    */
   async deleteFolder(): Promise<void> {
@@ -834,7 +1003,6 @@ export class ApiClient {
         "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
-    this.data({ autoExecute: this._autoExecute });
     return this.delete(
       `${this._apiUrl}/${this._folderUri}/${this._resourceId}`,
     );
@@ -849,7 +1017,6 @@ export class ApiClient {
    * - encrypted()
    * - tags()
    * - keys()
-   * - autoExecute()
    * @returns {Promise<Vault>}
    */
   async createVault(): Promise<Vault> {
@@ -865,7 +1032,6 @@ export class ApiClient {
       encrypted: this._encrypted,
       tags: this._tags,
       keys: this._keys,
-      autoExecute: this._autoExecute,
     });
 
     return this.post(`${this._apiUrl}/${this._vaultUri}`);
@@ -879,7 +1045,6 @@ export class ApiClient {
    * - name()
    * - description()
    * - status()
-   * - autoExecute()
    * @returns {Promise<Vault>}
    */
   async updateVault(): Promise<Vault> {
@@ -893,7 +1058,6 @@ export class ApiClient {
       description: this._description,
       tags: this._tags,
       status: this._status,
-      autoExecute: this._autoExecute,
     });
     return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
@@ -902,8 +1066,6 @@ export class ApiClient {
    *
    * @requires:
    * - resourceId()
-   * @uses:
-   * - autoExecute()
    * @returns {Promise<void>}
    */
   async deleteVault(): Promise<void> {
@@ -912,7 +1074,6 @@ export class ApiClient {
         "Missing resource id input. Use ApiClient#resourceId() to add it",
       );
     }
-    this.data({ autoExecute: this._autoExecute });
     return this.delete(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
   }
 
@@ -938,7 +1099,6 @@ export class ApiClient {
    * - encPrivateKey()
    * - allowedStorage()
    * - allowedPaths()
-   * - autoExecute()
    * @returns {Promise<Membership>}
    */
   async createMembership(): Promise<Membership> {
@@ -968,7 +1128,6 @@ export class ApiClient {
       ownerAccess: this._ownerAccess,
       allowedStorage: this._allowedStorage,
       allowedPaths: this._allowedPaths,
-      autoExecute: this._autoExecute,
     });
 
     return this.post(
@@ -985,7 +1144,6 @@ export class ApiClient {
    * - expiresAt()
    * - status()
    * - keys()
-   * - autoExecute()
    * @returns {Promise<Membership>}
    */
   async updateMembership(): Promise<Membership> {
@@ -999,7 +1157,6 @@ export class ApiClient {
       expiresAt: this._expiresAt,
       status: this._status,
       keys: this._keys,
-      autoExecute: this._autoExecute,
     });
     return this.patch(
       `${this._apiUrl}/${this._vaultUri}/${this._membershipUri}/${this._resourceId}`,
@@ -1031,35 +1188,6 @@ export class ApiClient {
   /**
    *
    * @requires:
-   * - id()
-   * - digest()
-   * - signature()
-   * @returns {Promise<any>}
-   */
-  async postTransaction(): Promise<any> {
-    if (!this._resourceId) {
-      throw new BadRequest(
-        "Missing resource id input. Use ApiClient#resourceId() to add it",
-      );
-    }
-
-    if (!this._digest) {
-      throw new BadRequest(
-        "Missing digest input. Use ApiClient#digest() to add it",
-      );
-    }
-
-    if (!this._signature) {
-      throw new BadRequest(
-        "Missing signature input. Use ApiClient#signature() to add it",
-      );
-    }
-    return this.post(`${this._apiUrl}/${this._transactionUri}`);
-  }
-
-  /**
-   *
-   * @requires:
    * - resourceId()
    * @uses:
    * - responseType()
@@ -1081,11 +1209,7 @@ export class ApiClient {
       headers: this.getCustomHeaders(),
     } as RequestInit;
 
-    if (!this._encrypted) {
-      config.headers = (await this._auth.getAuthorizationHeader()) as any;
-    }
-
-    const url = `${this._apiUrl}/files/${this._resourceId}/data`;
+    const url = `${this._cdnUrl}/${this._resourceId}`;
 
     logger.info(`Request ${config.method}: ` + url);
 
@@ -1100,11 +1224,6 @@ export class ApiClient {
   async getStorage(): Promise<Storage> {
     const data = await this.get(`${this._apiUrl}/${this._storageUri}`);
     return new Storage(data);
-  }
-
-  async createSubscriptionPaymentSession(): Promise<PaymentSession> {
-    const data = await this.put(`${this._apiUrl}/${this._subscriptionUri}`);
-    return new PaymentSession(data);
   }
 
   private getCustomHeaders(): AxiosRequestHeaders {

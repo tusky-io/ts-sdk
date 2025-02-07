@@ -63,6 +63,8 @@ class FileModule {
 
   protected auth: Auth;
 
+  protected folderIdMap: Record<string, string>;
+
   constructor(config?: ServiceConfig) {
     this.service = new FileService(config);
     this.auth = config.auth;
@@ -75,12 +77,12 @@ class FileModule {
    *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
    *    Browser: File | Blob | Uint8Array | ArrayBuffer
    * @param  {FileUploadOptions} options parent id, file name file mime type, etc
-   * @returns Promise with tus.Upload instance
+   * @returns {Promise<Promise<tus.Upload>>} Promise with tus.Upload instance
    *
+   * @example
+   * // use in Browser with Uppy upload
    *
-   * <b>Example 1 - use in Browser with Uppy upload</b>
-   *
-   * const uploader = tusky.zip.uploader(vaultId)
+   * const uploader = tusky.zip.uploader(vaultId);
    *
    * const uppy = new Uppy({
    *    restrictions: {
@@ -89,13 +91,13 @@ class FileModule {
    *    },
    *    autoProceed: false
    *  })
-   *  .use(Tus, uploader.options)
+   *  .use(Tus, uploader.options);
    *
-   * uppy.addFile(file)
-   * uppy.upload()
+   * uppy.addFile(file);
+   * uppy.upload();
    *
-   *
-   * <b>Example 2 - use in Nodejs</b>
+   * @example
+   * // use in Nodejs
    *
    * const uploader = tusky.zip.uploader(vaultId, file, {
    *    onSuccess: () => {
@@ -107,14 +109,14 @@ class FileModule {
    *    onProgress: (progress) => {
    *      console.log('Upload progress', progress);
    *    }
-   * })
+   * });
    *
-   * uploader.start()
+   * uploader.start();
    *
    */
   public async uploader(
     vaultId: string,
-    file: FileSource = null,
+    file: FileSource | any = null,
     options: FileUploadOptions = {},
   ): Promise<tus.Upload> {
     const vault = await this.service.api.getVault(vaultId);
@@ -153,7 +155,7 @@ class FileModule {
         this.service.encrypter,
       ),
       removeFingerprintOnSuccess: true,
-      onBeforeRequest: (req: tus.HttpRequest) => {
+      onBeforeRequest: async (req: tus.HttpRequest) => {
         if (req.getMethod() === "POST" || req.getMethod() === "PATCH") {
           const xhr = req.getUnderlyingObject();
           if (xhr) {
@@ -185,7 +187,7 @@ class FileModule {
    *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
    *    Browser: File | Blob | Uint8Array | ArrayBuffer
    * @param  {FileUploadOptions} options parent id, file name file mime type, etc.
-   * @returns Promise with upload id
+   * @returns {Promise<string>} Promise with upload id
    */
   public async upload(
     vaultId: string,
@@ -213,24 +215,8 @@ class FileModule {
   }
 
   /**
-   * Upload batch of files
-   * @param  {string} vaultId
-   * @param  {{ file: FileSource, options:FileUploadOptions }[] } items files array
-   * @param  {FileUploadOptions} options public/private, parent id, vault id, etc.
-   * @returns Promise with array of data response & errors if any
-   */
-  // public async batchUpload(vaultId: string, items: {
-  //   file: FileSource,
-  //   options?: FileUploadOptions
-  // }[]): Promise<{ data: File[], errors: any[] }> {
-  //   const batchModule = new BatchModule(this.service);
-  //   const { data, errors } = await batchModule.batchUpload(vaultId, items);
-  //   return { data, errors };
-  // }
-
-  /**
-   * @param  {string} id
-   * @returns Promise with the decrypted node
+   * @param {string} id
+   * @returns {Promise<File>}
    */
   public async get(
     id: string,
@@ -246,7 +232,7 @@ class FileModule {
 
   /**
    * @param  {ListOptions} options
-   * @returns Promise with paginated user files
+   * @returns {Promise<Paginated<File>>} Promise with paginated user files
    */
   public async list(
     options: ListOptions = (this.defaultListOptions = this.defaultListOptions),
@@ -281,7 +267,7 @@ class FileModule {
 
   /**
    * @param  {ListOptions} options
-   * @returns Promise with all user files
+   * @returns {Promise<Array<File>>} Promise with all user files
    */
   public async listAll(
     options: ListOptions = this.defaultListOptions,
@@ -295,7 +281,7 @@ class FileModule {
   /**
    * @param  {string} id file id
    * @param  {string} name new name
-   * @returns Promise with corresponding transaction id
+   * @returns {Promise<File>}
    */
   public async rename(id: string, name: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id);
@@ -310,7 +296,7 @@ class FileModule {
   /**
    * @param  {string} id
    * @param  {string} [parentId] new parent folder id, if no parent id provided will be moved to the vault root.
-   * @returns Promise with corresponding transaction id
+   * @returns {Promise<File>}
    */
   public async move(id: string, parentId?: string): Promise<File> {
     await this.service.setVaultContextFromNodeId(id);
@@ -324,7 +310,7 @@ class FileModule {
    * The file will be moved to the trash. The file will be permanently deleted within 30 days.
    * To undo this action, call file.restore() within the 30-day period.
    * @param  {string} id file id
-   * @returns Promise with the updated file
+   * @returns {Promise<File>}
    */
   public async delete(id: string): Promise<File> {
     return this.service.api.updateFile({ id: id, status: status.DELETED });
@@ -334,7 +320,7 @@ class FileModule {
    * Restores the file from the trash.
    * This action must be performed within 30 days of the file being moved to the trash to prevent permanent deletion.
    * @param  {string} id file id
-   * @returns Promise with the updated file
+   * @returns {Promise<File>}
    */
   public async restore(id: string): Promise<File> {
     return this.service.api.updateFile({ id: id, status: status.ACTIVE });
@@ -353,7 +339,6 @@ class FileModule {
   public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
     const file = await this.service.api.downloadFile(id, {
       responseType: "stream",
-      encrypted: true,
     });
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));
@@ -380,15 +365,14 @@ class FileModule {
 
   /**
    * Subscribe to file create/update events.
-   *
-   * To unsubscribe:
-   * const subscription = subscribe(vaultId, onSuccess, onError)
-   * subscription.unsubscribe()
-   *
    * @param  {string} vaultId
    * @param  {(file: File) => Promise<void>} onSuccess
    * @param  {(error: Error) => void} onError
    * @returns {Subscription}
+   * @example
+   * // To unsubscribe:
+   * const subscription = await tusky.file.subscribe(vaultId, onSuccess, onError);
+   * subscription.unsubscribe();
    */
   public async subscribe(
     vaultId: string,

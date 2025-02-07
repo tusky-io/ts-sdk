@@ -1,16 +1,5 @@
 import { AllowedPaths, EncryptedVaultKeyPair } from ".";
-import { actions, objects } from "../constants";
-
-export interface Transaction {
-  id: string;
-  action: actions;
-  owner: string;
-  vaultId: string;
-  objectId: string;
-  objectType: objects;
-  status: string;
-  timestamp: string;
-}
+import { FileOrFolderInfo } from "../core/folder";
 
 export interface CreateVaultTxPayload {
   name?: string;
@@ -31,6 +20,12 @@ export interface UpdateVaultTxPayload {
 export interface CreateFolderTxPayload {
   vaultId: string;
   name: string;
+  parentId?: string;
+}
+
+export interface CreateFolderTreeTxPayload {
+  vaultId: string;
+  paths: { name: string; relativePath: string; parentPath: string }[];
   parentId?: string;
 }
 

@@ -22,11 +22,11 @@ class ZipModule {
    *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
    *    Browser: File | Blob | Uint8Array | ArrayBuffer
    * @param  {ZipUploadOptions} options parent id
-   * @returns Promise with upload id
+   * @returns {Promise<tus.Upload>} Promise with tus.Upload instance
+   * @example
+   * // use in Browser with Uppy upload
    *
-   * <b>Example 1 - use in Browser with Uppy upload</b>
-   *
-   * const uploader = tusky.zip.uploader(vaultId)
+   * const uploader = tusky.zip.uploader(vaultId);
    *
    * const uppy = new Uppy({
    *    restrictions: {
@@ -35,12 +35,13 @@ class ZipModule {
    *    },
    *    autoProceed: false
    *  })
-   *  .use(Tus, uploader.options)
+   *  .use(Tus, uploader.options);
    *
-   * uppy.addFile(file)
-   * uppy.upload()
+   * uppy.addFile(file);
+   * uppy.upload();
    *
-   * <b>Example 2 - use in Nodejs</b>
+   * @example
+   * // use in Nodejs
    *
    * const uploader = tusky.zip.uploader(vaultId, file, {
    *    onSuccess: () => {
@@ -52,10 +53,9 @@ class ZipModule {
    *    onProgress: (progress) => {
    *      console.log('Upload progress', progress);
    *    }
-   * })
+   * });
    *
-   * uploader.start()
-   *
+   * uploader.start();
    *
    */
   public async uploader(
@@ -108,7 +108,7 @@ class ZipModule {
    *    Nodejs: Buffer | Readable | string (path) | ArrayBuffer | Uint8Array
    *    Browser: File | Blob | Uint8Array | ArrayBuffer
    * @param  {ZipUploadOptions} options parent id
-   * @returns Promise with upload id
+   * @returns {Promise<string>} Promise with upload id
    */
   public async upload(
     vaultId: string,

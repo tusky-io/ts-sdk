@@ -51,25 +51,25 @@ describe("Testing account recovery functions", () => {
 
   it("should retrieve user private key from keystore", async () => {
     const userEncryption = new UserEncryption({ storage: storage, encPrivateKey: encPrivateKey });
-    const { keyPair } = await userEncryption.importFromKeystore();
-    expect(keyPair).toBeTruthy();
-    expect(keyPair.getPrivateKey()).toBeTruthy();
-    expect(keyPair.getPublicKey()).toBeTruthy();
+    const { keypair } = await userEncryption.importFromKeystore();
+    expect(keypair).toBeTruthy();
+    expect(keypair.getPrivateKey()).toBeTruthy();
+    expect(keypair.getPublicKey()).toBeTruthy();
   });
 
   it("should retrieve user private key from password", async () => {
     const userEncryption = new UserEncryption({ storage: storage, encPrivateKey: encPrivateKey });
-    const { keyPair } = await userEncryption.importFromPassword(password);
-    expect(keyPair).toBeTruthy();
-    expect(keyPair.getPrivateKey()).toBeTruthy();
-    expect(keyPair.getPublicKey()).toBeTruthy();
+    const { keypair } = await userEncryption.importFromPassword(password);
+    expect(keypair).toBeTruthy();
+    expect(keypair.getPrivateKey()).toBeTruthy();
+    expect(keypair.getPublicKey()).toBeTruthy();
   });
 
   it("should retrieve user private key from backup", async () => {
     const userEncryption = new UserEncryption({ storage: storage, encPrivateKeyBackup: encPrivateKeyBackup });
-    const { keyPair } = await userEncryption.importFromBackupPhrase(backupPhrase);
-    expect(keyPair).toBeTruthy();
-    expect(keyPair.getPrivateKey()).toBeTruthy();
-    expect(keyPair.getPublicKey()).toBeTruthy();
+    const { keypair } = await userEncryption.importFromBackupPhrase(backupPhrase);
+    expect(keypair).toBeTruthy();
+    expect(keypair.getPrivateKey()).toBeTruthy();
+    expect(keypair.getPublicKey()).toBeTruthy();
   });
 });
