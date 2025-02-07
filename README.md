@@ -150,7 +150,7 @@ Tusky.signOut();
 
 ## Encryption
 
-All data within private vaults is end-to-end encrypted, you can learn more about encryption in Tusky from our [docs](https://docs.tusky.io/end-to-end-encryption).\
+All data within private vaults is end-to-end encrypted, you can learn more about encryption in Tusky from our [docs](https://docs.tusky.io/tusky-encryption/tusky-encryption).\
 The SDK provides two options for managing user keys:
 
 ### Self hosted keys
