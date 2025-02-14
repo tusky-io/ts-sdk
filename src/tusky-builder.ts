@@ -1,7 +1,7 @@
 import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
 import { Tusky } from "./tusky";
 import { Encrypter } from "./crypto/encrypter";
-import { Env } from "./types";
+import { DEFAULT_ENV, Env } from "./types";
 import { Auth, AuthOptions } from "./auth";
 import { ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ConsoleLogger, Logger, setLogger } from "./logger";
@@ -75,6 +75,7 @@ export class TuskyBuilder {
   }
 
   async build(): Promise<Tusky> {
+    this._env = this._env || DEFAULT_ENV;
     this._storage = this._storage || defaultStorage();
     const auth = new Auth({
       ...this.getConfig(),
