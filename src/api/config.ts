@@ -3,6 +3,7 @@ import { Env, Envs } from "../types";
 export const apiConfig = (env: Env) => {
   switch (env) {
     case Envs.PROD:
+    default:
       return {
         apiUrl: "https://api.tusky.io",
         cdnUrl: "https://cdn.tusky.io",
@@ -10,7 +11,6 @@ export const apiConfig = (env: Env) => {
           "https://zt4r4p7omrgmrfirr6322xawee.appsync-api.eu-central-1.amazonaws.com/graphql",
       };
     case Envs.DEV:
-    default:
       return {
         apiUrl: "https://dev-api.tusky.io",
         cdnUrl: "https://dev-cdn.tusky.io",
