@@ -122,8 +122,8 @@ class WebFileModule extends FileModule {
           if (percentageProgress === 100) {
             clearInterval(interval);
           }
-        } else {
-          throw new Error(event.data);
+        } else if (event.data.error && event.data.error !== "cancelled") {
+          throw new Error(event.data.error);
         }
       };
 
