@@ -17,6 +17,7 @@ Compatible with both Node.js and web browsers.
 >
 > By using the SDK, you're helping us improve, and we appreciate your support!
 
+
 - [Usage](#usage)
 - [Import](#import)
 - [Quick Start](#quick-start)
@@ -35,14 +36,14 @@ Compatible with both Node.js and web browsers.
   <CodeGroupItem title="yarn">
 
 ```console:no-line-numbers
-yarn add @tusky/ts-sdk
+yarn add @tusky-io/ts-sdk
 ```
 
   </CodeGroupItem>
   <CodeGroupItem title="npm">
 
 ```console:no-line-numbers
-npm install @tusky/ts-sdk
+npm install @tusky-io/ts-sdk
 ```
 
   </CodeGroupItem>
@@ -54,14 +55,14 @@ npm install @tusky/ts-sdk
   <CodeGroupItem title="ES Modules">
 
 ```js
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
 ```
 
   </CodeGroupItem>
   <CodeGroupItem title="CommonJS">
 
 ```js
-const { Tusky } = require("@tusky/ts-sdk");
+const { Tusky } = require("@tusky-io/ts-sdk");
 ```
 
   </CodeGroupItem>
@@ -72,7 +73,7 @@ const { Tusky } = require("@tusky/ts-sdk");
 ### Init Tusky
 
 ```js
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
 
 // You can generate fresh api key here: https://app.tusky.io/account/api-keys
 
@@ -112,7 +113,7 @@ const files = await tusky.file.listAll();
 
 ```js
 // on the browser
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
 import { useCurrentAccount, useSignPersonalMessage } from "@mysten/dapp-kit";
 
 // Sui wallet extension
@@ -127,7 +128,7 @@ await tusky.auth.signIn();
 
 ```js
 // on the server
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 // generate new Sui Key Pair
 const keypair = new Ed25519Keypair();
@@ -139,7 +140,7 @@ await tusky.auth.signIn();
 ### use OAuth (Google, Twitch)
 
 ```js
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
 const tusky = await Tusky.init({ oauth: { authProvider: "Google", redirectUri: "http://localhost:3000" } });
 
 // init OAuth flow
@@ -155,14 +156,14 @@ await tusky.auth.signIn();
 ### use API key
 
 ```js
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
 const tusky = await Tusky.init({ apiKey: "your-api-key" });
 ```
 
 ### clear current auth session
 
 ```js
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
 Tusky.signOut();
 ```
 
@@ -176,7 +177,7 @@ The SDK provides two options for managing user keys:
 Manage and store your encryption keys entirely on your own. This approach provides the highest level of control. However, it also requires you to securely store and back up your keys, as losing them will result in permanent loss of access to your encrypted data.
 
 ```js
-import { X25519KeyPair } from "@tusky/ts-sdk";
+import { X25519KeyPair } from "@tusky-io/ts-sdk";
 
 // generate fresh set of encryption keys
 const keypair = new X25519KeyPair();

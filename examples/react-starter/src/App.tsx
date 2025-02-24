@@ -4,7 +4,9 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import { useCurrentAccount, useSignPersonalMessage, useCurrentWallet } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
+import { AuthProvider } from '@tusky-io/ts-sdk/lib/web/types/types/auth';
+import { Account } from '@tusky-io/ts-sdk/lib/web/types/auth';
 
 function App() {
 
@@ -40,25 +42,27 @@ function App() {
   }
 
   const handleSignInWithWallet = async () => {
-    const tusky = await Tusky.init({ wallet: { signPersonalMessage, account } });
+    if (account) {
+      const tusky = await Tusky.init({ wallet: { signPersonalMessage, account: account as Account | any } });
 
-    await tusky.signIn();
-    console.log("ADDRESS: " + tusky.address);
+      await tusky.auth.signIn();
+      console.log("USER ADDRESS: " + tusky.auth.getAddress());
 
-    // setting encryption context from password
-    await handleEncryptionContext(tusky);
+      // setting encryption context from password
+      await handleEncryptionContext(tusky);
 
-    // setting encryption context from keystore
-    await tusky.addEncrypter({ keystore: true });
+      // setting encryption context from keystore
+      await tusky.addEncrypter({ keystore: true });
 
-    setTusky(tusky);
+      setTusky(tusky);
+    }
   };
 
-  const handleSignInWithOAuth = async (authProvider: string) => {
+  const handleSignInWithOAuth = async (authProvider: AuthProvider) => {
     const tusky = await Tusky.init({ oauth: { authProvider: authProvider, redirectUri: "http://localhost:3000" } });
 
-    await tusky.signIn();
-    console.log("ADDRESS: " + tusky.address);
+    await tusky.auth.signIn();
+    console.log("USER ADDRESS: " + tusky.auth.getAddress());
 
     await handleEncryptionContext(tusky);
 
@@ -69,7 +73,8 @@ function App() {
   const handleSignOut = async () => {
     if (tusky) {
       tusky.signOut();
-      console.log("ADDRESS: " + tusky.address);
+      // should be undefined
+      console.log("USER ADDRESS: " + tusky.auth.getAddress());
     }
     setTusky(null)
   };
