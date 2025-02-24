@@ -40,10 +40,7 @@ function App() {
   }
 
   const handleSignInWithWallet = async () => {
-    const tusky = Tusky
-      .withWallet({ walletSignFnClient: signPersonalMessage, walletAccount: account })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: "dev" });
+    const tusky = await Tusky.init({ wallet: { signPersonalMessage, account } });
 
     await tusky.signIn();
     console.log("ADDRESS: " + tusky.address);
@@ -52,16 +49,13 @@ function App() {
     await handleEncryptionContext(tusky);
 
     // setting encryption context from keystore
-    await tusky.withEncrypter({ keystore: true });
+    await tusky.addEncrypter({ keystore: true });
 
     setTusky(tusky);
   };
 
   const handleSignInWithOAuth = async (authProvider: string) => {
-    const tusky = Tusky
-      .withOAuth({ authProvider: authProvider as any, redirectUri: "http://localhost:3000" })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: "dev" });
+    const tusky = await Tusky.init({ oauth: { authProvider: authProvider, redirectUri: "http://localhost:3000" } });
 
     await tusky.signIn();
     console.log("ADDRESS: " + tusky.address);
@@ -87,7 +81,7 @@ function App() {
       throw new Error("Password input canceled.");
     }
     // set encryption context from password & use keystore to persist encryption session
-    await tusky.withEncrypter({ password: password, keystore: true });
+    await tusky.addEncrypter({ password: password, keystore: true });
   };
 
   const handleUpload = async (files: FileList | null) => {
