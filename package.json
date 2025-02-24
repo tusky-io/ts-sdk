@@ -60,6 +60,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@akord/browser-level": "^1.0.2",
     "@aws-amplify/api": "^6.0.54",
