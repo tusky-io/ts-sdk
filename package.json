@@ -1,6 +1,6 @@
 {
-  "name": "@tusky/ts-sdk",
-  "version": "0.26.1",
+  "name": "@tusky-io/ts-sdk",
+  "version": "0.27.0-dev.4",
   "description": "Tusky TypeScript SDK, the official client for Tusky API: https://docs.tusky.io",
   "main": "./lib/web/cjs/index.js",
   "module": "./lib/web/esm/index.esm.js",
@@ -34,8 +34,6 @@
     "build": "webpack --config webpack.config.js",
     "build:dev": "rm -r lib || true && tsc -p .",
     "analyze": "STATS=server npm run build",
-    "set:registry": "bash ./registry.sh",
-    "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -62,10 +60,11 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@akord/browser-level": "^1.0.2",
-    "@akord/carmella-gql": "^0.51.1",
-    "@akord/ts-cacheable": "1.0.13",
     "@aws-amplify/api": "^6.0.54",
     "@aws-amplify/api-graphql": "^4.4.1",
     "@aws-amplify/core": "^6.4.5",

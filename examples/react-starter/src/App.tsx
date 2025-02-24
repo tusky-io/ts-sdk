@@ -4,7 +4,9 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import { useCurrentAccount, useSignPersonalMessage, useCurrentWallet } from "@mysten/dapp-kit";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Tusky } from "@akord/carmella-sdk";
+import { Tusky } from "@tusky-io/ts-sdk";
+import { AuthProvider } from '@tusky-io/ts-sdk/lib/web/types/types/auth';
+import { Account } from '@tusky-io/ts-sdk/lib/web/types/auth';
 
 function App() {
 
@@ -40,31 +42,27 @@ function App() {
   }
 
   const handleSignInWithWallet = async () => {
-    const tusky = Tusky
-      .withWallet({ walletSignFnClient: signPersonalMessage, walletAccount: account })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: "dev" });
+    if (account) {
+      const tusky = await Tusky.init({ wallet: { signPersonalMessage, account: account as Account | any } });
 
-    await tusky.signIn();
-    console.log("ADDRESS: " + tusky.address);
+      await tusky.auth.signIn();
+      console.log("USER ADDRESS: " + tusky.auth.getAddress());
 
-    // setting encryption context from password
-    await handleEncryptionContext(tusky);
+      // setting encryption context from password
+      await handleEncryptionContext(tusky);
 
-    // setting encryption context from keystore
-    await tusky.withEncrypter({ keystore: true });
+      // setting encryption context from keystore
+      await tusky.addEncrypter({ keystore: true });
 
-    setTusky(tusky);
+      setTusky(tusky);
+    }
   };
 
-  const handleSignInWithOAuth = async (authProvider: string) => {
-    const tusky = Tusky
-      .withOAuth({ authProvider: authProvider as any, redirectUri: "http://localhost:3000" })
-      .withLogger({ logLevel: "debug", logToFile: true })
-      .withApi({ env: "dev" });
+  const handleSignInWithOAuth = async (authProvider: AuthProvider) => {
+    const tusky = await Tusky.init({ oauth: { authProvider: authProvider, redirectUri: "http://localhost:3000" } });
 
-    await tusky.signIn();
-    console.log("ADDRESS: " + tusky.address);
+    await tusky.auth.signIn();
+    console.log("USER ADDRESS: " + tusky.auth.getAddress());
 
     await handleEncryptionContext(tusky);
 
@@ -75,7 +73,8 @@ function App() {
   const handleSignOut = async () => {
     if (tusky) {
       tusky.signOut();
-      console.log("ADDRESS: " + tusky.address);
+      // should be undefined
+      console.log("USER ADDRESS: " + tusky.auth.getAddress());
     }
     setTusky(null)
   };
@@ -87,7 +86,7 @@ function App() {
       throw new Error("Password input canceled.");
     }
     // set encryption context from password & use keystore to persist encryption session
-    await tusky.withEncrypter({ password: password, keystore: true });
+    await tusky.addEncrypter({ password: password, keystore: true });
   };
 
   const handleUpload = async (files: FileList | null) => {

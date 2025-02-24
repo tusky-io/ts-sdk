@@ -278,7 +278,8 @@ class DecryptStreamController {
         : chunk;
       controller.enqueue(new Uint8Array(cleartext));
       if (this.file) {
-        this.file.progress += cleartext.byteLength;
+        this.file.progress +=
+          cleartext.byteLength + AUTH_TAG_SIZE_IN_BYTES + IV_SIZE_IN_BYTES;
         files.set(this.file.id, this.file);
       }
       this.index += 1;

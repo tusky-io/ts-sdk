@@ -23,7 +23,6 @@ import * as tus from "tus-js-client";
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
-import { onUpdateFile } from "@akord/carmella-gql/dist/types/subscriptions";
 import { Subscription } from "rxjs";
 import { VaultEncryption } from "../crypto/vault-encryption";
 
@@ -383,32 +382,35 @@ class FileModule {
     const keys = this.service.keys;
     const encrypter = this.service.encrypter;
     const isEncrypted = this.service.encrypted;
-    return this.service.pubsub.client
-      .graphql({
-        query: onUpdateFile,
-        variables: {
-          filter: {
-            vaultId: { eq: vaultId },
+    return (
+      this.service.pubsub.client
+        .graphql({
+          query: onUpdateFile,
+          variables: {
+            filter: {
+              vaultId: { eq: vaultId },
+            },
           },
-        },
-      })
-      .subscribe({
-        next: async ({ data }) => {
-          const fileProto = data.onUpdateFile;
-          if (fileProto && onSuccess) {
-            const file = new File(fileProto, keys);
-            if (isEncrypted) {
-              await file.decrypt(encrypter);
+        })
+        // @ts-ignore
+        .subscribe({
+          next: async ({ data }) => {
+            const fileProto = data.onUpdateFile;
+            if (fileProto && onSuccess) {
+              const file = new File(fileProto, keys);
+              if (isEncrypted) {
+                await file.decrypt(encrypter);
+              }
+              await onSuccess(file);
             }
-            await onSuccess(file);
-          }
-        },
-        error: (e: Error) => {
-          if (onError) {
-            onError(e);
-          }
-        },
-      });
+          },
+          error: (e: Error) => {
+            if (onError) {
+              onError(e);
+            }
+          },
+        })
+    );
   }
 
   protected async aesKey(id: string): Promise<CryptoKey | null> {
@@ -464,5 +466,33 @@ export type FileLocationOptions = {
 export type FileGetOptions = FileDownloadOptions & {
   responseType?: "arraybuffer" | "stream";
 };
+
+export const onUpdateFile = `subscription OnUpdateFile($filter: ModelSubscriptionFileFilterInput) {
+  onUpdateFile(filter: $filter) {
+    id
+    owner
+    vaultId
+    parentId
+    uploadId
+    partition
+    name
+    size
+    status
+    chunkSize
+    numberOfChunks
+    storedEpoch
+    blobId
+    ref
+    erasureCodeType
+    certifiedEpoch
+    mimeType
+    encryptedAesKey
+    expiresAt
+    createdAt
+    updatedAt
+    __typename
+  }
+}
+`;
 
 export { FileModule };

@@ -11,7 +11,6 @@ What can be found in the demo:
 
 ## Running the app locally
 ```
-yarn set:registry
 yarn install
 yarn start
 ```
