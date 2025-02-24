@@ -7,6 +7,16 @@
 The Tusky TypeScript SDK is the official client for [Tusky API](https://docs.tusky.io/).\
 Compatible with both Node.js and web browsers.
 
+
+> **_DISCLAIMER_**
+>
+> Please note that this SDK is still under review, and we are planning an audit. The use of the SDK is at your own risk.\
+> While we are working hard to ensure its stability and security, we recommend using it with caution at this stage.
+>
+> Please note that changes to the API and interface may occur as we continue to iterate on the SDK. We advise you to keep an eye out for updates to stay informed of any changes.
+>
+> By using the SDK, you're helping us improve, and we appreciate your support!
+
 - [Usage](#usage)
 - [Import](#import)
 - [Quick Start](#quick-start)
