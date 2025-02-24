@@ -34,8 +34,6 @@
     "build": "webpack --config webpack.config.js",
     "build:dev": "rm -r lib || true && tsc -p .",
     "analyze": "STATS=server npm run build",
-    "set:registry": "bash ./registry.sh",
-    "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
