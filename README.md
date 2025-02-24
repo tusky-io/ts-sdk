@@ -72,9 +72,17 @@ const tusky = await Tusky.init({ apiKey: "your-api-key" });
 ### Upload file with Tusky
 
 ```js
+// first create a Tusky vault, by default it will create a private encrypted vault
+const { id: vaultId } = await tusky.vault.create("My personal vault");
+// to create a public vault:
+// const { id: vaultId } = await tusky.vault.create("My public vault", { encrypted: false });
+
+// upload file to the vault
 const path = "/path/to/my/file.jpg";
-const uploadId = await tusky.file.upload(path);
+const uploadId = await tusky.file.upload(vaultId, path);
 ```
+
+See more upload flows under [file tests](src/__tests__/vault/file.test.ts).
 
 ### Download the file
 
