@@ -29,6 +29,7 @@ export class File extends Encryptable {
     super(keys ? keys : file.__keys__);
     this.id = file.id;
     this.blobId = file.blobId;
+    this.blobObjectId = file.blobObjectId;
     this.ref = file.ref;
     this.owner = file.owner;
     this.createdAt = file.createdAt;
