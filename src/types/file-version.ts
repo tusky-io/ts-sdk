@@ -6,7 +6,9 @@ export class File extends Encryptable {
   @encrypted() name: string;
   id: string;
   blobId: string; // file reference off chain
-  ref: string; // file reference on chain
+  blobObjectId: string; // file reference on chain
+  ref: string; // file reference on chain - deprecated
+  network: "mainnet" | "testnet";
   mimeType: string;
   owner: string;
   createdAt: string;
@@ -15,6 +17,7 @@ export class File extends Encryptable {
   size: number;
   external?: boolean;
   expiresAt?: string;
+  storedAt?: string;
   numberOfChunks?: number;
   chunkSize?: number;
   encryptedAesKey?: string; // encrypted AES key used to encrypt private files
@@ -31,9 +34,11 @@ export class File extends Encryptable {
     this.blobId = file.blobId;
     this.blobObjectId = file.blobObjectId;
     this.ref = file.ref;
+    this.network = file.network;
     this.owner = file.owner;
     this.createdAt = file.createdAt;
     this.updatedAt = file.updatedAt;
+    this.storedAt = file.storedAt;
     this.mimeType = file.mimeType;
     this.size = file.size;
     this.numberOfChunks = file.numberOfChunks;
