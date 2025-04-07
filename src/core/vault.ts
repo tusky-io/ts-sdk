@@ -169,12 +169,17 @@ class VaultModule {
       encrypted: this.service.encrypted,
       tags: createOptions.tags,
       keys: this.service.keys,
-      whitelist: {
-        ...createOptions.whitelist,
-        token: createOptions.whitelist.token.type
-          ? SUI_TYPE["COIN"] + "<" + createOptions.whitelist.token.address + ">"
-          : createOptions.whitelist.token.address,
-      },
+      whitelist: createOptions.whitelist
+        ? {
+            ...createOptions.whitelist,
+            token: createOptions.whitelist?.token.type
+              ? SUI_TYPE["COIN"] +
+                "<" +
+                createOptions.whitelist.token.address +
+                ">"
+              : createOptions.whitelist.token.address,
+          }
+        : undefined,
     });
 
     return this.service.processVault(vault, true, this.service.keys);

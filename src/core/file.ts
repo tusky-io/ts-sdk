@@ -25,6 +25,7 @@ import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { Subscription } from "rxjs";
 import { VaultEncryption } from "../crypto/vault-encryption";
+import { VaultModule } from "./vault";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -335,25 +336,48 @@ class FileModule {
     return this.service.api.deleteFile(id);
   }
 
-  public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
-    const file = await this.service.api.downloadFile(id, {
+  protected async streamWithHeaders(
+    id: string,
+  ): Promise<{ stream: ReadableStream<Uint8Array>; headers: Headers }> {
+    const { data: file, headers } = await this.service.api.downloadFile(id, {
       responseType: "stream",
     });
     // TODO: send encryption context directly with the file data
-    const fileMetadata = new File(await this.service.api.getFile(id));
-    this.service.setEncrypted(fileMetadata.__encrypted__);
+    // const fileMetadata = new File(await this.service.api.getFile(id));
+    // this.service.setEncrypted(fileMetadata.__encrypted__);
 
     let stream: ReadableStream<Uint8Array>;
-    if (!this.service.encrypted) {
+
+    console.log(headers);
+    const aesKeyHeader = headers.get("Encrypted-Aes-Key");
+    if (!aesKeyHeader) {
       stream = file as ReadableStream<Uint8Array>;
     } else {
-      const aesKey = await this.aesKey(id);
+      const vaultKeysHeader = headers.get("Encrypted-Vault-Keys");
+      // if(!vaultKeysHeader) {
+      //   const vault = this.service.api.getVault(fil);
+      // }
+      const vaultKeys = JSON.parse(vaultKeysHeader);
+
+      const vaultEncryption = new VaultEncryption({
+        vaultKeys: vaultKeys,
+        userEncrypter: this.service.encrypter,
+      });
+      const aesKey = await vaultEncryption.decryptAesKey(aesKeyHeader);
+      // const aesKey = await this.aesKey(id);
+      console.log(aesKey);
+      console.log("-----decrypting stream");
       stream = await decryptStream(
         file as ReadableStream,
         aesKey,
-        fileMetadata.chunkSize,
+        parseInt(headers.get("Chunk-Size")),
       );
     }
+    return { stream, headers };
+  }
+
+  public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
+    const { stream } = await this.streamWithHeaders(id);
     return stream;
   }
 

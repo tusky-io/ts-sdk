@@ -95,7 +95,10 @@ abstract class Api {
   abstract downloadFile(
     id: string,
     options?: FileGetOptions,
-  ): Promise<ArrayBuffer | ReadableStream<Uint8Array>>;
+  ): Promise<{
+    data: ArrayBuffer | ReadableStream<Uint8Array>;
+    headers: Headers;
+  }>;
 
   abstract getStorage(): Promise<Storage>;
 

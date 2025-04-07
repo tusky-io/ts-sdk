@@ -68,10 +68,10 @@ class WebFileModule extends FileModule {
   }
 
   private async inMemoryBufferUrl(id: string): Promise<string> {
-    const fileMetadata = await this.get(id);
-    const stream = await this.stream(id);
+    // const fileMetadata = await this.get(id);
+    const { stream, headers } = await this.streamWithHeaders(id);
     const buffer = await StreamConverter.toArrayBuffer(stream);
-    const blob = new Blob([buffer], { type: fileMetadata.mimeType });
+    const blob = new Blob([buffer], { type: headers.get("Content-Type") });
     const url = window.URL.createObjectURL(blob);
     return url;
   }
