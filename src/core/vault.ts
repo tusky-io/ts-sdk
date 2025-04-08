@@ -23,7 +23,7 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
 import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from "@noble/hashes/utils";
-import { SUI_COINS, SUI_TYPE } from "../types/whitelist";
+import { SUI_TYPE } from "../types/whitelist";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -169,12 +169,17 @@ class VaultModule {
       encrypted: this.service.encrypted,
       tags: createOptions.tags,
       keys: this.service.keys,
-      whitelist: {
-        ...createOptions.whitelist,
-        token: createOptions.whitelist.token.type
-          ? SUI_TYPE["COIN"] + "<" + createOptions.whitelist.token.address + ">"
-          : createOptions.whitelist.token.address,
-      },
+      whitelist: createOptions.whitelist
+        ? {
+            ...createOptions.whitelist,
+            token: createOptions.whitelist.token?.type
+              ? SUI_TYPE["COIN"] +
+                "<" +
+                createOptions.whitelist.token?.address +
+                ">"
+              : createOptions.whitelist.token?.address,
+          }
+        : undefined,
     });
 
     return this.service.processVault(vault, true, this.service.keys);
