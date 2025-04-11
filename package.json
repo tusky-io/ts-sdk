@@ -2,15 +2,15 @@
   "name": "@tusky-io/ts-sdk",
   "version": "0.28.0",
   "description": "Tusky TypeScript SDK, the official client for Tusky API: https://docs.tusky.io",
-  "main": "./lib/web/cjs/index.js",
-  "module": "./lib/web/esm/index.esm.js",
-  "types": "./lib/web/types/index.d.ts",
+  "main": "./lib/node/cjs/index.js",
+  "module": "./lib/node/esm/index.esm.js",
+  "types": "./lib/node/types/index.d.ts",
   "exports": {
     ".": {
-      "require": "./lib/web/cjs/index.js",
-      "import": "./lib/web/esm/index.esm.js",
-      "default": "./lib/web/cjs/index.js",
-      "types": "./lib/web/types/index.d.ts"
+      "require": "./lib/node/cjs/index.js",
+      "import": "./lib/node/esm/index.esm.js",
+      "default": "./lib/node/cjs/index.js",
+      "types": "./lib/node/types/index.d.ts"
     },
     "./node": {
       "require": "./lib/node/cjs/index.js",
