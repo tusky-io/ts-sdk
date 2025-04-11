@@ -16,16 +16,18 @@ export interface EnokiClientConfig {
   suiClient?: SuiClient;
 }
 
-export const enokiConfig = (env: Env) => {
+export const enokiConfig = (env: Env): EnokiClientConfig => {
   switch (env) {
     case Envs.PROD:
       return {
-        publicApiKey: "enoki_public_5313f34194cbfb93bb60354118d85ada",
+        apiKey: "enoki_public_722a16bdf5359463dade55f4ad8eb09e",
+        network: "mainnet",
       };
     case Envs.DEV:
     default:
       return {
-        publicApiKey: "enoki_public_b0c8cf52ada845c7dfbfe8eef1e9ded2",
+        apiKey: "enoki_public_b0c8cf52ada845c7dfbfe8eef1e9ded2",
+        network: "testnet",
       };
   }
 };
@@ -56,8 +58,9 @@ export default class EnokiClient {
   suiClient: SuiClient;
 
   constructor(config: EnokiClientConfig) {
-    this.apiKey = config.apiKey || enokiConfig(config.env).publicApiKey;
-    this.network = config.network || "testnet";
+    const enoki_config = enokiConfig(config.env);
+    this.apiKey = config.apiKey || enoki_config.apiKey;
+    this.network = config.network || enoki_config.network;
     this.suiClient =
       config.suiClient || new SuiClient({ url: getFullnodeUrl(this.network) });
     if (!this.apiKey) {
