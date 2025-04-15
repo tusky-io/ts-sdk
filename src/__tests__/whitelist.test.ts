@@ -1,9 +1,11 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Tusky } from "../index";
-import { initInstance } from './common';
+import { cleanup, initInstance, isEncrypted, testDataPath, vaultCreate } from './common';
 import faker from '@faker-js/faker';
 import { SUI_COINS, SUI_TYPE } from '../index';
 import { Forbidden } from '../errors/forbidden';
+import { firstFileName } from './data/content';
+import { createReadStream, promises as fs } from 'fs';
 
 let tusky: Tusky;
 
@@ -61,5 +63,21 @@ describe(`Testing TGA functions`, () => {
 
   it("should revoke user from the whitelist", async () => {
     await tusky.vault.revokeAccess(membershipId);
+  });
+
+  it("should upload file to the whitelist vault", async () => {
+    const id = await tusky.file.upload(vaultId, testDataPath + firstFileName);
+    const type = "image/png";
+    const file = await tusky.file.get(id);
+    expect(file.id).toBeTruthy();
+    expect(file.vaultId).toEqual(vaultId);
+    expect(file.name).toEqual(firstFileName);
+    expect(file.mimeType).toEqual(type);
+
+    const response = await tusky.file.arrayBuffer(file.id);
+    const buffer = await fs.readFile(testDataPath + firstFileName);
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+    expect(response).toEqual(arrayBuffer);
+    expect((<any>response).byteLength).toEqual((<any>arrayBuffer).byteLength);
   });
 });
