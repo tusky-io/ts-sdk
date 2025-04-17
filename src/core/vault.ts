@@ -182,7 +182,6 @@ class VaultModule {
           }
         : undefined,
     });
-
     return this.service.processVault(vault, true, this.service.keys);
   }
 
