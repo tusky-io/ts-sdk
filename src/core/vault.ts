@@ -172,12 +172,13 @@ class VaultModule {
       whitelist: createOptions.whitelist
         ? {
             ...createOptions.whitelist,
-            token: createOptions.whitelist.token?.type
-              ? SUI_TYPE["COIN"] +
-                "<" +
-                createOptions.whitelist.token?.address +
-                ">"
-              : createOptions.whitelist.token?.address,
+            token:
+              createOptions.whitelist.token?.type === "COIN"
+                ? SUI_TYPE["COIN"] +
+                  "<" +
+                  createOptions.whitelist.token?.address +
+                  ">"
+                : createOptions.whitelist.token?.address,
           }
         : undefined,
     });
