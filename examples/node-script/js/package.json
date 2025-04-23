@@ -6,6 +6,6 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "@tusky-io/ts-sdk": "0.29.0"
+    "@tusky-io/ts-sdk": "0.29.2"
   }
 }
