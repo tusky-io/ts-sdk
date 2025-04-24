@@ -23,6 +23,8 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { UserEncryption } from "../crypto/user-encryption";
 import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from "@noble/hashes/utils";
+import { BadRequest } from "../errors/bad-request";
+import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -142,6 +144,9 @@ class VaultModule {
           privateKey: vaultKeyPair.privateKey,
         },
       ]);
+      if (!this.service.encrypter) {
+        throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
+      }
       // encrypt vault private key to user public key
       const encryptedVaultPrivateKey = await this.service.encrypter.encrypt(
         vaultKeyPair.privateKey,
@@ -262,6 +267,9 @@ class VaultModule {
         // generate password & add it for owner access
         password = generateRandomPassword();
         ownerAccessJson.password = password;
+      }
+      if (!this.service.encrypter) {
+        throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
       }
       // encrypt owner access
       ownerAccess = await this.service.encrypter.encrypt(

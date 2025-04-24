@@ -10,7 +10,7 @@ import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
 import { FolderService } from "./service/folder";
 import { ServiceConfig } from ".";
-import pLimit from "p-limit";
+import pLimit from "@esm2cjs/p-limit";
 import { Auth } from "../auth";
 import { File } from "../types";
 import { FolderSource, traverse } from "@env/core/folder";
