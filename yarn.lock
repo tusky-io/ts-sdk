@@ -474,6 +474,13 @@
     "@eslint/core" "^0.12.0"
     levn "^0.4.1"
 
+"@esm2cjs/p-limit@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@esm2cjs/p-limit/-/p-limit-4.0.0.tgz#7a80e7a2cf16476052a58dea628132b002f00586"
+  integrity sha512-t2YIlQHsgMy8vyC8oSxIyGuhc99KPjjPI808IENcvWaKWlFEANu8VEO3tMN9jqaqJQp/WpLx+SLqm3vC6Ve9pQ==
+  dependencies:
+    "@esm2cjs/yocto-queue" "^1.0.0"
+
 "@esm2cjs/p-queue@^7.3.0":
   version "7.3.0"
   resolved "https://registry.yarnpkg.com/@esm2cjs/p-queue/-/p-queue-7.3.0.tgz#b7d08399168ebbcc42a81d3bdf65004aa24407b4"
@@ -486,6 +493,11 @@
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/@esm2cjs/p-timeout/-/p-timeout-5.1.0.tgz#644d155ed345f158589f364612b11955c9a626fc"
   integrity sha512-QW2sTVKgqiK1nirBD8Sq39izyYj3IINfzwtxn/rpcFjMan7qXovQG3X2SzTsLKxw/phftc2M9Qh4lPtBfb2Bzg==
+
+"@esm2cjs/yocto-queue@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@esm2cjs/yocto-queue/-/yocto-queue-1.0.0.tgz#b11486f3788929034a47ce504b013a8dbce10fdb"
+  integrity sha512-bDqljAQBEJji4mZ4uuH27Zhr5OOoB6YWe/ccG8lt2ZTwZAeOAoS3wugsGQzVUZcxkBYonbXqi/1+rizbuU833A==
 
 "@faker-js/faker@^6.2.0":
   version "6.3.1"
@@ -6299,13 +6311,6 @@ p-limit@^3.0.2, p-limit@^3.1.0:
   dependencies:
     yocto-queue "^0.1.0"
 
-p-limit@^6.2.0:
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-6.2.0.tgz#c254d22ba6aeef441a3564c5e6c2f2da59268a0f"
-  integrity sha512-kuUqqHNUqoIWp/c467RI4X6mmyuojY5jGutNU0wVTmEOOfcuwLqyMVoAi9MKi2Ak+5i9+nhmrK4ufZE8069kHA==
-  dependencies:
-    yocto-queue "^1.1.1"
-
 p-locate@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/p-locate/-/p-locate-4.1.0.tgz#a3428bb7088b3a60292f66919278b7c297ad4f07"
@@ -8290,11 +8295,6 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
-
-yocto-queue@^1.1.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-1.2.1.tgz#36d7c4739f775b3cbc28e6136e21aa057adec418"
-  integrity sha512-AyeEbWOu/TAXdxlV9wmGcR0+yh2j3vYPGOECcIj2S7MkrLyC7ne+oye2BKTItt0ii2PHk4cDy+95+LshzbXnGg==
 
 yoctocolors@^2.0.0:
   version "2.1.1"
