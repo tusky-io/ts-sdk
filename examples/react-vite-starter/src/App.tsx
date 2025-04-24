@@ -34,7 +34,7 @@ function App() {
   const handleSignInWithWallet = async () => {
     if (account) {
       addLog('Initializing Tusky with wallet...', 'Tusky.init({ wallet: { signPersonalMessage, account } })')
-      const tusky = await Tusky.init({ wallet: { signPersonalMessage, account: account as any } });
+      const tusky = new Tusky({ wallet: { signPersonalMessage, account: account as any } });
       addLog('Signing in with wallet...', 'tusky.auth.signIn()')
       await tusky.auth.signIn();
       addLog('Setting up encryption context...')
@@ -44,17 +44,6 @@ function App() {
       setTusky(tusky);
       addLog('Successfully signed in with wallet')
     }
-  };
-
-  const handleSignInWithOAuth = async (authProvider: any) => {
-    addLog(`Initializing Tusky with ${authProvider} OAuth...`, `Tusky.init({ oauth: { authProvider: "${authProvider}", redirectUri: "http://localhost:3000" } })`)
-    const tusky = await Tusky.init({ oauth: { authProvider: authProvider, redirectUri: "http://localhost:3000" } });
-    addLog('Signing in with OAuth...', 'tusky.auth.signIn()')
-    await tusky.auth.signIn();
-    addLog('Setting up encryption context...')
-    await handleEncryptionContext(tusky);
-    setTusky(tusky);
-    addLog('Successfully signed in with OAuth')
   };
 
   const handleSignOut = async () => {
@@ -122,12 +111,6 @@ function App() {
               onClick={handleSignInWithWallet}
             >
               Sign in with Wallet
-            </button>
-            <button 
-              className="btn btn-outline-primary" 
-              onClick={() => handleSignInWithOAuth("Google")}
-            >
-              Sign in with Google
             </button>
           </div>
         ) : (

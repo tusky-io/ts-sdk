@@ -6,7 +6,7 @@ const main = async () => {
   if (!process.env.TUSKY_API_KEY) {
     throw new Error('TUSKY_API_KEY is not set. Run it like this: TUSKY_API_KEY=your-api-key npm run start');
   }
-  const tusky = await Tusky.init({ apiKey: process.env.TUSKY_API_KEY });
+  const tusky = new Tusky({ apiKey: process.env.TUSKY_API_KEY });
   
   const vault = await tusky.vault.create('test', {
     description: 'test',
