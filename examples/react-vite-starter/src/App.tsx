@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import { useCurrentAccount, useSignPersonalMessage, useCurrentWallet } from "@mysten/dapp-kit";
@@ -8,10 +8,19 @@ import { Tusky } from "@tusky-io/ts-sdk/web";
 function App() {
   const [tusky, setTusky] = useState<Tusky | null>()
   const [logs, setLogs] = useState<string[]>([])
+  const logsEndRef = useRef<HTMLDivElement>(null)
 
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
   const account = useCurrentAccount();
   const wallet = useCurrentWallet();
+
+  const scrollToBottom = () => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [logs])
 
   const addLog = (message: string, methodCall?: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -151,6 +160,7 @@ function App() {
                 {log}
               </div>
             ))}
+            <div ref={logsEndRef} />
           </div>
         </div>
       </div>
