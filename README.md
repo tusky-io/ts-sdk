@@ -21,12 +21,13 @@ Compatible with both Node.js and web browsers.
 - [Usage](#usage)
 - [Import](#import)
 - [Quick Start](#quick-start)
+- [Examples](#examples)
 - [Authentication](#authentication)
   - [Sui wallet](#use-sui-wallet)
   - [OAuth](#use-oauth-google-twitch)
   - [Api key](#use-api-key)
 - [Encryption](#encryption)
-- [Examples](#examples)
+- [Full documentation](#documentation)
 
 ## Usage
 
@@ -51,22 +52,32 @@ npm install @tusky-io/ts-sdk
 
 ## Import
 
+### node
+
 <CodeGroup>
   <CodeGroupItem title="ES Modules">
 
 ```js
-import { Tusky } from "@tusky-io/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk"; // ES module
 ```
 
   </CodeGroupItem>
   <CodeGroupItem title="CommonJS">
 
 ```js
-const { Tusky } = require("@tusky-io/ts-sdk");
+const { Tusky } = require("@tusky-io/ts-sdk"); // CommonJS
 ```
 
   </CodeGroupItem>
 </CodeGroup>
+
+### web
+
+NOTE: SDK import defaults to node, to use it in browser environment:
+
+```js
+import { Tusky } from "@tusky-io/ts-sdk/web";
+```
 
 ## Quick start
 
@@ -77,20 +88,22 @@ import { Tusky } from "@tusky-io/ts-sdk";
 
 // You can generate fresh api key here: https://app.tusky.io/account/api-keys
 
-const tusky = await Tusky.init({ apiKey: "your-api-key" });
+const tusky = new Tusky({ apiKey: "your-api-key" });
 ```
 
 ### Upload file with Tusky
 
 ```js
-// first create a Tusky vault, by default it will create a private encrypted vault
-const { id: vaultId } = await tusky.vault.create("My personal vault");
-// to create a public vault:
-// const { id: vaultId } = await tusky.vault.create("My public vault", { encrypted: false });
+// first create a Tusky public vault
+const { id: vaultId } = await tusky.vault.create("My public vault", { encrypted: false });
 
 // upload file to the vault
 const path = "/path/to/my/file.jpg";
 const uploadId = await tusky.file.upload(vaultId, path);
+
+// to create a private vault, the encryption context is required, you can learn more in Encryption paragraph
+// await tusky.addEncrypter({ password: "your-account-password-here" });
+// const { id: vaultId } = await tusky.vault.create("My private vault", { encrypted: true });
 ```
 
 See more upload flows under [file tests](src/__tests__/vault/file.test.ts).
@@ -107,6 +120,11 @@ const fileBuffer = await tusky.file.download(uploadId);
 const files = await tusky.file.listAll();
 ```
 
+## Examples
+
+- See different app setups under [examples](examples).
+- See example flows under [tests](src/__tests__).
+
 ## Authentication
 
 ### use Sui Wallet
@@ -120,7 +138,7 @@ import { useCurrentAccount, useSignPersonalMessage } from "@mysten/dapp-kit";
 const account = useCurrentAccount();
 const { mutate: signPersonalMessage } = useSignPersonalMessage();
 
-const tusky = await Tusky.init({ wallet: { signPersonalMessage, account } });
+const tusky = new Tusky({ wallet: { signPersonalMessage, account } });
 
 // sign-in to Tusky (this will prompt the wallet & ask for user signature)
 await tusky.auth.signIn();
@@ -132,7 +150,7 @@ import { Tusky } from "@tusky-io/ts-sdk";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 // generate new Sui Key Pair
 const keypair = new Ed25519Keypair();
-const tusky = await Tusky.init({ wallet: { keypair } });
+const tusky = new Tusky({ wallet: { keypair } });
 
 await tusky.auth.signIn();
 ```
@@ -141,7 +159,7 @@ await tusky.auth.signIn();
 
 ```js
 import { Tusky } from "@tusky-io/ts-sdk";
-const tusky = await Tusky.init({ oauth: { authProvider: "Google", redirectUri: "http://localhost:3000" } });
+const tusky = new Tusky({ oauth: { authProvider: "Google", redirectUri: "http://localhost:3000" } });
 
 // init OAuth flow
 await tusky.auth.initOAuthFlow();
@@ -157,7 +175,7 @@ await tusky.auth.signIn();
 
 ```js
 import { Tusky } from "@tusky-io/ts-sdk";
-const tusky = await Tusky.init({ apiKey: "your-api-key" });
+const tusky = new Tusky({ apiKey: "your-api-key" });
 ```
 
 ### clear current auth session
@@ -223,12 +241,6 @@ const { backupPhrase } = await tusky.me.backupPassword(password);
 // in case of password loss, you can reset the password using the backup phrase
 await tusky.me.resetPassword(backupPhrase, newPassword);
 ```
-
-## Examples
-
-- See example flows under [tests](src/__tests__).
-
-- See different app setups under [examples](examples).
 
 ## Documentation
 
