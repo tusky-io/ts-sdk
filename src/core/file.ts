@@ -11,7 +11,7 @@ import {
 } from "../types/query-options";
 import { Paginated } from "../types/paginated";
 import { paginate, processListItems } from "./common";
-import { ReadableStream } from "web-streams-polyfill/ponyfill/es2018";
+import { ReadableStream } from "web-streams-polyfill";
 import { FileService } from "./service/file";
 import { ServiceConfig } from "./service/service";
 import {
