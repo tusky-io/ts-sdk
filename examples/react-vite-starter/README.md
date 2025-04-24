@@ -1,5 +1,5 @@
 
-# Tusky SDK <> React starter
+# Tusky SDK <> React Vite starter
 
 This example was bootsrapped with [Create React App](https://github.com/facebook/create-react-app).
 
