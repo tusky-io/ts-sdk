@@ -1,8 +1,8 @@
-import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
+import { OAuthConfig, WalletConfig } from "./types/auth";
 import { Tusky } from "./tusky";
 import { Encrypter } from "./crypto/encrypter";
 import { DEFAULT_ENV, Env } from "./types";
-import { Auth, AuthOptions } from "./auth";
+import { Auth, AuthConfig } from "./auth";
 import { ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ConsoleLogger, Logger, setLogger } from "./logger";
 import TuskyApi from "./api/tusky-api";
@@ -15,25 +15,21 @@ export class TuskyBuilder {
   private _env: Env;
   private _storage: Storage;
   private _auth: Auth;
-  private _authType: AuthType;
-  private _authConfig: AuthOptions;
+  private _authConfig: AuthConfig;
   private _logger: Logger;
   private _clientName: string;
 
   useOAuth(config: OAuthConfig): TuskyBuilder {
-    this._authType = "OAuth";
-    this._authConfig = config;
+    this._authConfig = { oauth: config };
     return this;
   }
 
   useWallet(config: WalletConfig): TuskyBuilder {
-    this._authType = "Wallet";
-    this._authConfig = config;
+    this._authConfig = { wallet: config };
     return this;
   }
 
   useApiKey(apiKey: string): TuskyBuilder {
-    this._authType = "ApiKey";
     this._authConfig = { apiKey: apiKey };
     return this;
   }
@@ -80,7 +76,6 @@ export class TuskyBuilder {
     const auth = new Auth({
       ...this.getConfig(),
       ...this._authConfig,
-      authType: this._authType,
     });
     const tusky = new Tusky({
       ...this.getConfig(),
