@@ -5,29 +5,23 @@ const WebpackBundleAnalyzer = require("webpack-bundle-analyzer")
     .BundleAnalyzerPlugin;
 const nodeExternals = require('webpack-node-externals');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-
 const webpack = require('webpack');
 
-const package = require('./package.json');
-const version = package.version;
+const pkg = require('./package.json');
+const version = pkg.version;
 
 const commonNodeConfig = {
   mode: 'production',
   entry: './src/index.ts',
   target: 'node',
-  externals: [nodeExternals()], // Exclude node_modules from the bundle
+  externals: [nodeExternals()],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.node.json" })],
+    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.node.cjs.json" })],
     alias: {
       '@env/types': path.resolve(__dirname, 'src/types/node'),
     }
   },
-  // output: {
-  //   path: path.resolve(__dirname, 'lib/node'),
-  //   filename: 'index.js',
-  //   libraryTarget: 'commonjs2'
-  // },
   module: {
     rules: [
       {
@@ -36,8 +30,9 @@ const commonNodeConfig = {
           {
             loader: 'ts-loader',
             options: {
-              configFile: 'tsconfig.node.json',
-              compiler: 'ts-patch/compiler'           
+              configFile: 'tsconfig.node.cjs.json',
+              compiler: 'ts-patch/compiler',
+              transpileOnly: false
             },
           }
         ],
@@ -85,6 +80,40 @@ const esmNodeConfig = {
   experiments: {
     outputModule: true,
   },
+  resolve: {
+    ...commonNodeConfig.resolve,
+    extensions: ['.tsx', '.ts', '.js', '.mjs'],
+    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.node.esm.json" })],
+  },
+  module: {
+    ...commonNodeConfig.module,
+    rules: [
+      {
+        ...commonNodeConfig.module.rules[0],
+        use: [
+          {
+            loader: 'ts-loader',
+            options: {
+              configFile: 'tsconfig.node.esm.json',
+              compiler: 'ts-patch/compiler',
+              transpileOnly: false
+            },
+          }
+        ],
+      },
+    ],
+  },
+  optimization: {
+    ...commonNodeConfig.optimization,
+    moduleIds: 'named',
+    chunkIds: 'named',
+  },
+  externals: [
+    nodeExternals({
+      importType: 'module',
+      modulesDir: path.resolve(__dirname, 'node_modules'),
+    }),
+  ],
 };
 
 const commonWebConfig = {
@@ -93,7 +122,7 @@ const commonWebConfig = {
   target: 'web',
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.web.json" })],
+    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.web.cjs.json" })],
     alias: {
       '@env/types': path.resolve(__dirname, 'src/types/web'),
       '@env/core': path.resolve(__dirname, 'src/core/web'),
@@ -107,46 +136,29 @@ const commonWebConfig = {
           {
             loader: 'ts-loader',
             options: {
-              configFile: 'tsconfig.web.json',
-              compiler: 'ts-patch/compiler',
+              configFile: 'tsconfig.web.cjs.json',
+              compiler: 'ts-patch/compiler'           
             },
           }
         ],
-        exclude: [/node_modules/, /worker\.js$/],
+        exclude: /node_modules/,
       },
     ],
   },
-  // devtool: 'source-map',
   optimization: {
     minimize: true,
     minimizer: [new TerserPlugin({
       terserOptions: {
-        format: {
-          comments: false,
-        },
+        keep_classnames: true,
+        keep_fnames: true,
       },
-      extractComments: false,
     })],
   },
   plugins: [
-    new WebpackBundleAnalyzer({
-        analyzerMode: process.env.STATS || 'disabled',
-    }),
     new webpack.DefinePlugin({
       'process.env.VERSION': JSON.stringify(version),
     }),
-    // new ProvidePlugin({
-    //     Buffer: ['buffer', 'Buffer'],
-    // }),
-    // new NodePolyfillPlugin({
-    //     excludeAliases: ['console']
-    // }),
-    // new CopyWebpackPlugin({
-    //     patterns: [
-    //         { from: 'static' }
-    //     ]
-    // })
-]
+  ]
 };
 
 const cjsWebConfig = {
@@ -157,7 +169,6 @@ const cjsWebConfig = {
     library: {
       type: 'commonjs2',
     },
-    globalObject: 'this',
   },
 };
 
@@ -174,28 +185,74 @@ const esmWebConfig = {
   experiments: {
     outputModule: true,
   },
+  resolve: {
+    ...commonWebConfig.resolve,
+    extensions: ['.tsx', '.ts', '.js', '.mjs'],
+    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.web.esm.json" })],
+  },
+  module: {
+    ...commonWebConfig.module,
+    rules: [
+      {
+        ...commonWebConfig.module.rules[0],
+        use: [
+          {
+            loader: 'ts-loader',
+            options: {
+              configFile: 'tsconfig.web.esm.json',
+              compiler: 'ts-patch/compiler'           
+            },
+          }
+        ],
+      },
+    ],
+  },
+  optimization: {
+    ...commonWebConfig.optimization,
+    moduleIds: 'named',
+    chunkIds: 'named',
+  },
 };
 
 const serviceWorkerWebConfig = {
   mode: 'development',
-
   entry: './src/core/web/worker.js',
-
   output: {
-      filename: 'worker.min.js',
-      path: path.resolve(__dirname, 'lib/web/sw'),
+    filename: 'worker.min.js',
+    path: path.resolve(__dirname, 'lib/web/sw'),
   },
-
   plugins: [
-      new CopyWebpackPlugin({
-          patterns: [
-              {
-                  from: path.resolve(__dirname, './src/core/web/worker.js'),
-                  to: path.resolve(__dirname, 'lib/web/sw'),
-              },
-          ],
-      }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, './src/core/web/worker.js'),
+          to: path.resolve(__dirname, 'lib/web/sw'),
+        },
+      ],
+    }),
   ],
 };
 
-module.exports = [cjsWebConfig, esmWebConfig, serviceWorkerWebConfig, cjsNodeConfig, esmNodeConfig];
+module.exports = (env, argv) => {
+  const configs = [];
+  if (process.env.STATS === 'server') {
+    configs.push(cjsNodeConfig, esmNodeConfig, cjsWebConfig, esmWebConfig);
+    configs.forEach(config => {
+      config.plugins.push(new WebpackBundleAnalyzer({
+        analyzerMode: 'server',
+        analyzerPort: 8888,
+        openAnalyzer: true,
+      }));
+    });
+  } else {
+    configs.push(
+      cjsNodeConfig, 
+      esmNodeConfig, 
+      cjsWebConfig, 
+      esmWebConfig,
+      serviceWorkerWebConfig
+    );
+  }
+  
+  return configs;
+};

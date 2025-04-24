@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "lib": ["ES2022", "WebWorker"],
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "experimentalDecorators": true,
+    "types": ["jest", "node"],
+  },
+}

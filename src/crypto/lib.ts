@@ -24,7 +24,7 @@ import {
   StreamSlicer,
   transformStream,
 } from "./stream";
-import { ReadableStream } from "web-streams-polyfill/ponyfill";
+import { ReadableStream } from "web-streams-polyfill";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 
 const HASH_ALGORITHM = "SHA-256";

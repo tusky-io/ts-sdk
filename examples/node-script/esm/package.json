@@ -1,0 +1,16 @@
+{
+  "name": "nodejs-script",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
+  "dependencies": {
+    "@tusky-io/ts-sdk": "file:../../../"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  }
+}
