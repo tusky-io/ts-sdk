@@ -25,6 +25,7 @@ import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { Subscription } from "rxjs";
 import { VaultEncryption } from "../crypto/vault-encryption";
+import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -347,6 +348,9 @@ class FileModule {
     if (!this.service.encrypted) {
       stream = file as ReadableStream<Uint8Array>;
     } else {
+      if (!this.service.encrypter) {
+        throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
+      }
       const aesKey = await this.aesKey(id);
       stream = await decryptStream(
         file as ReadableStream,
@@ -399,6 +403,9 @@ class FileModule {
             if (fileProto && onSuccess) {
               const file = new File(fileProto, keys);
               if (isEncrypted) {
+                if (!encrypter) {
+                  throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
+                }
                 await file.decrypt(encrypter);
               }
               await onSuccess(file);
