@@ -137,6 +137,12 @@ class VaultModule {
     memberService.setVaultId(this.service.vaultId);
 
     if (this.service.encrypted) {
+      if (!this.service.encrypter) {
+        throw new BadRequest(
+          MISSING_ENCRYPTION_ERROR_MESSAGE +
+            " or use `{ encrypted: false }` options if you want your data publicly available",
+        );
+      }
       const vaultKeyPair = await generateKeyPair();
       this.service.setDecryptedKeys([
         {
@@ -144,9 +150,6 @@ class VaultModule {
           privateKey: vaultKeyPair.privateKey,
         },
       ]);
-      if (!this.service.encrypter) {
-        throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
-      }
       // encrypt vault private key to user public key
       const encryptedVaultPrivateKey = await this.service.encrypter.encrypt(
         vaultKeyPair.privateKey,
