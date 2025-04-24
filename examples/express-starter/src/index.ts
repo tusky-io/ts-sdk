@@ -9,7 +9,7 @@ export let vaultId: string;
 
 async function initTusky() {
   try {
-    tusky = await Tusky.init({ apiKey: process.env.TUSKY_API_KEY });
+    tusky = new Tusky({ apiKey: process.env.TUSKY_API_KEY });
 
     const vault = await tusky.vault.create("Vault from express starter - " + new Date().toISOString(), { encrypted: false });
     console.log("Created test vault.");

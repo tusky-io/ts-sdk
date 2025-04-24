@@ -6,7 +6,7 @@
     "start": "ts-node index.ts"
   },
   "dependencies": {
-    "@tusky-io/ts-sdk": "file:../../../"
+    "@tusky-io/ts-sdk": "0.29.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
