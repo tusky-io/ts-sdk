@@ -1,6 +1,4 @@
-// TODO: make it work with import { Tusky } from "@tusky-io/ts-sdk";
-
-const { Tusky } = require("@tusky-io/ts-sdk");
+import { Tusky } from "@tusky-io/ts-sdk";
 
 const main = async () => {
   if (!process.env.TUSKY_API_KEY) {
@@ -23,5 +21,6 @@ const main = async () => {
   const file = await tusky.file.get(uploadId);
   console.log(file);
 }
+
 
 main().catch(console.error);

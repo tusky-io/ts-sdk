@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "ts-node index.ts"
   },
   "dependencies": {
     "@tusky-io/ts-sdk": "file:../../../"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }

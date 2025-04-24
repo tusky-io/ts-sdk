@@ -1,6 +1,4 @@
-// TODO: make it work with import { Tusky } from "@tusky-io/ts-sdk";
-
-const { Tusky } = require("@tusky-io/ts-sdk");
+import { Tusky } from "@tusky-io/ts-sdk";
 
 const main = async () => {
   if (!process.env.TUSKY_API_KEY) {
