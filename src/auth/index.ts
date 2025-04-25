@@ -15,6 +15,7 @@ import { defaultStorage, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
+import EnokiClient, { ZkLoginNonceResponse } from "./enoki";
 
 export type SignPersonalMessage = (
   message: { message: Uint8Array },
@@ -185,6 +186,22 @@ export class Auth {
     this.jwtClient.clearTokens();
   }
 
+  public async createAuthorizationUrl(
+    ephemeralKeyPair?: Ed25519Keypair,
+  ): Promise<{
+    oauthUrl: string;
+    zkLoginResponse: ZkLoginNonceResponse;
+  }> {
+    const aOuthClient = new OAuth({
+      clientId: this.clientId,
+      redirectUri: this.redirectUri,
+      authProvider: this.authProvider,
+      storage: this.storage,
+      env: this.env,
+    });
+    return aOuthClient.createAuthorizationUrl(ephemeralKeyPair);
+  }
+
   public async initOAuthFlow(): Promise<void> {
     const aOuthClient = new OAuth({
       clientId: this.clientId,
@@ -282,6 +299,8 @@ export class Auth {
     }
   }
 }
+
+export { EnokiClient };
 
 export type AuthConfig = {
   env?: Env;

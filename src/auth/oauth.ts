@@ -80,7 +80,7 @@ class OAuth {
 
   // redirect to OAuth provider's authorization URL
   async initOAuthFlow() {
-    const oauthUrl = await this.createAuthorizationUrl();
+    const { oauthUrl } = await this.createAuthorizationUrl();
     window.location.href = oauthUrl;
   }
 
@@ -133,13 +133,13 @@ class OAuth {
     }
   }
 
-  async createAuthorizationUrl() {
-    // generate ephemeral key pair
-    const ephemeralKeyPair = new Ed25519Keypair();
+  async createAuthorizationUrl(ephemeralKeyPair?: Ed25519Keypair) {
+    // use ephemeral key pair from config or generate new one
+    const keypair = ephemeralKeyPair || new Ed25519Keypair();
 
     const createZkLoginResponse = await retry(async () => {
       try {
-        return this.enokiClient.createZkLoginNonce(ephemeralKeyPair);
+        return this.enokiClient.createZkLoginNonce(keypair);
       } catch (error) {
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
@@ -161,7 +161,7 @@ class OAuth {
     });
 
     const oauthUrl = `${this.authProviderConfig.AUTH_URL}?${params}`;
-    return oauthUrl;
+    return { oauthUrl, zkLoginResponse: createZkLoginResponse };
   }
 
   async refreshTokens(): Promise<void> {

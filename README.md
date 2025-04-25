@@ -87,7 +87,7 @@ import { Tusky } from "@tusky-io/ts-sdk/web";
 ### Init Tusky
 
 ```js
-import { Tusky } from "@tusky-io/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk/node";
 
 // You can generate fresh api key here: https://app.tusky.io/account/api-keys
 
@@ -158,7 +158,7 @@ await tusky.auth.signIn();
 
 ```js
 // on the server
-import { Tusky } from "@tusky-io/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk/node";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 // generate new Sui Key Pair
 const keypair = new Ed25519Keypair();

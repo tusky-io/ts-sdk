@@ -2,6 +2,7 @@ import { EncryptedVaultKeyPair, Membership } from "./membership";
 import { Folder } from "./folder";
 import { File } from "./file-version";
 import { Encryptable, encrypted } from "../crypto";
+import { Whitelist } from "./whitelist";
 
 export class Vault extends Encryptable {
   id: string;
@@ -15,6 +16,8 @@ export class Vault extends Encryptable {
   tags?: string[];
   @encrypted() name: string;
   @encrypted() description?: string;
+
+  whitelist?: Whitelist;
 
   memberships?: Array<Membership>;
   files?: Array<File>;
@@ -33,6 +36,7 @@ export class Vault extends Encryptable {
     this.description = vaultProto.description;
     this.tags = vaultProto.tags;
     this.status = vaultProto.status;
+    this.whitelist = vaultProto.whitelist;
     // this.memberships = vaultProto?.memberships?.map((membership: Membership) => new Membership(membership, keys));
     // this.files = vaultProto?.files?.map((file: File) => new File(file, keys));
     // this.folders = vaultProto?.folders?.map((folder: Folder) => new Folder(folder, keys));
@@ -41,6 +45,14 @@ export class Vault extends Encryptable {
 
 export type VaultCreateOptions = {
   encrypted?: boolean;
+  whitelist?: {
+    token: {
+      type: "COIN" | "NFT";
+      address: string;
+    };
+    memberRole: string;
+    capacity?: number;
+  };
   description?: string;
   tags?: string[];
 };

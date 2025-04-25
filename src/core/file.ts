@@ -401,12 +401,17 @@ class FileModule {
           next: async ({ data }) => {
             const fileProto = data.onUpdateFile;
             if (fileProto && onSuccess) {
-              const file = new File(fileProto, keys);
+              let file = new File(fileProto, keys);
               if (isEncrypted) {
                 if (!encrypter) {
                   throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
                 }
                 await file.decrypt(encrypter);
+              }
+              if (this.service.vault?.whitelist) {
+                // TOOD: avoid additional call
+                const decryptedFile = await this.get(file.id);
+                file = decryptedFile;
               }
               await onSuccess(file);
             }

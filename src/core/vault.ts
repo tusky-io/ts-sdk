@@ -25,6 +25,7 @@ import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from "@noble/hashes/utils";
 import { BadRequest } from "../errors/bad-request";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
+import { SUI_TYPE } from "../types/whitelist";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -131,7 +132,9 @@ class VaultModule {
       ...options,
     };
 
-    this.service.setEncrypted(createOptions.encrypted);
+    this.service.setEncrypted(
+      !createOptions.whitelist && createOptions.encrypted,
+    );
 
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
@@ -174,8 +177,19 @@ class VaultModule {
       encrypted: this.service.encrypted,
       tags: createOptions.tags,
       keys: this.service.keys,
+      whitelist: createOptions.whitelist
+        ? {
+            ...createOptions.whitelist,
+            token:
+              createOptions.whitelist.token?.type === "COIN"
+                ? SUI_TYPE["COIN"] +
+                  "<" +
+                  createOptions.whitelist.token?.address +
+                  ">"
+                : createOptions.whitelist.token?.address,
+          }
+        : undefined,
     });
-
     return this.service.processVault(vault, true, this.service.keys);
   }
 
@@ -253,13 +267,13 @@ class VaultModule {
     memberService.setVaultId(this.service.vaultId);
 
     // generate member identity key pair for authentication
-    const memberKeyPair = new Ed25519Keypair();
+    const memberKeyPair = options.keypair || new Ed25519Keypair();
 
     let keys: EncryptedVaultKeyPair[];
     let userEncPrivateKey: string;
     let password: string;
     let ownerAccessJson = {
-      identityPrivateKey: memberKeyPair.getSecretKey(),
+      identityPrivateKey: memberKeyPair?.getSecretKey(),
     } as OwnerAccess;
     let ownerAccess: string;
 
@@ -291,7 +305,7 @@ class VaultModule {
 
     const membership = await this.service.api.createMembership({
       vaultId: vaultId,
-      address: memberKeyPair.toSuiAddress(),
+      address: options.address || memberKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
       allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
@@ -303,7 +317,7 @@ class VaultModule {
     });
 
     return {
-      identityPrivateKey: memberKeyPair.getSecretKey(),
+      identityPrivateKey: memberKeyPair?.getSecretKey(),
       password: password,
       membership: await memberService.processMembership(
         membership,
@@ -346,6 +360,15 @@ class VaultModule {
       id: id,
       // keys: keys
     });
+  }
+
+  /**
+   * Join vault
+   * @param  {string} id vault id
+   * @returns {Promise<void>}
+   */
+  public async join(id: string): Promise<Membership> {
+    return this.service.api.joinVault({ vaultId: id });
   }
 
   /**
