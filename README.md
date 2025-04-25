@@ -4,9 +4,11 @@
 
 # Tusky SDK
 
-The Tusky TypeScript SDK is the official client for [Tusky API](https://docs.tusky.io/).\
-Compatible with both Node.js and web browsers.
+Tusky - TypeScript SDK for a complete file system on [Walrus](https://www.walrus.xyz/).\
+It includes end-to-end encryption, file management and access control.\
+The official client for [Tusky API](https://docs.tusky.io/) compatible with both Node.js and web browsers.
 
+<br/>
 
 > **_DISCLAIMER_**
 >
@@ -17,6 +19,8 @@ Compatible with both Node.js and web browsers.
 >
 > By using the SDK, you're helping us improve, and we appreciate your support!
 
+<br/>
+
 
 - [Usage](#usage)
 - [Import](#import)
@@ -24,7 +28,6 @@ Compatible with both Node.js and web browsers.
 - [Examples](#examples)
 - [Authentication](#authentication)
   - [Sui wallet](#use-sui-wallet)
-  - [OAuth](#use-oauth-google-twitch)
   - [Api key](#use-api-key)
 - [Encryption](#encryption)
 - [Full documentation](#documentation)
@@ -108,10 +111,19 @@ const uploadId = await tusky.file.upload(vaultId, path);
 
 See more upload flows under [file tests](src/__tests__/vault/file.test.ts).
 
-### Download the file
+### Download the file buffer
 
 ```js
 const fileBuffer = await tusky.file.download(uploadId);
+```
+
+### Get the file metadata (blob id, etc.)
+
+> NOTE: upload id is the internal Tusky file identifier populated immediately during upload, while blob id is computed in an asynchronous manner while uploading the file to Walrus, hence the field may take some time to be populated.
+
+```js
+const fileMetadata = await tusky.file.get(uploadId);
+console.log("File blob id: " + fileMetadata.blobId);
 ```
 
 ### List all user files
@@ -131,7 +143,7 @@ const files = await tusky.file.listAll();
 
 ```js
 // on the browser
-import { Tusky } from "@tusky-io/ts-sdk";
+import { Tusky } from "@tusky-io/ts-sdk/web";
 import { useCurrentAccount, useSignPersonalMessage } from "@mysten/dapp-kit";
 
 // Sui wallet extension
@@ -152,22 +164,6 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 const keypair = new Ed25519Keypair();
 const tusky = new Tusky({ wallet: { keypair } });
 
-await tusky.auth.signIn();
-```
-
-### use OAuth (Google, Twitch)
-
-```js
-import { Tusky } from "@tusky-io/ts-sdk";
-const tusky = new Tusky({ oauth: { authProvider: "Google", redirectUri: "http://localhost:3000" } });
-
-// init OAuth flow
-await tusky.auth.initOAuthFlow();
-
-// handle OAuth callback
-await tusky.auth.handleOAuthCallback();
-
-// or perform the entire flow in one go
 await tusky.auth.signIn();
 ```
 
