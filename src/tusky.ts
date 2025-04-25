@@ -10,7 +10,7 @@ import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
 import { StorageModule } from "./core/storage";
 import { DEFAULT_ENV, Env } from "./types/env";
-import { Auth, AuthOptions } from "./auth";
+import { Auth, AuthConfig } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./crypto/encrypter";
@@ -148,7 +148,7 @@ export class Tusky {
   /**
    * @param  {ClientConfig} config
    */
-  constructor(config: ClientConfig & AuthOptions = {}) {
+  constructor(config: ClientConfig & AuthConfig = {}) {
     this._encrypter = config.encrypter;
     this._env = { ...this.getConfig(), ...config }.env || DEFAULT_ENV;
     this._storage = config.storage || defaultStorage();

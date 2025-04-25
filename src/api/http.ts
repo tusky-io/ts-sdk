@@ -1,5 +1,4 @@
-import Agent from "agentkeepalive";
-const HttpsAgent = Agent.HttpsAgent;
+import Agent, { HttpsAgent } from "agentkeepalive";
 import axios from "axios";
 
 const keepAliveAgent = new Agent({

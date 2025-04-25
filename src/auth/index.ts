@@ -53,26 +53,37 @@ export class Auth {
   // API key auth
   private apiKey: string;
 
-  constructor(options: AuthOptions = { authType: "OAuth" }) {
-    // reset previous configuration
-    this.authType = options.authType;
-    this.apiKey = options.apiKey;
+  constructor(options: AuthConfig = {}) {
     this.env = options.env;
-    // walet-based auth
-    this.signPersonalMessage = options.signPersonalMessage;
-    this.account = options.account;
-    this.keypair =
-      options.keypair ||
-      (options.privateKey &&
-        Ed25519Keypair.fromSecretKey(
-          decodeSuiPrivateKey(options.privateKey).secretKey,
-        ));
-    // Oauth
-    this.authProvider = options.authProvider;
-    this.clientId = options.clientId;
-    this.redirectUri = options.redirectUri;
+
     this.storage = options.storage || defaultStorage();
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
+
+    // walet-based auth
+    if (options.wallet) {
+      this.signPersonalMessage = options.wallet.signPersonalMessage;
+      this.account = options.wallet.account;
+      this.keypair =
+        options.wallet.keypair ||
+        (options.wallet.privateKey &&
+          Ed25519Keypair.fromSecretKey(
+            decodeSuiPrivateKey(options.wallet.privateKey).secretKey,
+          ));
+      this.authType = "Wallet";
+    }
+    // Oauth
+    if (options.oauth) {
+      this.authProvider = options.oauth.authProvider;
+      this.clientId = options.oauth.clientId;
+      this.redirectUri = options.oauth.redirectUri;
+      this.authType = "OAuth";
+    }
+
+    // api key
+    if (options.apiKey) {
+      this.apiKey = options.apiKey;
+      this.authType = "ApiKey";
+    }
   }
 
   /*
@@ -291,9 +302,10 @@ export class Auth {
 
 export { EnokiClient };
 
-export type AuthOptions = {
-  authType?: AuthType;
+export type AuthConfig = {
   env?: Env;
-  apiKey?: string;
-} & OAuthConfig &
-  WalletConfig;
+  storage?: Storage;
+  wallet?: WalletConfig; // Wallet-based auth
+  oauth?: OAuthConfig; // OAuth
+  apiKey?: string; // Api key auth
+};
