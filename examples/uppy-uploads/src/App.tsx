@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-icons/font/bootstrap-icons.css'
-import { Tusky } from "@tusky/ts-sdk";
+import { Tusky } from '@tusky-io/ts-sdk/web';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import Uppy from '@uppy/core';
 import { Dashboard, DashboardModal, DragDrop } from '@uppy/react';
 import Tus from '@uppy/tus';
@@ -17,10 +17,6 @@ import '@uppy/dashboard/dist/style.min.css';
 import '@uppy/webcam/dist/style.min.css';
 import '@uppy/status-bar/dist/style.css';
 import '@uppy/drag-drop/dist/style.css';
-
-let uploads: Record<string, string>;
-
-const API_KEY = "52c5e727-07b2-4605-bb4c-d6b4907613ea"
 
 function Page1({ uppy }: { uppy: Uppy }) {
   return (
@@ -112,51 +108,6 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
       });
     };
 
-    const onFilesAdded = async (e: any) => {
-      console.log(e)
-      if (!tusky) {
-        tusky = await Tusky.init({ env: "dev", apiKey: API_KEY });
-      }
-      // configure uppy
-      const uploader = await tusky.file.uploader(vaultId);
-      uppy  // update this for every vault
-        .getPlugin('Tus')!
-        .setOptions(uploader.options)
-      uppy.setMeta({ vaultId: vaultId })
-
-      uppy.setOptions({
-        onBeforeUpload: (files) => {
-          console.log(files)
-          // before upload update parentId in file meta
-          const updatedFiles = Object.assign({}, files)
-          for (let fileId of Object.keys(updatedFiles)) {
-            const relativePath = updatedFiles[fileId].meta.relativePath as any;
-            console.log("relative path: " + relativePath)
-            const lastSlashIndex = relativePath.lastIndexOf("/");
-            const parentPath =
-              lastSlashIndex !== -1
-                ? relativePath.substring(0, lastSlashIndex)
-                : null;
-            console.log("parent path: " + parentPath)
-            console.log("parent id: " + uploads[parentPath])
-            updatedFiles[fileId].meta = {
-              ...updatedFiles[fileId].meta,
-              parentId: uploads[parentPath],
-            }
-          }
-          return updatedFiles
-        },
-      });
-      // create folder tree on the backend
-      const folderPaths = e.map((file: any) => file.meta.relativePath?.substring(0, file.meta.relativePath?.lastIndexOf("/")))
-      const { folderIdMap } = await tusky.folder.createTree(vaultId, folderPaths)
-      uploads = folderIdMap;
-      // trigger upload manually once the tree is created
-      uppy.upload().then((result) => {
-        console.log('Upload result:', result);
-      });
-    };
-
     const onUploadSuccess = (file: any, response: any) => {
       setCompleteUploads(prev => {
         if (!prev.some(f => f.id === file.id)) {
@@ -211,8 +162,6 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
       setPausedFiles([]);
     };
 
-    uppy.on('files-added', onFilesAdded);
-
     uppy.on('upload-progress', onUploadProgress);
     uppy.on('upload-success', onUploadSuccess);
     uppy.on('upload-error', onUploadError);
@@ -230,7 +179,6 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
       uppy.off('upload-pause', onFilePaused);
       uppy.off('state-update', onStateChanged);
       uppy.off('cancel-all', onCancelAll);
-      uppy.off('files-added', onFilesAdded);
     };
   }, [uppy]);
 
@@ -447,10 +395,10 @@ function UploadeManager({ uppy, tusky, vaultId }: { uppy: Uppy, tusky: Tusky, va
 
 function App() {
   const [tusky, setTusky] = useState<Tusky>(null as any);
-  const [vaultId] = useState<string>("712700d0-0059-444e-8cab-7fc5d18a6ad2");
+  const [vaultId, setVaultId] = useState<string>("");
   const [uppy] = useState<Uppy>(
     new Uppy({
-      autoProceed: false, //put this to true if you want to upload files automatically without mid-step
+      autoProceed: true, //put this to true if you want to upload files automatically without mid-step
     }) // keep this in app context so it doesn't get recreated on every page
       .use(Webcam)
       .use(Audio)
@@ -464,21 +412,24 @@ function App() {
 
   useEffect(() => {
     const configureUploaderForCurrentVault = async () => {
-      const tusky = await Tusky.init({ env: "dev", apiKey: API_KEY });
-      setTusky(tusky)
-      // const uploader = await tusky.file.uploader(vaultId);
-      // uppy  // update this for every vault
-      //   .getPlugin('Tus')!
-      //   .setOptions(uploader.options)
-      // uppy.setMeta({ vaultId: vaultId })
-      // setUploader(uploader as any)
+      if (!tusky && !vaultId) {
+        const keypair = new Ed25519Keypair();
+        const tusky = new Tusky({ wallet: { keypair } });
+        await tusky.auth.signIn();
+        const vault = await tusky.vault.create("Vault from Uppy starter - " + new Date().toISOString(), { encrypted: false });
+        setVaultId(vault.id)
+        setTusky(tusky)
+        const uploader = await tusky.file.uploader(vault.id);
+        uppy  // update this for every vault
+          .getPlugin('Tus')!
+          .setOptions(uploader.options)
+        uppy.setMeta({ vaultId: vault.id })
+      }
     }
 
-    if (tusky && vaultId && uppy) {
-      console.log("configure uploader")
-      configureUploaderForCurrentVault();
-    }
-  }, [tusky, vaultId, uppy]);
+    console.log("configure uploader")
+    configureUploaderForCurrentVault();
+  }, []);
 
 
   return (
