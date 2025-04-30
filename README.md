@@ -114,7 +114,7 @@ See more upload flows under [file tests](src/__tests__/vault/file.test.ts).
 ### Download the file buffer
 
 ```js
-const fileBuffer = await tusky.file.download(uploadId);
+const fileBuffer = await tusky.file.arrayBuffer(uploadId);
 ```
 
 ### Get the file metadata (blob id, etc.)

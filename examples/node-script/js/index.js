@@ -19,6 +19,9 @@ const main = async () => {
     mimeType: 'text/plain',
   });
   console.log(uploadId);
+
+  const fileBuffer = await tusky.file.arrayBuffer(uploadId);
+  console.log(fileBuffer);
   
   const file = await tusky.file.get(uploadId);
   console.log(file);
