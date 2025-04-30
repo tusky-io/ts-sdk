@@ -1,9 +1,8 @@
 import { Api } from "../../api/api";
-import { base64ToArray, stringToArray, base64ToJson } from "../../crypto";
+import { base64ToArray, stringToArray } from "../../crypto";
 import { actions } from "../../constants";
 import { Vault } from "../../types/vault";
 import { Object, ObjectType } from "../../types/object";
-import { Signer } from "../../signer";
 import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
 import { Encrypter } from "../../crypto/encrypter";
 import { Auth } from "../../auth";
@@ -17,7 +16,6 @@ class Service {
   pubsub: PubSub;
 
   address: string;
-  signer: Signer;
   encrypter: Encrypter;
 
   keys: Array<EncryptedVaultKeyPair>;
@@ -38,7 +36,6 @@ class Service {
   env: Env;
 
   constructor(config: ServiceConfig) {
-    this.signer = config.signer;
     this.api = config.api;
     this.pubsub = config.pubsub;
     this.encrypter = config.encrypter;
@@ -140,7 +137,6 @@ export type ServiceConfig = {
   api?: Api;
   pubsub?: PubSub;
   auth?: Auth;
-  signer?: Signer;
   encrypter?: Encrypter;
   keys?: Array<EncryptedVaultKeyPair>;
   vaultId?: string;

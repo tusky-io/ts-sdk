@@ -4,13 +4,13 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "ts-node index.ts"
+    "start": "tsx index.ts"
   },
   "dependencies": {
     "@tusky-io/ts-sdk": "0.29.3"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "ts-node": "^10.9.2"
+    "tsx": "^4.19.3",
+    "typescript": "^5.3.3"
   }
 }
