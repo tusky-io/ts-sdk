@@ -54,7 +54,7 @@
   "bugs": {
     "url": "https://github.com/tusky-io/ts-sdk/issues"
   },
-  "homepage": "https://github.com/tusky-io/ts-sdk/issues#readme",
+  "homepage": "https://github.com/tusky-io/ts-sdk/#readme",
   "author": "Tusky Team",
   "license": "MIT",
   "engines": {
