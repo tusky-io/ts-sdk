@@ -4,28 +4,40 @@ import { Encryptable, encrypted } from "../crypto";
 
 export class File extends Encryptable {
   @encrypted() name: string;
-  id: string;
-  blobId: string; // file reference off chain
-  blobObjectId: string; // file reference on chain
-  ref: string; // file reference on chain - deprecated
-  network: "mainnet" | "testnet";
+  id: string; // file reference off chain - internal Tusky upload id
+
+  // Walrus & Sui related fields
+
+  // populated together with encodedAt or storedAt
+  blobId: string; // file reference off chain - Walrus blob id (computed deterministically from blob content)
+
+  // populated together with storedAt
+  blobObjectId: string; // file reference on chain - Sui object id
+  ref: string; // file reference on chain - Sui object id (depracated - please use blobObjectId)
+  network: "mainnet" | "testnet"; // Sui network
+  storedEpoch?: number;
+  certifiedEpoch?: number;
+  endEpoch?: number;
+
+  createdAt: string; // uploaded to Tusky timestamp
+  encodedAt?: string; // encoded by Tusky timestamp
+  storedAt?: string; // stored on Walrus timestamp
+  expiresAt?: string; // will expire from Walrus timestamp
+
+  // file metadata
   mimeType: string;
   owner: string;
-  createdAt: string;
   updatedAt: string;
   status: string;
   size: number;
   external?: boolean;
-  expiresAt?: string;
-  storedAt?: string;
   numberOfChunks?: number;
   chunkSize?: number;
   encryptedAesKey?: string; // encrypted AES key used to encrypt private files
 
+  // vault context
   vaultId: string;
   parentId?: string;
-
-  // vault context
   __encrypted__?: boolean;
 
   constructor(file: any, keys?: Array<EncryptedVaultKeyPair>) {
@@ -39,6 +51,10 @@ export class File extends Encryptable {
     this.createdAt = file.createdAt;
     this.updatedAt = file.updatedAt;
     this.storedAt = file.storedAt;
+    this.encodedAt = file.encodedAt;
+    this.certifiedEpoch = file.certifiedEpoch;
+    this.storedEpoch = file.storedEpoch;
+    this.endEpoch = file.endEpoch;
     this.mimeType = file.mimeType;
     this.size = file.size;
     this.numberOfChunks = file.numberOfChunks;

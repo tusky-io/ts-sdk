@@ -493,13 +493,18 @@ export const onUpdateFile = `subscription OnUpdateFile($filter: ModelSubscriptio
     chunkSize
     numberOfChunks
     storedEpoch
+    endEpoch
     blobId
+    network
+    blobObjectId
     ref
     erasureCodeType
     certifiedEpoch
     mimeType
     encryptedAesKey
     expiresAt
+    storedAt
+    encodedAt
     createdAt
     updatedAt
     __typename

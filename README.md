@@ -114,16 +114,20 @@ See more upload flows under [file tests](src/__tests__/vault/file.test.ts).
 ### Download the file buffer
 
 ```js
-const fileBuffer = await tusky.file.download(uploadId);
+const fileBuffer = await tusky.file.arrayBuffer(uploadId);
 ```
 
 ### Get the file metadata (blob id, etc.)
 
-> NOTE: upload id is the internal Tusky file identifier populated immediately during upload, while blob id is computed in an asynchronous manner while uploading the file to Walrus, hence the field may take some time to be populated.
+> NOTE: upload id is the internal Tusky file identifier populated immediately during upload, while blob id is computed in an asynchronous manner while encoding & uploading the file to Walrus, hence the field may take some time to be populated.
+>
+> (See file fields description [here](src/types/file-version.ts))
+
 
 ```js
 const fileMetadata = await tusky.file.get(uploadId);
-console.log("File blob id: " + fileMetadata.blobId);
+console.log("File Walrus blob id: " + fileMetadata.blobId); // file reference off chain, computed deterministically from blob content
+console.log("File Sui object id: " + fileMetadata.blobObjectId); // file reference on chain
 ```
 
 ### List all user files
