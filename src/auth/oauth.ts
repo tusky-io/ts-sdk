@@ -97,7 +97,11 @@ class OAuth {
 
       const { address } = await retry(async () => {
         try {
-          return this.enokiClient.getZkLogin(this.jwtClient.getIdToken());
+          const idToken = this.jwtClient.getIdToken();
+          if (!idToken) {
+            throw new Unauthorized("Invalid session, please log in again.");
+          }
+          return this.enokiClient.getZkLogin(idToken);
         } catch (error) {
           throwError(error.response?.status, error.response?.data?.msg, error);
         }
@@ -170,7 +174,7 @@ class OAuth {
       try {
         const refreshToken = this.jwtClient.getRefreshToken();
         if (!refreshToken) {
-          throw new Unauthorized("Session expired. Please log in again.");
+          throw new Unauthorized("Session expired, please log in again.");
         }
         const result = await new TuskyApi({ env: this.env }).generateJWT({
           authProvider: this.authProvider,
@@ -179,7 +183,7 @@ class OAuth {
         });
 
         if (!result || !result.accessToken || !result.idToken) {
-          throw new Unauthorized("Invalid session. Please log in again.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
 
         this.jwtClient.setAccessToken(result.accessToken);

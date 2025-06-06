@@ -237,7 +237,7 @@ export class Auth {
       case "OAuth": {
         let idToken = this.jwtClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid session.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
           await retry(async () => {
@@ -259,7 +259,7 @@ export class Auth {
               logger.info("Refresh already in progress...");
               let idToken = this.jwtClient.getIdToken();
               if (!idToken) {
-                throw new Unauthorized("Invalid session.");
+                throw new Unauthorized("Invalid session, please log in again.");
               }
             }
           }, true);
@@ -270,9 +270,9 @@ export class Auth {
       }
       // TODO: consolidate OAuth & Wallet flow with refresh token logic
       case "Wallet": {
-        let idToken = this.jwtClient.getIdToken();
+        const idToken = this.jwtClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid session.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken, 0)) {
           throw new Unauthorized("JWT is expired, please log in again.");

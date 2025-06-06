@@ -4,6 +4,7 @@ import { logger } from "../logger";
 import { Env, Envs } from "../types";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { BadRequest } from "../errors/bad-request";
+import { InternalError } from "../errors/internal-error";
 
 export const ENOKI_API_URL = "https://api.enoki.mystenlabs.com/v1";
 
@@ -81,7 +82,9 @@ export default class EnokiClient {
     });
     if (!response.ok) {
       logger.error(response);
-      throw new Unauthorized("Invalid authorization.");
+      throw new InternalError(
+        "Retrieving ZkLogin failed, please try again in a moment.",
+      );
     }
     return (await response.json()).data;
   }
@@ -103,7 +106,9 @@ export default class EnokiClient {
     });
     if (!response.ok) {
       logger.error(response);
-      throw new Unauthorized("Invalid authorization.");
+      throw new InternalError(
+        "Generating ZkLogin nonce failed, please try again in a moment.",
+      );
     }
     return (await response.json()).data;
   }
