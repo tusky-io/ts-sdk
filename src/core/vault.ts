@@ -222,8 +222,19 @@ class VaultModule {
   }
 
   /**
+   * Purge the vault data
+   * @param id vault id
+   * Puts all the vault data in the trash
+   * @returns {Promise<void>}
+   */
+  public async purge(id: string): Promise<void> {
+    return this.service.api.purgeVault(id);
+  }
+
+  /**
    * Delete the vault\
    * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
+   * Use vault.purge() if you would like to put all vault content in the trash
    * @param id vault id
    * @returns {Promise<void>}
    */
