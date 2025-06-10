@@ -186,6 +186,15 @@ export default class TuskyApi extends Api {
       .updateVault();
   }
 
+  public async purgeVault(id: string): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .resourceId(id)
+      .purgeVault();
+  }
+
   public async deleteVault(id: string): Promise<void> {
     return new ApiClient()
       .env(this.config)
