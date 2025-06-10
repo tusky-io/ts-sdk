@@ -1068,6 +1068,23 @@ export class ApiClient {
    * - resourceId()
    * @returns {Promise<void>}
    */
+  async purgeVault(): Promise<void> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
+      );
+    }
+    return this.post(
+      `${this._apiUrl}/${this._vaultUri}/${this._resourceId}/purge`,
+    );
+  }
+
+  /**
+   *
+   * @requires:
+   * - resourceId()
+   * @returns {Promise<void>}
+   */
   async deleteVault(): Promise<void> {
     if (!this._resourceId) {
       throw new BadRequest(

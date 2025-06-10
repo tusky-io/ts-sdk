@@ -77,6 +77,8 @@ abstract class Api {
 
   abstract updateVault(tx: UpdateVaultTxPayload): Promise<Vault>;
 
+  abstract purgeVault(id: string): Promise<void>;
+
   abstract deleteVault(id: string): Promise<void>;
 
   abstract getTrash(): Promise<Folder>;
