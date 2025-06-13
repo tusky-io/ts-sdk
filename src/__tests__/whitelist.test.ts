@@ -1,13 +1,14 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Tusky } from "../index";
-import { cleanup, initInstance, isEncrypted, testDataPath, vaultCreate } from './common';
+import { initInstance, testDataPath } from './common';
 import faker from '@faker-js/faker';
-import { SUI_COINS, SUI_TYPE } from '../index';
 import { Forbidden } from '../errors/forbidden';
 import { firstFileName } from './data/content';
-import { createReadStream, promises as fs } from 'fs';
+import { promises as fs } from 'fs';
 
 let tusky: Tusky;
+
+const USDC_COIN = "0x2::coin::Coin<0xa1ec7fc00a6f40db9693ad1415d0c193ad3906494428cf252621037bd7117e29::usdc::USDC>"
 
 describe(`Testing TGA functions`, () => {
 
@@ -25,16 +26,17 @@ describe(`Testing TGA functions`, () => {
   it("should create a vault with TGA", async () => {
     const name = faker.random.word();
 
-    const vault = await tusky.vault.create(name, { whitelist: { token: { type: "COIN", address: SUI_COINS["USDC"] }, memberRole: memberRole, capacity: capacity } });
+    const vault = await tusky.vault.create(name, { whitelist: { token: USDC_COIN, memberRole: memberRole, capacity: capacity } });
     expect(vault).toBeTruthy();
     expect(vault.id).toBeTruthy();
     expect(vault.name).toEqual(name);
     expect(vault.whitelist).toBeTruthy();
     expect(vault.whitelist?.id).toBeTruthy();
     expect(vault.whitelist?.capId).toBeTruthy();
-    expect(vault.whitelist?.token).toEqual(SUI_TYPE["COIN"] + "<" + SUI_COINS["USDC"] + ">");
+    expect(vault.whitelist?.tgaId).toBeTruthy();
+    expect(vault.whitelist?.token).toEqual(USDC_COIN);
     expect(vault.whitelist?.memberRole).toEqual(memberRole);
-    expect(vault.whitelist?.capacity).toEqual(capacity)
+    expect(vault.whitelist?.capacity).toEqual(capacity);
     vaultId = vault.id;
     vaultName = name;
   });

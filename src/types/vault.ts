@@ -46,10 +46,7 @@ export class Vault extends Encryptable {
 export type VaultCreateOptions = {
   encrypted?: boolean;
   whitelist?: {
-    token: {
-      type: "COIN" | "NFT";
-      address: string;
-    };
+    token: string;
     memberRole: string;
     capacity?: number;
   };

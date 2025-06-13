@@ -39,7 +39,7 @@ describe("Testing airdrop actions", () => {
 
   describe(`Sharing ${isEncrypted ? "private" : "public"} vault`, () => {
     it("should only list owner for all members of the vault", async () => {
-      const members = await tusky.vault.members(vaultId);
+      const members = await tusky.vault.membersAll(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(1);
@@ -116,7 +116,7 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should list all members of the vault", async () => {
-      const members = await tusky.vault.members(vaultId);
+      const members = await tusky.vault.membersAll(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(4);
@@ -133,7 +133,7 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should list all members of the vault without the revoked one", async () => {
-      const members = await tusky.vault.members(vaultId);
+      const members = await tusky.vault.membersAll(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(3);

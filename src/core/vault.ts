@@ -25,7 +25,6 @@ import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from "@noble/hashes/utils";
 import { BadRequest } from "../errors/bad-request";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
-import { SUI_TYPE } from "../types/whitelist";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -177,18 +176,7 @@ class VaultModule {
       encrypted: this.service.encrypted,
       tags: createOptions.tags,
       keys: this.service.keys,
-      whitelist: createOptions.whitelist
-        ? {
-            ...createOptions.whitelist,
-            token:
-              createOptions.whitelist.token?.type === "COIN"
-                ? SUI_TYPE["COIN"] +
-                  "<" +
-                  createOptions.whitelist.token?.address +
-                  ">"
-                : createOptions.whitelist.token?.address,
-          }
-        : undefined,
+      whitelist: createOptions.whitelist,
     });
     return this.service.processVault(vault, true, this.service.keys);
   }
@@ -385,11 +373,34 @@ class VaultModule {
   }
 
   /**
+   * Retrieve vault members
+   * @param  {string} vaultId
+   * @returns {Promise<Paginated<Membership>>}
+   */
+  public async members(vaultId: string): Promise<Paginated<Membership>> {
+    const paginated = await this.service.api.getMembers(vaultId);
+    await this.service.setVaultContext(vaultId);
+    const memberService = new MembershipService(this.service);
+    return {
+      items: await Promise.all(
+        paginated.items?.map(async (member) =>
+          memberService.processMembership(
+            member,
+            this.service.vault.owner === this.service.address,
+          ),
+        ),
+      ),
+      nextToken: paginated.nextToken,
+      errors: paginated.errors,
+    };
+  }
+
+  /**
    * Retrieve all vault members
    * @param  {string} vaultId
    * @returns {Promise<Array<Membership>>}
    */
-  public async members(vaultId: string): Promise<Array<Membership>> {
+  public async membersAll(vaultId: string): Promise<Array<Membership>> {
     const list = async (listOptions: ListOptions) => {
       return this.service.api.getMembers(listOptions.vaultId);
     };
