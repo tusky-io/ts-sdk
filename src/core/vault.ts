@@ -385,11 +385,34 @@ class VaultModule {
   }
 
   /**
+   * Retrieve vault members
+   * @param  {string} vaultId
+   * @returns {Promise<Paginated<Membership>>}
+   */
+  public async members(vaultId: string): Promise<Paginated<Membership>> {
+    const paginated = await this.service.api.getMembers(vaultId);
+    await this.service.setVaultContext(vaultId);
+    const memberService = new MembershipService(this.service);
+    return {
+      items: await Promise.all(
+        paginated.items?.map(async (member) =>
+          memberService.processMembership(
+            member,
+            this.service.vault.owner === this.service.address,
+          ),
+        ),
+      ),
+      nextToken: paginated.nextToken,
+      errors: paginated.errors,
+    };
+  }
+
+  /**
    * Retrieve all vault members
    * @param  {string} vaultId
    * @returns {Promise<Array<Membership>>}
    */
-  public async members(vaultId: string): Promise<Array<Membership>> {
+  public async membersAll(vaultId: string): Promise<Array<Membership>> {
     const list = async (listOptions: ListOptions) => {
       return this.service.api.getMembers(listOptions.vaultId);
     };
