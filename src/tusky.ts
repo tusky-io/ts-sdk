@@ -19,6 +19,7 @@ import { Conflict } from "./errors/conflict";
 import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
+import { Storage } from "./util/storage";
 
 export class Tusky {
   public api: Api;
@@ -141,7 +142,6 @@ export class Tusky {
       encrypter: this._encrypter,
       env: this._env,
       storage: this._storage,
-      address: this._auth?.getAddress(),
     };
   }
 
