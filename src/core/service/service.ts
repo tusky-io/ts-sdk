@@ -8,6 +8,7 @@ import { Encrypter } from "../../crypto/encrypter";
 import { Auth } from "../../auth";
 import PubSub from "../../api/pubsub";
 import { VaultEncryption } from "../../crypto/vault-encryption";
+import { Storage } from "../../util/storage";
 
 export const STATE_CONTENT_TYPE = "application/json";
 
