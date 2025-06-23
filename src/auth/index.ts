@@ -13,11 +13,12 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { OAuth } from "./oauth";
 import { TuskyApi } from "../api/tusky-api";
 import { Env } from "../types/env";
-import { defaultStorage, JWTClient } from "./jwt";
+import { JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
 import EnokiClient, { ZkLoginNonceResponse } from "./enoki";
+import { defaultStorage, Storage } from "../util/storage";
 
 const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
@@ -133,8 +134,8 @@ export class Auth {
           address,
         });
 
-        this.jwtClient.setAddress(address);
-        this.jwtClient.setIdToken(idToken);
+        await this.jwtClient.setAddress(address);
+        await this.jwtClient.setIdToken(idToken);
         return { address };
       }
       case "OAuth": {
@@ -170,9 +171,9 @@ export class Auth {
     }
   }
 
-  public signOut(): void {
+  public async signOut(): Promise<void> {
     // clear auth tokens from the storage
-    this.jwtClient.clearTokens();
+    await this.jwtClient.clearTokens();
   }
 
   public async createAuthorizationUrl(
@@ -224,7 +225,7 @@ export class Auth {
         throw new Unauthorized("Please add apiKey into config.");
       }
       case "OAuth": {
-        let idToken = this.jwtClient.getIdToken();
+        let idToken = await this.jwtClient.getIdToken();
         if (!idToken) {
           throw new Unauthorized("Invalid session, please log in again.");
         }
@@ -243,10 +244,10 @@ export class Auth {
               });
               await oauthClient.refreshTokens();
               logger.info("Tokens refreshed successfully.");
-              idToken = this.jwtClient.getIdToken();
+              idToken = await this.jwtClient.getIdToken();
             } else {
               logger.info("Refresh already in progress...");
-              let idToken = this.jwtClient.getIdToken();
+              let idToken = await this.jwtClient.getIdToken();
               if (!idToken) {
                 throw new Unauthorized("Invalid session, please log in again.");
               }
@@ -259,7 +260,7 @@ export class Auth {
       }
       // TODO: consolidate OAuth & Wallet flow with refresh token logic
       case "Wallet": {
-        const idToken = this.jwtClient.getIdToken();
+        const idToken = await this.jwtClient.getIdToken();
         if (!idToken) {
           throw new Unauthorized("Invalid session, please log in again.");
         }
@@ -277,11 +278,11 @@ export class Auth {
     }
   }
 
-  public getAddress(): string {
+  public async getAddress(): Promise<string> {
     switch (this.authType) {
       case "OAuth":
       case "Wallet": {
-        return this.jwtClient.getAddress();
+        return await this.jwtClient.getAddress();
       }
       default:
         return undefined;

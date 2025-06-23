@@ -17,10 +17,11 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "types": ["jest", "node"],
-    
+
     "paths": {
       "@env/types/*": ["types/node/*"],
-      "@env/core/*": ["core/node/*"]
+      "@env/core/*": ["core/node/*"],
+      "@env/util/*": ["util/node/*"]
     },
     "plugins": [
       { "transform": "typescript-transform-paths" },

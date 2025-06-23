@@ -425,7 +425,12 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async getMe(): Promise<User> {
+    logger.info(`[time] Api call me.get() start`);
+    const start = performance.now();
+
     const me = await this.get(`${this._apiUrl}/${this._meUri}`);
+    const end = performance.now();
+    logger.info(`[time] Api call me.get() end - took ${end - start} ms`);
     return new User(me);
   }
 
@@ -620,7 +625,14 @@ export class ApiClient {
    * @returns {Promise<Vault>}
    */
   async getVault(): Promise<Vault> {
-    return this.get(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
+    logger.info(`[time] Api call vault.get() start`);
+    const start = performance.now();
+    const vault = await this.get(
+      `${this._apiUrl}/${this._vaultUri}/${this._resourceId}`,
+    );
+    const end = performance.now();
+    logger.info(`[time] Api call vault.get() end - took ${end - start} ms`);
+    return vault;
   }
 
   /**
@@ -788,10 +800,43 @@ export class ApiClient {
 
     return await retry(async () => {
       try {
-        const response = await this._httpClient(config);
-        return response.data;
+        const method = (config.method || "get").toUpperCase();
+
+        const fetchConfig = {
+          method,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            ...(config.headers || {}),
+          },
+        } as any;
+
+        if (
+          ["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
+          config.data !== undefined
+        ) {
+          fetchConfig.body = JSON.stringify(config.data);
+        }
+
+        const response = await fetch(config.url, fetchConfig);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${errorText}`,
+          );
+        }
+
+        if (response.status === 204) {
+          return null;
+        }
+
+        const responseData = await response.json();
+        logger.info(responseData);
+        return responseData;
       } catch (error) {
         logger.debug(config);
+        logger.debug(error);
         throwError(
           error.response?.status,
           error.response?.data?.msg || error.message,
@@ -1130,9 +1175,8 @@ export class ApiClient {
     return new Folder(data);
   }
 
-  async emptyTrash(): Promise<Folder> {
-    const data = await this.delete(`${this._apiUrl}/${this._trashUri}`);
-    return new Folder(data);
+  async emptyTrash(): Promise<void> {
+    await this.delete(`${this._apiUrl}/${this._trashUri}`);
   }
 
   /**

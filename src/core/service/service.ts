@@ -7,6 +7,7 @@ import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
 import { Encrypter } from "../../crypto/encrypter";
 import { Auth } from "../../auth";
 import { VaultEncryption } from "../../crypto/vault-encryption";
+import { Storage } from "../../util/storage";
 
 export const STATE_CONTENT_TYPE = "application/json";
 

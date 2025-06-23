@@ -30,9 +30,10 @@ import {
 import * as tus from "tus-js-client";
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
-import { EncryptableHttpStack } from "../crypto/tus/http-stack";
+import { EncryptableHttpStack } from "@env/util/tus";
 import { VaultEncryption } from "../crypto/vault-encryption";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
+import { logger } from "../logger";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -158,15 +159,18 @@ class FileModule {
           string
         >),
       },
-      httpStack: new EncryptableHttpStack(
-        new tus.DefaultHttpStack({}),
-        vault,
-        this.service.encrypter,
-      ),
+      httpStack: options.httpStack
+        ? options.httpStack
+        : new EncryptableHttpStack(
+            new tus.DefaultHttpStack({}),
+            vault,
+            this.service.encrypter,
+          ),
       removeFingerprintOnSuccess: true,
       onBeforeRequest: async (req: tus.HttpRequest) => {
         if (req.getMethod() === "POST" || req.getMethod() === "PATCH") {
           const xhr = req.getUnderlyingObject();
+
           if (xhr) {
             xhr.withCredentials = true;
           } else if (uploadId) {
@@ -235,7 +239,13 @@ class FileModule {
       ...this.defaultGetOptions,
       ...options,
     };
+
+    logger.info(`[time] Api call file.get() start`);
+    const start = performance.now();
+
     const nodeProto = await this.service.api.getFile(id);
+    const end = performance.now();
+    logger.info(`[time] Api call file.get() end - took ${end - start} ms`);
     return this.service.processFile(nodeProto, getOptions.shouldDecrypt);
   }
 
@@ -253,7 +263,12 @@ class FileModule {
       ...this.defaultListOptions,
       ...options,
     };
+    logger.info(`[time] Api call file.list() start`);
+    const start = performance.now();
+
     const response = await this.service.api.getFiles(listOptions);
+    const end = performance.now();
+    logger.info(`[time] Api call file.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
@@ -352,6 +367,7 @@ class FileModule {
     const { data: file, headers } = await this.service.api.downloadFile(id, {
       responseType: "stream",
     });
+
     let stream: ReadableStream<Uint8Array>;
 
     console.log(headers);
@@ -396,7 +412,7 @@ class FileModule {
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
   }
 
-  protected async aesKey(fileMetadata: File): Promise<CryptoKey | null> {
+  protected async aesKey(fileMetadata: File): Promise<Uint8Array | null> {
     if (!fileMetadata.encryptedAesKey) {
       return null;
     }

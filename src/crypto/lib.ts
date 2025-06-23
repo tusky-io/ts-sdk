@@ -1,13 +1,7 @@
-import {
-  ready,
-  crypto_sign_detached,
-  crypto_box_keypair,
-  crypto_box_open_easy,
-  randombytes_buf,
-  crypto_box_NONCEBYTES,
-  crypto_box_easy,
-  KeyPair,
-} from "libsodium-wrappers";
+import { sha256 } from "@noble/hashes/sha256";
+import { randomBytes } from "@noble/hashes/utils";
+import { gcm } from "@noble/ciphers/aes";
+import { pbkdf2Async } from "@noble/hashes/pbkdf2";
 import {
   arrayToBase64,
   base64ToArray,
@@ -16,7 +10,6 @@ import {
   stringToArray,
 } from "./encoding";
 
-import jsSHA from "jssha";
 import { AESEncryptedPayload, X25519EncryptedPayload } from "./types";
 import { logger } from "../logger";
 import {
@@ -26,122 +19,14 @@ import {
 } from "./stream";
 import { ReadableStream } from "web-streams-polyfill";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
+import { loadSodium } from "./libsodium";
 
-const HASH_ALGORITHM = "SHA-256";
+export const SYMMETRIC_KEY_LENGTH = 32;
 
-const SYMMETRIC_KEY_ALGORITHM = "AES-GCM";
-const SYMMETRIC_KEY_LENGTH = 256;
-
-const KEY_DERIVATION_FUNCTION = "PBKDF2";
 export const KEY_DERIVATION_ITERATION_COUNT = 1000000;
 
 export const AUTH_TAG_LENGTH_IN_BYTES = 16;
 export const IV_LENGTH_IN_BYTES = 12;
-
-/**
- * Export CryptoKey object to base64 encoded string
- * @param {CryptoKey} key
- * @returns {Promise.<string>} string containing crypto key
- */
-async function exportKeyToBase64(key: CryptoKey): Promise<string> {
-  const keyBuffer = await exportKeyToArray(key);
-  return arrayToBase64(keyBuffer);
-}
-
-/**
- * Export CryptoKey object to buffer key material
- * @param {CryptoKey} key
- * @returns {Promise.<Uint8Array>} buffer containing crypto key
- */
-async function exportKeyToArray(key: CryptoKey): Promise<Uint8Array> {
-  try {
-    const rawKeyBuffer = await crypto.subtle.exportKey("raw", key);
-    return new Uint8Array(rawKeyBuffer);
-  } catch (error) {
-    logger.error(error);
-    throw new IncorrectEncryptionKey(new Error("Web Crypto key export error."));
-  }
-}
-
-/**
- * Import CryptoKey object from base64 encoded string
- * @param {string} keyBase64
- * @returns {Promise.<CryptoKey>} crypto key object
- */
-async function importKeyFromBase64(
-  keyBase64: string,
-  extractable = false,
-): Promise<CryptoKey> {
-  return importKeyFromArray(base64ToArray(keyBase64), extractable);
-}
-
-/**
- * Import CryptoKey object from key buffer material
- * @param {Uint8Array} keyBuffer
- * @returns {Promise.<CryptoKey>} crypto key object
- */
-async function importKeyFromArray(
-  keyBuffer: Uint8Array,
-  extractable = false,
-): Promise<CryptoKey> {
-  try {
-    const key = await crypto.subtle.importKey(
-      "raw",
-      keyBuffer,
-      {
-        name: SYMMETRIC_KEY_ALGORITHM,
-        length: SYMMETRIC_KEY_LENGTH,
-      },
-      extractable,
-      ["encrypt", "decrypt"],
-    );
-    return key;
-  } catch (error) {
-    logger.error(error);
-    throw new IncorrectEncryptionKey(new Error("Web Crypto key import error."));
-  }
-}
-
-/**
- * Import key from a random seed
- * @param {Uint8Array} seed
- * @returns {Promise.<CryptoKey>} crypto key object
- */
-async function importKeyFromSeed(seed: Uint8Array): Promise<CryptoKey> {
-  try {
-    const seedHash = await crypto.subtle.digest(HASH_ALGORITHM, seed);
-    const key = await crypto.subtle.importKey(
-      "raw",
-      seedHash,
-      {
-        name: SYMMETRIC_KEY_ALGORITHM,
-        length: SYMMETRIC_KEY_LENGTH,
-      },
-      false,
-      ["encrypt", "decrypt"],
-    );
-    return key;
-  } catch (error) {
-    logger.error(error);
-    throw new IncorrectEncryptionKey(new Error("Web Crypto key import error."));
-  }
-}
-
-/**
- * Signature generation using sodium library: https://github.com/jedisct1/libsodium
- * @param {BufferSource} msgHash buffer message hash to be signed
- * @param {Uint8Array} privateKey private key used to sign message hash
- * @returns {Promise.<string>} signature as base64 string
- */
-async function signHash(
-  msgHash: ArrayBuffer,
-  privateKey: Uint8Array,
-): Promise<string> {
-  const msgHashByteArray = new Uint8Array(msgHash);
-  await ready;
-  const signature = crypto_sign_detached(msgHashByteArray, privateKey);
-  return arrayToBase64(signature);
-}
 
 /**
  * Digest generation
@@ -153,34 +38,8 @@ async function digest(payload: string): Promise<string> {
 }
 
 async function digestRaw(payload: Uint8Array): Promise<string> {
-  const msgHash = await crypto.subtle.digest(HASH_ALGORITHM, payload);
+  const msgHash = sha256(payload);
   return arrayToBase64(msgHash);
-}
-
-function initDigest(): jsSHA {
-  return new jsSHA(HASH_ALGORITHM, "UINT8ARRAY");
-}
-
-function chainDigest(digestObject: jsSHA, payload: Uint8Array): jsSHA {
-  return digestObject.update(payload);
-}
-
-/**
- * Signature generation
- * @param {string} payload string payload to be signed
- * @param {Uint8Array} privateKey private key used to sign string payload
- * @returns {Promise.<string>} signature as base64 string
- */
-async function signString(
-  payload: string,
-  privateKey: Uint8Array,
-): Promise<string> {
-  const msgHash = await crypto.subtle.digest(
-    HASH_ALGORITHM,
-    stringToArray(payload),
-  );
-  const signature = await signHash(msgHash, privateKey);
-  return signature;
 }
 
 /**
@@ -193,20 +52,14 @@ async function signString(
  */
 async function encryptAes(
   plaintext: Uint8Array,
-  key: CryptoKey,
+  key: Uint8Array,
   encode: boolean = true,
 ): Promise<string | Uint8Array> {
   try {
-    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_IN_BYTES));
+    const iv = randomBytes(IV_LENGTH_IN_BYTES);
+    const aes = gcm(key, iv);
+    const ciphertextArray = await aes.encrypt(plaintext);
 
-    let ciphertextArray = await crypto.subtle.encrypt(
-      {
-        name: SYMMETRIC_KEY_ALGORITHM,
-        iv: iv,
-      },
-      key,
-      plaintext,
-    );
     if (encode) {
       return encodeAesPayload(ciphertextArray, iv);
     }
@@ -231,20 +84,18 @@ async function encryptAes(
  */
 async function decryptAes(
   encryptedPayload: string | AESEncryptedPayload,
-  key: CryptoKey,
-): Promise<ArrayBuffer> {
+  key: Uint8Array,
+): Promise<Uint8Array> {
   try {
+    logger.info(`[time] decryptAes() start`);
+    const start = performance.now();
     const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext
       ? (encryptedPayload as AESEncryptedPayload)
       : decodeAesPayload(encryptedPayload as string);
-    const plaintext = await crypto.subtle.decrypt(
-      {
-        name: SYMMETRIC_KEY_ALGORITHM,
-        iv: payload.iv,
-      },
-      key,
-      payload.ciphertext as ArrayBufferLike,
-    );
+    const aes = gcm(key, payload.iv);
+    const plaintext = await aes.decrypt(payload.ciphertext as Uint8Array);
+    const end = performance.now();
+    logger.info(`[time] decryptAes() end - took ${end - start} ms`);
     return plaintext;
   } catch (error) {
     logger.error(error);
@@ -253,7 +104,7 @@ async function decryptAes(
 }
 
 function encodeAesPayload(
-  ciphertextArray: ArrayBuffer,
+  ciphertextArray: Uint8Array,
   iv: ArrayBuffer | Uint8Array,
 ): string {
   const encryptedPayload = {
@@ -279,63 +130,54 @@ function decodeAesPayload(payload: string): AESEncryptedPayload {
  * @param {BufferSource} salt
  * @returns {Promise.<CryptoKey>} Promise of CryptoKey object with AES 256-bit symmetric key
  */
-async function deriveAesKey(
+async function deriveAesKeyPbkdf2(
   password: string,
   salt: Uint8Array,
   iterationCount: number = KEY_DERIVATION_ITERATION_COUNT,
-): Promise<CryptoKey> {
+): Promise<Uint8Array> {
   try {
-    const keyBase = await crypto.subtle.importKey(
-      "raw",
-      stringToArray(password),
-      KEY_DERIVATION_FUNCTION,
-      false,
-      ["deriveBits", "deriveKey"],
-    );
-
-    return crypto.subtle.deriveKey(
+    const key = await pbkdf2Async(
+      sha256,
+      new TextEncoder().encode(password),
+      salt,
       {
-        name: KEY_DERIVATION_FUNCTION,
-        salt: salt,
-        iterations: iterationCount,
-        hash: HASH_ALGORITHM,
+        c: iterationCount,
+        dkLen: 32,
       },
-      keyBase,
-      {
-        name: SYMMETRIC_KEY_ALGORITHM,
-        length: SYMMETRIC_KEY_LENGTH,
-      },
-      true,
-      ["encrypt", "decrypt"],
-    );
-  } catch (error) {
-    logger.error(error);
-    throw new IncorrectEncryptionKey(
-      new Error("Web Crypto key derivation error."),
-    );
-  }
-}
-
-/**
- * Symmetric key generation
- * - generate an extractable AES 256-bit symmetric key
- * @returns {Promise.<CryptoKey>}
- */
-async function generateKey(extractable = false): Promise<CryptoKey> {
-  try {
-    const key = await crypto.subtle.generateKey(
-      {
-        name: SYMMETRIC_KEY_ALGORITHM,
-        length: SYMMETRIC_KEY_LENGTH,
-      },
-      extractable,
-      ["encrypt", "decrypt"],
     );
     return key;
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(
-      new Error("Web Crypto key generation error."),
+      new Error("Noble PBKDF2 key derivation error."),
+    );
+  }
+}
+
+/**
+ * Key derivation using libsodium
+ * - Argon2id
+ * @param {string} password
+ * @param {BufferSource} salt
+ * @returns {Promise.<Uint8Array>} Promise of key bytes
+ */
+async function deriveAesKeyArgon(
+  password: string,
+  salt: Uint8Array,
+): Promise<Uint8Array> {
+  try {
+    logger.info(`[time] deriveAesKeyArgon() start`);
+    const start = performance.now();
+    const sodium = await loadSodium();
+
+    const hash = await sodium.pwHash(password, arrayToBase64(salt));
+    const end = performance.now();
+    logger.info(`[time] deriveAesKeyArgon() end - took ${end - start} ms`);
+    return base64ToArray(hash);
+  } catch (error) {
+    logger.error(error);
+    throw new IncorrectEncryptionKey(
+      new Error("Libsodium Argon key derivation error."),
     );
   }
 }
@@ -343,12 +185,15 @@ async function generateKey(extractable = false): Promise<CryptoKey> {
 /**
  * Public key pair generation
  * - generate a Curve25519 key pair
- * @returns {Promise.<_sodium.KeyPair>}
+ * @returns {Promise.<any>}
  */
-async function generateKeyPair(): Promise<KeyPair> {
+async function generateKeyPair(): Promise<{
+  publicKey: Uint8Array;
+  privateKey: Uint8Array;
+}> {
   try {
-    await ready;
-    const keyPair = crypto_box_keypair();
+    const sodium = await loadSodium();
+    const keyPair = await sodium.crypto_box_keypair();
 
     return keyPair;
   } catch (error) {
@@ -370,11 +215,11 @@ async function encryptWithPublicKey(
   plaintext: string | Uint8Array,
 ): Promise<X25519EncryptedPayload> {
   try {
-    await ready;
-    const ephemeralKeyPair = crypto_box_keypair();
-    const nonce = randombytes_buf(crypto_box_NONCEBYTES);
+    const sodium = await loadSodium();
+    const ephemeralKeyPair = await sodium.crypto_box_keypair();
+    const nonce = await sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 
-    const ciphertext = crypto_box_easy(
+    const ciphertext = await sodium.crypto_box_easy(
       plaintext,
       nonce,
       publicKey,
@@ -406,13 +251,18 @@ async function decryptWithPrivateKey(
   encryptedPayload: X25519EncryptedPayload,
 ): Promise<Uint8Array> {
   try {
-    await ready;
-    const plaintext = crypto_box_open_easy(
+    logger.info(`[time] decryptWithPrivateKey() start`);
+    const start = performance.now();
+
+    const sodium = await loadSodium();
+    const plaintext = await sodium.crypto_box_open_easy(
       base64ToArray(encryptedPayload.ciphertext),
       base64ToArray(encryptedPayload.nonce),
       base64ToArray(encryptedPayload.ephemPublicKey),
       privateKey,
     );
+    const end = performance.now();
+    logger.info(`[time] decryptWithPrivateKey() end - took ${end - start} ms`);
     return plaintext;
   } catch (error) {
     logger.debug(encryptedPayload);
@@ -423,7 +273,7 @@ async function decryptWithPrivateKey(
 
 async function decryptStream(
   stream: ReadableStream<Uint8Array>,
-  aesKey: CryptoKey,
+  aesKey: Uint8Array,
   chunkSize: number,
 ): Promise<any> {
   if (stream === null) return null;
@@ -437,21 +287,12 @@ async function decryptStream(
 }
 
 export {
-  exportKeyToArray,
-  importKeyFromArray,
-  exportKeyToBase64,
-  importKeyFromBase64,
-  importKeyFromSeed,
   digest,
   digestRaw,
-  initDigest,
-  chainDigest,
-  signHash,
-  signString,
   encryptAes,
   decryptAes,
-  deriveAesKey,
-  generateKey,
+  deriveAesKeyPbkdf2,
+  deriveAesKeyArgon,
   generateKeyPair,
   encryptWithPublicKey,
   decryptWithPrivateKey,

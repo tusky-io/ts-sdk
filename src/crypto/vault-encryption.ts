@@ -5,9 +5,7 @@ import {
   decryptAes,
   encryptAes,
   encryptWithPublicKey,
-  exportKeyToArray,
-  generateKey,
-  importKeyFromArray,
+  SYMMETRIC_KEY_LENGTH,
 } from "./lib";
 import { base64ToArray, base64ToJson, jsonToBase64 } from "./encoding";
 import {
@@ -16,6 +14,7 @@ import {
   X25519EncryptedPayload,
 } from "./types";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
+import { randomBytes } from "@noble/hashes/utils";
 
 export class VaultEncryption {
   currentPublicKey: string;
@@ -39,16 +38,15 @@ export class VaultEncryption {
   }
 
   async generateAesKey(): Promise<AESKeyPayload> {
-    const aesKey = await generateKey(true);
-    const keyBuffer = await exportKeyToArray(aesKey);
+    const keyBuffer = randomBytes(SYMMETRIC_KEY_LENGTH);
     const encryptedAesKey = await encryptWithPublicKey(
       base64ToArray(this.currentPublicKey),
       keyBuffer,
     );
-    return { aesKey, encryptedAesKey };
+    return { aesKey: keyBuffer, encryptedAesKey };
   }
 
-  async decryptAesKey(encryptedAesKey: string): Promise<CryptoKey> {
+  async decryptAesKey(encryptedAesKey: string): Promise<Uint8Array> {
     const encryptedAesKeyJson = base64ToJson(
       encryptedAesKey,
     ) as X25519EncryptedPayload;
@@ -61,8 +59,7 @@ export class VaultEncryption {
       keypair: new X25519KeyPair(privateKey),
     });
     const decryptedKey = await vaultEncrypter.decrypt(encryptedAesKey);
-    const aesKey = await importKeyFromArray(decryptedKey, true);
-    return aesKey;
+    return new Uint8Array(decryptedKey);
   }
 
   async encryptHybrid(data: Uint8Array): Promise<string> {
@@ -112,6 +109,6 @@ export class VaultEncryption {
 }
 
 export type AESKeyPayload = {
-  aesKey: CryptoKey;
+  aesKey: Uint8Array;
   encryptedAesKey: X25519EncryptedPayload;
 };

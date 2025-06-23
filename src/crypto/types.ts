@@ -6,8 +6,8 @@ export type X25519EncryptedPayload = {
 };
 
 export type AESEncryptedPayload = {
-  ciphertext: ArrayBufferLike | ReadableStream;
-  iv?: ArrayBufferLike;
+  ciphertext: Uint8Array | ReadableStream;
+  iv?: Uint8Array;
 };
 
 export type EncryptedPayload = {
@@ -30,4 +30,5 @@ export type EncryptedUserBackupPayload = {
   encryptedPayload: string | AESEncryptedPayload;
   salt: string;
   iterationCount?: number;
+  argon?: boolean;
 };

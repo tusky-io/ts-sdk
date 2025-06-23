@@ -4,7 +4,9 @@ export class StreamConverter {
   public static async toArrayBuffer<T>(
     readableStream: ReadableStream<T>,
   ): Promise<ArrayBuffer> {
-    const reader = readableStream.getReader();
+    const reader = readableStream.getReader
+      ? readableStream.getReader()
+      : (readableStream as any);
     const chunks = [];
     let result = await reader.read();
 

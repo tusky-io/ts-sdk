@@ -5,10 +5,11 @@ import { BadRequest } from "../errors/bad-request";
 import { logger } from "../logger";
 import { TuskyApi } from "../api/tusky-api";
 import { Unauthorized } from "../errors/unauthorized";
-import { defaultStorage, JWTClient } from "./jwt";
+import { JWTClient } from "./jwt";
 import { Env, Envs } from "../types/env";
 import { retry } from "../api/api-client";
 import { throwError } from "../errors/error-factory";
+import { defaultStorage, Storage } from "../util/storage";
 
 interface AuthProviderConfig {
   CLIENT_ID: string;
@@ -103,7 +104,7 @@ class OAuth {
 
       const { address } = await retry(async () => {
         try {
-          const idToken = this.jwtClient.getIdToken();
+          const idToken = await this.jwtClient.getIdToken();
           if (!idToken) {
             throw new Unauthorized("Invalid session, please log in again.");
           }
@@ -112,7 +113,7 @@ class OAuth {
           throwError(error.response?.status, error.response?.data?.msg, error);
         }
       });
-      this.jwtClient.setAddress(address);
+      await this.jwtClient.setAddress(address);
       return { address };
     } else {
       logger.warn("Authorization code not found.");
@@ -135,9 +136,9 @@ class OAuth {
         authCode: code,
       });
 
-      this.jwtClient.setAccessToken(accessToken);
-      this.jwtClient.setRefreshToken(refreshToken);
-      this.jwtClient.setIdToken(idToken);
+      await this.jwtClient.setAccessToken(accessToken);
+      await this.jwtClient.setRefreshToken(refreshToken);
+      await this.jwtClient.setIdToken(idToken);
     } catch (error) {
       logger.error(error);
     }
@@ -175,10 +176,10 @@ class OAuth {
   }
 
   async refreshTokens(): Promise<void> {
-    if (!this.jwtClient.getRefreshInProgress()) {
-      this.jwtClient.setRefreshInProgress(true);
+    if (!(await this.jwtClient.getRefreshInProgress())) {
+      await this.jwtClient.setRefreshInProgress(true);
       try {
-        const refreshToken = this.jwtClient.getRefreshToken();
+        const refreshToken = await this.jwtClient.getRefreshToken();
         if (!refreshToken) {
           throw new Unauthorized("Session expired, please log in again.");
         }
@@ -192,15 +193,15 @@ class OAuth {
           throw new Unauthorized("Invalid session, please log in again.");
         }
 
-        this.jwtClient.setAccessToken(result.accessToken);
-        this.jwtClient.setIdToken(result.idToken);
+        await this.jwtClient.setAccessToken(result.accessToken);
+        await this.jwtClient.setIdToken(result.idToken);
         if (result.refreshToken) {
-          this.jwtClient.setRefreshToken(result.refreshToken);
+          await this.jwtClient.setRefreshToken(result.refreshToken);
         }
-        this.jwtClient.setRefreshInProgress(false);
+        await this.jwtClient.setRefreshInProgress(false);
       } catch (error) {
         logger.error(error);
-        this.jwtClient.setRefreshInProgress(false);
+        await this.jwtClient.setRefreshInProgress(false);
         throw new Unauthorized("Failed to refresh tokens.");
       }
     }

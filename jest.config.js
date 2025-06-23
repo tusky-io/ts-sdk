@@ -21,6 +21,7 @@ const baseConfig = {
   moduleNameMapper: {
     '^@env/types(.*)$': '<rootDir>/src/types/node/$1',
     '^@env/core(.*)$': '<rootDir>/src/core/node/$1',
+    '^@env/util(.*)$': '<rootDir>/src/util/node/$1',
   },
   
   transform: {

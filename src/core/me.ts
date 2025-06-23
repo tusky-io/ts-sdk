@@ -4,6 +4,7 @@ import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
 import { ClientConfig } from "../config";
 import { arrayToBase64, X25519KeyPair } from "../crypto";
+import { logger } from "../logger";
 
 class MeModule {
   protected service: Service;
@@ -19,7 +20,8 @@ class MeModule {
    * @returns {Promise<User>}
    */
   public async get(): Promise<User> {
-    return await this.service.api.getMe();
+    const me = await this.service.api.getMe();
+    return me;
   }
 
   /**
@@ -168,12 +170,13 @@ class MeModule {
    */
   public async importEncryptionSessionFromPassword(
     password: string,
+    keystore = false,
   ): Promise<{ keypair: X25519KeyPair }> {
     const me = await this.get();
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
     const { keypair } = await this.userEncryption.importFromPassword(
       password,
-      true,
+      keystore,
     );
     return { keypair };
   }

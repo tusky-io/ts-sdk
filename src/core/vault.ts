@@ -2,6 +2,7 @@ import { role } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import {
   ListOptions,
+  ListPaginatedApiOptions,
   VaultGetOptions,
   validateListPaginatedApiOptions,
 } from "../types/query-options";
@@ -25,6 +26,7 @@ import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from "@noble/hashes/utils";
 import { BadRequest } from "../errors/bad-request";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
+import { logger } from "../logger";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -81,7 +83,11 @@ class VaultModule {
       ...this.defaultListOptions,
       ...options,
     };
+    logger.info(`[time] Api call vault.list() start`);
+    const start = performance.now();
     const response = await this.service.api.getVaults(listOptions);
+    const end = performance.now();
+    logger.info(`[time] Api call vault.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processVault = async (vaultProto: Vault) => {
@@ -315,12 +321,13 @@ class VaultModule {
       ownerAccess: ownerAccess,
     });
 
+    const me = await this.service.api.getMe();
     return {
       identityPrivateKey: memberKeyPair?.getSecretKey(),
       password: password,
       membership: await memberService.processMembership(
         membership,
-        this.service.vault.owner === this.service.address,
+        this.service.vault.owner === me.address,
       ),
     };
   }
@@ -344,7 +351,7 @@ class VaultModule {
     //     member.id !== id // filter out the member being revoked
     //     && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
 
-    //     console.log(activeMembers)
+    //     logger.info(activeMembers)
     //   // rotate keys for all active members
     //   const memberPublicKeys = new Map<string, string>();
     //   await Promise.all(activeMembers.map(async (member: Membership) => {
@@ -388,16 +395,23 @@ class VaultModule {
    * @param  {string} vaultId
    * @returns {Promise<Paginated<Membership>>}
    */
-  public async members(vaultId: string): Promise<Paginated<Membership>> {
-    const paginated = await this.service.api.getMembers({ vaultId });
+  public async members(
+    vaultId: string,
+    options: ListPaginatedApiOptions = {},
+  ): Promise<Paginated<Membership>> {
+    const paginated = await this.service.api.getMembers({
+      vaultId: vaultId,
+      ...options,
+    });
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
+    const me = await this.service.api.getMe();
     return {
       items: await Promise.all(
         paginated.items?.map(async (member) =>
           memberService.processMembership(
             member,
-            this.service.vault.owner === this.service.address,
+            this.service.vault.owner === me.address,
           ),
         ),
       ),
@@ -420,11 +434,12 @@ class VaultModule {
     });
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
+    const me = await this.service.api.getMe();
     return Promise.all(
       members?.map(async (member: Membership) =>
         memberService.processMembership(
           member,
-          this.service.vault.owner === this.service.address,
+          this.service.vault.owner === me.address,
         ),
       ),
     );

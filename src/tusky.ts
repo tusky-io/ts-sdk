@@ -1,7 +1,7 @@
 import { Api } from "./api/api";
 import { TuskyApi } from "./api/tusky-api";
 import { ClientConfig, EncrypterConfig, TuskyConfig } from "./config";
-import { logger } from "./logger";
+import { ConsoleLogger, logger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { NFTModule } from "./core/nft";
 import { VaultModule } from "./core/vault";
@@ -16,8 +16,8 @@ import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./crypto/encrypter";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
-import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
+import { defaultStorage, Storage } from "./util/storage";
 
 export class Tusky {
   public api: Api;
@@ -80,6 +80,9 @@ export class Tusky {
     if (config.oauth) {
       builder.useOAuth(config.oauth);
     }
+    if (config.storage) {
+      builder.useStorage(config.storage);
+    }
     return builder.build();
   }
 
@@ -90,6 +93,9 @@ export class Tusky {
   }
 
   async addEncrypter(config: EncrypterConfig): Promise<this> {
+    logger.info(`[time] addEncrypter() start`);
+
+    const start = performance.now();
     if (!config) {
       return;
     }
@@ -97,6 +103,7 @@ export class Tusky {
       this._encrypter = new Encrypter({ keypair: config.keypair });
     } else if (config.password) {
       const user = await this.me.get();
+
       if (!user.encPrivateKey) {
         logger.info("Generate new user encryption context");
         const { keypair } = await this.me.setupPassword(config.password);
@@ -107,6 +114,7 @@ export class Tusky {
         );
         const { keypair } = await this.me.importEncryptionSessionFromPassword(
           config.password,
+          config.keystore,
         );
         this._encrypter = new Encrypter({ keypair: keypair });
       }
@@ -128,6 +136,8 @@ export class Tusky {
         throw new Conflict("The user needs to provide the password again.");
       }
     }
+    const end = performance.now();
+    logger.info(`[time] addEncrypter() end - took ${end - start} ms`);
     return this;
   }
 
@@ -138,7 +148,6 @@ export class Tusky {
       encrypter: this._encrypter,
       env: this._env,
       storage: this._storage,
-      address: this._auth?.getAddress(),
     };
   }
 
@@ -153,6 +162,14 @@ export class Tusky {
       ? config.auth
       : new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());
+    if (config.logLevel) {
+      setLogger(
+        new ConsoleLogger({
+          logLevel: config.logLevel,
+          logToFile: config.logToFile,
+        }),
+      );
+    }
     CacheBusters.cache = config?.cache;
   }
 }

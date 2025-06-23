@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
-    "lib": ["ES2020", "WebWorker"],
-    "outDir": "./lib/node/esm",
+    "target": "ES2017",
+    "module": "ESNext",
+    "lib": ["ESNext"],
+    "outDir": "./lib/react-native/esm",
     "baseUrl": "src",
     "strict": false,
     "esModuleInterop": true,
@@ -13,18 +13,19 @@
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
+    "importHelpers": true,
+    "noEmitHelpers": true,
     "experimentalDecorators": true,
-    "types": ["node"],
     "paths": {
-      "@env/types/*": ["types/node/*"],
-      "@env/core/*": ["core/node/*"],
-      "@env/util/*": ["util/node/*"]
+      "@env/types/*": ["types/react-native/*"],
+      "@env/core/*": ["core/react-native/*"],
+      "@env/util/*": ["util/react-native/*"]
     },
     "plugins": [
       { "transform": "typescript-transform-paths" },
       { "transform": "typescript-transform-paths", "afterDeclarations": true }
     ],
-    "declarationDir": "./lib/node/types"
+    "declarationDir": "./lib/react-native/types"
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*", "src/__tests__/*"]

@@ -12,7 +12,7 @@ class TrashModule {
     return await this.service.api.getTrash();
   }
 
-  public async empty(): Promise<Folder> {
+  public async empty(): Promise<void> {
     return await this.service.api.emptyTrash();
   }
 }

@@ -7,23 +7,24 @@ import {
 import {
   decodeAesPayload,
   decryptAes,
-  deriveAesKey,
+  deriveAesKeyArgon,
+  deriveAesKeyPbkdf2,
   encryptAes,
-  exportKeyToArray,
-  generateKey,
   generateKeyPair,
-  importKeyFromArray,
   KEY_DERIVATION_ITERATION_COUNT,
+  SYMMETRIC_KEY_LENGTH,
 } from "./lib";
 import Keystore from "./storage/keystore";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { logger } from "../logger";
 import { X25519KeyPair } from "./keypair";
-import { defaultStorage, JWTClient } from "../auth/jwt";
+import { JWTClient } from "../auth/jwt";
 import { Env } from "../types";
 import * as bip39 from "bip39";
 import { EncryptedUserBackupPayload } from "./types";
 import { Conflict } from "../errors/conflict";
+import { defaultStorage, Storage } from "../util/storage";
+import { randomBytes } from "@noble/hashes/utils";
 
 const MNEMONIC_ENTROPY = 256;
 const SALT_LENGTH = 16;
@@ -35,9 +36,9 @@ export class UserEncryption {
   private encPrivateKeyBackup: string;
   private storage: Storage;
 
-  private userId: string;
   private sessionKeyPath: string;
   private encryptedPasswordKeyPath: string;
+  private env: Env;
 
   constructor(
     config: {
@@ -50,9 +51,7 @@ export class UserEncryption {
     this.encPrivateKey = config.encPrivateKey;
     this.encPrivateKeyBackup = config.encPrivateKeyBackup;
     this.storage = config.storage || defaultStorage();
-    this.userId = new JWTClient(config).getUserId();
-    this.sessionKeyPath = `${this.userId}_${SESSION_KEY_PATH}`;
-    this.encryptedPasswordKeyPath = `${this.userId}_${ENCRYPTED_PASSWORD_KEY_PATH}`;
+    this.env = config.env;
   }
 
   public setEncryptedPrivateKey(encPrivateKey: string) {
@@ -161,12 +160,10 @@ export class UserEncryption {
       { ciphertext, iv },
       encryptionSession.sessionKey,
     );
-    const passwordKey = await importKeyFromArray(new Uint8Array(decryptedKey));
-
     const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any; // TODO: type here
     const privateKey = await decryptAes(
       parsedEncPrivateKey.encryptedPayload,
-      passwordKey,
+      decryptedKey,
     );
     return { keypair: new X25519KeyPair(new Uint8Array(privateKey)) };
   }
@@ -234,18 +231,14 @@ export class UserEncryption {
     try {
       const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
 
-      const passwordKey = await deriveAesKey(
-        password,
-        salt,
-        KEY_DERIVATION_ITERATION_COUNT,
-      );
+      const passwordKey = await deriveAesKeyArgon(password, salt);
 
       const encryptedPayload = await encryptAes(plaintext, passwordKey);
 
       const payload = {
         encryptedPayload: encryptedPayload,
         salt: arrayToBase64(salt),
-        iterationCount: KEY_DERIVATION_ITERATION_COUNT,
+        argon: true,
       };
 
       if (keystore) {
@@ -273,6 +266,10 @@ export class UserEncryption {
     keystore: boolean = false,
   ): Promise<Uint8Array> {
     try {
+      logger.info(`[time] decryptWithPassword() start`);
+
+      const start = performance.now();
+
       const parsedPayload = base64ToJson(
         encryptedPayload,
       ) as EncryptedUserBackupPayload;
@@ -283,19 +280,30 @@ export class UserEncryption {
 
       const salt = base64ToArray(parsedPayload.salt);
 
-      const passwordKey = await deriveAesKey(
-        password,
-        salt,
-        parsedPayload.iterationCount || 150000, // support legacy
-      );
+      let passwordKey: Uint8Array;
+      if (parsedPayload.argon) {
+        passwordKey = await deriveAesKeyArgon(password, salt);
+      } else {
+        passwordKey = await deriveAesKeyPbkdf2(
+          password,
+          salt,
+          parsedPayload.iterationCount
+            ? KEY_DERIVATION_ITERATION_COUNT
+            : 150000, // support testnet legacy
+        );
+      }
 
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
         passwordKey,
       );
+
       if (keystore) {
+        logger.info("Saving encrypted password key in keystore");
         await this.saveSessionInKeystore(passwordKey);
       }
+      const end = performance.now();
+      logger.info(`[time] decryptWithPassword() end - took ${end - start} ms`);
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);
@@ -334,19 +342,24 @@ export class UserEncryption {
   }
 
   async hasEncryptionSession(): Promise<
-    false | { sessionKey: CryptoKey; encryptedPasswordKey: string }
+    false | { sessionKey: Uint8Array; encryptedPasswordKey: string }
   > {
+    logger.info(`[time] hasEncryptionSession() start`);
+
+    const start = performance.now();
     const keystore = await Keystore.instance();
-    const sessionKey = await keystore.get(this.sessionKeyPath);
+    const sessionKey = await keystore.get(await this.getSessionKeyPath());
     if (!sessionKey) {
       return false;
     }
-    const encryptedPasswordKey = this.storage.getItem(
-      this.encryptedPasswordKeyPath,
+    const encryptedPasswordKey = await this.storage.getItem(
+      await this.getEncryptedSessionKeyPath(),
     );
     if (!encryptedPasswordKey) {
       return false;
     }
+    const end = performance.now();
+    logger.info(`[time] hasEncryptionSession() end - took ${end - start} ms`);
     return {
       sessionKey: sessionKey,
       encryptedPasswordKey: encryptedPasswordKey,
@@ -355,19 +368,43 @@ export class UserEncryption {
 
   async clear() {
     const keystore = await Keystore.instance();
-    await keystore.delete(this.sessionKeyPath);
-    await keystore.delete(this.encryptedPasswordKeyPath);
+    await keystore.delete(await this.getSessionKeyPath());
+    await keystore.delete(await this.getEncryptedSessionKeyPath());
   }
 
-  private async saveSessionInKeystore(passwordKey: CryptoKey) {
-    const sessionKey = await generateKey();
-    const exportedPasswordKey = await exportKeyToArray(passwordKey);
+  private async saveSessionInKeystore(passwordKey: Uint8Array) {
+    const sessionKey = randomBytes(SYMMETRIC_KEY_LENGTH);
     const encryptedPasswordKey = (await encryptAes(
-      exportedPasswordKey,
+      passwordKey,
       sessionKey,
     )) as string;
-    this.storage.setItem(this.encryptedPasswordKeyPath, encryptedPasswordKey);
+    await this.storage.setItem(
+      await this.getEncryptedSessionKeyPath(),
+      encryptedPasswordKey,
+    );
     const keystore = await Keystore.instance();
-    await keystore.store(this.sessionKeyPath, sessionKey);
+    await keystore.store(await this.getSessionKeyPath(), sessionKey);
+  }
+
+  private async getSessionKeyPath() {
+    if (!this.sessionKeyPath) {
+      const userId = await new JWTClient({
+        env: this.env,
+        storage: this.storage,
+      }).getUserId();
+      this.sessionKeyPath = `${userId}_${SESSION_KEY_PATH}`;
+    }
+    return this.sessionKeyPath;
+  }
+
+  private async getEncryptedSessionKeyPath() {
+    if (!this.encryptedPasswordKeyPath) {
+      const userId = await new JWTClient({
+        env: this.env,
+        storage: this.storage,
+      }).getUserId();
+      this.encryptedPasswordKeyPath = `${userId}_${ENCRYPTED_PASSWORD_KEY_PATH}`;
+    }
+    return this.encryptedPasswordKeyPath;
   }
 }
