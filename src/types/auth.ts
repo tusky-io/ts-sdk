@@ -1,7 +1,6 @@
 import { SignPersonalMessage, Account } from "../auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Env } from "../types/env";
-import { Storage } from "../util/storage";
 
 export type AuthType = "OAuth" | "Wallet" | "ApiKey";
 

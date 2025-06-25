@@ -9,7 +9,6 @@ import { defaultStorage, JWTClient } from "./jwt";
 import { Env, Envs } from "../types/env";
 import { retry } from "../api/api-client";
 import { throwError } from "../errors/error-factory";
-import { Storage } from "../util/storage";
 
 interface AuthProviderConfig {
   CLIENT_ID: string;
@@ -98,7 +97,7 @@ class OAuth {
 
       const { address } = await retry(async () => {
         try {
-          const idToken = await this.jwtClient.getIdToken();
+          const idToken = this.jwtClient.getIdToken();
           if (!idToken) {
             throw new Unauthorized("Invalid session, please log in again.");
           }
@@ -107,7 +106,7 @@ class OAuth {
           throwError(error.response?.status, error.response?.data?.msg, error);
         }
       });
-      await this.jwtClient.setAddress(address);
+      this.jwtClient.setAddress(address);
       return { address };
     } else {
       logger.warn("Authorization code not found.");
@@ -130,9 +129,9 @@ class OAuth {
         authCode: code,
       });
 
-      await this.jwtClient.setAccessToken(accessToken);
-      await this.jwtClient.setRefreshToken(refreshToken);
-      await this.jwtClient.setIdToken(idToken);
+      this.jwtClient.setAccessToken(accessToken);
+      this.jwtClient.setRefreshToken(refreshToken);
+      this.jwtClient.setIdToken(idToken);
     } catch (error) {
       logger.error(error);
     }
@@ -170,10 +169,10 @@ class OAuth {
   }
 
   async refreshTokens(): Promise<void> {
-    if (!(await this.jwtClient.getRefreshInProgress())) {
-      await this.jwtClient.setRefreshInProgress(true);
+    if (!this.jwtClient.getRefreshInProgress()) {
+      this.jwtClient.setRefreshInProgress(true);
       try {
-        const refreshToken = await this.jwtClient.getRefreshToken();
+        const refreshToken = this.jwtClient.getRefreshToken();
         if (!refreshToken) {
           throw new Unauthorized("Session expired, please log in again.");
         }
@@ -187,15 +186,15 @@ class OAuth {
           throw new Unauthorized("Invalid session, please log in again.");
         }
 
-        await this.jwtClient.setAccessToken(result.accessToken);
-        await this.jwtClient.setIdToken(result.idToken);
+        this.jwtClient.setAccessToken(result.accessToken);
+        this.jwtClient.setIdToken(result.idToken);
         if (result.refreshToken) {
-          await this.jwtClient.setRefreshToken(result.refreshToken);
+          this.jwtClient.setRefreshToken(result.refreshToken);
         }
-        await this.jwtClient.setRefreshInProgress(false);
+        this.jwtClient.setRefreshInProgress(false);
       } catch (error) {
         logger.error(error);
-        await this.jwtClient.setRefreshInProgress(false);
+        this.jwtClient.setRefreshInProgress(false);
         throw new Unauthorized("Failed to refresh tokens.");
       }
     }
