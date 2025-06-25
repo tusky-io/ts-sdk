@@ -1,6 +1,6 @@
 {
   "name": "@tusky-io/ts-sdk",
-  "version": "0.31.0-dev.5",
+  "version": "0.31.0-dev.6",
   "description": "Tusky TypeScript SDK, the official client for Tusky API: https://docs.tusky.io",
   "main": "./lib/node/cjs/index.js",
   "module": "./lib/node/esm/index.esm.js",
