@@ -1255,6 +1255,7 @@ export class ApiClient {
       method: "get",
       signal: this._cancelHook ? this._cancelHook.signal : null,
       headers: this.getCustomHeaders(),
+      ...(await this._auth.getAuthorizationHeader()),
     } as RequestInit;
 
     const url = `${this._cdnUrl}/${this._resourceId}`;
