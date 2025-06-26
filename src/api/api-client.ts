@@ -7,7 +7,13 @@ import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { User } from "../types/user";
-import { AllowedPaths, EncryptedVaultKeyPair, File, Folder } from "../types";
+import {
+  AllowedPaths,
+  EncryptedVaultKeyPair,
+  File,
+  Folder,
+  WhitelistTxPayload,
+} from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
 import { logger } from "../logger";
@@ -59,6 +65,7 @@ export class ApiClient {
   private _description: string;
   private _tags: Array<string>;
   private _keys: Array<EncryptedVaultKeyPair>;
+  private _whitelist: WhitelistTxPayload;
 
   // member specific
   private _address: string;
@@ -137,6 +144,7 @@ export class ApiClient {
     clone._link = this._link;
     clone._tags = this._tags;
     clone._keys = this._keys;
+    clone._whitelist = this._whitelist;
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
@@ -199,6 +207,11 @@ export class ApiClient {
 
   publicRoute(publicRoute: boolean): ApiClient {
     this._publicRoute = publicRoute;
+    return this;
+  }
+
+  whitelist(whitelist: WhitelistTxPayload): ApiClient {
+    this._whitelist = whitelist;
     return this;
   }
 
@@ -1032,6 +1045,7 @@ export class ApiClient {
       encrypted: this._encrypted,
       tags: this._tags,
       keys: this._keys,
+      whitelist: this._whitelist,
     });
 
     return this.post(`${this._apiUrl}/${this._vaultUri}`);
@@ -1155,6 +1169,23 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - vaultId()
+   * @returns {Promise<Membership>}
+   */
+  async joinVault(): Promise<Membership> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#vaultId() to add it",
+      );
+    }
+    return this.post(
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}/join`,
+    );
+  }
+
+  /**
+   *
+   * @requires:
    * - resourceId()
    * @uses:
    * - role()
@@ -1223,7 +1254,10 @@ export class ApiClient {
     const config = {
       method: "get",
       signal: this._cancelHook ? this._cancelHook.signal : null,
-      headers: this.getCustomHeaders(),
+      headers: {
+        ...this.getCustomHeaders(),
+        ...(await this._auth.getAuthorizationHeader()),
+      },
     } as RequestInit;
 
     const url = `${this._cdnUrl}/${this._resourceId}`;

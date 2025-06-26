@@ -80,7 +80,7 @@ class OAuth {
 
   // redirect to OAuth provider's authorization URL
   async initOAuthFlow() {
-    const oauthUrl = await this.createAuthorizationUrl();
+    const { oauthUrl } = await this.createAuthorizationUrl();
     window.location.href = oauthUrl;
   }
 
@@ -97,7 +97,11 @@ class OAuth {
 
       const { address } = await retry(async () => {
         try {
-          return this.enokiClient.getZkLogin(this.jwtClient.getIdToken());
+          const idToken = this.jwtClient.getIdToken();
+          if (!idToken) {
+            throw new Unauthorized("Invalid session, please log in again.");
+          }
+          return this.enokiClient.getZkLogin(idToken);
         } catch (error) {
           throwError(error.response?.status, error.response?.data?.msg, error);
         }
@@ -133,13 +137,13 @@ class OAuth {
     }
   }
 
-  async createAuthorizationUrl() {
-    // generate ephemeral key pair
-    const ephemeralKeyPair = new Ed25519Keypair();
+  async createAuthorizationUrl(ephemeralKeyPair?: Ed25519Keypair) {
+    // use ephemeral key pair from config or generate new one
+    const keypair = ephemeralKeyPair || new Ed25519Keypair();
 
     const createZkLoginResponse = await retry(async () => {
       try {
-        return this.enokiClient.createZkLoginNonce(ephemeralKeyPair);
+        return this.enokiClient.createZkLoginNonce(keypair);
       } catch (error) {
         throwError(error.response?.status, error.response?.data?.msg, error);
       }
@@ -161,7 +165,7 @@ class OAuth {
     });
 
     const oauthUrl = `${this.authProviderConfig.AUTH_URL}?${params}`;
-    return oauthUrl;
+    return { oauthUrl, zkLoginResponse: createZkLoginResponse };
   }
 
   async refreshTokens(): Promise<void> {
@@ -170,7 +174,7 @@ class OAuth {
       try {
         const refreshToken = this.jwtClient.getRefreshToken();
         if (!refreshToken) {
-          throw new Unauthorized("Session expired. Please log in again.");
+          throw new Unauthorized("Session expired, please log in again.");
         }
         const result = await new TuskyApi({ env: this.env }).generateJWT({
           authProvider: this.authProvider,
@@ -179,7 +183,7 @@ class OAuth {
         });
 
         if (!result || !result.accessToken || !result.idToken) {
-          throw new Unauthorized("Invalid session. Please log in again.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
 
         this.jwtClient.setAccessToken(result.accessToken);
