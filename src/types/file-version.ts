@@ -12,6 +12,8 @@ export class File extends Encryptable {
   blobId: string; // file reference off chain - Walrus blob id (computed deterministically from blob content)
 
   // populated together with storedAt
+  quiltId: string; // blob id of quilt (batch) containing the file
+  quiltPatchId: string; // file reference in quilt batch, can be used to retrieve the file from Walrus
   blobObjectId: string; // file reference on chain - Sui object id
   ref: string; // file reference on chain - Sui object id (depracated - please use blobObjectId)
   network: "mainnet" | "testnet"; // Sui network
@@ -44,6 +46,8 @@ export class File extends Encryptable {
     super(keys ? keys : file.__keys__);
     this.id = file.id;
     this.blobId = file.blobId;
+    this.quiltId = file.quiltId;
+    this.quiltPatchId = file.quiltPatchId;
     this.blobObjectId = file.blobObjectId;
     this.ref = file.ref;
     this.network = file.network;
