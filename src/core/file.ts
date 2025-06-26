@@ -495,6 +495,8 @@ export const onUpdateFile = `subscription OnUpdateFile($filter: ModelSubscriptio
     storedEpoch
     endEpoch
     blobId
+    quiltId
+    quiltPatchId
     network
     blobObjectId
     ref
