@@ -1,6 +1,7 @@
-import { Tusky } from "./tusky";
 import { Auth, EnokiClient } from "./auth";
+import { Tusky } from "./tusky";
+import { TuskyBuilder } from "./tusky-builder";
 
-export * from "./types";
 export * from "./crypto";
-export { Tusky, Auth, EnokiClient };
+export * from "./types";
+export { Auth, EnokiClient, Tusky, TuskyBuilder };

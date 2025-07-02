@@ -1,7 +1,7 @@
 import { Api } from "./api/api";
 import { TuskyApi } from "./api/tusky-api";
 import { ClientConfig, EncrypterConfig, TuskyConfig } from "./config";
-import { logger } from "./logger";
+import { ConsoleLogger, logger, setLogger } from "./logger";
 import { FolderModule } from "./core/folder";
 import { NFTModule } from "./core/nft";
 import { VaultModule } from "./core/vault";
@@ -83,6 +83,9 @@ export class Tusky {
     if (config.oauth) {
       builder.useOAuth(config.oauth);
     }
+    if (config.storage) {
+      builder.useStorage(config.storage);
+    }
     return builder.build();
   }
 
@@ -157,6 +160,17 @@ export class Tusky {
       : new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());
     this.pubsub = new PubSub({ env: this._env });
+    if (config.logger) {
+      setLogger(config.logger);
+    }
+    if (config.logLevel) {
+      setLogger(
+        new ConsoleLogger({
+          logLevel: config.logLevel,
+          logToFile: config.logToFile,
+        }),
+      );
+    }
     CacheBusters.cache = config?.cache;
   }
 }

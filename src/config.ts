@@ -15,6 +15,7 @@ export interface TuskyConfig {
   oauth?: OAuthConfig; // OAuth
   apiKey?: string; // Api key auth
   clientName?: string; // name of the client consuming the API
+  storage?: Storage;
 }
 
 export interface ClientConfig {
