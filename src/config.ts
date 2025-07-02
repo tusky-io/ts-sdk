@@ -5,6 +5,7 @@ import { Logger, LogLevel } from "./logger";
 import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
 import { Auth } from "./auth";
 import { X25519KeyPair } from "./crypto";
+import { Storage } from "./util/storage";
 
 export interface TuskyConfig {
   env?: Env;
@@ -14,6 +15,7 @@ export interface TuskyConfig {
   oauth?: OAuthConfig; // OAuth
   apiKey?: string; // Api key auth
   clientName?: string; // name of the client consuming the API
+  storage?: Storage;
 }
 
 export interface ClientConfig {

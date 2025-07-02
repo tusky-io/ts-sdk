@@ -24,6 +24,7 @@ import { Env } from "../types";
 import * as bip39 from "bip39";
 import { EncryptedUserBackupPayload } from "./types";
 import { Conflict } from "../errors/conflict";
+import { Storage } from "../util/storage";
 
 const MNEMONIC_ENTROPY = 256;
 const SALT_LENGTH = 16;
@@ -38,6 +39,7 @@ export class UserEncryption {
   private userId: string;
   private sessionKeyPath: string;
   private encryptedPasswordKeyPath: string;
+  private env: Env;
 
   constructor(
     config: {
@@ -50,9 +52,7 @@ export class UserEncryption {
     this.encPrivateKey = config.encPrivateKey;
     this.encPrivateKeyBackup = config.encPrivateKeyBackup;
     this.storage = config.storage || defaultStorage();
-    this.userId = new JWTClient(config).getUserId();
-    this.sessionKeyPath = `${this.userId}_${SESSION_KEY_PATH}`;
-    this.encryptedPasswordKeyPath = `${this.userId}_${ENCRYPTED_PASSWORD_KEY_PATH}`;
+    this.env = config.env;
   }
 
   public setEncryptedPrivateKey(encPrivateKey: string) {
@@ -337,12 +337,12 @@ export class UserEncryption {
     false | { sessionKey: CryptoKey; encryptedPasswordKey: string }
   > {
     const keystore = await Keystore.instance();
-    const sessionKey = await keystore.get(this.sessionKeyPath);
+    const sessionKey = await keystore.get(await this.getSessionKeyPath());
     if (!sessionKey) {
       return false;
     }
-    const encryptedPasswordKey = this.storage.getItem(
-      this.encryptedPasswordKeyPath,
+    const encryptedPasswordKey = await this.storage.getItem(
+      await this.getEncryptedSessionKeyPath(),
     );
     if (!encryptedPasswordKey) {
       return false;
@@ -355,8 +355,8 @@ export class UserEncryption {
 
   async clear() {
     const keystore = await Keystore.instance();
-    await keystore.delete(this.sessionKeyPath);
-    await keystore.delete(this.encryptedPasswordKeyPath);
+    await keystore.delete(await this.getSessionKeyPath());
+    await keystore.delete(await this.getEncryptedSessionKeyPath());
   }
 
   private async saveSessionInKeystore(passwordKey: CryptoKey) {
@@ -366,8 +366,27 @@ export class UserEncryption {
       exportedPasswordKey,
       sessionKey,
     )) as string;
-    this.storage.setItem(this.encryptedPasswordKeyPath, encryptedPasswordKey);
+    await this.storage.setItem(
+      await this.getEncryptedSessionKeyPath(),
+      encryptedPasswordKey,
+    );
     const keystore = await Keystore.instance();
-    await keystore.store(this.sessionKeyPath, sessionKey);
+    await keystore.store(await this.getSessionKeyPath(), sessionKey);
+  }
+
+  private async getSessionKeyPath() {
+    if (!this.sessionKeyPath) {
+      const userId = await new JWTClient({ env: this.env }).getUserId();
+      this.sessionKeyPath = `${userId}_${SESSION_KEY_PATH}`;
+    }
+    return this.sessionKeyPath;
+  }
+
+  private async getEncryptedSessionKeyPath() {
+    if (!this.encryptedPasswordKeyPath) {
+      const userId = await new JWTClient({ env: this.env }).getUserId();
+      this.encryptedPasswordKeyPath = `${userId}_${ENCRYPTED_PASSWORD_KEY_PATH}`;
+    }
+    return this.encryptedPasswordKeyPath;
   }
 }
