@@ -783,6 +783,9 @@ export class ApiClient {
 
     return await retry(async () => {
       try {
+        if (config.data && config.data.length === 0) {
+          delete config.data;
+        }
         const response = await this._httpClient(config);
         return response.data;
       } catch (error) {
