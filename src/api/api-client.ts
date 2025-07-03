@@ -783,11 +783,36 @@ export class ApiClient {
 
     return await retry(async () => {
       try {
-        if (config.data && config.data.length === 0) {
-          delete config.data;
+        const method = (config.method || "get").toUpperCase();
+
+        const fetchConfig = {
+          method,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            ...(config.headers || {}),
+          },
+        } as any;
+
+        if (
+          ["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
+          config.data !== undefined
+        ) {
+          fetchConfig.body = JSON.stringify(config.data);
         }
-        const response = await this._httpClient(config);
-        return response.data;
+
+        const response = await fetch(config.url, fetchConfig);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${errorText}`,
+          );
+        }
+
+        const responseData = await response.json();
+        logger.info(responseData);
+        return responseData;
       } catch (error) {
         logger.debug(config);
         logger.debug(error);
