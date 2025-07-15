@@ -810,6 +810,10 @@ export class ApiClient {
           );
         }
 
+        if (response.status === 204) {
+          return null;
+        }
+
         const responseData = await response.json();
         logger.info(responseData);
         return responseData;
