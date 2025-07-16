@@ -31,6 +31,7 @@ import {
 } from "../types/auth";
 import { NFT } from "../types/nft";
 import { Collection } from "../types/collection";
+import { QuotaLimits } from "../types/quota";
 
 abstract class Api {
   config: ApiConfig;
@@ -102,6 +103,8 @@ abstract class Api {
   abstract getStorage(): Promise<Storage>;
 
   abstract getFile(id: string): Promise<File>;
+
+  abstract getQuota(): Promise<QuotaLimits>;
 
   abstract getFolder(id: string): Promise<Folder>;
 
