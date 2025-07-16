@@ -23,6 +23,7 @@ import { GenerateJWTResponsePayload } from "../types/auth";
 import { InternalError } from "../errors/internal-error";
 import { Collection } from "../types/collection";
 import { NFT } from "../types/nft";
+import { QuotaLimits } from "../types/quota";
 
 export class ApiClient {
   private _apiUrl: string;
@@ -40,6 +41,7 @@ export class ApiClient {
   private _membershipUri: string = "members";
   private _apiKeyUri: string = "api-keys";
   private _storageUri: string = "storage";
+  private _quotaUri: string = "quota";
   private _subscriptionUri: string = "subscriptions";
   private _collectionUri: string = "collections";
   private _nftUri: string = "nfts";
@@ -1275,6 +1277,11 @@ export class ApiClient {
   async getStorage(): Promise<Storage> {
     const data = await this.get(`${this._apiUrl}/${this._storageUri}`);
     return new Storage(data);
+  }
+
+  async getQuota(): Promise<QuotaLimits> {
+    const data = await this.get(`${this._apiUrl}/${this._quotaUri}`);
+    return new QuotaLimits(data);
   }
 
   private getCustomHeaders(): AxiosRequestHeaders {
