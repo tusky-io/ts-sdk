@@ -9,6 +9,7 @@ import {
   CreateMembershipTxPayload,
   UpdateFileTxPayload,
   CreateFolderTreeTxPayload,
+  JoinVaultTxPayload,
 } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import {
@@ -86,6 +87,8 @@ abstract class Api {
   abstract emptyTrash(): Promise<Folder>;
 
   abstract createMembership(tx: CreateMembershipTxPayload): Promise<Membership>;
+
+  abstract joinVault(tx: JoinVaultTxPayload): Promise<Membership>;
 
   abstract updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership>;
 

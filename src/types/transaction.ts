@@ -1,5 +1,4 @@
 import { AllowedPaths, EncryptedVaultKeyPair } from ".";
-import { FileOrFolderInfo } from "../core/folder";
 
 export interface CreateVaultTxPayload {
   name?: string;
@@ -7,6 +6,13 @@ export interface CreateVaultTxPayload {
   encrypted?: boolean;
   keys?: Array<EncryptedVaultKeyPair>;
   tags?: string[];
+  whitelist?: WhitelistTxPayload;
+}
+
+export interface WhitelistTxPayload {
+  token: string;
+  memberRole: string;
+  capacity?: number;
 }
 
 export interface UpdateVaultTxPayload {
@@ -61,6 +67,10 @@ export interface CreateMembershipTxPayload {
   ownerAccess?: string;
   allowedStorage?: number;
   allowedPaths?: AllowedPaths;
+}
+
+export interface JoinVaultTxPayload {
+  vaultId: string;
 }
 
 export interface UpdateMembershipTxPayload {

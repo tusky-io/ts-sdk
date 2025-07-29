@@ -41,7 +41,7 @@ class JWTClient {
     bufferTime: number = EXPIRATION_BUFFER,
   ): boolean {
     if (!token) {
-      throw new Unauthorized("Invalid session. Please log in again.");
+      throw new Unauthorized("Invalid session, please log in again.");
     }
     const decoded = decode(token) as any;
     const currentTime = Math.floor(Date.now() / 1000);
