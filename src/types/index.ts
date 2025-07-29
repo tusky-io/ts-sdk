@@ -12,3 +12,4 @@ export * from "./env";
 export * from "./zip";
 export * from "./whitelist";
 export * from "@env/types/file";
+export * from "./auth";
