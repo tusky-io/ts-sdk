@@ -11,3 +11,4 @@ export * from "./paginated";
 export * from "./env";
 export * from "./zip";
 export * from "@env/types/file";
+export * from "./auth";
