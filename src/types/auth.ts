@@ -1,4 +1,3 @@
-import { SignPersonalMessage, Account } from "../auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Env } from "../types/env";
 
@@ -13,6 +12,19 @@ export interface OAuthConfig {
   storage?: Storage;
   env?: Env;
 }
+
+export type SignPersonalMessage = (
+  message: { message: Uint8Array },
+  callbacks: {
+    onSuccess: (data: { signature: string }) => void;
+    onError: (error: Error) => void;
+  },
+) => void;
+
+export type Account = {
+  address: string;
+  publicKey: Uint8Array;
+};
 
 export interface WalletConfig {
   signPersonalMessage?: SignPersonalMessage; // mutation hook for prompting the user to sign a message
