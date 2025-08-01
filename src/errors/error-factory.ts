@@ -4,7 +4,7 @@ import { Conflict } from "./conflict";
 import { Forbidden } from "./forbidden";
 import { GatewayTimeout } from "./gateway-timeout";
 import { InternalError } from "./internal-error";
-import { Locked } from "./Locked";
+import { Locked } from "./locked";
 import { NetworkError } from "./network-error";
 import { NotEnoughStorage } from "./not-enough-storage";
 import { NotFound } from "./not-found";
