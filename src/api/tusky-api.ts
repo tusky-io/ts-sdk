@@ -326,6 +326,14 @@ export default class TuskyApi extends Api {
       .updateMe();
   }
 
+  public async verifyMe(): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .verifyMe();
+  }
+
   public async createEncryptionKeys(input: UserEncryptionKeys): Promise<User> {
     return new ApiClient()
       .env(this.config)

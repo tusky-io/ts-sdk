@@ -53,6 +53,8 @@ abstract class Api {
 
   abstract updateMe(input: UserMutable): Promise<User>;
 
+  abstract verifyMe(): Promise<void>;
+
   abstract createEncryptionKeys(input: UserEncryptionKeys): Promise<User>;
 
   abstract updateEncryptionKeys(input: UserEncryptionKeys): Promise<User>;

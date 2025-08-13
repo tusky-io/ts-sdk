@@ -148,7 +148,7 @@ describe("Testing airdrop actions", () => {
         const vault = await memberTusky.vault.get(vaultId);
         expect(vault).toBeTruthy();
         expect(vault.name).toBeTruthy();
-      }).rejects.toThrow(Unauthorized);
+      }).rejects.toThrow(Forbidden);
     });
   });
 

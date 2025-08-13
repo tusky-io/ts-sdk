@@ -6,7 +6,6 @@ import { Auth, AuthConfig } from "./auth";
 import { ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ConsoleLogger, Logger, setLogger } from "./logger";
 import TuskyApi from "./api/tusky-api";
-import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 
 export class TuskyBuilder {
@@ -83,7 +82,6 @@ export class TuskyBuilder {
       env: this._env,
       api: new TuskyApi({ ...this.getConfig(), auth: auth }),
     });
-    tusky.pubsub = new PubSub({ env: this._env });
     await tusky.addEncrypter(this._encrypterConfig);
     setLogger(this._logger);
     return tusky;
