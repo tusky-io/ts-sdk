@@ -84,9 +84,8 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
     const rootFolder = await tusky.folder.get(rootFolderId);
     expect(rootFolder.status).toEqual(status.DELETED);
 
-    // this part is async
-    // const subFolder = await tusky.folder.get(subFolderId);
-    // expect(subFolder.status).toEqual(status.DELETED);
+    const subFolder = await tusky.folder.get(subFolderId);
+    expect(subFolder.status).toEqual(status.DELETED);
   });
 
   it("should fail adding new sub-folder to the deleted root folder", async () => {
@@ -102,9 +101,8 @@ describe(`Testing ${isEncrypted ? "private" : "public"} folder functions`, () =>
     const rootFolder = await tusky.folder.get(rootFolderId);
     expect(rootFolder.status).toEqual(status.ACTIVE);
 
-    // this part is async
-    // const subFolder = await tusky.folder.get(subFolderId);
-    // expect(subFolder.status).toEqual(status.ACTIVE);
+    const subFolder = await tusky.folder.get(subFolderId);
+    expect(subFolder.status).toEqual(status.ACTIVE);
   });
 
   it("should list all root folders", async () => {

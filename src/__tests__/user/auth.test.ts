@@ -18,8 +18,8 @@ describe("Testing auth functions", () => {
       .useLogger({ logLevel: LOG_LEVEL, logToFile: true })
       .useEnv(ENV_TEST_RUN)
       .build();
-
     await tusky.auth.signIn();
+    await tusky.api.verifyMe();
   });
 
   it("should create vault", async () => {
