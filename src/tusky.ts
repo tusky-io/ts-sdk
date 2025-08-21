@@ -20,6 +20,7 @@ import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
 import { Storage } from "./util/storage";
+import { loadSodium } from "./crypto/libsodium";
 
 export class Tusky {
   public api: Api;
@@ -98,6 +99,9 @@ export class Tusky {
   async addEncrypter(config: EncrypterConfig): Promise<this> {
     if (!config) {
       return;
+    }
+    if (config.sodium) {
+      await loadSodium(config.sodium);
     }
     if (config.keypair) {
       this._encrypter = new Encrypter({ keypair: config.keypair });

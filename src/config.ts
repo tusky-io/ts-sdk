@@ -43,6 +43,7 @@ export interface EncrypterConfig {
   password?: string; // password to decrypt user's encryption key
   keystore?: boolean; // indicate whether should import the key from the keystore
   keypair?: X25519KeyPair; // encryption key pair
+  sodium?: any;
 }
 
 export interface ApiConfig {

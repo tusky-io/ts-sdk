@@ -1,6 +1,10 @@
 let sodium: any;
 import libsodium from "libsodium-wrappers";
-export async function loadSodium(): Promise<any> {
+export async function loadSodium(customSodium?: any): Promise<any> {
+  if (customSodium) {
+    sodium = customSodium;
+    return sodium;
+  }
   if (sodium) return sodium;
 
   // const runtime = getRuntime();
