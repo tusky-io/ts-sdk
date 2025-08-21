@@ -280,17 +280,19 @@ export class UserEncryption {
 
       const salt = base64ToArray(parsedPayload.salt);
 
+      logger.info("Deriving password key");
       const passwordKey = await deriveAesKey(
         password,
         salt,
         parsedPayload.iterationCount || 150000, // support legacy
       );
-
+      logger.info("Decrypting with password key");
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
         passwordKey,
       );
       if (keystore) {
+        logger.info("Saving encrypted password key in keystore");
         await this.saveSessionInKeystore(passwordKey);
       }
       return new Uint8Array(plaintext);
