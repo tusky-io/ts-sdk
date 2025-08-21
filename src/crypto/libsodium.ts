@@ -1,12 +1,12 @@
 let sodium: any;
+import libsodium from "react-native-libsodium";
 
 export async function loadSodium(): Promise<any> {
   if (sodium) return sodium;
 
   // const runtime = getRuntime();
 
-  const module = await import("../platform/react-native");
-  sodium = module.default;
+  sodium = libsodium.default;
 
   // if (runtime === "node") {
   //   const module = await import("../platform/node");
