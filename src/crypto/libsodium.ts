@@ -1,13 +1,14 @@
 let sodium: any;
-import libsodium from "react-native-libsodium";
-
 export async function loadSodium(): Promise<any> {
   if (sodium) return sodium;
 
-  // const runtime = getRuntime();
+  const runtime = getRuntime();
 
-  sodium = libsodium.default;
-
+  if (runtime === "react-native") {
+    sodium = require("react-native-libsodium").default;
+  }
+  //   throw new Error("Unsupported runtime environment");
+  // }
   // if (runtime === "node") {
   //   const module = await import("../platform/node");
   //   sodium = (<any>module.default).default;

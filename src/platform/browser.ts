@@ -1,2 +1,2 @@
-import * as sodium from "libsodium-wrappers";
-export default sodium;
+// import * as sodium from "libsodium-wrappers";
+// export default sodium;
