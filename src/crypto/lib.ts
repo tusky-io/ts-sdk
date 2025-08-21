@@ -1,4 +1,4 @@
-import { pbkdf2 } from "@noble/hashes/pbkdf2";
+import { pbkdf2Async } from "@noble/hashes/pbkdf2";
 import { sha256 } from "@noble/hashes/sha256";
 import { randomBytes } from "@noble/hashes/utils";
 import { gcm } from "@noble/ciphers/webcrypto"; // uses webcrypto if available
@@ -163,10 +163,16 @@ async function deriveAesKey(
   iterationCount: number = KEY_DERIVATION_ITERATION_COUNT,
 ): Promise<Uint8Array> {
   try {
-    return pbkdf2(sha256, new TextEncoder().encode(password), salt, {
-      c: iterationCount,
-      dkLen: 32,
-    });
+    const key = await pbkdf2Async(
+      sha256,
+      new TextEncoder().encode(password),
+      salt,
+      {
+        c: iterationCount,
+        dkLen: 32,
+      },
+    );
+    return key;
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(
