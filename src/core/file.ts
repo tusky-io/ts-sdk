@@ -425,7 +425,7 @@ class FileModule {
     );
   }
 
-  protected async aesKey(id: string): Promise<CryptoKey | null> {
+  protected async aesKey(id: string): Promise<Uint8Array | null> {
     const fileMetadata = await this.get(id);
     if (!fileMetadata.encryptedAesKey) {
       return null;

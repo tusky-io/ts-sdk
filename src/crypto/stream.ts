@@ -5,14 +5,14 @@ import { logger } from "../logger";
 const MODE_DECRYPT = "decrypt";
 
 export class DecryptStreamController {
-  private key: CryptoKey;
+  private key: Uint8Array;
   private iv: string[];
   private index: number;
   private file?: any;
   private files?: Map<any, any>;
 
   constructor(
-    key: CryptoKey,
+    key: Uint8Array,
     index: number = 0,
     id?: string,
     files?: Map<any, any>,

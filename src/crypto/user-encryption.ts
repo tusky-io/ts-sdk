@@ -9,11 +9,9 @@ import {
   decryptAes,
   deriveAesKey,
   encryptAes,
-  exportKeyToArray,
-  generateKey,
   generateKeyPair,
-  importKeyFromArray,
   KEY_DERIVATION_ITERATION_COUNT,
+  SYMMETRIC_KEY_LENGTH,
 } from "./lib";
 import Keystore from "./storage/keystore";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
@@ -25,6 +23,7 @@ import * as bip39 from "bip39";
 import { EncryptedUserBackupPayload } from "./types";
 import { Conflict } from "../errors/conflict";
 import { Storage } from "../util/storage";
+import { randomBytes } from "@noble/hashes/utils";
 
 const MNEMONIC_ENTROPY = 256;
 const SALT_LENGTH = 16;
@@ -161,12 +160,10 @@ export class UserEncryption {
       { ciphertext, iv },
       encryptionSession.sessionKey,
     );
-    const passwordKey = await importKeyFromArray(new Uint8Array(decryptedKey));
-
     const parsedEncPrivateKey = base64ToJson(this.encPrivateKey) as any; // TODO: type here
     const privateKey = await decryptAes(
       parsedEncPrivateKey.encryptedPayload,
-      passwordKey,
+      decryptedKey,
     );
     return { keypair: new X25519KeyPair(new Uint8Array(privateKey)) };
   }
@@ -334,7 +331,7 @@ export class UserEncryption {
   }
 
   async hasEncryptionSession(): Promise<
-    false | { sessionKey: CryptoKey; encryptedPasswordKey: string }
+    false | { sessionKey: Uint8Array; encryptedPasswordKey: string }
   > {
     const keystore = await Keystore.instance();
     const sessionKey = await keystore.get(await this.getSessionKeyPath());
@@ -359,11 +356,10 @@ export class UserEncryption {
     await keystore.delete(await this.getEncryptedSessionKeyPath());
   }
 
-  private async saveSessionInKeystore(passwordKey: CryptoKey) {
-    const sessionKey = await generateKey();
-    const exportedPasswordKey = await exportKeyToArray(passwordKey);
+  private async saveSessionInKeystore(passwordKey: Uint8Array) {
+    const sessionKey = randomBytes(SYMMETRIC_KEY_LENGTH);
     const encryptedPasswordKey = (await encryptAes(
-      exportedPasswordKey,
+      passwordKey,
       sessionKey,
     )) as string;
     await this.storage.setItem(

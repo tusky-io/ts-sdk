@@ -61,11 +61,11 @@ export default class Keystore {
     return (this._instance = new this(db));
   }
 
-  async store(keyName: string, key: CryptoKey): Promise<void> {
+  async store(keyName: string, key: Uint8Array): Promise<void> {
     await this.db.put(keyName, key, Keystore.DEFAULT_ENCODING_OPTIONS);
   }
 
-  async get(keyName: string): Promise<CryptoKey> {
+  async get(keyName: string): Promise<Uint8Array> {
     try {
       return await this.db.get(keyName, Keystore.DEFAULT_ENCODING_OPTIONS);
     } catch (err) {

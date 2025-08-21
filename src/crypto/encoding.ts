@@ -5,7 +5,7 @@ import { toByteArray, fromByteArray } from "base64-js";
  * @param {BufferSource} bufferSource
  * @returns {string}
  */
-function arrayToBase64(bufferSource: ArrayBuffer): string {
+function arrayToBase64(bufferSource: ArrayBuffer | Uint8Array): string {
   return fromByteArray(new Uint8Array(bufferSource));
 }
 
@@ -23,7 +23,7 @@ function base64ToArray(base64String: string): Uint8Array {
  * @param {BufferSource} bufferSource
  * @returns {string}
  */
-function arrayToString(bufferSource: ArrayBuffer): string {
+function arrayToString(bufferSource: ArrayBuffer | Uint8Array): string {
   const utf8Decoder = new TextDecoder();
   return utf8Decoder.decode(bufferSource);
 }
