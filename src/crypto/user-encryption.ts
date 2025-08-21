@@ -374,7 +374,10 @@ export class UserEncryption {
 
   private async getSessionKeyPath() {
     if (!this.sessionKeyPath) {
-      const userId = await new JWTClient({ env: this.env }).getUserId();
+      const userId = await new JWTClient({
+        env: this.env,
+        storage: this.storage,
+      }).getUserId();
       this.sessionKeyPath = `${userId}_${SESSION_KEY_PATH}`;
     }
     return this.sessionKeyPath;
@@ -382,7 +385,10 @@ export class UserEncryption {
 
   private async getEncryptedSessionKeyPath() {
     if (!this.encryptedPasswordKeyPath) {
-      const userId = await new JWTClient({ env: this.env }).getUserId();
+      const userId = await new JWTClient({
+        env: this.env,
+        storage: this.storage,
+      }).getUserId();
       this.encryptedPasswordKeyPath = `${userId}_${ENCRYPTED_PASSWORD_KEY_PATH}`;
     }
     return this.encryptedPasswordKeyPath;
