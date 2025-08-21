@@ -1,7 +1,7 @@
 import { pbkdf2Async } from "@noble/hashes/pbkdf2";
 import { sha256 } from "@noble/hashes/sha256";
 import { randomBytes } from "@noble/hashes/utils";
-import { gcm } from "@noble/ciphers/webcrypto"; // uses webcrypto if available
+import { gcm } from "@noble/ciphers/aes";
 import {
   arrayToBase64,
   base64ToArray,
