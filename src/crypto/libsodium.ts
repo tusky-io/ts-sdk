@@ -3,21 +3,23 @@ let sodium: any;
 export async function loadSodium(): Promise<any> {
   if (sodium) return sodium;
 
-  // detect runtime env
   const runtime = getRuntime();
-  console.log(runtime);
 
-  if (runtime === "react-native") {
-    console.log("is react native");
-    const rnSodium = await import("react-native-libsodium");
-    sodium = rnSodium.default || rnSodium;
-    return sodium;
+  if (runtime === "node") {
+    const module = await import("../platform/node");
+    sodium = (<any>module.default).default;
+    await sodium.ready;
+  } else if (runtime === "browser") {
+    const module = await import("../platform/browser");
+    sodium = (<any>module.default).default;
+    await sodium.ready;
+  } else if (runtime === "react-native") {
+    const module = await import("../platform/react-native");
+    sodium = module.default;
+  } else {
+    throw new Error("Unsupported runtime environment");
   }
 
-  // browser or node (libsodium-wrappers with WASM)
-  const sodiumWrappers = await import("libsodium-wrappers");
-  await sodiumWrappers.ready;
-  sodium = sodiumWrappers.default;
   return sodium;
 }
 
