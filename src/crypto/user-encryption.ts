@@ -231,11 +231,7 @@ export class UserEncryption {
     try {
       const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
 
-      const passwordKey = await deriveAesKey(
-        password,
-        salt,
-        KEY_DERIVATION_ITERATION_COUNT,
-      );
+      const passwordKey = await deriveAesKey(password, salt);
 
       const encryptedPayload = await encryptAes(plaintext, passwordKey);
 
@@ -281,11 +277,7 @@ export class UserEncryption {
       const salt = base64ToArray(parsedPayload.salt);
 
       logger.info("Deriving password key");
-      const passwordKey = await deriveAesKey(
-        password,
-        salt,
-        parsedPayload.iterationCount || 150000, // support legacy
-      );
+      const passwordKey = await deriveAesKey(password, salt);
       logger.info("Decrypting with password key");
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,

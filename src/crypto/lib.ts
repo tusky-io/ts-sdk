@@ -1,4 +1,4 @@
-import { pbkdf2Async } from "@noble/hashes/pbkdf2";
+import { argon2idAsync } from "@noble/hashes/argon2";
 import { sha256 } from "@noble/hashes/sha256";
 import { randomBytes } from "@noble/hashes/utils";
 import { gcm } from "@noble/ciphers/aes";
@@ -160,18 +160,15 @@ function decodeAesPayload(payload: string): AESEncryptedPayload {
 async function deriveAesKey(
   password: string,
   salt: Uint8Array,
-  iterationCount: number = KEY_DERIVATION_ITERATION_COUNT,
 ): Promise<Uint8Array> {
   try {
-    const key = await pbkdf2Async(
-      sha256,
-      new TextEncoder().encode(password),
-      salt,
-      {
-        c: iterationCount,
-        dkLen: 32,
-      },
-    );
+    const key = await argon2idAsync(new TextEncoder().encode(password), salt, {
+      t: 2,
+      m: 65536,
+      p: 1,
+      maxmem: 2 ** 32 - 1,
+      dkLen: 32,
+    });
     return key;
   } catch (error) {
     logger.error(error);
