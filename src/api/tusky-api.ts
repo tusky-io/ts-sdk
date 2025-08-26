@@ -212,7 +212,7 @@ export default class TuskyApi extends Api {
       .getTrash();
   }
 
-  public async emptyTrash(): Promise<Folder> {
+  public async emptyTrash(): Promise<void> {
     return new ApiClient()
       .env(this.config)
       .clientName(this.clientName)

@@ -84,7 +84,7 @@ abstract class Api {
 
   abstract getTrash(): Promise<Folder>;
 
-  abstract emptyTrash(): Promise<Folder>;
+  abstract emptyTrash(): Promise<void>;
 
   abstract createMembership(tx: CreateMembershipTxPayload): Promise<Membership>;
 
