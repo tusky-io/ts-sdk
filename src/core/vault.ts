@@ -315,12 +315,13 @@ class VaultModule {
       ownerAccess: ownerAccess,
     });
 
+    const me = await this.service.api.getMe();
     return {
       identityPrivateKey: memberKeyPair?.getSecretKey(),
       password: password,
       membership: await memberService.processMembership(
         membership,
-        this.service.vault.owner === this.service.address,
+        this.service.vault.owner === me.address,
       ),
     };
   }
@@ -392,12 +393,13 @@ class VaultModule {
     const paginated = await this.service.api.getMembers(vaultId);
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
+    const me = await this.service.api.getMe();
     return {
       items: await Promise.all(
         paginated.items?.map(async (member) =>
           memberService.processMembership(
             member,
-            this.service.vault.owner === this.service.address,
+            this.service.vault.owner === me.address,
           ),
         ),
       ),
@@ -420,11 +422,12 @@ class VaultModule {
     });
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
+    const me = await this.service.api.getMe();
     return Promise.all(
       members?.map(async (member: Membership) =>
         memberService.processMembership(
           member,
-          this.service.vault.owner === this.service.address,
+          this.service.vault.owner === me.address,
         ),
       ),
     );
