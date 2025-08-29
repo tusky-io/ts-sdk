@@ -1,4 +1,3 @@
-import { argon2idAsync } from "@noble/hashes/argon2";
 import { sha256 } from "@noble/hashes/sha256";
 import { randomBytes } from "@noble/hashes/utils";
 import { gcm } from "@noble/ciphers/aes";
@@ -9,6 +8,7 @@ import {
   jsonToBase64,
   stringToArray,
 } from "./encoding";
+import libsodium from "libsodium-wrappers-sumo";
 
 import { AESEncryptedPayload, X25519EncryptedPayload } from "./types";
 import { logger } from "../logger";
@@ -29,22 +29,6 @@ export const AUTH_TAG_LENGTH_IN_BYTES = 16;
 export const IV_LENGTH_IN_BYTES = 12;
 
 /**
- * Signature generation using sodium library: https://github.com/jedisct1/libsodium
- * @param {BufferSource} msgHash buffer message hash to be signed
- * @param {Uint8Array} privateKey private key used to sign message hash
- * @returns {Promise.<string>} signature as base64 string
- */
-async function signHash(
-  msgHash: Uint8Array,
-  privateKey: Uint8Array,
-): Promise<string> {
-  const msgHashByteArray = new Uint8Array(msgHash);
-  const sodium = await loadSodium();
-  const signature = sodium.crypto_sign_detached(msgHashByteArray, privateKey);
-  return arrayToBase64(signature);
-}
-
-/**
  * Digest generation
  * @param {string} payload string payload to be signed
  * @returns {Promise.<string>} payload digest as base64 string
@@ -56,21 +40,6 @@ async function digest(payload: string): Promise<string> {
 async function digestRaw(payload: Uint8Array): Promise<string> {
   const msgHash = sha256(payload);
   return arrayToBase64(msgHash);
-}
-
-/**
- * Signature generation
- * @param {string} payload string payload to be signed
- * @param {Uint8Array} privateKey private key used to sign string payload
- * @returns {Promise.<string>} signature as base64 string
- */
-async function signString(
-  payload: string,
-  privateKey: Uint8Array,
-): Promise<string> {
-  const msgHash = sha256(stringToArray(payload));
-  const signature = await signHash(msgHash, privateKey);
-  return signature;
 }
 
 /**
@@ -162,14 +131,9 @@ async function deriveAesKey(
   salt: Uint8Array,
 ): Promise<Uint8Array> {
   try {
-    const key = await argon2idAsync(new TextEncoder().encode(password), salt, {
-      t: 2,
-      m: 65536,
-      p: 1,
-      maxmem: 2 ** 32 - 1,
-      dkLen: 32,
-    });
-    return key;
+    const sodium = await loadSodium();
+    const hash = await sodium.pwHash(password, sodium.toBase64(salt));
+    return sodium.fromBase64(hash);
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(
@@ -185,7 +149,7 @@ async function deriveAesKey(
  */
 async function generateKeyPair(): Promise<any> {
   try {
-    const sodium = await loadSodium();
+    const sodium = libsodium;
     const keyPair = sodium.crypto_box_keypair();
 
     return keyPair;
@@ -208,7 +172,7 @@ async function encryptWithPublicKey(
   plaintext: string | Uint8Array,
 ): Promise<X25519EncryptedPayload> {
   try {
-    const sodium = await loadSodium();
+    const sodium = libsodium;
     const ephemeralKeyPair = sodium.crypto_box_keypair();
     const nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 
@@ -244,7 +208,7 @@ async function decryptWithPrivateKey(
   encryptedPayload: X25519EncryptedPayload,
 ): Promise<Uint8Array> {
   try {
-    const sodium = await loadSodium();
+    const sodium = libsodium;
     const plaintext = sodium.crypto_box_open_easy(
       base64ToArray(encryptedPayload.ciphertext),
       base64ToArray(encryptedPayload.nonce),
@@ -277,8 +241,6 @@ async function decryptStream(
 export {
   digest,
   digestRaw,
-  signHash,
-  signString,
   encryptAes,
   decryptAes,
   deriveAesKey,
