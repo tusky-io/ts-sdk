@@ -379,7 +379,7 @@ class VaultModule {
    */
   public async members(vaultId: string): Promise<Array<Membership>> {
     const list = async (listOptions: ListOptions) => {
-      return this.service.api.getMembers(listOptions.vaultId);
+      return this.service.api.getMembers(listOptions);
     };
     const members = await paginate<Membership>(list, {
       vaultId: vaultId,
