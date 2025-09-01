@@ -263,12 +263,18 @@ export default class TuskyApi extends Api {
       .deleteMembership();
   }
 
-  public async getMembers(vaultId: string): Promise<Paginated<Membership>> {
+  public async getMembers(
+    options: ListApiOptions = {},
+  ): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
       .auth(this.auth)
-      .vaultId(vaultId)
+      .vaultId(options.vaultId)
+      .queryParams({
+        limit: options.limit || DEFAULT_LIMIT,
+        nextToken: options.nextToken,
+      })
       .getMembers();
   }
 
