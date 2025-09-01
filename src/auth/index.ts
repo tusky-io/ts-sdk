@@ -2,9 +2,11 @@ import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
 import { logger } from "../logger";
 import {
+  Account,
   AuthProvider,
   AuthType,
   OAuthConfig,
+  SignPersonalMessage,
   WalletConfig,
 } from "../types/auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
@@ -17,19 +19,6 @@ import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
 import EnokiClient, { ZkLoginNonceResponse } from "./enoki";
 import { Storage } from "../util/storage";
-
-export type SignPersonalMessage = (
-  message: { message: Uint8Array },
-  callbacks: {
-    onSuccess: (data: { signature: string }) => void;
-    onError: (error: Error) => void;
-  },
-) => void;
-
-export type Account = {
-  address: string;
-  publicKey: Uint8Array;
-};
 
 const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 

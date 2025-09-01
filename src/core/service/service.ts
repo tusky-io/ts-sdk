@@ -6,7 +6,6 @@ import { Object, ObjectType } from "../../types/object";
 import { EncryptedVaultKeyPair, Env, VaultKeyPair } from "../../types";
 import { Encrypter } from "../../crypto/encrypter";
 import { Auth } from "../../auth";
-import PubSub from "../../api/pubsub";
 import { VaultEncryption } from "../../crypto/vault-encryption";
 import { Storage } from "../../util/storage";
 
@@ -14,7 +13,6 @@ export const STATE_CONTENT_TYPE = "application/json";
 
 class Service {
   api: Api;
-  pubsub: PubSub;
 
   address: string;
   encrypter: Encrypter;
@@ -38,7 +36,6 @@ class Service {
 
   constructor(config: ServiceConfig) {
     this.api = config.api;
-    this.pubsub = config.pubsub;
     this.encrypter = config.encrypter;
     this.address = config.address;
     // set context from config / another service
@@ -136,7 +133,6 @@ export type ServiceConfig = {
   decryptedKeys?: VaultKeyPair[];
   address?: string;
   api?: Api;
-  pubsub?: PubSub;
   auth?: Auth;
   encrypter?: Encrypter;
   keys?: Array<EncryptedVaultKeyPair>;

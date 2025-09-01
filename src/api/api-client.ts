@@ -429,6 +429,10 @@ export class ApiClient {
     return new User(me);
   }
 
+  async verifyMe(): Promise<void> {
+    return this.post(`${this._apiUrl}/${this._meUri}/verify`);
+  }
+
   /**
    * Update currently authenticated user
    * @uses:
@@ -764,9 +768,10 @@ export class ApiClient {
   async fetch(method: string, url: string): Promise<any> {
     const config = {
       method,
-      url: this._queryParams
-        ? this.addQueryParams(url, this._queryParams)
-        : url,
+      url:
+        this._queryParams && Object.keys(this._queryParams).length > 0
+          ? this.addQueryParams(url, this._queryParams)
+          : url,
       headers: {
         "Content-Type": "application/json",
         ...this.getCustomHeaders(),
@@ -775,7 +780,7 @@ export class ApiClient {
           : {}),
       },
     } as AxiosRequestConfig;
-    if (this._data) {
+    if (this._data && Object.keys(this._data).length > 0) {
       config.data = this._data;
     }
     logger.info(`Request ${config.method}: ` + config.url);
@@ -826,8 +831,16 @@ export class ApiClient {
   }
 
   addQueryParams = function (url: string, params: any) {
-    const queryParams = new URLSearchParams(JSON.parse(JSON.stringify(params)));
-    url += "?" + queryParams.toString();
+    const queryParams = Object.fromEntries(
+      Object.entries(params).filter(
+        ([_, value]) => value !== null && value !== undefined && value !== "",
+      ),
+    );
+    if (Object.keys(queryParams).length > 0) {
+      url +=
+        "?" +
+        new URLSearchParams(JSON.parse(JSON.stringify(queryParams))).toString();
+    }
     return url;
   };
 

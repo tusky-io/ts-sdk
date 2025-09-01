@@ -54,6 +54,8 @@ abstract class Api {
 
   abstract updateMe(input: UserMutable): Promise<User>;
 
+  abstract verifyMe(): Promise<void>;
+
   abstract createEncryptionKeys(input: UserEncryptionKeys): Promise<User>;
 
   abstract updateEncryptionKeys(input: UserEncryptionKeys): Promise<User>;
@@ -115,7 +117,7 @@ abstract class Api {
 
   abstract getFolders(options?: ListApiOptions): Promise<Paginated<Folder>>;
 
-  abstract getMembers(vaultId: string): Promise<Paginated<Membership>>;
+  abstract getMembers(options?: ListApiOptions): Promise<Paginated<Membership>>;
 
   abstract getApiKeys(): Promise<Paginated<ApiKey>>;
 

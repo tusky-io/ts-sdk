@@ -10,6 +10,7 @@ export class User {
   publicKey?: string;
   encPrivateKey?: string;
   encPrivateKeyBackup?: string;
+  verificationStatus?: "verified" | "pending" | "rejected";
 
   constructor(json: any) {
     this.address = json.address;
@@ -21,6 +22,7 @@ export class User {
     this.encPrivateKeyBackup = json.encPrivateKeyBackup;
     this.storage = json.storage ? new Storage(json.storage) : json.storage;
     this.guest = json.guest;
+    this.verificationStatus = json.verificationStatus;
   }
 }
 

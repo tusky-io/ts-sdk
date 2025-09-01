@@ -16,7 +16,6 @@ import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./crypto/encrypter";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
-import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
 import { Storage } from "./util/storage";
@@ -24,7 +23,6 @@ import { loadSodium } from "./crypto/libsodium";
 
 export class Tusky {
   public api: Api;
-  public pubsub: PubSub;
   private _encrypter: Encrypter;
   private _env: Env;
   private _storage: Storage;
@@ -144,7 +142,6 @@ export class Tusky {
   private getConfig() {
     return {
       api: this.api,
-      pubsub: this.pubsub,
       auth: this._auth,
       encrypter: this._encrypter,
       env: this._env,
@@ -163,7 +160,6 @@ export class Tusky {
       ? config.auth
       : new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());
-    this.pubsub = new PubSub({ env: this._env });
     if (config.logger) {
       setLogger(config.logger);
     }

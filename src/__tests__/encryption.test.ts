@@ -70,6 +70,7 @@ describe("Testing encryption functions", () => {
       .build();
 
     await tusky.auth.signIn();
+    await tusky.api.verifyMe();
 
     password = faker.random.word();
 
