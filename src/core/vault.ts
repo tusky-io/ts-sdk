@@ -2,6 +2,7 @@ import { role } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import {
   ListOptions,
+  ListPaginatedApiOptions,
   VaultGetOptions,
   validateListPaginatedApiOptions,
 } from "../types/query-options";
@@ -389,8 +390,14 @@ class VaultModule {
    * @param  {string} vaultId
    * @returns {Promise<Paginated<Membership>>}
    */
-  public async members(vaultId: string): Promise<Paginated<Membership>> {
-    const paginated = await this.service.api.getMembers(vaultId);
+  public async members(
+    vaultId: string,
+    options: ListPaginatedApiOptions = {},
+  ): Promise<Paginated<Membership>> {
+    const paginated = await this.service.api.getMembers({
+      vaultId: vaultId,
+      ...options,
+    });
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
     const me = await this.service.api.getMe();
