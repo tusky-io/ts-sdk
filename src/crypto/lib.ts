@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha256";
 import { randomBytes } from "@noble/hashes/utils";
 import { gcm } from "@noble/ciphers/aes";
+import { pbkdf2Async } from "@noble/hashes/pbkdf2";
 import {
   arrayToBase64,
   base64ToArray,
@@ -126,18 +127,49 @@ function decodeAesPayload(payload: string): AESEncryptedPayload {
  * @param {BufferSource} salt
  * @returns {Promise.<CryptoKey>} Promise of CryptoKey object with AES 256-bit symmetric key
  */
-async function deriveAesKey(
+async function deriveAesKeyPbkdf2(
+  password: string,
+  salt: Uint8Array,
+  iterationCount: number = KEY_DERIVATION_ITERATION_COUNT,
+): Promise<Uint8Array> {
+  try {
+    const key = await pbkdf2Async(
+      sha256,
+      new TextEncoder().encode(password),
+      salt,
+      {
+        c: iterationCount,
+        dkLen: 32,
+      },
+    );
+    return key;
+  } catch (error) {
+    logger.error(error);
+    throw new IncorrectEncryptionKey(
+      new Error("Noble PBKDF2 key derivation error."),
+    );
+  }
+}
+
+/**
+ * Key derivation using libsodium
+ * - Argon2id
+ * @param {string} password
+ * @param {BufferSource} salt
+ * @returns {Promise.<Uint8Array>} Promise of key bytes
+ */
+async function deriveAesKeyArgon(
   password: string,
   salt: Uint8Array,
 ): Promise<Uint8Array> {
   try {
     const sodium = await loadSodium();
-    const hash = await sodium.pwHash(password, sodium.toBase64(salt));
-    return sodium.fromBase64(hash);
+    const hash = await sodium.pwHash(password, arrayToBase64(salt));
+    return base64ToArray(hash);
   } catch (error) {
     logger.error(error);
     throw new IncorrectEncryptionKey(
-      new Error("Web Crypto key derivation error."),
+      new Error("Libsodium Argon key derivation error."),
     );
   }
 }
@@ -243,7 +275,8 @@ export {
   digestRaw,
   encryptAes,
   decryptAes,
-  deriveAesKey,
+  deriveAesKeyPbkdf2,
+  deriveAesKeyArgon,
   generateKeyPair,
   encryptWithPublicKey,
   decryptWithPrivateKey,

@@ -1,5 +1,6 @@
 let sodium: Sodium;
 import libsodium from "libsodium-wrappers-sumo";
+import { arrayToBase64, base64ToArray } from "./encoding";
 
 export interface Sodium {
   crypto_pwhash_ALG_ARGON2ID13: number;
@@ -100,17 +101,15 @@ const SodiumWrappers: Sodium = {
   },
 
   async pwHash(passwordB64: string, saltB64: string): Promise<string> {
-    console.log(libsodium);
     const hash = libsodium.crypto_pwhash(
       32, // output length
       passwordB64,
-      libsodium.from_base64(saltB64),
+      base64ToArray(saltB64),
       4, // opsLimit (CPU cost)
       128 * 1024 * 1024, // memLimit (128 MB)
       libsodium.crypto_pwhash_ALG_ARGON2ID13,
-      "base64",
     );
-    return hash;
+    return arrayToBase64(hash);
   },
 };
 

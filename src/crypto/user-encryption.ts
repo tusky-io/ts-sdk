@@ -7,7 +7,8 @@ import {
 import {
   decodeAesPayload,
   decryptAes,
-  deriveAesKey,
+  deriveAesKeyArgon,
+  deriveAesKeyPbkdf2,
   encryptAes,
   generateKeyPair,
   KEY_DERIVATION_ITERATION_COUNT,
@@ -231,7 +232,7 @@ export class UserEncryption {
     try {
       const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
 
-      const passwordKey = await deriveAesKey(password, salt);
+      const passwordKey = await deriveAesKeyArgon(password, salt);
 
       const encryptedPayload = await encryptAes(plaintext, passwordKey);
 
@@ -239,6 +240,7 @@ export class UserEncryption {
         encryptedPayload: encryptedPayload,
         salt: arrayToBase64(salt),
         iterationCount: KEY_DERIVATION_ITERATION_COUNT,
+        argon: true,
       };
 
       if (keystore) {
@@ -277,7 +279,16 @@ export class UserEncryption {
       const salt = base64ToArray(parsedPayload.salt);
 
       logger.info("Deriving password key");
-      const passwordKey = await deriveAesKey(password, salt);
+      let passwordKey: Uint8Array;
+      if (parsedPayload.argon) {
+        passwordKey = await deriveAesKeyArgon(password, salt);
+      } else {
+        passwordKey = await deriveAesKeyPbkdf2(
+          password,
+          salt,
+          parsedPayload.iterationCount || 150000, // support legacy
+        );
+      }
       logger.info("Decrypting with password key");
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
