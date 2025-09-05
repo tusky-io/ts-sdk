@@ -1,16 +1,22 @@
 import { BadRequest } from "../../errors/bad-request";
+import { logger } from "../../logger";
 
 export async function tusFileToUint8Array(
   source: TusFile,
 ): Promise<Uint8Array> {
-  if (source instanceof File) {
-    return new Uint8Array(await source.arrayBuffer());
-  } else if (source instanceof Blob) {
-    return new Uint8Array(await source.arrayBuffer());
-  } else {
-    throw new BadRequest(
-      "File source is not supported. Please provide a valid source: File, Blob, Uint8Array, or ArrayBuffer.",
-    );
+  try {
+    logger.info(source);
+    if (source instanceof File) {
+      return new Uint8Array(await source.arrayBuffer());
+    } else if (source instanceof Blob) {
+      return new Uint8Array(await source.arrayBuffer());
+    } else {
+      throw new BadRequest(
+        "File source is not supported. Please provide a valid source: File, Blob, Uint8Array, or ArrayBuffer.",
+      );
+    }
+  } catch (error) {
+    logger.error(error);
   }
 }
 export async function fileSourceToTusFile(
