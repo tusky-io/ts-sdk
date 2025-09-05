@@ -26,6 +26,7 @@ import { EncryptableHttpStack } from "../crypto/tus/http-stack";
 import { Subscription } from "rxjs";
 import { VaultEncryption } from "../crypto/vault-encryption";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
+import { logger } from "../logger";
 
 export const DEFAULT_FILE_TYPE = "text/plain";
 export const DEFAULT_FILE_NAME = "unnamed";
@@ -119,16 +120,19 @@ class FileModule {
     file: FileSource | any = null,
     options: FileUploadOptions = {},
   ): Promise<tus.Upload> {
+    logger.info("[uploader] Getting vault: " + vaultId);
     const vault = await this.service.api.getVault(vaultId);
 
     let fileLike = null;
     if (file) {
+      logger.info("[uploader] File source to tus file");
       fileLike = await fileSourceToTusFile(file);
 
       if (fileLike.size === 0) {
         throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
       }
     }
+    logger.info("[uploader] File like created");
     let uploadId = null;
 
     const upload = new tus.Upload(fileLike as any, {
@@ -157,7 +161,11 @@ class FileModule {
       removeFingerprintOnSuccess: true,
       onBeforeRequest: async (req: tus.HttpRequest) => {
         if (req.getMethod() === "POST" || req.getMethod() === "PATCH") {
+          logger.info("[uploader] before getUnderlyingObject()");
+
           const xhr = req.getUnderlyingObject();
+          logger.info("[uploader] after getUnderlyingObject()");
+
           if (xhr) {
             xhr.withCredentials = true;
           } else if (uploadId) {

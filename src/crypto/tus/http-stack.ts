@@ -20,6 +20,7 @@ import * as tus from "tus-js-client";
 import { X25519EncryptedPayload } from "../types";
 import { Encrypter } from "../encrypter";
 import { AESKeyPayload, VaultEncryption } from "../vault-encryption";
+import { logger } from "../../logger";
 
 export const CONTENT_LENGTH_HEADER = "Content-Length";
 export const UPLOAD_LENGTH_HEADER = "Upload-Length";
@@ -54,6 +55,7 @@ export class EncryptableHttpStack {
   }
 
   createRequest(method: string, url: string): tus.HttpRequest {
+    logger.info("[EncryptableHttpStack] ");
     const request = this.defaultStack.createRequest(method, url);
     if (method !== "POST" && method !== "PATCH" && method !== "HEAD") {
       return request;
@@ -76,19 +78,32 @@ export class EncryptableHttpStack {
 
       if (method === "POST" || method === "PATCH") {
         // get aes key
+        logger.info("[EncryptableHttpStack] get aes key");
+
         if (uploadId && this.uploadAes.has(uploadId)) {
           key = this.uploadAes.get(uploadId);
         } else {
+          logger.info("[EncryptableHttpStack] before generateAesKey()");
+
           key = await this.vaultEncryption.generateAesKey();
+          logger.info("[EncryptableHttpStack] after generateAesKey()");
         }
 
         // encrypt the body
+        logger.info("[EncryptableHttpStack] after tusFileToUint8Array(body)");
+
         const bodyUint8Array = await tusFileToUint8Array(body);
+        logger.info("[EncryptableHttpStack] before tusFileToUint8Array(body)");
+
+        logger.info("[EncryptableHttpStack] before encryptAes()");
+
         const encryptedBody = (await encryptAes(
           bodyUint8Array,
           key.aesKey,
           false,
         )) as Uint8Array;
+        logger.info("[EncryptableHttpStack] after encryptAes()");
+
         if (!request.getUnderlyingObject()) {
           request.setHeader(
             CONTENT_LENGTH_HEADER,
@@ -100,14 +115,21 @@ export class EncryptableHttpStack {
         // encrypt the filename
         const filename =
           this.getMetadata(request, UPLOAD_METADATA_FILENAME_KEY) || "unnamed";
+        logger.info("[EncryptableHttpStack] before encryptHybrid()");
+
         const encryptedFileNameB64 = await this.vaultEncryption.encryptHybrid(
           stringToArray(filename),
         );
+        logger.info("[EncryptableHttpStack] after encryptHybrid()");
+
+        logger.info("[EncryptableHttpStack] before putMetadata()");
+
         this.putMetadata(
           request,
           UPLOAD_METADATA_FILENAME_KEY,
           stringToBase64(encryptedFileNameB64),
         );
+        logger.info("[EncryptableHttpStack] after putMetadata()");
 
         // set the upload length
         const uploadLengthHeader = request.getHeader(UPLOAD_LENGTH_HEADER);
@@ -156,6 +178,8 @@ export class EncryptableHttpStack {
           );
         }
 
+        logger.info("[EncryptableHttpStack] before reinitialize the xhr");
+
         // reinitialize the xhr
         if ((request as any)._xhr) {
           const xhr = (request as any)._xhr;
@@ -175,9 +199,13 @@ export class EncryptableHttpStack {
           (request as any)._xhr = newXhr;
         }
       }
+      logger.info("[EncryptableHttpStack] after reinitialize the xhr");
 
       // send the request
+      logger.info("[EncryptableHttpStack] before send the request");
+
       response = await originalSend(decoratedBody);
+      logger.info("[EncryptableHttpStack] after send the request");
 
       // read the upload id
       const location = response.getHeader("Location");
@@ -186,6 +214,8 @@ export class EncryptableHttpStack {
       }
 
       // cache the aes key
+      logger.info("[EncryptableHttpStack] before cache the aes key");
+
       if (uploadId) {
         if (!key) {
           if (this.uploadAes.has(uploadId)) {
@@ -212,8 +242,13 @@ export class EncryptableHttpStack {
           this.uploadAes.set(uploadId, key);
         }
       }
+      logger.info("[EncryptableHttpStack] after cache the aes key");
 
       // override response upload-offset to allow reading from proper place in source file
+      logger.info(
+        "[EncryptableHttpStack] before override response upload-offset",
+      );
+
       const originalResponseOffset = parseInt(
         response.getHeader(UPLOAD_OFFSET_HEADER) as string,
       );
@@ -231,6 +266,10 @@ export class EncryptableHttpStack {
         }
         return originalGetHeader(key);
       };
+      logger.info(
+        "[EncryptableHttpStack] after override response upload-offset",
+      );
+
       return response as tus.HttpResponse;
     };
     return request;
