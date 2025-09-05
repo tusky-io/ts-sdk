@@ -173,6 +173,8 @@ export class UserEncryption {
     password: string,
     keystore: boolean = false,
   ): Promise<{ keypair: X25519KeyPair }> {
+    logger.info("[user-encryption] before decrypt with password");
+
     if (!password) {
       throw new IncorrectEncryptionKey(
         new Error("Missing password to decrypt user keys."),
@@ -189,6 +191,7 @@ export class UserEncryption {
       this.encPrivateKey,
       keystore,
     );
+    logger.info("[user-encryption] after decrypt with password");
 
     return { keypair: new X25519KeyPair(privateKey) };
   }
@@ -268,20 +271,28 @@ export class UserEncryption {
     keystore: boolean = false,
   ): Promise<Uint8Array> {
     try {
+      logger.info("[decrypt-with-password] before base64ToJson()");
+
       const parsedPayload = base64ToJson(
         encryptedPayload,
       ) as EncryptedUserBackupPayload;
+      logger.info("[decrypt-with-password] after base64ToJson()");
 
       if (!parsedPayload.salt || !parsedPayload.encryptedPayload) {
         throw new Conflict("Malformed encrypted payload.");
       }
+      logger.info("[decrypt-with-password] before base64ToArray()");
 
       const salt = base64ToArray(parsedPayload.salt);
+      logger.info("[decrypt-with-password] after base64ToArray()");
 
       logger.info("Deriving password key");
       let passwordKey: Uint8Array;
       if (parsedPayload.argon) {
+        logger.info("[decrypt-with-password] before deriveAesKey()");
+
         passwordKey = await deriveAesKeyArgon(password, salt);
+        logger.info("[decrypt-with-password] after deriveAesKey()");
       } else {
         passwordKey = await deriveAesKeyPbkdf2(
           password,
@@ -290,10 +301,14 @@ export class UserEncryption {
         );
       }
       logger.info("Decrypting with password key");
+      logger.info("[decrypt-with-password] before decryptAes()");
+
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
         passwordKey,
       );
+      logger.info("[decrypt-with-password] after decryptAes()");
+
       if (keystore) {
         logger.info("Saving encrypted password key in keystore");
         await this.saveSessionInKeystore(passwordKey);

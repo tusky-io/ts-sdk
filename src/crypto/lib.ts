@@ -163,8 +163,13 @@ async function deriveAesKeyArgon(
   salt: Uint8Array,
 ): Promise<Uint8Array> {
   try {
+    logger.info("[derive-key] before load sodium");
     const sodium = await loadSodium();
+    logger.info("[derive-key] after load sodium");
+    logger.info("[derive-key] before pwHash()");
+
     const hash = await sodium.pwHash(password, arrayToBase64(salt));
+    logger.info("[derive-key] after pwHash()");
     return base64ToArray(hash);
   } catch (error) {
     logger.error(error);

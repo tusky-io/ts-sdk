@@ -90,10 +90,10 @@ export class EncryptableHttpStack {
         }
 
         // encrypt the body
-        logger.info("[EncryptableHttpStack] after tusFileToUint8Array(body)");
+        logger.info("[EncryptableHttpStack] before tusFileToUint8Array(body)");
 
         const bodyUint8Array = await tusFileToUint8Array(body);
-        logger.info("[EncryptableHttpStack] before tusFileToUint8Array(body)");
+        logger.info("[EncryptableHttpStack] after tusFileToUint8Array(body)");
 
         logger.info("[EncryptableHttpStack] before encryptAes()");
 

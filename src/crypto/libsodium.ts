@@ -1,6 +1,7 @@
 let sodium: Sodium;
 import libsodium from "libsodium-wrappers-sumo";
 import { arrayToBase64, base64ToArray } from "./encoding";
+import { logger } from "../logger";
 
 export interface Sodium {
   crypto_pwhash_ALG_ARGON2ID13: number;
@@ -114,13 +115,23 @@ const SodiumWrappers: Sodium = {
 };
 
 export async function loadSodium(customSodium?: Sodium): Promise<Sodium> {
+  logger.info("[load-sodium]");
   if (customSodium) {
+    logger.info("[load-sodium] in custom sodium");
+
     sodium = customSodium;
     return sodium;
   }
+  logger.info("[load-sodium] return sodium");
+
   if (sodium) return sodium;
+  logger.info("[load-sodium] no sodium found, using sodium wrappers");
 
   await SodiumWrappers.ready();
+  logger.info(
+    "[load-sodium] no sodium found, using sodium wrappers - sodium ready",
+  );
+
   sodium = SodiumWrappers;
   return sodium;
 }
