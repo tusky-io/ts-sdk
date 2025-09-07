@@ -99,12 +99,19 @@ export class Tusky {
       return;
     }
     if (config.sodium) {
+      logger.info("[encrypter] befre loading sodium");
+
       await loadSodium(config.sodium);
+      logger.info("[encrypter] after loading sodium");
     }
     if (config.keypair) {
       this._encrypter = new Encrypter({ keypair: config.keypair });
     } else if (config.password) {
+      logger.info("[encrypter] before me.get()");
+
       const user = await this.me.get();
+      logger.info("[encrypter] after me.get()");
+
       if (!user.encPrivateKey) {
         logger.info("Generate new user encryption context");
         const { keypair } = await this.me.setupPassword(config.password);

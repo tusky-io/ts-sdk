@@ -9,7 +9,6 @@ import {
   jsonToBase64,
   stringToArray,
 } from "./encoding";
-import libsodium from "libsodium-wrappers-sumo";
 
 import { AESEncryptedPayload, X25519EncryptedPayload } from "./types";
 import { logger } from "../logger";
@@ -184,10 +183,13 @@ async function deriveAesKeyArgon(
  * - generate a Curve25519 key pair
  * @returns {Promise.<any>}
  */
-async function generateKeyPair(): Promise<any> {
+async function generateKeyPair(): Promise<{
+  publicKey: Uint8Array;
+  privateKey: Uint8Array;
+}> {
   try {
-    const sodium = libsodium;
-    const keyPair = sodium.crypto_box_keypair();
+    const sodium = await loadSodium();
+    const keyPair = await sodium.crypto_box_keypair();
 
     return keyPair;
   } catch (error) {
@@ -209,11 +211,11 @@ async function encryptWithPublicKey(
   plaintext: string | Uint8Array,
 ): Promise<X25519EncryptedPayload> {
   try {
-    const sodium = libsodium;
-    const ephemeralKeyPair = sodium.crypto_box_keypair();
-    const nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
+    const sodium = await loadSodium();
+    const ephemeralKeyPair = await sodium.crypto_box_keypair();
+    const nonce = await sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 
-    const ciphertext = sodium.crypto_box_easy(
+    const ciphertext = await sodium.crypto_box_easy(
       plaintext,
       nonce,
       publicKey,
@@ -245,8 +247,8 @@ async function decryptWithPrivateKey(
   encryptedPayload: X25519EncryptedPayload,
 ): Promise<Uint8Array> {
   try {
-    const sodium = libsodium;
-    const plaintext = sodium.crypto_box_open_easy(
+    const sodium = await loadSodium();
+    const plaintext = await sodium.crypto_box_open_easy(
       base64ToArray(encryptedPayload.ciphertext),
       base64ToArray(encryptedPayload.nonce),
       base64ToArray(encryptedPayload.ephemPublicKey),

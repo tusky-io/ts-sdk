@@ -4,8 +4,25 @@ import { arrayToBase64, base64ToArray } from "./encoding";
 import { logger } from "../logger";
 
 export interface Sodium {
+  crypto_box_open_easy(
+    ciphertext: Uint8Array,
+    nonce: Uint8Array,
+    publicKey: Uint8Array,
+    privateKey: Uint8Array,
+  ): Promise<Uint8Array>;
+  crypto_box_easy(
+    plaintext: string | Uint8Array,
+    nonce: Uint8Array,
+    publicKey: Uint8Array,
+    privateKey: Uint8Array,
+  ): Promise<Uint8Array>;
+  randombytes_buf(crypto_box_NONCEBYTES: number): Promise<Uint8Array>;
+  crypto_box_keypair(): Promise<{
+    publicKey: Uint8Array;
+    privateKey: Uint8Array;
+  }>;
   crypto_pwhash_ALG_ARGON2ID13: number;
-
+  crypto_box_NONCEBYTES: number;
   ready(): Promise<void>;
 
   generateKeyPair(): Promise<{
@@ -37,6 +54,7 @@ export interface Sodium {
 
 const SodiumWrappers: Sodium = {
   crypto_pwhash_ALG_ARGON2ID13: libsodium.crypto_pwhash_ALG_ARGON2ID13,
+  crypto_box_NONCEBYTES: libsodium.crypto_box_NONCEBYTES,
 
   toBase64(array: Uint8Array) {
     return libsodium.to_base64(array);
@@ -58,6 +76,16 @@ const SodiumWrappers: Sodium = {
     return libsodium.randombytes_buf(libsodium.crypto_box_NONCEBYTES, "base64");
   },
 
+  async randombytes_buf(crypto_box_NONCEBYTES: number): Promise<Uint8Array> {
+    return libsodium.randombytes_buf(libsodium.crypto_box_NONCEBYTES);
+  },
+  async crypto_box_keypair(): Promise<{
+    publicKey: Uint8Array;
+    privateKey: Uint8Array;
+  }> {
+    return libsodium.crypto_box_keypair();
+  },
+
   async encrypt(
     message: string,
     nonceB64: string,
@@ -76,6 +104,36 @@ const SodiumWrappers: Sodium = {
       "base64",
     );
 
+    return ciphertext;
+  },
+
+  async crypto_box_open_easy(
+    ciphertext: Uint8Array,
+    nonce: Uint8Array,
+    publicKey: Uint8Array,
+    privateKey: Uint8Array,
+  ): Promise<Uint8Array> {
+    const decrypted = libsodium.crypto_box_open_easy(
+      ciphertext,
+      nonce,
+      publicKey,
+      privateKey,
+    );
+    return decrypted;
+  },
+
+  async crypto_box_easy(
+    plaintext: Uint8Array,
+    nonce: Uint8Array,
+    publicKey: Uint8Array,
+    privateKey: Uint8Array,
+  ): Promise<Uint8Array> {
+    const ciphertext = libsodium.crypto_box_easy(
+      plaintext,
+      nonce,
+      publicKey,
+      privateKey,
+    );
     return ciphertext;
   },
 
