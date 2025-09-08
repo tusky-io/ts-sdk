@@ -55,7 +55,7 @@ export class EncryptableHttpStack {
   }
 
   createRequest(method: string, url: string): tus.HttpRequest {
-    logger.info("[EncryptableHttpStack] ");
+    logger.info("[EncryptableHttpStack] create request");
     const request = this.defaultStack.createRequest(method, url);
     if (method !== "POST" && method !== "PATCH" && method !== "HEAD") {
       return request;
@@ -72,6 +72,8 @@ export class EncryptableHttpStack {
 
     const originalSend = request.send.bind(request);
     request.send = async (body: any) => {
+      logger.info(request);
+      logger.info(body);
       let decoratedBody = body;
       let response: tus.HttpResponse;
       let key: AESKeyPayload;
