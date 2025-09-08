@@ -5,14 +5,13 @@ export async function tusFileToUint8Array(
   source: TusFile,
 ): Promise<Uint8Array> {
   try {
-    logger.info(source);
     if (source instanceof File) {
       return new Uint8Array(await source.arrayBuffer());
     } else if (source instanceof Blob) {
       return new Uint8Array(await source.arrayBuffer());
     } else if (source instanceof Uint8Array) {
       return source;
-    } else if (source instanceof Uint8Array) {
+    } else if (source instanceof ArrayBuffer) {
       return new Uint8Array(source);
     } else {
       throw new BadRequest(

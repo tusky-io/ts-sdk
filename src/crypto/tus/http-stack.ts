@@ -72,8 +72,6 @@ export class EncryptableHttpStack {
 
     const originalSend = request.send.bind(request);
     request.send = async (body: any) => {
-      logger.info(request);
-      logger.info(body);
       let decoratedBody = body;
       let response: tus.HttpResponse;
       let key: AESKeyPayload;
