@@ -11,6 +11,8 @@ export async function tusFileToUint8Array(
       return new Uint8Array(await source.arrayBuffer());
     } else if (source instanceof Uint8Array) {
       return source;
+    } else if (source && typeof source.arrayBuffer === "function") {
+      return new Uint8Array(await source.arrayBuffer());
     } else if (source instanceof ArrayBuffer) {
       return new Uint8Array(source);
     } else {
@@ -36,7 +38,7 @@ export async function fileSourceToTusFile(
 }
 
 //Browser: source object may only be an instance of File, Blob, or Reader in this environment
-export type TusFile = File | Blob | Uint8Array | ArrayBuffer;
+export type TusFile = File | Blob | Uint8Array | ArrayBuffer | any;
 
 //Explicitly repeat TusFile types in public FileSource type
 export type FileSource = File | Blob | ArrayBuffer | Uint8Array;
