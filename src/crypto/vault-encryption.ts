@@ -14,7 +14,6 @@ import {
   X25519EncryptedPayload,
 } from "./types";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
-import { randomBytes } from "@noble/hashes/utils";
 
 export class VaultEncryption {
   currentPublicKey: string;
@@ -38,6 +37,7 @@ export class VaultEncryption {
   }
 
   async generateAesKey(): Promise<AESKeyPayload> {
+    const { randomBytes } = await import("@noble/hashes/utils");
     const keyBuffer = randomBytes(SYMMETRIC_KEY_LENGTH);
     const encryptedAesKey = await encryptWithPublicKey(
       base64ToArray(this.currentPublicKey),
