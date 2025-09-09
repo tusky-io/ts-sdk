@@ -168,12 +168,13 @@ class MeModule {
    */
   public async importEncryptionSessionFromPassword(
     password: string,
+    keystore = false,
   ): Promise<{ keypair: X25519KeyPair }> {
     const me = await this.get();
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
     const { keypair } = await this.userEncryption.importFromPassword(
       password,
-      true,
+      keystore,
     );
     return { keypair };
   }

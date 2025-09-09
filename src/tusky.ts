@@ -122,6 +122,7 @@ export class Tusky {
         );
         const { keypair } = await this.me.importEncryptionSessionFromPassword(
           config.password,
+          config.keystore,
         );
         this._encrypter = new Encrypter({ keypair: keypair });
       }
