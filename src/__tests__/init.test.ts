@@ -9,6 +9,7 @@ describe("Testing init functions", () => {
     const tusky = await Tusky.init({ wallet: { keypair: keypair }});
     expect(tusky).toBeTruthy();
     await tusky.auth.signIn();
+    await tusky.api.verifyMe();
     const me = await tusky.me.get();
     expect(me).toBeTruthy();
   });
@@ -29,6 +30,7 @@ describe("Testing init functions", () => {
       .build();
     expect(tusky).toBeTruthy();
     await tusky.auth.signIn();
+    await tusky.api.verifyMe();
     const me = await tusky.me.get();
     expect(me).toBeTruthy();
   });

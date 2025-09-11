@@ -366,65 +366,6 @@ class FileModule {
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
   }
 
-  /**
-   * Subscribe to file create/update events.
-   * @param  {string} vaultId
-   * @param  {(file: File) => Promise<void>} onSuccess
-   * @param  {(error: Error) => void} onError
-   * @returns {Subscription}
-   * @example
-   * // To unsubscribe:
-   * const subscription = await tusky.file.subscribe(vaultId, onSuccess, onError);
-   * subscription.unsubscribe();
-   */
-  public async subscribe(
-    vaultId: string,
-    onSuccess: (file: File) => Promise<void>,
-    onError: (error: Error) => void,
-  ): Promise<Subscription> {
-    await this.service.setVaultContext(vaultId);
-    const keys = this.service.keys;
-    const encrypter = this.service.encrypter;
-    const isEncrypted = this.service.encrypted;
-    return (
-      this.service.pubsub.client
-        .graphql({
-          query: onUpdateFile,
-          variables: {
-            filter: {
-              vaultId: { eq: vaultId },
-            },
-          },
-        })
-        // @ts-ignore
-        .subscribe({
-          next: async ({ data }) => {
-            const fileProto = data.onUpdateFile;
-            if (fileProto && onSuccess) {
-              let file = new File(fileProto, keys);
-              if (isEncrypted) {
-                if (!encrypter) {
-                  throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
-                }
-                await file.decrypt(encrypter);
-              }
-              if (this.service.vault?.whitelist) {
-                // TOOD: avoid additional call
-                const decryptedFile = await this.get(file.id);
-                file = decryptedFile;
-              }
-              await onSuccess(file);
-            }
-          },
-          error: (e: Error) => {
-            if (onError) {
-              onError(e);
-            }
-          },
-        })
-    );
-  }
-
   protected async aesKey(id: string): Promise<CryptoKey | null> {
     const fileMetadata = await this.get(id);
     if (!fileMetadata.encryptedAesKey) {

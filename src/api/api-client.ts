@@ -429,6 +429,10 @@ export class ApiClient {
     return new User(me);
   }
 
+  async verifyMe(): Promise<void> {
+    return this.post(`${this._apiUrl}/${this._meUri}/verify`);
+  }
+
   /**
    * Update currently authenticated user
    * @uses:
