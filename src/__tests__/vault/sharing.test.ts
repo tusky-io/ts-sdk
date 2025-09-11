@@ -139,16 +139,10 @@ describe("Testing airdrop actions", () => {
       expect(members.length).toEqual(3);
     });
 
-    it("should fail getting the vault from revoked member account", async () => {
+    it("should fail authenticating with revoked member account", async () => {
       await expect(async () => {
-        const memberTusky = await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
-
-        await memberTusky.addEncrypter({ password: airdropeePassword });
-
-        const vault = await memberTusky.vault.get(vaultId);
-        expect(vault).toBeTruthy();
-        expect(vault.name).toBeTruthy();
-      }).rejects.toThrow(Forbidden);
+        await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
+      }).rejects.toThrow(Unauthorized);
     });
   });
 
