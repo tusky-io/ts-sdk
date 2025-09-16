@@ -345,9 +345,13 @@ class FileModule {
   }
 
   public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
-    const file = await this.service.api.downloadFile(id, {
-      responseType: "stream",
-    });
+    // const file = await this.service.api.downloadFile(id, {
+    //   responseType: "stream",
+    // });
+    const fileBuffer = (await this.service.api.downloadFile(id, {
+      responseType: "arraybuffer",
+    })) as ArrayBuffer;
+    const file = bufferToStream(fileBuffer);
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));
     this.service.setEncrypted(fileMetadata.__encrypted__);
@@ -462,5 +466,14 @@ export const onUpdateFile = `subscription OnUpdateFile($filter: ModelSubscriptio
   }
 }
 `;
+
+function bufferToStream(buffer: ArrayBuffer): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(new Uint8Array(buffer));
+      controller.close();
+    },
+  });
+}
 
 export { FileModule };
