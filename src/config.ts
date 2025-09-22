@@ -5,6 +5,7 @@ import { Logger, LogLevel } from "./logger";
 import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
 import { Auth } from "./auth";
 import { X25519KeyPair } from "./crypto";
+import { Storage } from "./util/storage";
 import { Sodium } from "./crypto/libsodium";
 
 export interface TuskyConfig {

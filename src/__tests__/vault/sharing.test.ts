@@ -106,7 +106,7 @@ describe("Testing airdrop actions", () => {
     it("should get vault by airdropee", async () => {
       const memberTusky = await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
 
-      expect(memberTusky.auth.getAddress()).toEqual(airdropeeAddress);
+      expect(await memberTusky.auth.getAddress()).toEqual(airdropeeAddress);
 
       await memberTusky.addEncrypter({ password: airdropeePassword });
 
