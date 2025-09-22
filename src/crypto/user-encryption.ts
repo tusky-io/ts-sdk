@@ -172,8 +172,6 @@ export class UserEncryption {
     password: string,
     keystore: boolean = false,
   ): Promise<{ keypair: X25519KeyPair }> {
-    logger.info("[user-encryption] before decrypt with password");
-
     if (!password) {
       throw new IncorrectEncryptionKey(
         new Error("Missing password to decrypt user keys."),
@@ -190,7 +188,6 @@ export class UserEncryption {
       this.encPrivateKey,
       keystore,
     );
-    logger.info("[user-encryption] after decrypt with password");
 
     return { keypair: new X25519KeyPair(privateKey) };
   }
@@ -270,30 +267,23 @@ export class UserEncryption {
     keystore: boolean = false,
   ): Promise<Uint8Array> {
     try {
-      const start = Date.now();
+      logger.info(`[time] decryptWithPassword() start`);
 
-      logger.info("[decrypt-with-password] before base64ToJson()");
+      const start = Date.now();
 
       const parsedPayload = base64ToJson(
         encryptedPayload,
       ) as EncryptedUserBackupPayload;
-      logger.info("[decrypt-with-password] after base64ToJson()");
 
       if (!parsedPayload.salt || !parsedPayload.encryptedPayload) {
         throw new Conflict("Malformed encrypted payload.");
       }
-      logger.info("[decrypt-with-password] before base64ToArray()");
 
       const salt = base64ToArray(parsedPayload.salt);
-      logger.info("[decrypt-with-password] after base64ToArray()");
 
-      logger.info("Deriving password key");
       let passwordKey: Uint8Array;
       if (parsedPayload.argon) {
-        logger.info("[decrypt-with-password] before deriveAesKey()");
-
         passwordKey = await deriveAesKeyArgon(password, salt);
-        logger.info("[decrypt-with-password] after deriveAesKey()");
       } else {
         passwordKey = await deriveAesKeyPbkdf2(
           password,
@@ -301,21 +291,18 @@ export class UserEncryption {
           parsedPayload.iterationCount || 150000, // support legacy
         );
       }
-      logger.info("Decrypting with password key");
-      logger.info("[decrypt-with-password] before decryptAes()");
 
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
         passwordKey,
       );
-      logger.info("[decrypt-with-password] after decryptAes()");
 
       if (keystore) {
         logger.info("Saving encrypted password key in keystore");
         await this.saveSessionInKeystore(passwordKey);
       }
       const end = Date.now();
-      console.log(`[time] Decrypt with password took ${end - start} ms`);
+      logger.info(`[time] decryptWithPassword() end - took ${end - start} ms`);
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);
@@ -356,6 +343,8 @@ export class UserEncryption {
   async hasEncryptionSession(): Promise<
     false | { sessionKey: Uint8Array; encryptedPasswordKey: string }
   > {
+    logger.info(`[time] hasEncryptionSession() start`);
+
     const start = Date.now();
     const keystore = await Keystore.instance();
     const sessionKey = await keystore.get(await this.getSessionKeyPath());
@@ -369,9 +358,7 @@ export class UserEncryption {
       return false;
     }
     const end = Date.now();
-    console.log(
-      `[time] Keystore has encryption session check took ${end - start} ms`,
-    );
+    logger.info(`[time] hasEncryptionSession() end - took ${end - start} ms`);
     return {
       sessionKey: sessionKey,
       encryptedPasswordKey: encryptedPasswordKey,

@@ -88,6 +88,7 @@ async function decryptAes(
   key: Uint8Array,
 ): Promise<Uint8Array> {
   try {
+    logger.info(`[time] decryptAes() start`);
     const start = Date.now();
     const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext
       ? (encryptedPayload as AESEncryptedPayload)
@@ -95,7 +96,7 @@ async function decryptAes(
     const aes = gcm(key, payload.iv);
     const plaintext = await aes.decrypt(payload.ciphertext as Uint8Array);
     const end = Date.now();
-    console.log(`[time] Noble AES decryption took ${end - start} ms`);
+    logger.info(`[time] decryptAes() end - took ${end - start} ms`);
     return plaintext;
   } catch (error) {
     logger.error(error);
@@ -166,13 +167,13 @@ async function deriveAesKeyArgon(
   salt: Uint8Array,
 ): Promise<Uint8Array> {
   try {
-    logger.info("[derive-key] before load sodium");
+    logger.info(`[time] deriveAesKeyArgon() start`);
+    const start = Date.now();
     const sodium = await loadSodium();
-    logger.info("[derive-key] after load sodium");
-    logger.info("[derive-key] before pwHash()");
 
     const hash = await sodium.pwHash(password, arrayToBase64(salt));
-    logger.info("[derive-key] after pwHash()");
+    const end = Date.now();
+    logger.info(`[time] deriveAesKeyArgon() end - took ${end - start} ms`);
     return base64ToArray(hash);
   } catch (error) {
     logger.error(error);
@@ -251,6 +252,9 @@ async function decryptWithPrivateKey(
   encryptedPayload: X25519EncryptedPayload,
 ): Promise<Uint8Array> {
   try {
+    logger.info(`[time] decryptWithPrivateKey() start`);
+    const start = Date.now();
+
     const sodium = await loadSodium();
     const plaintext = await sodium.crypto_box_open_easy(
       base64ToArray(encryptedPayload.ciphertext),
@@ -258,6 +262,8 @@ async function decryptWithPrivateKey(
       base64ToArray(encryptedPayload.ephemPublicKey),
       privateKey,
     );
+    const end = Date.now();
+    logger.info(`[time] decryptWithPrivateKey() end - took ${end - start} ms`);
     return plaintext;
   } catch (error) {
     logger.debug(encryptedPayload);

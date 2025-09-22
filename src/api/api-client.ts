@@ -425,7 +425,12 @@ export class ApiClient {
    * @returns {Promise<User>}
    */
   async getMe(): Promise<User> {
+    logger.info(`[time] Api call me.get() start`);
+    const start = Date.now();
+
     const me = await this.get(`${this._apiUrl}/${this._meUri}`);
+    const end = Date.now();
+    logger.info(`[time] Api call me.get() end - took ${end - start} ms`);
     return new User(me);
   }
 
@@ -620,7 +625,14 @@ export class ApiClient {
    * @returns {Promise<Vault>}
    */
   async getVault(): Promise<Vault> {
-    return this.get(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
+    logger.info(`[time] Api call vault.get() start`);
+    const start = Date.now();
+    const vault = await this.get(
+      `${this._apiUrl}/${this._vaultUri}/${this._resourceId}`,
+    );
+    const end = Date.now();
+    logger.info(`[time] Api call vault.get() end - took ${end - start} ms`);
+    return vault;
   }
 
   /**

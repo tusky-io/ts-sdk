@@ -120,19 +120,16 @@ class FileModule {
     file: FileSource | any = null,
     options: FileUploadOptions = {},
   ): Promise<tus.Upload> {
-    logger.info("[uploader] Getting vault: " + vaultId);
     const vault = await this.service.api.getVault(vaultId);
 
     let fileLike = null;
     if (file) {
-      logger.info("[uploader] File source to tus file");
       fileLike = await fileSourceToTusFile(file);
 
       if (fileLike.size === 0) {
         throw new BadRequest(EMPTY_FILE_ERROR_MESSAGE);
       }
     }
-    logger.info("[uploader] File like created");
     let uploadId = null;
 
     const upload = new tus.Upload(fileLike as any, {
@@ -161,10 +158,7 @@ class FileModule {
       removeFingerprintOnSuccess: true,
       onBeforeRequest: async (req: tus.HttpRequest) => {
         if (req.getMethod() === "POST" || req.getMethod() === "PATCH") {
-          logger.info("[uploader] before getUnderlyingObject()");
-
           const xhr = req.getUnderlyingObject();
-          logger.info("[uploader] after getUnderlyingObject()");
 
           if (xhr) {
             xhr.withCredentials = true;
@@ -235,11 +229,12 @@ class FileModule {
       ...options,
     };
 
+    logger.info(`[time] Api call file.get() start`);
     const start = Date.now();
 
     const nodeProto = await this.service.api.getFile(id);
     const end = Date.now();
-    console.log(`[time] Api call file.get() took ${end - start} ms`);
+    logger.info(`[time] Api call file.get() end - took ${end - start} ms`);
     return this.service.processFile(nodeProto, getOptions.shouldDecrypt);
   }
 
@@ -256,11 +251,12 @@ class FileModule {
       ...this.defaultListOptions,
       ...options,
     };
+    logger.info(`[time] Api call file.list() start`);
     const start = Date.now();
 
     const response = await this.service.api.getFiles(listOptions);
     const end = Date.now();
-    console.log(`[time] Api call file.list() took ${end - start} ms`);
+    logger.info(`[time] Api call file.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {

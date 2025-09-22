@@ -1,5 +1,6 @@
 import { Service, ServiceConfig } from "./service/service";
 import { Storage } from "../types/storage";
+import { logger } from "../logger";
 
 class StorageModule {
   protected service: Service;
@@ -13,7 +14,13 @@ class StorageModule {
    * @returns {Promise<Storage>}
    */
   public async get(): Promise<Storage> {
-    return await this.service.api.getStorage();
+    logger.info(`[time] Api call storage.get() start`);
+    const start = Date.now();
+
+    const storage = await this.service.api.getStorage();
+    const end = Date.now();
+    logger.info(`[time] Api call storage.get() end - took ${end - start} ms`);
+    return storage;
   }
 }
 

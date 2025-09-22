@@ -4,6 +4,7 @@ import { UserEncryption } from "../crypto/user-encryption";
 import { BadRequest } from "../errors/bad-request";
 import { ClientConfig } from "../config";
 import { arrayToBase64, X25519KeyPair } from "../crypto";
+import { logger } from "../logger";
 
 class MeModule {
   protected service: Service;
@@ -19,11 +20,7 @@ class MeModule {
    * @returns {Promise<User>}
    */
   public async get(): Promise<User> {
-    const start = Date.now();
-
     const me = await this.service.api.getMe();
-    const end = Date.now();
-    console.log(`[time] Api call me.get() took ${end - start} ms`);
     return me;
   }
 

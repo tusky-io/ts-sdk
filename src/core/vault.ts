@@ -26,6 +26,7 @@ import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from "@noble/hashes/utils";
 import { BadRequest } from "../errors/bad-request";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
+import { logger } from "../logger";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -62,10 +63,7 @@ class VaultModule {
       ...this.defaultGetOptions,
       ...options,
     };
-    const start = Date.now();
     const result = await this.service.api.getVault(vaultId, getOptions);
-    const end = Date.now();
-    console.log(`[time] Api call vault.get() took ${end - start} ms`);
     return this.service.processVault(
       result,
       result.encrypted && getOptions.shouldDecrypt,
@@ -85,10 +83,11 @@ class VaultModule {
       ...this.defaultListOptions,
       ...options,
     };
+    logger.info(`[time] Api call vault.list() start`);
     const start = Date.now();
     const response = await this.service.api.getVaults(listOptions);
     const end = Date.now();
-    console.log(`[time] Api call vault.list() took ${end - start} ms`);
+    logger.info(`[time] Api call vault.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processVault = async (vaultProto: Vault) => {
@@ -352,7 +351,7 @@ class VaultModule {
     //     member.id !== id // filter out the member being revoked
     //     && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
 
-    //     console.log(activeMembers)
+    //     logger.info(activeMembers)
     //   // rotate keys for all active members
     //   const memberPublicKeys = new Map<string, string>();
     //   await Promise.all(activeMembers.map(async (member: Membership) => {

@@ -173,23 +173,14 @@ const SodiumWrappers: Sodium = {
 };
 
 export async function loadSodium(customSodium?: Sodium): Promise<Sodium> {
-  logger.info("[load-sodium]");
   if (customSodium) {
-    logger.info("[load-sodium] in custom sodium");
-
     sodium = customSodium;
     return sodium;
   }
-  logger.info("[load-sodium] return sodium");
 
   if (sodium) return sodium;
-  logger.info("[load-sodium] no sodium found, using sodium wrappers");
 
   await SodiumWrappers.ready();
-  logger.info(
-    "[load-sodium] no sodium found, using sodium wrappers - sodium ready",
-  );
-
   sodium = SodiumWrappers;
   return sodium;
 }

@@ -15,6 +15,7 @@ import { Auth } from "../auth";
 import { File } from "../types";
 import { FolderSource, traverse } from "@env/core/folder";
 import { digest } from "../crypto";
+import { logger } from "../logger";
 
 const CONCURRENCY_LIMIT = 10;
 
@@ -229,10 +230,11 @@ class FolderModule {
       ...this.defaultListOptions,
       ...options,
     };
+    logger.info(`[time] Api call folder.list() start`);
     const start = Date.now();
     const response = await this.service.api.getFolders(listOptions);
     const end = Date.now();
-    console.log(`[time] Api call folder.list() took ${end - start} ms`);
+    logger.info(`[time] Api call folder.list() end - took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {
