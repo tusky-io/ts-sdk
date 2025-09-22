@@ -1,7 +1,6 @@
 import { Unauthorized } from "../errors/unauthorized";
 import { DEFAULT_ENV, Env } from "../types/env";
 import { isServer } from "../util/platform";
-import { Storage } from "../util/storage";
 
 const STORAGE_PATH_PREFIX = "tusky";
 
@@ -51,85 +50,74 @@ class JWTClient {
     return tokenExpiringSoon;
   }
 
-  async getRefreshInProgress() {
+  getRefreshInProgress() {
     this.refreshInProgress =
-      (await this.storage.getItem(this.STORAGE_PATH_REFRESH_IN_PROGRESS)) ===
-      "true"
+      this.storage.getItem(this.STORAGE_PATH_REFRESH_IN_PROGRESS) === "true"
         ? true
         : false;
     return this.refreshInProgress;
   }
 
-  async setRefreshInProgress(refreshInProgress: boolean) {
+  setRefreshInProgress(refreshInProgress: boolean) {
     this.refreshInProgress = refreshInProgress;
-    await this.storage.setItem(
+    this.storage.setItem(
       this.STORAGE_PATH_REFRESH_IN_PROGRESS,
       refreshInProgress ? "true" : "false",
     );
   }
 
-  async getAccessToken() {
-    this.accessToken = await this.storage.getItem(
-      this.STORAGE_PATH_ACCESS_TOKEN,
-    );
+  getAccessToken() {
+    this.accessToken = this.storage.getItem(this.STORAGE_PATH_ACCESS_TOKEN);
     return this.accessToken;
   }
 
-  async getRefreshToken() {
-    this.refreshToken = await this.storage.getItem(
-      this.STORAGE_PATH_REFRESH_TOKEN,
-    );
+  getRefreshToken() {
+    this.refreshToken = this.storage.getItem(this.STORAGE_PATH_REFRESH_TOKEN);
     return this.refreshToken;
   }
 
-  async getIdToken() {
-    this.idToken = await this.storage.getItem(this.STORAGE_PATH_ID_TOKEN);
+  getIdToken() {
+    this.idToken = this.storage.getItem(this.STORAGE_PATH_ID_TOKEN);
     return this.idToken;
   }
 
-  async setAccessToken(accessToken: string) {
+  setAccessToken(accessToken: string) {
     this.accessToken = accessToken;
-    await this.storage.setItem(
-      this.STORAGE_PATH_ACCESS_TOKEN,
-      this.accessToken,
-    );
+    this.storage.setItem(this.STORAGE_PATH_ACCESS_TOKEN, this.accessToken);
   }
 
-  async setRefreshToken(refreshToken: string) {
+  setRefreshToken(refreshToken: string) {
     this.refreshToken = refreshToken;
-    await this.storage.setItem(
-      this.STORAGE_PATH_REFRESH_TOKEN,
-      this.refreshToken,
-    );
+    this.storage.setItem(this.STORAGE_PATH_REFRESH_TOKEN, this.refreshToken);
   }
 
-  async setIdToken(idToken: string) {
+  setIdToken(idToken: string) {
     this.idToken = idToken;
-    await this.storage.setItem(this.STORAGE_PATH_ID_TOKEN, this.idToken);
+    this.storage.setItem(this.STORAGE_PATH_ID_TOKEN, this.idToken);
   }
 
-  async setAddress(address: string) {
+  setAddress(address: string) {
     this.address = address;
-    await this.storage.setItem(this.STORAGE_PATH_ADDRESS, address);
+    this.storage.setItem(this.STORAGE_PATH_ADDRESS, address);
   }
 
-  async getAddress() {
+  getAddress() {
     if (!this.address) {
-      this.address = await this.storage.getItem(this.STORAGE_PATH_ADDRESS);
+      this.address = this.storage.getItem(this.STORAGE_PATH_ADDRESS);
     }
     return this.address;
   }
 
-  async getUserId() {
-    const idToken = await this.getIdToken();
+  getUserId() {
+    const idToken = this.getIdToken();
     return idToken ? decode(idToken).sub : "";
   }
 
-  async clearTokens() {
-    await this.storage.removeItem(this.STORAGE_PATH_ACCESS_TOKEN);
-    await this.storage.removeItem(this.STORAGE_PATH_ID_TOKEN);
-    await this.storage.removeItem(this.STORAGE_PATH_REFRESH_TOKEN);
-    await this.storage.removeItem(this.STORAGE_PATH_ADDRESS);
+  clearTokens() {
+    this.storage.removeItem(this.STORAGE_PATH_ACCESS_TOKEN);
+    this.storage.removeItem(this.STORAGE_PATH_ID_TOKEN);
+    this.storage.removeItem(this.STORAGE_PATH_REFRESH_TOKEN);
+    this.storage.removeItem(this.STORAGE_PATH_ADDRESS);
   }
 }
 

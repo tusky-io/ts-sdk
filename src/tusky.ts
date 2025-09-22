@@ -18,7 +18,6 @@ import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
 import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
-import { Storage } from "./util/storage";
 import { loadSodium } from "./crypto/libsodium";
 
 export class Tusky {
@@ -154,6 +153,7 @@ export class Tusky {
       encrypter: this._encrypter,
       env: this._env,
       storage: this._storage,
+      address: this._auth?.getAddress(),
     };
   }
 

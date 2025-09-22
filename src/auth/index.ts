@@ -18,7 +18,6 @@ import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
 import EnokiClient, { ZkLoginNonceResponse } from "./enoki";
-import { Storage } from "../util/storage";
 
 const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
@@ -134,8 +133,8 @@ export class Auth {
           address,
         });
 
-        await this.jwtClient.setAddress(address);
-        await this.jwtClient.setIdToken(idToken);
+        this.jwtClient.setAddress(address);
+        this.jwtClient.setIdToken(idToken);
         return { address };
       }
       case "OAuth": {
@@ -171,9 +170,9 @@ export class Auth {
     }
   }
 
-  public async signOut(): Promise<void> {
+  public signOut(): void {
     // clear auth tokens from the storage
-    await this.jwtClient.clearTokens();
+    this.jwtClient.clearTokens();
   }
 
   public async createAuthorizationUrl(
@@ -225,7 +224,7 @@ export class Auth {
         throw new Unauthorized("Please add apiKey into config.");
       }
       case "OAuth": {
-        let idToken = await this.jwtClient.getIdToken();
+        let idToken = this.jwtClient.getIdToken();
         if (!idToken) {
           throw new Unauthorized("Invalid session, please log in again.");
         }
@@ -244,10 +243,10 @@ export class Auth {
               });
               await oauthClient.refreshTokens();
               logger.info("Tokens refreshed successfully.");
-              idToken = await this.jwtClient.getIdToken();
+              idToken = this.jwtClient.getIdToken();
             } else {
               logger.info("Refresh already in progress...");
-              let idToken = await this.jwtClient.getIdToken();
+              let idToken = this.jwtClient.getIdToken();
               if (!idToken) {
                 throw new Unauthorized("Invalid session, please log in again.");
               }
@@ -260,7 +259,7 @@ export class Auth {
       }
       // TODO: consolidate OAuth & Wallet flow with refresh token logic
       case "Wallet": {
-        const idToken = await this.jwtClient.getIdToken();
+        const idToken = this.jwtClient.getIdToken();
         if (!idToken) {
           throw new Unauthorized("Invalid session, please log in again.");
         }
@@ -278,11 +277,11 @@ export class Auth {
     }
   }
 
-  public async getAddress(): Promise<string> {
+  public getAddress(): string {
     switch (this.authType) {
       case "OAuth":
       case "Wallet": {
-        return await this.jwtClient.getAddress();
+        return this.jwtClient.getAddress();
       }
       default:
         return undefined;
