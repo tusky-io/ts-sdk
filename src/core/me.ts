@@ -19,7 +19,12 @@ class MeModule {
    * @returns {Promise<User>}
    */
   public async get(): Promise<User> {
-    return await this.service.api.getMe();
+    const start = Date.now();
+
+    const me = await this.service.api.getMe();
+    const end = Date.now();
+    console.log(`[time] Api call me.get() took ${end - start} ms`);
+    return me;
   }
 
   /**

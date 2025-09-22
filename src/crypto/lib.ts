@@ -88,11 +88,14 @@ async function decryptAes(
   key: Uint8Array,
 ): Promise<Uint8Array> {
   try {
+    const start = Date.now();
     const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext
       ? (encryptedPayload as AESEncryptedPayload)
       : decodeAesPayload(encryptedPayload as string);
     const aes = gcm(key, payload.iv);
     const plaintext = await aes.decrypt(payload.ciphertext as Uint8Array);
+    const end = Date.now();
+    console.log(`[time] Noble AES decryption took ${end - start} ms`);
     return plaintext;
   } catch (error) {
     logger.error(error);

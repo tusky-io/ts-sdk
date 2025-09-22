@@ -234,7 +234,12 @@ class FileModule {
       ...this.defaultGetOptions,
       ...options,
     };
+
+    const start = Date.now();
+
     const nodeProto = await this.service.api.getFile(id);
+    const end = Date.now();
+    console.log(`[time] Api call file.get() took ${end - start} ms`);
     return this.service.processFile(nodeProto, getOptions.shouldDecrypt);
   }
 
@@ -251,7 +256,11 @@ class FileModule {
       ...this.defaultListOptions,
       ...options,
     };
+    const start = Date.now();
+
     const response = await this.service.api.getFiles(listOptions);
+    const end = Date.now();
+    console.log(`[time] Api call file.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {

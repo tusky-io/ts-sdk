@@ -229,7 +229,10 @@ class FolderModule {
       ...this.defaultListOptions,
       ...options,
     };
+    const start = Date.now();
     const response = await this.service.api.getFolders(listOptions);
+    const end = Date.now();
+    console.log(`[time] Api call folder.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processItem = async (nodeProto: any) => {

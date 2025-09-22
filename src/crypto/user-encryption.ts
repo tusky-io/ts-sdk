@@ -270,6 +270,8 @@ export class UserEncryption {
     keystore: boolean = false,
   ): Promise<Uint8Array> {
     try {
+      const start = Date.now();
+
       logger.info("[decrypt-with-password] before base64ToJson()");
 
       const parsedPayload = base64ToJson(
@@ -312,6 +314,8 @@ export class UserEncryption {
         logger.info("Saving encrypted password key in keystore");
         await this.saveSessionInKeystore(passwordKey);
       }
+      const end = Date.now();
+      console.log(`[time] Decrypt with password took ${end - start} ms`);
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);
@@ -352,6 +356,7 @@ export class UserEncryption {
   async hasEncryptionSession(): Promise<
     false | { sessionKey: Uint8Array; encryptedPasswordKey: string }
   > {
+    const start = Date.now();
     const keystore = await Keystore.instance();
     const sessionKey = await keystore.get(await this.getSessionKeyPath());
     if (!sessionKey) {
@@ -363,6 +368,10 @@ export class UserEncryption {
     if (!encryptedPasswordKey) {
       return false;
     }
+    const end = Date.now();
+    console.log(
+      `[time] Keystore has encryption session check took ${end - start} ms`,
+    );
     return {
       sessionKey: sessionKey,
       encryptedPasswordKey: encryptedPasswordKey,

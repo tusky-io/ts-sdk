@@ -62,7 +62,10 @@ class VaultModule {
       ...this.defaultGetOptions,
       ...options,
     };
+    const start = Date.now();
     const result = await this.service.api.getVault(vaultId, getOptions);
+    const end = Date.now();
+    console.log(`[time] Api call vault.get() took ${end - start} ms`);
     return this.service.processVault(
       result,
       result.encrypted && getOptions.shouldDecrypt,
@@ -82,7 +85,10 @@ class VaultModule {
       ...this.defaultListOptions,
       ...options,
     };
+    const start = Date.now();
     const response = await this.service.api.getVaults(listOptions);
+    const end = Date.now();
+    console.log(`[time] Api call vault.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
     const processVault = async (vaultProto: Vault) => {
