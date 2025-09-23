@@ -236,7 +236,7 @@ const serviceWorkerWebConfig = {
 module.exports = (env, argv) => {
   const configs = [];
   if (process.env.STATS === 'server') {
-    configs.push(cjsNodeConfig, esmNodeConfig, cjsWebConfig, esmWebConfig);
+   configs.push(cjsNodeConfig, esmNodeConfig, cjsWebConfig, esmWebConfig);
     configs.forEach(config => {
       config.plugins.push(new WebpackBundleAnalyzer({
         analyzerMode: 'server',

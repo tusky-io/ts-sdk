@@ -7,6 +7,7 @@
   "types": "./lib/node/types/index.d.ts",
   "exports": {
     ".": {
+      "react-native": "./src/index.ts",
       "require": "./lib/node/cjs/index.js",
       "import": "./lib/node/esm/index.esm.js",
       "default": "./lib/node/cjs/index.js",
@@ -41,7 +42,8 @@
     "lib/**/*.js",
     "lib/**/*.d.ts",
     "lib/web/types/index.d.ts",
-    "lib/node/types/index.d.ts"
+    "lib/node/types/index.d.ts",
+    "lib/react-native/types/index.d.ts"
   ],
   "keywords": [
     "tusky",
@@ -84,6 +86,7 @@
     "memory-level": "^1.0.0",
     "memorystorage": "^0.12.0",
     "micro-key-producer": "^0.7.0",
+    "react-native-blob-util": "^0.22.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.5.6",
     "tus-js-client": "^4.2.3",

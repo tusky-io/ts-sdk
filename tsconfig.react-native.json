@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
+    "outDir": "./lib/react-native/esm",
+    "baseUrl": "src",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "importHelpers": true,
+    "noEmitHelpers": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "@env/types/*": ["types/react-native/*"],
+      "@env/core/*": ["core/react-native/*"]
+    },
+    "plugins": [
+      { "transform": "typescript-transform-paths" },
+      { "transform": "typescript-transform-paths", "afterDeclarations": true }
+    ],
+    "declarationDir": "./lib/react-native/types"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "**/__tests__/*", "src/__tests__/*"]
+}
