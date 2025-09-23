@@ -1,3 +1,5 @@
+import { base64ToJson } from "../crypto";
+import { EncryptedUserBackupPayload } from "../crypto/types";
 import { Storage } from "./storage";
 
 export class User {
@@ -11,6 +13,7 @@ export class User {
   encPrivateKey?: string;
   encPrivateKeyBackup?: string;
   verificationStatus?: "verified" | "pending" | "rejected";
+  keyDerivationAlgorithm?: "argon" | "pbkdf2";
 
   constructor(json: any) {
     this.address = json.address;
@@ -23,6 +26,11 @@ export class User {
     this.storage = json.storage ? new Storage(json.storage) : json.storage;
     this.guest = json.guest;
     this.verificationStatus = json.verificationStatus;
+    this.keyDerivationAlgorithm = this.encPrivateKey
+      ? (base64ToJson(this.encPrivateKey) as EncryptedUserBackupPayload).argon
+        ? "argon"
+        : "pbkdf2"
+      : undefined;
   }
 }
 
