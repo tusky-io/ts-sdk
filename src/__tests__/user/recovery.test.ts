@@ -2,7 +2,7 @@ import faker from '@faker-js/faker';
 import { UserEncryption } from '../../crypto/user-encryption';
 import { ConsoleLogger, setLogger } from '../../logger';
 import { LOG_LEVEL } from '../common';
-import { defaultStorage } from '../../auth/jwt';
+import { defaultStorage } from '../../util/storage';
 
 setLogger(new ConsoleLogger({ logLevel: LOG_LEVEL }));
 

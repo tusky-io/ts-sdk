@@ -18,12 +18,12 @@ import Keystore from "./storage/keystore";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { logger } from "../logger";
 import { X25519KeyPair } from "./keypair";
-import { defaultStorage, JWTClient } from "../auth/jwt";
+import { JWTClient } from "../auth/jwt";
 import { Env } from "../types";
 import * as bip39 from "bip39";
 import { EncryptedUserBackupPayload } from "./types";
 import { Conflict } from "../errors/conflict";
-import { Storage } from "../util/storage";
+import { defaultStorage, Storage } from "../util/storage";
 
 const MNEMONIC_ENTROPY = 256;
 const SALT_LENGTH = 16;
@@ -35,7 +35,6 @@ export class UserEncryption {
   private encPrivateKeyBackup: string;
   private storage: Storage;
 
-  private userId: string;
   private sessionKeyPath: string;
   private encryptedPasswordKeyPath: string;
   private env: Env;

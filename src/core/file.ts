@@ -22,8 +22,7 @@ import {
 import * as tus from "tus-js-client";
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
-import { EncryptableHttpStack } from "../crypto/tus/http-stack";
-import { Subscription } from "rxjs";
+import { EncryptableHttpStack } from "@env/util/tus";
 import { VaultEncryption } from "../crypto/vault-encryption";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
 import { logger } from "../logger";
@@ -352,13 +351,9 @@ class FileModule {
   }
 
   public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
-    // const file = await this.service.api.downloadFile(id, {
-    //   responseType: "stream",
-    // });
-    const fileBuffer = (await this.service.api.downloadFile(id, {
-      responseType: "arraybuffer",
-    })) as ArrayBuffer;
-    const file = bufferToStream(fileBuffer);
+    const file = await this.service.api.downloadFile(id, {
+      responseType: "stream",
+    });
     // TODO: send encryption context directly with the file data
     const fileMetadata = new File(await this.service.api.getFile(id));
     this.service.setEncrypted(fileMetadata.__encrypted__);
@@ -473,14 +468,5 @@ export const onUpdateFile = `subscription OnUpdateFile($filter: ModelSubscriptio
   }
 }
 `;
-
-function bufferToStream(buffer: ArrayBuffer): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    start(controller) {
-      controller.enqueue(new Uint8Array(buffer));
-      controller.close();
-    },
-  });
-}
 
 export { FileModule };

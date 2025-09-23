@@ -18,7 +18,8 @@
     "experimentalDecorators": true,
     "paths": {
       "@env/types/*": ["types/web/*"],
-      "@env/core/*": ["core/web/*"]
+      "@env/core/*": ["core/web/*"],
+      "@env/util/*": ["util/web/*"]
     },
     "plugins": [
       { "transform": "typescript-transform-paths" },

@@ -16,11 +16,8 @@ import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./crypto/encrypter";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
-import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
-import { Storage } from "./util/storage";
-import { loadSodium } from "./crypto/libsodium";
-import { loadFetch } from "./crypto/fetch";
+import { defaultStorage, Storage } from "./util/storage";
 
 export class Tusky {
   public api: Api;
@@ -102,9 +99,6 @@ export class Tusky {
     if (!config) {
       return;
     }
-    if (config.sodium) {
-      await loadSodium(config.sodium);
-    }
     if (config.keypair) {
       this._encrypter = new Encrypter({ keypair: config.keypair });
     } else if (config.password) {
@@ -176,7 +170,6 @@ export class Tusky {
         }),
       );
     }
-    loadFetch(config.fetchFn);
     CacheBusters.cache = config?.cache;
   }
 }

@@ -1,26 +1,23 @@
-import { tusFileToUint8Array } from "@env/types/file";
+import * as tus from "tus-js-client";
 import {
+  AUTH_TAG_LENGTH_IN_BYTES,
   base64ToJson,
   base64ToString,
+  encryptAes,
+  IV_LENGTH_IN_BYTES,
   jsonToBase64,
   stringToArray,
   stringToBase64,
-} from "../";
-import {
-  CHUNK_SIZE_IN_BYTES,
-  ENCRYPTED_CHUNK_SIZE_IN_BYTES,
-} from "../../core/file";
-import { Vault } from "../../types";
-import {
-  AUTH_TAG_LENGTH_IN_BYTES,
-  encryptAes,
-  IV_LENGTH_IN_BYTES,
-} from "../lib";
-import * as tus from "tus-js-client";
-import { X25519EncryptedPayload } from "../types";
-import { Encrypter } from "../encrypter";
-import { AESKeyPayload, VaultEncryption } from "../vault-encryption";
-import { logger } from "../../logger";
+} from "../../crypto";
+import { tusFileToUint8Array, Vault } from "../../types";
+import { AESKeyPayload, VaultEncryption } from "../../crypto/vault-encryption";
+import Encrypter from "../../crypto/encrypter";
+import { X25519EncryptedPayload } from "../../crypto/types";
+
+export const BYTES_IN_MB = 1000000;
+export const CHUNK_SIZE_IN_BYTES = 5 * BYTES_IN_MB;
+export const ENCRYPTED_CHUNK_SIZE_IN_BYTES =
+  CHUNK_SIZE_IN_BYTES + AUTH_TAG_LENGTH_IN_BYTES + IV_LENGTH_IN_BYTES;
 
 export const CONTENT_LENGTH_HEADER = "Content-Length";
 export const UPLOAD_LENGTH_HEADER = "Upload-Length";
@@ -64,36 +61,42 @@ export class EncryptableHttpStack {
       return request;
     }
 
-    let uploadId = null;
+    let uploadId: string | null | undefined = null;
     if (method === "PATCH" || method === "HEAD") {
       uploadId = url.split("/").pop();
     }
 
     const originalSend = request.send.bind(request);
-    request.send = async (body: any) => {
+    request.send = async (body) => {
+      const startSend = performance.now();
+
       let decoratedBody = body;
       let response: tus.HttpResponse;
-      let key: AESKeyPayload;
+      let key: AESKeyPayload = {} as any;
 
       if (method === "POST" || method === "PATCH") {
         // get aes key
-
         if (uploadId && this.uploadAes.has(uploadId)) {
-          key = this.uploadAes.get(uploadId);
+          key = this.uploadAes.get(uploadId) as AESKeyPayload;
         } else {
-          key = await this.vaultEncryption.generateAesKey();
+          key = (await this.vaultEncryption?.generateAesKey()) as AESKeyPayload;
         }
 
         // encrypt the body
-
+        const startTransformation = performance.now();
         const bodyUint8Array = await tusFileToUint8Array(body);
-
+        const endTransformation = performance.now();
+        console.log(
+          `[time] File buffer manipulation took ${endTransformation - startTransformation} ms`,
+        );
+        const start = performance.now();
         const encryptedBody = (await encryptAes(
           bodyUint8Array,
           key.aesKey,
           false,
         )) as Uint8Array;
-
+        const end = performance.now();
+        console.log(`[time] File AES encryption took ${end - start} ms`);
         if (!request.getUnderlyingObject()) {
           request.setHeader(
             CONTENT_LENGTH_HEADER,
@@ -102,21 +105,25 @@ export class EncryptableHttpStack {
         }
         decoratedBody = encryptedBody;
 
+        console.log(`Encrypting file name`);
+
         // encrypt the filename
         const filename =
           this.getMetadata(request, UPLOAD_METADATA_FILENAME_KEY) || "unnamed";
-
-        const encryptedFileNameB64 = await this.vaultEncryption.encryptHybrid(
+        const encryptedFileNameB64 = (await this.vaultEncryption?.encryptHybrid(
           stringToArray(filename),
-        );
-
+        )) as string;
         this.putMetadata(
           request,
           UPLOAD_METADATA_FILENAME_KEY,
           stringToBase64(encryptedFileNameB64),
         );
 
+        console.log(`After file name`);
+
         // set the upload length
+        console.log(`Before metadata`);
+
         const uploadLengthHeader = request.getHeader(UPLOAD_LENGTH_HEADER);
         if (uploadLengthHeader) {
           const originalUploadLength = parseInt(uploadLengthHeader);
@@ -163,6 +170,10 @@ export class EncryptableHttpStack {
           );
         }
 
+        console.log(`After metadata`);
+
+        console.log(`Reinitialize`);
+
         // reinitialize the xhr
         if ((request as any)._xhr) {
           const xhr = (request as any)._xhr;
@@ -182,10 +193,13 @@ export class EncryptableHttpStack {
           (request as any)._xhr = newXhr;
         }
       }
+      console.log(`After reinitalize`);
+
+      console.log(`Sending request`);
 
       // send the request
-
       response = await originalSend(decoratedBody);
+      console.log(`After sending reuqest`);
 
       // read the upload id
       const location = response.getHeader("Location");
@@ -194,13 +208,13 @@ export class EncryptableHttpStack {
       }
 
       // cache the aes key
-
       if (uploadId) {
         if (!key) {
           if (this.uploadAes.has(uploadId)) {
-            key = this.uploadAes.get(uploadId);
+            key = this.uploadAes.get(uploadId) as AESKeyPayload;
           } else {
             // read the aes key from the response (primary for HEAD requests but would work for POST & PATCH as well)
+            console.log("Decrypting Aes key");
             const encryptedAesKey = this.getMetadata(
               response,
               UPLOAD_METADATA_ENCRYPTED_AES_KEY_KEY,
@@ -214,6 +228,7 @@ export class EncryptableHttpStack {
                   encryptedAesKey,
                 ) as X25519EncryptedPayload,
               };
+              console.log("After Decrypting Aes key");
             }
           }
         }
@@ -223,7 +238,6 @@ export class EncryptableHttpStack {
       }
 
       // override response upload-offset to allow reading from proper place in source file
-
       const originalResponseOffset = parseInt(
         response.getHeader(UPLOAD_OFFSET_HEADER) as string,
       );
@@ -241,7 +255,8 @@ export class EncryptableHttpStack {
         }
         return originalGetHeader(key);
       };
-
+      const endSend = performance.now();
+      console.log(`[time] File send took ${endSend - startSend} ms`);
       return response as tus.HttpResponse;
     };
     return request;
@@ -272,11 +287,11 @@ export class EncryptableHttpStack {
   ): string {
     const metadataHeader = request.getHeader(UPLOAD_METADATA_HEADER);
     if (!metadataHeader) {
-      return null;
+      return "";
     }
     const metadata = metadataHeader
       .split(",")
       .find((item) => item.startsWith(key));
-    return metadata ? base64ToString(metadata.split(" ")[1]) : null;
+    return metadata ? base64ToString(metadata.split(" ")[1]) : "";
   }
 }

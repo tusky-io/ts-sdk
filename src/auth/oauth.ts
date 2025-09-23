@@ -5,11 +5,11 @@ import { BadRequest } from "../errors/bad-request";
 import { logger } from "../logger";
 import { TuskyApi } from "../api/tusky-api";
 import { Unauthorized } from "../errors/unauthorized";
-import { defaultStorage, JWTClient } from "./jwt";
+import { JWTClient } from "./jwt";
 import { Env, Envs } from "../types/env";
 import { retry } from "../api/api-client";
 import { throwError } from "../errors/error-factory";
-import { Storage } from "../util/storage";
+import { defaultStorage, Storage } from "../util/storage";
 
 interface AuthProviderConfig {
   CLIENT_ID: string;

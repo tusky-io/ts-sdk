@@ -23,7 +23,6 @@ import { GenerateJWTResponsePayload } from "../types/auth";
 import { InternalError } from "../errors/internal-error";
 import { Collection } from "../types/collection";
 import { NFT } from "../types/nft";
-import { loadFetch } from "../crypto/fetch";
 
 export class ApiClient {
   private _apiUrl: string;
@@ -1323,8 +1322,7 @@ export class ApiClient {
     logger.info(`Request ${config.method}: ` + url);
 
     try {
-      const fetchFn = loadFetch();
-      const response = await fetchFn(url, config);
+      const response = await fetch(url, config);
       return response;
     } catch (error) {
       throwError(error.response?.status, error.response?.data?.msg, error);

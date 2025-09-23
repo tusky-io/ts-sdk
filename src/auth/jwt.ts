@@ -1,7 +1,6 @@
 import { Unauthorized } from "../errors/unauthorized";
 import { DEFAULT_ENV, Env } from "../types/env";
-import { isServer } from "../util/platform";
-import { Storage } from "../util/storage";
+import { defaultStorage, Storage } from "../util/storage";
 
 const STORAGE_PATH_PREFIX = "tusky";
 
@@ -151,37 +150,5 @@ const decode = (token: string): any => {
 
   return JSON.parse(jsonPayload);
 };
-
-class MemoryStorage {
-  private storage: { [key: string]: string } = {};
-
-  setItem(key: string, value: string): void {
-    this.storage[key] = value;
-  }
-
-  getItem(key: string): string | null {
-    return this.storage.hasOwnProperty(key) ? this.storage[key] : null;
-  }
-
-  removeItem(key: string): void {
-    delete this.storage[key];
-  }
-
-  clear(): void {
-    this.storage = {};
-  }
-
-  get length(): number {
-    return Object.keys(this.storage).length;
-  }
-
-  key(index: number): string | null {
-    const keys = Object.keys(this.storage);
-    return keys[index] || null;
-  }
-}
-
-export const defaultStorage = () =>
-  isServer() ? new MemoryStorage() : globalThis.sessionStorage;
 
 export { JWTClient, decode };

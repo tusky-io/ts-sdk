@@ -1,6 +1,7 @@
 import { FileLocationOptions, FileMetadataOptions, Hooks } from "../core/file";
 import { EncryptedVaultKeyPair } from ".";
-import { Encryptable, EncryptableHttpStack, encrypted } from "../crypto";
+import { Encryptable, encrypted } from "../crypto";
+import { EncryptableHttpStack } from "@env/util/tus";
 
 export class File extends Encryptable {
   @encrypted() name: string;
