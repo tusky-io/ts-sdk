@@ -15,10 +15,10 @@ class StorageModule {
    */
   public async get(): Promise<Storage> {
     logger.info(`[time] Api call storage.get() start`);
-    const start = Date.now();
+    const start = performance.now();
 
     const storage = await this.service.api.getStorage();
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] Api call storage.get() end - took ${end - start} ms`);
     return storage;
   }

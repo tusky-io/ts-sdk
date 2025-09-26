@@ -269,7 +269,7 @@ export class UserEncryption {
     try {
       logger.info(`[time] decryptWithPassword() start`);
 
-      const start = Date.now();
+      const start = performance.now();
 
       const parsedPayload = base64ToJson(
         encryptedPayload,
@@ -301,7 +301,7 @@ export class UserEncryption {
         logger.info("Saving encrypted password key in keystore");
         await this.saveSessionInKeystore(passwordKey);
       }
-      const end = Date.now();
+      const end = performance.now();
       logger.info(`[time] decryptWithPassword() end - took ${end - start} ms`);
       return new Uint8Array(plaintext);
     } catch (err) {
@@ -345,7 +345,7 @@ export class UserEncryption {
   > {
     logger.info(`[time] hasEncryptionSession() start`);
 
-    const start = Date.now();
+    const start = performance.now();
     const keystore = await Keystore.instance();
     const sessionKey = await keystore.get(await this.getSessionKeyPath());
     if (!sessionKey) {
@@ -357,7 +357,7 @@ export class UserEncryption {
     if (!encryptedPasswordKey) {
       return false;
     }
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] hasEncryptionSession() end - took ${end - start} ms`);
     return {
       sessionKey: sessionKey,

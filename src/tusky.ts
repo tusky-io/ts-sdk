@@ -97,7 +97,7 @@ export class Tusky {
   async addEncrypter(config: EncrypterConfig): Promise<this> {
     logger.info(`[time] addEncrypter() start`);
 
-    const start = Date.now();
+    const start = performance.now();
     if (!config) {
       return;
     }
@@ -141,7 +141,7 @@ export class Tusky {
         throw new Conflict("The user needs to provide the password again.");
       }
     }
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] addEncrypter() end - took ${end - start} ms`);
     return this;
   }

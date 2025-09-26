@@ -230,10 +230,10 @@ class FileModule {
     };
 
     logger.info(`[time] Api call file.get() start`);
-    const start = Date.now();
+    const start = performance.now();
 
     const nodeProto = await this.service.api.getFile(id);
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] Api call file.get() end - took ${end - start} ms`);
     return this.service.processFile(nodeProto, getOptions.shouldDecrypt);
   }
@@ -252,10 +252,10 @@ class FileModule {
       ...options,
     };
     logger.info(`[time] Api call file.list() start`);
-    const start = Date.now();
+    const start = performance.now();
 
     const response = await this.service.api.getFiles(listOptions);
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] Api call file.list() took ${end - start} ms`);
     const items = [];
     const errors = [];

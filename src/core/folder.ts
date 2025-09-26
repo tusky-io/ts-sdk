@@ -231,9 +231,9 @@ class FolderModule {
       ...options,
     };
     logger.info(`[time] Api call folder.list() start`);
-    const start = Date.now();
+    const start = performance.now();
     const response = await this.service.api.getFolders(listOptions);
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] Api call folder.list() end - took ${end - start} ms`);
     const items = [];
     const errors = [];

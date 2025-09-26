@@ -89,13 +89,13 @@ async function decryptAes(
 ): Promise<Uint8Array> {
   try {
     logger.info(`[time] decryptAes() start`);
-    const start = Date.now();
+    const start = performance.now();
     const payload = (<AESEncryptedPayload>encryptedPayload)?.ciphertext
       ? (encryptedPayload as AESEncryptedPayload)
       : decodeAesPayload(encryptedPayload as string);
     const aes = gcm(key, payload.iv);
     const plaintext = await aes.decrypt(payload.ciphertext as Uint8Array);
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] decryptAes() end - took ${end - start} ms`);
     return plaintext;
   } catch (error) {
@@ -168,11 +168,11 @@ async function deriveAesKeyArgon(
 ): Promise<Uint8Array> {
   try {
     logger.info(`[time] deriveAesKeyArgon() start`);
-    const start = Date.now();
+    const start = performance.now();
     const sodium = await loadSodium();
 
     const hash = await sodium.pwHash(password, arrayToBase64(salt));
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] deriveAesKeyArgon() end - took ${end - start} ms`);
     return base64ToArray(hash);
   } catch (error) {
@@ -253,7 +253,7 @@ async function decryptWithPrivateKey(
 ): Promise<Uint8Array> {
   try {
     logger.info(`[time] decryptWithPrivateKey() start`);
-    const start = Date.now();
+    const start = performance.now();
 
     const sodium = await loadSodium();
     const plaintext = await sodium.crypto_box_open_easy(
@@ -262,7 +262,7 @@ async function decryptWithPrivateKey(
       base64ToArray(encryptedPayload.ephemPublicKey),
       privateKey,
     );
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] decryptWithPrivateKey() end - took ${end - start} ms`);
     return plaintext;
   } catch (error) {

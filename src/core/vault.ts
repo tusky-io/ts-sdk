@@ -84,9 +84,9 @@ class VaultModule {
       ...options,
     };
     logger.info(`[time] Api call vault.list() start`);
-    const start = Date.now();
+    const start = performance.now();
     const response = await this.service.api.getVaults(listOptions);
-    const end = Date.now();
+    const end = performance.now();
     logger.info(`[time] Api call vault.list() took ${end - start} ms`);
     const items = [];
     const errors = [];
