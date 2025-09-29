@@ -20,6 +20,7 @@ import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
 import { Storage } from "./util/storage";
 import { loadSodium } from "./crypto/libsodium";
+import { loadFetch } from "./crypto/fetch";
 
 export class Tusky {
   public api: Api;
@@ -178,6 +179,7 @@ export class Tusky {
         }),
       );
     }
+    loadFetch(config.fetchFn);
     CacheBusters.cache = config?.cache;
   }
 }

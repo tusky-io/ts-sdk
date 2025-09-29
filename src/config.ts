@@ -7,6 +7,7 @@ import { Auth } from "./auth";
 import { X25519KeyPair } from "./crypto";
 import { Storage } from "./util/storage";
 import { Sodium } from "./crypto/libsodium";
+import { FetchType } from "./crypto/fetch";
 
 export interface TuskyConfig {
   env?: Env;
@@ -32,6 +33,7 @@ export interface ClientConfig {
   apiKey?: string;
   clientName?: string; // name of the client consuming the API
   authType?: AuthType;
+  fetchFn?: FetchType;
 }
 
 export interface LoggerConfig {
