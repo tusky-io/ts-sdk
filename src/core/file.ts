@@ -3,7 +3,15 @@ import { status } from "../constants";
 import { ApiClient } from "../api/api-client";
 import { BadRequest } from "../errors/bad-request";
 import { StreamConverter } from "../util/stream-converter";
-import { File, FileDownloadOptions, FileUploadOptions } from "../types";
+import {
+  CHUNK_SIZE_HEADER,
+  ENCRYPTED_AES_KEY_HEADER,
+  ENCRYPTED_VAULT_KEYS_HEADER,
+  EncryptedVaultKeyPair,
+  File,
+  FileDownloadOptions,
+  FileUploadOptions,
+} from "../types";
 import {
   GetOptions,
   ListOptions,
@@ -23,7 +31,6 @@ import * as tus from "tus-js-client";
 import { Auth } from "../auth";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 import { EncryptableHttpStack } from "../crypto/tus/http-stack";
-import { Subscription } from "rxjs";
 import { VaultEncryption } from "../crypto/vault-encryption";
 import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
 
@@ -336,28 +343,48 @@ class FileModule {
     return this.service.api.deleteFile(id);
   }
 
-  public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
-    const file = await this.service.api.downloadFile(id, {
+  protected async streamWithHeaders(
+    id: string,
+  ): Promise<{ stream: ReadableStream<Uint8Array>; headers: Headers }> {
+    const { data: file, headers } = await this.service.api.downloadFile(id, {
       responseType: "stream",
     });
-    // TODO: send encryption context directly with the file data
-    const fileMetadata = new File(await this.service.api.getFile(id));
-    this.service.setEncrypted(fileMetadata.__encrypted__);
-
     let stream: ReadableStream<Uint8Array>;
-    if (!this.service.encrypted) {
+
+    console.log(headers);
+    const aesKeyHeader = headers.get(ENCRYPTED_AES_KEY_HEADER);
+    const vaultKeysHeader = headers.get(ENCRYPTED_VAULT_KEYS_HEADER);
+    const chunkSizeHeader = headers.get(CHUNK_SIZE_HEADER);
+
+    const isEncrypted = !!(aesKeyHeader && vaultKeysHeader);
+    this.service.setEncrypted(isEncrypted);
+    if (!isEncrypted) {
       stream = file as ReadableStream<Uint8Array>;
     } else {
+      let encryptedVaultKeys = JSON.parse(
+        vaultKeysHeader,
+      ) as EncryptedVaultKeyPair[];
+      let encryptedAesKey = aesKeyHeader;
       if (!this.service.encrypter) {
         throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
       }
-      const aesKey = await this.aesKey(id);
+
+      const vaultEncryption = new VaultEncryption({
+        vaultKeys: encryptedVaultKeys,
+        userEncrypter: this.service.encrypter,
+      });
+      const aesKey = await vaultEncryption.decryptAesKey(encryptedAesKey);
       stream = await decryptStream(
         file as ReadableStream,
         aesKey,
-        fileMetadata.chunkSize,
+        chunkSizeHeader ? parseInt(chunkSizeHeader) : CHUNK_SIZE_IN_BYTES,
       );
     }
+    return { stream, headers };
+  }
+
+  public async stream(id: string): Promise<ReadableStream<Uint8Array>> {
+    const { stream } = await this.streamWithHeaders(id);
     return stream;
   }
 
@@ -366,8 +393,7 @@ class FileModule {
     return StreamConverter.toArrayBuffer<Uint8Array>(stream as any);
   }
 
-  protected async aesKey(id: string): Promise<CryptoKey | null> {
-    const fileMetadata = await this.get(id);
+  protected async aesKey(fileMetadata: File): Promise<CryptoKey | null> {
     if (!fileMetadata.encryptedAesKey) {
       return null;
     }

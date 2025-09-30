@@ -281,7 +281,10 @@ export default class TuskyApi extends Api {
   public async downloadFile(
     id: string,
     options: FileGetOptions = {},
-  ): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
+  ): Promise<{
+    data: ArrayBuffer | ReadableStream<Uint8Array>;
+    headers: Headers;
+  }> {
     const response = await new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
@@ -303,7 +306,7 @@ export default class TuskyApi extends Api {
         );
       }
     }
-    return data;
+    return { data, headers: response.headers };
   }
 
   public async getStorage(): Promise<Storage> {

@@ -83,3 +83,7 @@ export type FileDownloadOptions = Hooks & {
   path?: string;
   skipSave?: boolean;
 };
+
+export const ENCRYPTED_AES_KEY_HEADER = "Encrypted-Aes-Key";
+export const ENCRYPTED_VAULT_KEYS_HEADER = "Encrypted-Vault-Keys";
+export const CHUNK_SIZE_HEADER = "Chunk-Size";
