@@ -7,7 +7,6 @@ import { ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ConsoleLogger, Logger, setLogger } from "./logger";
 import TuskyApi from "./api/tusky-api";
 import { defaultStorage } from "./auth/jwt";
-import { Storage } from "./util/storage";
 
 export class TuskyBuilder {
   private _encrypterConfig: EncrypterConfig;
