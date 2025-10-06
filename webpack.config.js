@@ -2,7 +2,7 @@ const path = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const WebpackBundleAnalyzer = require("webpack-bundle-analyzer")
-  .BundleAnalyzerPlugin;
+    .BundleAnalyzerPlugin;
 const nodeExternals = require('webpack-node-externals');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
@@ -137,7 +137,7 @@ const commonWebConfig = {
             loader: 'ts-loader',
             options: {
               configFile: 'tsconfig.web.cjs.json',
-              compiler: 'ts-patch/compiler'
+              compiler: 'ts-patch/compiler'           
             },
           }
         ],
@@ -200,7 +200,7 @@ const esmWebConfig = {
             loader: 'ts-loader',
             options: {
               configFile: 'tsconfig.web.esm.json',
-              compiler: 'ts-patch/compiler'
+              compiler: 'ts-patch/compiler'           
             },
           }
         ],
@@ -233,116 +233,10 @@ const serviceWorkerWebConfig = {
   ],
 };
 
-const commonReactNativeConfig = {
-  mode: 'production',
-  entry: './src/index.ts',
-  target: 'web',
-  resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
-    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.react-native.cjs.json" })],
-    alias: {
-      '@env/types': path.resolve(__dirname, 'src/types/react-native'),
-      '@env/core': path.resolve(__dirname, 'src/core/react-native'),
-    }
-  },
-  externals: {
-    'react-native': 'react-native',
-    'react-native-blob-util': 'react-native-blob-util',
-    'react-native-libsodium': 'react-native-libsodium',
-    'expo-file-system': 'expo-file-system',
-    'react-native-fs': 'react-native-fs'
-
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        use: [
-          {
-            loader: 'ts-loader',
-            options: {
-              configFile: 'tsconfig.react-native.cjs.json',
-              compiler: 'ts-patch/compiler'
-            },
-          }
-        ],
-        exclude: /node_modules/,
-      },
-    ],
-  },
-  optimization: {
-    minimize: true,
-    minimizer: [new TerserPlugin({
-      terserOptions: {
-        keep_classnames: true,
-        keep_fnames: true,
-      },
-    })],
-  },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env.VERSION': JSON.stringify(version),
-    }),
-  ]
-};
-
-const cjsReactNativeConfig = {
-  ...commonReactNativeConfig,
-  output: {
-    filename: 'index.js',
-    path: path.resolve(__dirname, 'lib/react-native/cjs'),
-    library: {
-      type: 'commonjs2',
-    },
-  },
-};
-
-const esmReactNativeConfig = {
-  ...commonReactNativeConfig,
-  output: {
-    filename: 'index.esm.js',
-    path: path.resolve(__dirname, 'lib/react-native/esm'),
-    library: {
-      type: 'module',
-    },
-    chunkFormat: 'module',
-  },
-  experiments: {
-    outputModule: true,
-  },
-  resolve: {
-    ...commonReactNativeConfig.resolve,
-    extensions: ['.tsx', '.ts', '.js', '.mjs'],
-    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.react-native.esm.json" })],
-  },
-  module: {
-    ...commonReactNativeConfig.module,
-    rules: [
-      {
-        ...commonReactNativeConfig.module.rules[0],
-        use: [
-          {
-            loader: 'ts-loader',
-            options: {
-              configFile: 'tsconfig.react-native.esm.json',
-              compiler: 'ts-patch/compiler'
-            },
-          }
-        ],
-      },
-    ],
-  },
-  optimization: {
-    ...commonReactNativeConfig.optimization,
-    moduleIds: 'named',
-    chunkIds: 'named',
-  },
-};
-
 module.exports = (env, argv) => {
   const configs = [];
   if (process.env.STATS === 'server') {
-    configs.push(cjsNodeConfig, esmNodeConfig, cjsWebConfig, esmWebConfig, cjsReactNativeConfig, esmReactNativeConfig);
+    configs.push(cjsNodeConfig, esmNodeConfig, cjsWebConfig, esmWebConfig);
     configs.forEach(config => {
       config.plugins.push(new WebpackBundleAnalyzer({
         analyzerMode: 'server',
@@ -352,15 +246,13 @@ module.exports = (env, argv) => {
     });
   } else {
     configs.push(
-      cjsNodeConfig,
-      esmNodeConfig,
-      cjsWebConfig,
+      cjsNodeConfig, 
+      esmNodeConfig, 
+      cjsWebConfig, 
       esmWebConfig,
-      cjsReactNativeConfig,
-      esmReactNativeConfig,
       serviceWorkerWebConfig
     );
   }
-
+  
   return configs;
 };
