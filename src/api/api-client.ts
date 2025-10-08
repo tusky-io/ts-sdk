@@ -779,7 +779,11 @@ export class ApiClient {
         return response.data;
       } catch (error) {
         logger.debug(config);
-        throwError(error.response?.status, error.response?.data?.msg, error);
+        throwError(
+          error.response?.status,
+          error.response?.data?.msg || error.message,
+          error,
+        );
       }
     });
   }
