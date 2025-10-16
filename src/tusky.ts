@@ -168,9 +168,6 @@ export class Tusky {
       ? config.auth
       : new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());
-    if (config.logger) {
-      setLogger(config.logger);
-    }
     if (config.logLevel) {
       setLogger(
         new ConsoleLogger({
