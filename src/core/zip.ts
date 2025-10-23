@@ -83,6 +83,7 @@ class ZipModule {
         vaultId: vaultId,
         parentId: options?.parentId || vaultId,
         filetype: "application/zip",
+        uncompress: "true",
       },
       uploadDataDuringCreation: true,
       parallelUploads: 1, // tus-nodejs-server does not support parallel uploads yet
