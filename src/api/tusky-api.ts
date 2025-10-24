@@ -433,7 +433,7 @@ export default class TuskyApi extends Api {
   }
 
   public async getFiles(
-    options: ListApiOptions = {},
+    options: ListApiOptions & { uploadId?: string } = {},
   ): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
@@ -442,6 +442,7 @@ export default class TuskyApi extends Api {
       .queryParams({
         vaultId: options.vaultId,
         parentId: options.parentId,
+        uploadId: options.uploadId,
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken,

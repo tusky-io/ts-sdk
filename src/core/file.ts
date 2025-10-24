@@ -47,6 +47,8 @@ export const EMPTY_FILE_ERROR_MESSAGE = "Cannot upload an empty file";
 
 export const UPLOAD_COOKIE_SESSION_NAME = "tusky.upload.session.id";
 
+export type FileListOptions = ListOptions & { uploadId?: string };
+
 class FileModule {
   protected contentType = null as string;
   protected client: ApiClient;
@@ -58,7 +60,7 @@ class FileModule {
   protected defaultListOptions = {
     shouldDecrypt: true,
     parentId: undefined,
-  } as ListOptions;
+  } as FileListOptions;
 
   protected defaultGetOptions = {
     shouldDecrypt: true,
@@ -238,11 +240,12 @@ class FileModule {
   }
 
   /**
-   * @param  {ListOptions} options
+   * @param  {FileListOptions} options
    * @returns {Promise<Paginated<File>>} Promise with paginated user files
    */
   public async list(
-    options: ListOptions = (this.defaultListOptions = this.defaultListOptions),
+    options: FileListOptions = (this.defaultListOptions =
+      this.defaultListOptions),
   ): Promise<Paginated<File>> {
     validateListPaginatedApiOptions(options);
 
@@ -273,13 +276,13 @@ class FileModule {
   }
 
   /**
-   * @param  {ListOptions} options
+   * @param  {FileListOptions} options
    * @returns {Promise<Array<File>>} Promise with all user files
    */
   public async listAll(
-    options: ListOptions = this.defaultListOptions,
+    options: FileListOptions = this.defaultListOptions,
   ): Promise<Array<File>> {
-    const list = async (options: ListOptions) => {
+    const list = async (options: FileListOptions) => {
       return this.list(options);
     };
     return paginate<File>(list, options);
