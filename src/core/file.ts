@@ -150,11 +150,13 @@ class FileModule {
           string
         >),
       },
-      httpStack: new EncryptableHttpStack(
-        new tus.DefaultHttpStack({}),
-        vault,
-        this.service.encrypter,
-      ),
+      httpStack: options.httpStack
+        ? options.httpStack
+        : new EncryptableHttpStack(
+            new tus.DefaultHttpStack({}),
+            vault,
+            this.service.encrypter,
+          ),
       removeFingerprintOnSuccess: true,
       onBeforeRequest: async (req: tus.HttpRequest) => {
         if (req.getMethod() === "POST" || req.getMethod() === "PATCH") {

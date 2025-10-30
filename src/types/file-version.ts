@@ -1,6 +1,6 @@
 import { FileLocationOptions, FileMetadataOptions, Hooks } from "../core/file";
 import { EncryptedVaultKeyPair } from ".";
-import { Encryptable, encrypted } from "../crypto";
+import { Encryptable, EncryptableHttpStack, encrypted } from "../crypto";
 
 export class File extends Encryptable {
   @encrypted() name: string;
@@ -77,7 +77,9 @@ export class File extends Encryptable {
 
 export type FileUploadOptions = Hooks &
   FileLocationOptions &
-  FileMetadataOptions;
+  FileMetadataOptions & {
+    httpStack?: EncryptableHttpStack;
+  };
 
 export type FileDownloadOptions = Hooks & {
   path?: string;
