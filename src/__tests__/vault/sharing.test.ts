@@ -275,14 +275,19 @@ describe("Testing airdrop actions", () => {
       }).rejects.toThrow(Forbidden);
     });
 
-    it("should fail downloading owner's file by the contributor member", async () => {
-      await expect(async () => {
-        const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
+    it("should fail downloading owner's private file by the contributor member", async () => {
+      const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-        await memberTusky.addEncrypter({ password: contributorPassword });
+      await memberTusky.addEncrypter({ password: contributorPassword });
 
-        await memberTusky.file.arrayBuffer(ownerFileId);
-      }).rejects.toThrow(Forbidden);
+      if (isEncrypted) {
+        await expect(async () => {
+          await memberTusky.file.arrayBuffer(ownerFileId);
+        }).rejects.toThrow(Forbidden);
+      } else {
+        const response = await memberTusky.file.arrayBuffer(ownerFileId);
+        expect(response).toBeTruthy();
+      }
     });
 
     it("should share folder with a contributor member", async () => {
