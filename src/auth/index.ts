@@ -98,16 +98,21 @@ export class Auth {
         let signature: string;
         if (this.signPersonalMessage) {
           const res = await new Promise<string>((resolve, reject) => {
+            const signingTimer = setTimeout(() => {
+              reject(new Unauthorized("Signing timed out after 30 seconds."));
+            }, 30000);
             this.signPersonalMessage(
               {
                 message: message,
               },
               {
                 onSuccess: (data: { signature: string }) => {
+                  clearTimeout(signingTimer);
                   logger.info("Message signed on client: " + data.signature);
                   resolve(data.signature);
                 },
                 onError: (error: Error) => {
+                  clearTimeout(signingTimer);
                   logger.info("Error signing on client: " + error);
                   reject(error);
                 },
