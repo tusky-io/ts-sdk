@@ -131,7 +131,9 @@ class VaultModule {
       ...options,
     };
 
-    this.service.setEncrypted(createOptions.encrypted);
+    this.service.setEncrypted(
+      !createOptions.whitelist && createOptions.encrypted,
+    );
 
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
@@ -174,8 +176,8 @@ class VaultModule {
       encrypted: this.service.encrypted,
       tags: createOptions.tags,
       keys: this.service.keys,
+      whitelist: createOptions.whitelist,
     });
-
     return this.service.processVault(vault, true, this.service.keys);
   }
 
@@ -264,13 +266,13 @@ class VaultModule {
     memberService.setVaultId(this.service.vaultId);
 
     // generate member identity key pair for authentication
-    const memberKeyPair = new Ed25519Keypair();
+    const memberKeyPair = options.keypair || new Ed25519Keypair();
 
     let keys: EncryptedVaultKeyPair[];
     let userEncPrivateKey: string;
     let password: string;
     let ownerAccessJson = {
-      identityPrivateKey: memberKeyPair.getSecretKey(),
+      identityPrivateKey: memberKeyPair?.getSecretKey(),
     } as OwnerAccess;
     let ownerAccess: string;
 
@@ -302,7 +304,7 @@ class VaultModule {
 
     const membership = await this.service.api.createMembership({
       vaultId: vaultId,
-      address: memberKeyPair.toSuiAddress(),
+      address: options.address || memberKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
       allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
@@ -314,7 +316,7 @@ class VaultModule {
     });
 
     return {
-      identityPrivateKey: memberKeyPair.getSecretKey(),
+      identityPrivateKey: memberKeyPair?.getSecretKey(),
       password: password,
       membership: await memberService.processMembership(
         membership,
@@ -360,6 +362,15 @@ class VaultModule {
   }
 
   /**
+   * Join vault
+   * @param  {string} id vault id
+   * @returns {Promise<void>}
+   */
+  public async join(id: string): Promise<Membership> {
+    return this.service.api.joinVault({ vaultId: id });
+  }
+
+  /**
    * @param  {string} id membership id
    * @param  {RoleType} role VIEWER/CONTRIBUTOR/OWNER
    * @returns {Promise<Membership>}
@@ -373,11 +384,34 @@ class VaultModule {
   }
 
   /**
+   * Retrieve vault members
+   * @param  {string} vaultId
+   * @returns {Promise<Paginated<Membership>>}
+   */
+  public async members(vaultId: string): Promise<Paginated<Membership>> {
+    const paginated = await this.service.api.getMembers(vaultId);
+    await this.service.setVaultContext(vaultId);
+    const memberService = new MembershipService(this.service);
+    return {
+      items: await Promise.all(
+        paginated.items?.map(async (member) =>
+          memberService.processMembership(
+            member,
+            this.service.vault.owner === this.service.address,
+          ),
+        ),
+      ),
+      nextToken: paginated.nextToken,
+      errors: paginated.errors,
+    };
+  }
+
+  /**
    * Retrieve all vault members
    * @param  {string} vaultId
    * @returns {Promise<Array<Membership>>}
    */
-  public async members(vaultId: string): Promise<Array<Membership>> {
+  public async membersAll(vaultId: string): Promise<Array<Membership>> {
     const list = async (listOptions: ListOptions) => {
       return this.service.api.getMembers(listOptions);
     };

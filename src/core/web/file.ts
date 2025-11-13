@@ -19,18 +19,21 @@ class WebFileModule extends FileModule {
     id: string,
     options: FileDownloadOptions = {},
   ): Promise<string> {
-    if (this.hasServiceWorkerInstalled()) {
-      return this.webWorkerStreamUrl(id, options);
-    } else {
-      const fileMetadata = await this.get(id);
-      if (!fileMetadata.encryptedAesKey) {
-        return this.cdnPreviewUrl(id);
-      }
-      logger.warn(
-        "No decryption web worker found, downloading file into memory buffer.",
-      );
-      return this.inMemoryBufferUrl(id);
-    }
+    // TODO: handle authorized cdn requests
+    // NOTE: temp always stream file
+    return this.inMemoryBufferUrl(id);
+    // if (this.hasServiceWorkerInstalled()) {
+    //   return this.webWorkerStreamUrl(id, options);
+    // } else {
+    //   const fileMetadata = await this.get(id);
+    //   if (!fileMetadata.encryptedAesKey) {
+    //     return this.cdnPreviewUrl(id);
+    //   }
+    //   logger.warn(
+    //     "No decryption web worker found, downloading file into memory buffer.",
+    //   );
+    //   return this.inMemoryBufferUrl(id);
+    // }
   }
 
   public async download(

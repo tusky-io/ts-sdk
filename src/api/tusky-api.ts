@@ -8,6 +8,7 @@ import {
   CreateFolderTxPayload,
   CreateMembershipTxPayload,
   CreateVaultTxPayload,
+  JoinVaultTxPayload,
   UpdateFileTxPayload,
   UpdateFolderTxPayload,
   UpdateMembershipTxPayload,
@@ -168,6 +169,7 @@ export default class TuskyApi extends Api {
       .description(tx.description)
       .tags(tx.tags)
       .keys(tx.keys)
+      .whitelist(tx.whitelist)
       .createVault();
   }
 
@@ -216,6 +218,15 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .emptyTrash();
+  }
+
+  public async joinVault(tx: JoinVaultTxPayload): Promise<Membership> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .vaultId(tx.vaultId)
+      .joinVault();
   }
 
   public async createMembership(

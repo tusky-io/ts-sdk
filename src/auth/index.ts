@@ -17,6 +17,7 @@ import { defaultStorage, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
+import EnokiClient, { ZkLoginNonceResponse } from "./enoki";
 
 const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
@@ -174,6 +175,22 @@ export class Auth {
     this.jwtClient.clearTokens();
   }
 
+  public async createAuthorizationUrl(
+    ephemeralKeyPair?: Ed25519Keypair,
+  ): Promise<{
+    oauthUrl: string;
+    zkLoginResponse: ZkLoginNonceResponse;
+  }> {
+    const aOuthClient = new OAuth({
+      clientId: this.clientId,
+      redirectUri: this.redirectUri,
+      authProvider: this.authProvider,
+      storage: this.storage,
+      env: this.env,
+    });
+    return aOuthClient.createAuthorizationUrl(ephemeralKeyPair);
+  }
+
   public async initOAuthFlow(): Promise<void> {
     const aOuthClient = new OAuth({
       clientId: this.clientId,
@@ -209,7 +226,7 @@ export class Auth {
       case "OAuth": {
         let idToken = this.jwtClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid session.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
           await retry(async () => {
@@ -231,7 +248,7 @@ export class Auth {
               logger.info("Refresh already in progress...");
               let idToken = this.jwtClient.getIdToken();
               if (!idToken) {
-                throw new Unauthorized("Invalid session.");
+                throw new Unauthorized("Invalid session, please log in again.");
               }
             }
           }, true);
@@ -242,9 +259,9 @@ export class Auth {
       }
       // TODO: consolidate OAuth & Wallet flow with refresh token logic
       case "Wallet": {
-        let idToken = this.jwtClient.getIdToken();
+        const idToken = this.jwtClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid session.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken, 0)) {
           throw new Unauthorized("JWT is expired, please log in again.");
@@ -271,6 +288,8 @@ export class Auth {
     }
   }
 }
+
+export { EnokiClient };
 
 export type AuthConfig = {
   env?: Env;

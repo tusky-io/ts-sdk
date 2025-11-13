@@ -10,5 +10,6 @@ export * from "./api-key";
 export * from "./paginated";
 export * from "./env";
 export * from "./zip";
+export * from "./whitelist";
 export * from "@env/types/file";
 export * from "./auth";
