@@ -389,7 +389,7 @@ class VaultModule {
    * @returns {Promise<Paginated<Membership>>}
    */
   public async members(vaultId: string): Promise<Paginated<Membership>> {
-    const paginated = await this.service.api.getMembers(vaultId);
+    const paginated = await this.service.api.getMembers({ vaultId });
     await this.service.setVaultContext(vaultId);
     const memberService = new MembershipService(this.service);
     return {

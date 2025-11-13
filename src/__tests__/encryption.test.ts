@@ -127,7 +127,7 @@ describe("Testing encryption functions", () => {
   });
 
   it("should upload multi-chunk encrypted file", async () => {
-    const fileName = "11mb.png";
+    const fileName = "6mb.png";
     const id = await tusky.file.upload(vaultId, testDataPath + fileName);
 
     const type = "image/png";

@@ -292,7 +292,10 @@ export default class TuskyApi extends Api {
   public async downloadFile(
     id: string,
     options: FileGetOptions = {},
-  ): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
+  ): Promise<{
+    data: ArrayBuffer | ReadableStream<Uint8Array>;
+    headers: Headers;
+  }> {
     const response = await new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
@@ -314,7 +317,7 @@ export default class TuskyApi extends Api {
         );
       }
     }
-    return data;
+    return { data, headers: response.headers };
   }
 
   public async getStorage(): Promise<Storage> {
@@ -441,7 +444,7 @@ export default class TuskyApi extends Api {
   }
 
   public async getFiles(
-    options: ListApiOptions = {},
+    options: ListApiOptions & { uploadId?: string } = {},
   ): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
@@ -450,6 +453,7 @@ export default class TuskyApi extends Api {
       .queryParams({
         vaultId: options.vaultId,
         parentId: options.parentId,
+        uploadId: options.uploadId,
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken,

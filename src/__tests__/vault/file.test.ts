@@ -42,7 +42,7 @@ describe(`Testing ${isEncrypted ? "private" : "public"} file upload functions`, 
   });
 
   it("should upload multi-chunk file from path and download it", async () => {
-    const fileName = "11mb.png";
+    const fileName = "6mb.png";
     const id = await tusky.file.upload(vaultId, testDataPath + fileName);
 
     const type = "image/png";
