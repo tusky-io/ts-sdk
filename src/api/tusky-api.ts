@@ -37,6 +37,7 @@ import { ApiConfig } from "../config";
 import { Collection } from "../types/collection";
 import { NFT } from "../types/nft";
 import { CollectionMetadata, NFTMetadata } from "../core/nft";
+import { QuotaLimits } from "../types/quota";
 
 export const defaultFileUploadOptions = {
   encrypted: true,
@@ -326,6 +327,14 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .getStorage();
+  }
+
+  public async getQuota(): Promise<QuotaLimits> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .getQuota();
   }
 
   public async getMe(): Promise<User> {

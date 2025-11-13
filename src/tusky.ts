@@ -18,6 +18,7 @@ import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
 import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
+import { QuotaModule } from "./core/quota";
 
 export class Tusky {
   public api: Api;
@@ -52,6 +53,9 @@ export class Tusky {
   }
   get storage(): StorageModule {
     return new StorageModule(this.getConfig());
+  }
+  get quota(): QuotaModule {
+    return new QuotaModule(this.getConfig());
   }
   get auth(): Auth {
     return this._auth;
