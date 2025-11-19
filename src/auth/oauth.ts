@@ -170,6 +170,10 @@ class OAuth {
       prompt: "consent",
     });
 
+    if (this.authProvider === "Apple") {
+      params.set("response_mode", "form_post");
+    }
+
     const oauthUrl = `${this.authProviderConfig.AUTH_URL}?${params}`;
     return { oauthUrl, zkLoginResponse: createZkLoginResponse };
   }
