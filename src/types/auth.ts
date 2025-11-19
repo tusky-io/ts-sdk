@@ -4,7 +4,7 @@ import { Storage } from "../util/storage";
 
 export type AuthType = "OAuth" | "Wallet" | "ApiKey";
 
-export type AuthProvider = "Google" | "Twitch";
+export type AuthProvider = "Google" | "Twitch" | "Apple";
 
 export interface OAuthConfig {
   authProvider?: AuthProvider;
