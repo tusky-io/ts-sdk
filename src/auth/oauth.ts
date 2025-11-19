@@ -19,6 +19,7 @@ interface AuthProviderConfig {
 interface AuthProviderConfigType {
   Google: AuthProviderConfig;
   Twitch: AuthProviderConfig;
+  Apple: AuthProviderConfig;
 }
 
 export const authProviderConfig = (env?: string): AuthProviderConfigType => {
@@ -38,6 +39,11 @@ export const authProviderConfig = (env?: string): AuthProviderConfigType => {
           : "6h9wlqcwu01ve4al9qs04zeul7znj7",
       AUTH_URL: "https://id.twitch.tv/oauth2/authorize",
       SCOPES: "openid user:read:email",
+    },
+    Apple: {
+      CLIENT_ID: env === Envs.PROD ? "com.tusky.web" : "com.tusky.web.dev",
+      AUTH_URL: "https://appleid.apple.com/auth/authorize",
+      SCOPES: "",
     },
   };
 };
