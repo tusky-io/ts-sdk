@@ -43,7 +43,7 @@ export const authProviderConfig = (env?: string): AuthProviderConfigType => {
     Apple: {
       CLIENT_ID: env === Envs.PROD ? "com.tusky.web" : "com.tusky.web.dev",
       AUTH_URL: "https://appleid.apple.com/auth/authorize",
-      SCOPES: "name email",
+      SCOPES: "email",
     },
   };
 };
@@ -169,10 +169,6 @@ class OAuth {
       access_type: "offline",
       prompt: "consent",
     });
-
-    if (this.authProvider === "Apple") {
-      params.set("response_mode", "form_post");
-    }
 
     const oauthUrl = `${this.authProviderConfig.AUTH_URL}?${params}`;
     return { oauthUrl, zkLoginResponse: createZkLoginResponse };
