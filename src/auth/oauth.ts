@@ -43,7 +43,7 @@ export const authProviderConfig = (env?: string): AuthProviderConfigType => {
     Apple: {
       CLIENT_ID: env === Envs.PROD ? "com.tusky.web" : "com.tusky.web.dev",
       AUTH_URL: "https://appleid.apple.com/auth/authorize",
-      SCOPES: "email",
+      SCOPES: "",
     },
   };
 };
