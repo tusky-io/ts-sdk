@@ -238,7 +238,6 @@ export class UserEncryption {
       const payload = {
         encryptedPayload: encryptedPayload,
         salt: arrayToBase64(salt),
-        iterationCount: KEY_DERIVATION_ITERATION_COUNT,
         argon: true,
       };
 
