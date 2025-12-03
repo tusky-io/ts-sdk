@@ -5,6 +5,7 @@
   "main": "./lib/node/cjs/index.js",
   "module": "./lib/node/esm/index.esm.js",
   "types": "./lib/node/types/index.d.ts",
+  "react-native": "./lib/react-native/cjs/index.js",
   "exports": {
     ".": {
       "require": "./lib/node/cjs/index.js",
@@ -25,6 +26,7 @@
       "types": "./lib/web/types/index.d.ts"
     },
     "./react-native": {
+      "react-native": "./lib/react-native/cjs/index.js",
       "require": "./lib/react-native/cjs/index.js",
       "import": "./lib/react-native/esm/index.esm.js",
       "default": "./lib/react-native/cjs/index.js",
