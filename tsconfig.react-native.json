@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2015",
-    "module": "ES2020",
-    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
+    "target": "ES2017",
+    "module": "ESNext",
+    "lib": ["ESNext"],
     "outDir": "./lib/react-native/esm",
     "baseUrl": "src",
     "strict": false,
