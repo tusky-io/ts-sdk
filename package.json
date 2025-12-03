@@ -7,7 +7,6 @@
   "types": "./lib/node/types/index.d.ts",
   "exports": {
     ".": {
-      "react-native": "./src/index.ts",
       "require": "./lib/node/cjs/index.js",
       "import": "./lib/node/esm/index.esm.js",
       "default": "./lib/node/cjs/index.js",
@@ -24,6 +23,12 @@
       "import": "./lib/web/esm/index.esm.js",
       "default": "./lib/web/cjs/index.js",
       "types": "./lib/web/types/index.d.ts"
+    },
+    "./react-native": {
+      "require": "./lib/react-native/cjs/index.js",
+      "import": "./lib/react-native/esm/index.esm.js",
+      "default": "./lib/react-native/cjs/index.js",
+      "types": "./lib/react-native/types/index.d.ts"
     }
   },
   "repository": "git@github.com:tusky-io/ts-sdk.git",
