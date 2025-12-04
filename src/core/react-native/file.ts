@@ -6,16 +6,17 @@ import AesGcmCrypto from "react-native-aes-gcm-crypto";
 import * as NativeFileSystem from "react-native-fs";
 import { VaultEncryption } from "../../crypto/vault-encryption";
 import { UserEncryption } from "../../crypto/user-encryption";
-import { ClientConfig } from "../../config";
+import { ServiceConfig } from "../service/service";
 
 const DEFAULT_CHUNK_SIZE = 5000000; // 5 MB
 const IV_SIZE = 12;
 const TAG_SIZE = 16;
 
 class ReactNativeFileModule extends FileModule {
-  userEncryption: UserEncryption;
-  constructor(config?: ClientConfig) {
-    super();
+  private userEncryption: UserEncryption;
+
+  constructor(config?: ServiceConfig) {
+    super(config);
     this.userEncryption = new UserEncryption(config);
   }
 
