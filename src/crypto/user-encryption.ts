@@ -24,6 +24,7 @@ import * as bip39 from "bip39";
 import { EncryptedUserBackupPayload } from "./types";
 import { Conflict } from "../errors/conflict";
 import { defaultStorage, Storage } from "../util/storage";
+import { randomBytes } from "@noble/hashes/utils";
 
 const MNEMONIC_ENTROPY = 256;
 const SALT_LENGTH = 16;
@@ -370,7 +371,6 @@ export class UserEncryption {
   }
 
   private async saveSessionInKeystore(passwordKey: Uint8Array) {
-    const { randomBytes } = await import("@noble/hashes/utils");
     const sessionKey = randomBytes(SYMMETRIC_KEY_LENGTH);
     const encryptedPasswordKey = (await encryptAes(
       passwordKey,

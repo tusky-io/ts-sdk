@@ -1,4 +1,5 @@
 import { sha256 } from "@noble/hashes/sha256";
+import { randomBytes } from "@noble/hashes/utils";
 import { gcm } from "@noble/ciphers/aes";
 import { pbkdf2Async } from "@noble/hashes/pbkdf2";
 import {
@@ -55,9 +56,7 @@ async function encryptAes(
   encode: boolean = true,
 ): Promise<string | Uint8Array> {
   try {
-    const { randomBytes } = await import("@noble/hashes/utils");
     const iv = randomBytes(IV_LENGTH_IN_BYTES);
-    const { gcm } = await import("@noble/ciphers/aes");
     const aes = gcm(key, iv);
     const ciphertextArray = await aes.encrypt(plaintext);
 
