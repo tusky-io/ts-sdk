@@ -837,7 +837,11 @@ export class ApiClient {
       } catch (error) {
         logger.debug(config);
         logger.debug(error);
-        throwError(error.response?.status, error.response?.data?.msg, error);
+        throwError(
+          error.response?.status,
+          error.response?.data?.msg || error.message,
+          error,
+        );
       }
     });
   }
@@ -1323,9 +1327,28 @@ export class ApiClient {
 
     try {
       const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorMessage: string | undefined;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.msg || errorData.message;
+        } catch {
+          try {
+            errorMessage = await response.text();
+          } catch {
+            errorMessage = undefined;
+          }
+        }
+        throwError(response.status, errorMessage);
+      }
+
       return response;
     } catch (error) {
-      throwError(error.response?.status, error.response?.data?.msg, error);
+      if (error instanceof TypeError) {
+        throwError(0, error.message, error);
+      }
+      throw error;
     }
   }
 
