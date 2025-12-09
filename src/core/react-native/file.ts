@@ -1,25 +1,17 @@
 import { FileModule } from "../file";
 import { File } from "../../";
-import Encrypter from "../../crypto/encrypter";
+import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../../crypto/encrypter";
 import { fromByteArray, toByteArray } from "base64-js";
 import AesGcmCrypto from "react-native-aes-gcm-crypto";
 import * as NativeFileSystem from "react-native-fs";
 import { VaultEncryption } from "../../crypto/vault-encryption";
-import { UserEncryption } from "../../crypto/user-encryption";
-import { ServiceConfig } from "../service/service";
+import { BadRequest } from "../../errors/bad-request";
 
 const DEFAULT_CHUNK_SIZE = 5000000; // 5 MB
 const IV_SIZE = 12;
 const TAG_SIZE = 16;
 
 class ReactNativeFileModule extends FileModule {
-  private userEncryption: UserEncryption;
-
-  constructor(config?: ServiceConfig) {
-    super(config);
-    this.userEncryption = new UserEncryption(config);
-  }
-
   public async readToPath(
     id: string,
     options: {
@@ -52,11 +44,12 @@ class ReactNativeFileModule extends FileModule {
       if (onProgress) onProgress(100);
       return destinationPath;
     }
-    const { keypair } = await this.userEncryption.importFromKeystore();
-    const userEncrypter = new Encrypter({ keypair: keypair });
+    if (!this.service.encrypter) {
+      throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
+    }
     const vaultEncryption = new VaultEncryption({
       vaultKeys: file.__keys__,
-      userEncrypter: userEncrypter,
+      userEncrypter: this.service.encrypter,
     });
 
     console.log("File chunk size: " + file.chunkSize);
