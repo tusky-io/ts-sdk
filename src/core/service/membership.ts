@@ -22,7 +22,7 @@ class MembershipService extends Service {
     const vault = await this.api.getVault(membership.vaultId);
     this.setVault(vault);
     this.setVaultId(membership.vaultId);
-    this.setEncrypted(membership.__encrypted__);
+    this.setEncrypted(vault.encrypted);
     await this.setMembershipKeys(membership);
     this.setObject(membership);
     this.setObjectId(membershipId);
@@ -55,6 +55,11 @@ class MembershipService extends Service {
 
     for (let [memberId, publicKey] of publicKeys) {
       try {
+        if (!publicKey) {
+          throw new IncorrectEncryptionKey(
+            new Error("Missing member public key: " + memberId),
+          );
+        }
         // encrypt private key with member's public key
         const memberEncPrivateKey = await encryptWithPublicKey(
           base64ToArray(publicKey),

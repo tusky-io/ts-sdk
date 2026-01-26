@@ -1,4 +1,4 @@
-import { role } from "../constants";
+import { role, membershipStatus } from "../constants";
 import { Vault, VaultCreateOptions } from "../types/vault";
 import {
   ListOptions,
@@ -266,13 +266,14 @@ class VaultModule {
     memberService.setVaultId(this.service.vaultId);
 
     // generate member identity key pair for authentication
-    const memberKeyPair = options.keypair || new Ed25519Keypair();
+    const memberIdentityKeyPair = options.keypair || new Ed25519Keypair();
 
     let keys: EncryptedVaultKeyPair[];
     let userEncPrivateKey: string;
+    let userPublicKey: string;
     let password: string;
     let ownerAccessJson = {
-      identityPrivateKey: memberKeyPair?.getSecretKey(),
+      identityPrivateKey: memberIdentityKeyPair.getSecretKey(),
     } as OwnerAccess;
     let ownerAccess: string;
 
@@ -295,6 +296,7 @@ class VaultModule {
       const { encPrivateKey, keypair } =
         await new UserEncryption().setupPassword(password, false);
       userEncPrivateKey = encPrivateKey;
+      userPublicKey = arrayToBase64(keypair.getPublicKey());
       keys = await memberService.prepareMemberKeys(
         arrayToBase64(keypair.publicKey),
       );
@@ -304,7 +306,7 @@ class VaultModule {
 
     const membership = await this.service.api.createMembership({
       vaultId: vaultId,
-      address: options.address || memberKeyPair.toSuiAddress(),
+      address: options.address || memberIdentityKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
       allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
@@ -313,10 +315,11 @@ class VaultModule {
       keys: keys,
       encPrivateKey: userEncPrivateKey,
       ownerAccess: ownerAccess,
+      publicKey: userPublicKey,
     });
 
     return {
-      identityPrivateKey: memberKeyPair?.getSecretKey(),
+      identityPrivateKey: memberIdentityKeyPair.getSecretKey(),
       password: password,
       membership: await memberService.processMembership(
         membership,
@@ -329,39 +332,87 @@ class VaultModule {
    * Revoke member access\
    * If private vault, vault keys will be rotated & distributed to all valid members
    * @param  {string} id membership id
+   * @param  {boolean} shouldRotateKeys indicate whether should rotate vault keys, default to true
    * @returns {Promise<void>}
    */
-  public async revokeAccess(id: string): Promise<void> {
+  public async revokeAccess(
+    id: string,
+    shouldRotateKeys: boolean = true,
+  ): Promise<void> {
     const memberService = new MembershipService(this.service);
     await memberService.setVaultContextFromMembershipId(id);
 
-    // TODO: rotate member keys
-    // let keys: Map<string, EncryptedVaultKeyPair[]>;
-    // if (!this.service.isPublic) {
-    //   const memberships = await this.members(this.service.vaultId);
+    let keys: Map<string, EncryptedVaultKeyPair[]>;
+    if (memberService.encrypted && shouldRotateKeys) {
+      const memberships = await this.membersAll(memberService.vaultId);
 
-    //   const activeMembers = memberships.filter((member: Membership) =>
-    //     member.id !== id // filter out the member being revoked
-    //     && (member.status === membershipStatus.ACCEPTED || member.status === membershipStatus.PENDING));
+      const activeMembers = memberships.filter(
+        (member: Membership) =>
+          member.id !== id && // filter out the member being revoked
+          member.status === membershipStatus.ACCEPTED,
+      );
 
-    //     console.log(activeMembers)
-    //   // rotate keys for all active members
-    //   const memberPublicKeys = new Map<string, string>();
-    //   await Promise.all(activeMembers.map(async (member: Membership) => {
-    //     const { publicKey } = await this.service.api.getUserPublicData(member.email);
-    //     memberPublicKeys.set(member.id, publicKey);
-    //   }));
-    //   const { memberKeys } = await memberService.rotateMemberKeys(memberPublicKeys);
-    //   keys = memberKeys;
-    // }
+      // rotate keys for all active members
+      const memberPublicKeys = new Map<string, string>();
+      let hasPublicKeysForAllMembers: boolean = true;
+      for (let member of activeMembers) {
+        if (!member.memberDetails?.publicKey) {
+          hasPublicKeysForAllMembers = false;
+        }
+        memberPublicKeys.set(member.id, member.memberDetails?.publicKey);
+      }
+      // safely rotate the keys
+      if (hasPublicKeysForAllMembers) {
+        const { memberKeys } =
+          await memberService.rotateMemberKeys(memberPublicKeys);
+        keys = memberKeys;
+      }
+    }
 
     await this.service.api.deleteMembership({
       id: id,
-      // keys: keys
+      keys: keys ? mapToObject(keys) : undefined,
     });
   }
 
   /**
+   * Rotate vault keys
+   * @param  {string} id vault id
+   * @returns Promise with the updated vault
+   */
+  public async rotateKeys(id: string): Promise<Vault> {
+    await this.service.setVaultContext(id);
+
+    if (!this.service.encrypted) {
+      throw new BadRequest(
+        "Rotate keys method is not supported for public vaults.",
+      );
+    }
+
+    const memberService = new MembershipService(this.service);
+    const memberships = await this.membersAll(memberService.vaultId);
+
+    const activeMembers = memberships.filter(
+      (member: Membership) => member.status === membershipStatus.ACCEPTED,
+    );
+
+    // rotate keys for all active members
+    const memberPublicKeys = new Map<string, string>();
+    for (let member of activeMembers) {
+      memberPublicKeys.set(member.id, member.memberDetails.publicKey);
+    }
+    const { memberKeys } =
+      await memberService.rotateMemberKeys(memberPublicKeys);
+
+    const vault = await this.service.api.updateVault({
+      id: id,
+      keys: mapToObject(memberKeys) as any,
+    });
+    return this.service.processVault(vault, true, this.service.keys);
+  }
+
+  /**
+   * @param  {string} membershipId membership id
    * Join vault
    * @param  {string} id vault id
    * @returns {Promise<void>}
@@ -375,9 +426,12 @@ class VaultModule {
    * @param  {RoleType} role VIEWER/CONTRIBUTOR/OWNER
    * @returns {Promise<Membership>}
    */
-  public async changeAccess(id: string, role: RoleType): Promise<Membership> {
+  public async changeAccess(
+    membershipId: string,
+    role: RoleType,
+  ): Promise<Membership> {
     const membership = await this.service.api.updateMembership({
-      id: id,
+      id: membershipId,
       role: role,
     });
     return new Membership(membership);
@@ -436,4 +490,13 @@ function generateRandomPassword() {
   return pwd.secureMask.apply(seed).password;
 }
 
+function mapToObject(map: Map<string, any>): {
+  [key: string]: EncryptedVaultKeyPair[];
+} {
+  const obj: { [key: string]: any } = {};
+  map.forEach((value, key) => {
+    obj[key] = value;
+  });
+  return obj;
+}
 export { VaultModule };

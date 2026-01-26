@@ -12,7 +12,8 @@ import { TuskyBuilder } from "../tusky-builder";
 
 // check if the encrypted flag is present
 export const isEncrypted = global.isEncrypted;
-export const LOG_LEVEL = "none" //"error";
+export const LOG_LEVEL = "debug";
+
 export const ENV_TEST_RUN = (process.env.ENV || "dev") as Env;
 
 export async function initInstance(encrypted = true): Promise<Tusky> {

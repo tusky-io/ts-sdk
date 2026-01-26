@@ -447,13 +447,15 @@ export class ApiClient {
       !this._name &&
       !this._picture &&
       !this._encPrivateKey &&
-      !this._encPrivateKeyBackup
+      !this._encPrivateKeyBackup &&
+      !this._publicKey
     ) {
       throw new BadRequest("Nothing to update.");
     }
     this.data({
       name: this._name,
       picture: this._picture,
+      publicKey: this._publicKey,
       encPrivateKey: this._encPrivateKey,
       encPrivateKeyBackup: this._encPrivateKeyBackup,
     });
@@ -1174,6 +1176,7 @@ export class ApiClient {
       keys: this._keys,
       encPrivateKey: this._encPrivateKey,
       ownerAccess: this._ownerAccess,
+      publicKey: this._publicKey,
       allowedStorage: this._allowedStorage,
       allowedPaths: this._allowedPaths,
     });

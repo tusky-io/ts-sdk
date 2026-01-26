@@ -29,6 +29,7 @@ export class User {
 export type UserMutable = {
   name?: string;
   picture?: string;
+  publicKey?: string; // encryption public key
 };
 
 export type UserEncryptionKeys = {
