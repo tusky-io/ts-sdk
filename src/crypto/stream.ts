@@ -1,4 +1,4 @@
-import { ReadableStream, TransformStream } from "web-streams-polyfill/ponyfill";
+import { ReadableStream, TransformStream } from "web-streams-polyfill";
 import { decryptAes, IV_LENGTH_IN_BYTES } from "./lib";
 import { logger } from "../logger";
 

@@ -70,6 +70,7 @@ describe("Testing encryption functions", () => {
       .build();
 
     await tusky.auth.signIn();
+    await tusky.api.verifyMe();
 
     password = faker.random.word();
 
@@ -126,7 +127,7 @@ describe("Testing encryption functions", () => {
   });
 
   it("should upload multi-chunk encrypted file", async () => {
-    const fileName = "11mb.png";
+    const fileName = "6mb.png";
     const id = await tusky.file.upload(vaultId, testDataPath + fileName);
 
     const type = "image/png";

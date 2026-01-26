@@ -1,4 +1,4 @@
-import { ReadableStream } from "web-streams-polyfill/ponyfill";
+import { ReadableStream } from "web-streams-polyfill";
 
 export class StreamConverter {
   public static async toArrayBuffer<T>(

@@ -1,0 +1,49 @@
+{
+  "name": "tusky-react-vite-starter",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@mysten/dapp-kit": "^0.14.50",
+    "@mysten/sui": "^1.3.0",
+    "@tanstack/react-query": "^5.37.1",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@tusky-io/ts-sdk": "0.29.3",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "bootstrap": "^5.2.3",
+    "buffer": "^6.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.0.4",
+    "vite": "^5.1.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "copy:dsw": "cp node_modules/@tusky-io/ts-sdk/lib/web/sw/worker.js ./public/dsw.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

@@ -13,6 +13,7 @@ import {
   generateKey,
   generateKeyPair,
   importKeyFromArray,
+  KEY_DERIVATION_ITERATION_COUNT,
 } from "./lib";
 import Keystore from "./storage/keystore";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
@@ -233,18 +234,23 @@ export class UserEncryption {
     try {
       const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
 
-      const passwordKey = await deriveAesKey(password, salt);
-
-      if (keystore) {
-        await this.saveSessionInKeystore(passwordKey);
-      }
+      const passwordKey = await deriveAesKey(
+        password,
+        salt,
+        KEY_DERIVATION_ITERATION_COUNT,
+      );
 
       const encryptedPayload = await encryptAes(plaintext, passwordKey);
 
       const payload = {
         encryptedPayload: encryptedPayload,
         salt: arrayToBase64(salt),
+        iterationCount: KEY_DERIVATION_ITERATION_COUNT,
       };
+
+      if (keystore) {
+        await this.saveSessionInKeystore(passwordKey);
+      }
       return jsonToBase64(payload);
     } catch (err) {
       logger.error(err);
@@ -277,16 +283,19 @@ export class UserEncryption {
 
       const salt = base64ToArray(parsedPayload.salt);
 
-      const passwordKey = await deriveAesKey(password, salt);
-
-      if (keystore) {
-        await this.saveSessionInKeystore(passwordKey);
-      }
+      const passwordKey = await deriveAesKey(
+        password,
+        salt,
+        parsedPayload.iterationCount || 150000, // support legacy
+      );
 
       const plaintext = await decryptAes(
         parsedPayload.encryptedPayload,
         passwordKey,
       );
+      if (keystore) {
+        await this.saveSessionInKeystore(passwordKey);
+      }
       return new Uint8Array(plaintext);
     } catch (err) {
       logger.error(err);

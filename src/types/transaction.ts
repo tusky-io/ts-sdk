@@ -6,6 +6,13 @@ export interface CreateVaultTxPayload {
   encrypted?: boolean;
   keys?: Array<EncryptedVaultKeyPair>;
   tags?: string[];
+  whitelist?: WhitelistTxPayload;
+}
+
+export interface WhitelistTxPayload {
+  token: string;
+  memberRole: string;
+  capacity?: number;
 }
 
 export interface UpdateVaultTxPayload {
@@ -20,6 +27,12 @@ export interface UpdateVaultTxPayload {
 export interface CreateFolderTxPayload {
   vaultId: string;
   name: string;
+  parentId?: string;
+}
+
+export interface CreateFolderTreeTxPayload {
+  vaultId: string;
+  paths: { name: string; relativePath: string; parentPath: string }[];
   parentId?: string;
 }
 
@@ -56,6 +69,10 @@ export interface CreateMembershipTxPayload {
   ownerAccess?: string;
   allowedStorage?: number;
   allowedPaths?: AllowedPaths;
+}
+
+export interface JoinVaultTxPayload {
+  vaultId: string;
 }
 
 export interface UpdateMembershipTxPayload {

@@ -8,6 +8,8 @@ import {
   UpdateMembershipTxPayload,
   CreateMembershipTxPayload,
   UpdateFileTxPayload,
+  CreateFolderTreeTxPayload,
+  JoinVaultTxPayload,
 } from "../types/transaction";
 import { Paginated } from "../types/paginated";
 import {
@@ -15,7 +17,7 @@ import {
   ListOptions,
   VaultApiGetOptions,
 } from "../types/query-options";
-import { User, UserMutable } from "../types/user";
+import { User, UserEncryptionKeys, UserMutable } from "../types/user";
 import { ApiConfig } from "./config";
 import { FileGetOptions } from "../core/file";
 import { File, Folder } from "../types";
@@ -52,11 +54,23 @@ abstract class Api {
 
   abstract updateMe(input: UserMutable): Promise<User>;
 
+  abstract verifyMe(): Promise<void>;
+
+  abstract createEncryptionKeys(input: UserEncryptionKeys): Promise<User>;
+
+  abstract updateEncryptionKeys(input: UserEncryptionKeys): Promise<User>;
+
+  abstract deleteEncryptionKeys(): Promise<void>;
+
   abstract updateFile(tx: UpdateFileTxPayload): Promise<File>;
 
   abstract deleteFile(id: string): Promise<void>;
 
   abstract createFolder(tx: CreateFolderTxPayload): Promise<Folder>;
+
+  abstract createFolderTree(
+    tx: CreateFolderTreeTxPayload,
+  ): Promise<{ folderIdMap: Record<string, string> }>;
 
   abstract updateFolder(tx: UpdateFolderTxPayload): Promise<Folder>;
 
@@ -66,6 +80,8 @@ abstract class Api {
 
   abstract updateVault(tx: UpdateVaultTxPayload): Promise<Vault>;
 
+  abstract purgeVault(id: string): Promise<void>;
+
   abstract deleteVault(id: string): Promise<void>;
 
   abstract getTrash(): Promise<Folder>;
@@ -74,6 +90,8 @@ abstract class Api {
 
   abstract createMembership(tx: CreateMembershipTxPayload): Promise<Membership>;
 
+  abstract joinVault(tx: JoinVaultTxPayload): Promise<Membership>;
+
   abstract updateMembership(tx: UpdateMembershipTxPayload): Promise<Membership>;
 
   abstract deleteMembership(tx: UpdateMembershipTxPayload): Promise<void>;
@@ -81,7 +99,10 @@ abstract class Api {
   abstract downloadFile(
     id: string,
     options?: FileGetOptions,
-  ): Promise<ArrayBuffer | ReadableStream<Uint8Array>>;
+  ): Promise<{
+    data: ArrayBuffer | ReadableStream<Uint8Array>;
+    headers: Headers;
+  }>;
 
   abstract getStorage(): Promise<Storage>;
 
@@ -99,7 +120,7 @@ abstract class Api {
 
   abstract getFolders(options?: ListApiOptions): Promise<Paginated<Folder>>;
 
-  abstract getMembers(vaultId: string): Promise<Paginated<Membership>>;
+  abstract getMembers(options?: ListApiOptions): Promise<Paginated<Membership>>;
 
   abstract getApiKeys(): Promise<Paginated<ApiKey>>;
 

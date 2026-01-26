@@ -101,7 +101,7 @@ function stringify(message: any) {
 let logger: Logger = new ConsoleLogger({ logLevel: "none" });
 
 export function setLogger(newLogger: Logger) {
-  logger = newLogger;
+  logger = newLogger || logger;
 }
 
 export { logger };

@@ -29,4 +29,5 @@ export type EncryptionMetadata = {
 export type EncryptedUserBackupPayload = {
   encryptedPayload: string | AESEncryptedPayload;
   salt: string;
+  iterationCount?: number;
 };

@@ -19,18 +19,21 @@ class WebFileModule extends FileModule {
     id: string,
     options: FileDownloadOptions = {},
   ): Promise<string> {
-    if (this.hasServiceWorkerInstalled()) {
-      return this.webWorkerStreamUrl(id, options);
-    } else {
-      const fileMetadata = await this.get(id);
-      if (!fileMetadata.encryptedAesKey) {
-        return this.cdnPreviewUrl(id);
-      }
-      logger.warn(
-        "No decryption web worker found, downloading file into memory buffer.",
-      );
-      return this.inMemoryBufferUrl(id);
-    }
+    // TODO: handle authorized cdn requests
+    // NOTE: temp always stream file
+    return this.inMemoryBufferUrl(id);
+    // if (this.hasServiceWorkerInstalled()) {
+    //   return this.webWorkerStreamUrl(id, options);
+    // } else {
+    //   const fileMetadata = await this.get(id);
+    //   if (!fileMetadata.encryptedAesKey) {
+    //     return this.cdnPreviewUrl(id);
+    //   }
+    //   logger.warn(
+    //     "No decryption web worker found, downloading file into memory buffer.",
+    //   );
+    //   return this.inMemoryBufferUrl(id);
+    // }
   }
 
   public async download(
@@ -68,10 +71,9 @@ class WebFileModule extends FileModule {
   }
 
   private async inMemoryBufferUrl(id: string): Promise<string> {
-    const fileMetadata = await this.get(id);
-    const stream = await this.stream(id);
+    const { stream, headers } = await this.streamWithHeaders(id);
     const buffer = await StreamConverter.toArrayBuffer(stream);
-    const blob = new Blob([buffer], { type: fileMetadata.mimeType });
+    const blob = new Blob([buffer], { type: headers.get("Content-Type") });
     const url = window.URL.createObjectURL(blob);
     return url;
   }
@@ -83,7 +85,7 @@ class WebFileModule extends FileModule {
     const fileMetadata = await this.get(id);
     const proxyUrl = `${PROXY_DOWNLOAD_URL}/${id}`;
 
-    const aesKey = await this.aesKey(id);
+    const aesKey = await this.aesKey(fileMetadata);
 
     const workerMessage = {
       type: "init",
@@ -122,8 +124,8 @@ class WebFileModule extends FileModule {
           if (percentageProgress === 100) {
             clearInterval(interval);
           }
-        } else {
-          throw new Error(event.data);
+        } else if (event.data.error && event.data.error !== "cancelled") {
+          throw new Error(event.data.error);
         }
       };
 

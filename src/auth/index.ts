@@ -2,9 +2,11 @@ import { AxiosRequestHeaders } from "axios";
 import { Unauthorized } from "../errors/unauthorized";
 import { logger } from "../logger";
 import {
+  Account,
   AuthProvider,
   AuthType,
   OAuthConfig,
+  SignPersonalMessage,
   WalletConfig,
 } from "../types/auth";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
@@ -15,19 +17,7 @@ import { defaultStorage, JWTClient } from "./jwt";
 import { BadRequest } from "../errors/bad-request";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
 import { retry } from "../api/api-client";
-
-export type SignPersonalMessage = (
-  message: { message: Uint8Array },
-  callbacks: {
-    onSuccess: (data: { signature: string }) => void;
-    onError: (error: Error) => void;
-  },
-) => void;
-
-export type Account = {
-  address: string;
-  publicKey: Uint8Array;
-};
+import EnokiClient, { ZkLoginNonceResponse } from "./enoki";
 
 const AUTH_MESSAGE_PREFIX = "tusky:connect:";
 
@@ -52,28 +42,42 @@ export class Auth {
   // API key auth
   private apiKey: string;
 
-  constructor(options: AuthOptions = { authType: "OAuth" }) {
-    // reset previous configuration
-    this.authType = options.authType;
-    this.apiKey = options.apiKey;
+  constructor(options: AuthConfig = {}) {
     this.env = options.env;
-    // walet-based auth
-    this.signPersonalMessage = options.signPersonalMessage;
-    this.account = options.account;
-    this.keypair =
-      options.keypair ||
-      (options.privateKey &&
-        Ed25519Keypair.fromSecretKey(
-          decodeSuiPrivateKey(options.privateKey).secretKey,
-        ));
-    // Oauth
-    this.authProvider = options.authProvider;
-    this.clientId = options.clientId;
-    this.redirectUri = options.redirectUri;
+
     this.storage = options.storage || defaultStorage();
     this.jwtClient = new JWTClient({ storage: this.storage, env: this.env });
+
+    // walet-based auth
+    if (options.wallet) {
+      this.signPersonalMessage = options.wallet.signPersonalMessage;
+      this.account = options.wallet.account;
+      this.keypair =
+        options.wallet.keypair ||
+        (options.wallet.privateKey &&
+          Ed25519Keypair.fromSecretKey(
+            decodeSuiPrivateKey(options.wallet.privateKey).secretKey,
+          ));
+      this.authType = "Wallet";
+    }
+    // Oauth
+    if (options.oauth) {
+      this.authProvider = options.oauth.authProvider;
+      this.clientId = options.oauth.clientId;
+      this.redirectUri = options.oauth.redirectUri;
+      this.authType = "OAuth";
+    }
+
+    // api key
+    if (options.apiKey) {
+      this.apiKey = options.apiKey;
+      this.authType = "ApiKey";
+    }
   }
 
+  /*
+   * NOTE: by signing in to Tusky, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
+   */
   public async signIn(): Promise<{ address?: string }> {
     switch (this.authType) {
       case "Wallet": {
@@ -171,6 +175,22 @@ export class Auth {
     this.jwtClient.clearTokens();
   }
 
+  public async createAuthorizationUrl(
+    ephemeralKeyPair?: Ed25519Keypair,
+  ): Promise<{
+    oauthUrl: string;
+    zkLoginResponse: ZkLoginNonceResponse;
+  }> {
+    const aOuthClient = new OAuth({
+      clientId: this.clientId,
+      redirectUri: this.redirectUri,
+      authProvider: this.authProvider,
+      storage: this.storage,
+      env: this.env,
+    });
+    return aOuthClient.createAuthorizationUrl(ephemeralKeyPair);
+  }
+
   public async initOAuthFlow(): Promise<void> {
     const aOuthClient = new OAuth({
       clientId: this.clientId,
@@ -206,7 +226,7 @@ export class Auth {
       case "OAuth": {
         let idToken = this.jwtClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid session.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken)) {
           await retry(async () => {
@@ -228,7 +248,7 @@ export class Auth {
               logger.info("Refresh already in progress...");
               let idToken = this.jwtClient.getIdToken();
               if (!idToken) {
-                throw new Unauthorized("Invalid session.");
+                throw new Unauthorized("Invalid session, please log in again.");
               }
             }
           }, true);
@@ -239,9 +259,9 @@ export class Auth {
       }
       // TODO: consolidate OAuth & Wallet flow with refresh token logic
       case "Wallet": {
-        let idToken = this.jwtClient.getIdToken();
+        const idToken = this.jwtClient.getIdToken();
         if (!idToken) {
-          throw new Unauthorized("Invalid session.");
+          throw new Unauthorized("Invalid session, please log in again.");
         }
         if (this.jwtClient.isTokenExpiringSoon(idToken, 0)) {
           throw new Unauthorized("JWT is expired, please log in again.");
@@ -269,9 +289,12 @@ export class Auth {
   }
 }
 
-export type AuthOptions = {
-  authType?: AuthType;
+export { EnokiClient };
+
+export type AuthConfig = {
   env?: Env;
-  apiKey?: string;
-} & OAuthConfig &
-  WalletConfig;
+  storage?: Storage;
+  wallet?: WalletConfig; // Wallet-based auth
+  oauth?: OAuthConfig; // OAuth
+  apiKey?: string; // Api key auth
+};

@@ -7,7 +7,13 @@ import { Auth } from "../auth";
 import { retryableErrors, throwError } from "../errors/error-factory";
 import { BadRequest } from "../errors/bad-request";
 import { User } from "../types/user";
-import { AllowedPaths, EncryptedVaultKeyPair, File, Folder } from "../types";
+import {
+  AllowedPaths,
+  EncryptedVaultKeyPair,
+  File,
+  Folder,
+  WhitelistTxPayload,
+} from "../types";
 import fetch from "cross-fetch";
 import { Storage } from "../types/storage";
 import { logger } from "../logger";
@@ -26,6 +32,7 @@ export class ApiClient {
 
   // API endpoints
   private _meUri: string = "me";
+  private _keysUri: string = "keys";
   private _vaultUri: string = "vaults";
   private _fileUri: string = "files";
   private _folderUri: string = "folders";
@@ -58,6 +65,7 @@ export class ApiClient {
   private _description: string;
   private _tags: Array<string>;
   private _keys: Array<EncryptedVaultKeyPair>;
+  private _whitelist: WhitelistTxPayload;
 
   // member specific
   private _address: string;
@@ -72,11 +80,12 @@ export class ApiClient {
 
   // user specific
   private _picture: string;
-  private _termsAccepted: boolean;
   private _trashExpiration: number;
+
+  // user encryption specific
+  private _publicKey: string;
   private _encPrivateKey: string;
   private _encPrivateKeyBackup: string;
-  private _publicKey: string;
 
   // nft specific
   private _recipient: string;
@@ -135,6 +144,7 @@ export class ApiClient {
     clone._link = this._link;
     clone._tags = this._tags;
     clone._keys = this._keys;
+    clone._whitelist = this._whitelist;
     clone._address = this._address;
     clone._role = this._role;
     clone._expiresAt = this._expiresAt;
@@ -142,7 +152,6 @@ export class ApiClient {
     clone._allowedPaths = this._allowedPaths;
     clone._picture = this._picture;
     clone._trashExpiration = this._trashExpiration;
-    clone._termsAccepted = this._termsAccepted;
     clone._publicKey = this._publicKey;
     clone._encPrivateKey = this._encPrivateKey;
     clone._encPrivateKeyBackup = this._encPrivateKeyBackup;
@@ -198,6 +207,11 @@ export class ApiClient {
 
   publicRoute(publicRoute: boolean): ApiClient {
     this._publicRoute = publicRoute;
+    return this;
+  }
+
+  whitelist(whitelist: WhitelistTxPayload): ApiClient {
+    this._whitelist = whitelist;
     return this;
   }
 
@@ -293,11 +307,6 @@ export class ApiClient {
 
   picture(picture: string): ApiClient {
     this._picture = picture;
-    return this;
-  }
-
-  termsAccepted(termsAccepted: boolean): ApiClient {
-    this._termsAccepted = termsAccepted;
     return this;
   }
 
@@ -420,12 +429,15 @@ export class ApiClient {
     return new User(me);
   }
 
+  async verifyMe(): Promise<void> {
+    return this.post(`${this._apiUrl}/${this._meUri}/verify`);
+  }
+
   /**
    * Update currently authenticated user
    * @uses:
    * - name()
    * - picture()
-   * - termsAccepted()
    * - encPrivateKey()
    * - encPrivateKeyBackup()
    * @returns {Promise<User>}
@@ -434,7 +446,6 @@ export class ApiClient {
     if (
       !this._name &&
       !this._picture &&
-      !this._termsAccepted &&
       !this._encPrivateKey &&
       !this._encPrivateKeyBackup &&
       !this._publicKey
@@ -444,13 +455,66 @@ export class ApiClient {
     this.data({
       name: this._name,
       picture: this._picture,
-      termsAccepted: this._termsAccepted,
       publicKey: this._publicKey,
       encPrivateKey: this._encPrivateKey,
       encPrivateKeyBackup: this._encPrivateKeyBackup,
     });
 
     return this.patch(`${this._apiUrl}/${this._meUri}`);
+  }
+
+  /**
+   * Create user encryption keys backup
+   * @uses:
+   * - publicKey()
+   * - encPrivateKey()
+   * - encPrivateKeyBackup()
+   * @returns {Promise<User>}
+   */
+  async createEncryptionKeys(): Promise<User> {
+    if (!this._publicKey && !this._encPrivateKey) {
+      throw new BadRequest("Nothing to create.");
+    }
+    this.data({
+      publicKey: this._publicKey,
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup,
+    });
+
+    return this.post(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
+  }
+
+  /**
+   * Update currently authenticated user encryption keys backup
+   * @uses:
+   * - publicKey()
+   * - encPrivateKey()
+   * - encPrivateKeyBackup()
+   * @returns {Promise<User>}
+   */
+  async updateEncryptionKeys(): Promise<User> {
+    if (
+      !this._publicKey &&
+      !this._encPrivateKey &&
+      !this._encPrivateKeyBackup
+    ) {
+      throw new BadRequest("Nothing to update.");
+    }
+    this.data({
+      publicKey: this._publicKey,
+      encPrivateKey: this._encPrivateKey,
+      encPrivateKeyBackup: this._encPrivateKeyBackup,
+    });
+
+    return this.patch(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
+  }
+
+  /**
+   * Deletes currently authenticated user encryption keys
+   * @returns {Promise<void>}
+   */
+  async deleteEncryptionKeys(): Promise<void> {
+    return this.delete(`${this._apiUrl}/${this._meUri}/${this._keysUri}`);
   }
 
   /**
@@ -706,9 +770,10 @@ export class ApiClient {
   async fetch(method: string, url: string): Promise<any> {
     const config = {
       method,
-      url: this._queryParams
-        ? this.addQueryParams(url, this._queryParams)
-        : url,
+      url:
+        this._queryParams && Object.keys(this._queryParams).length > 0
+          ? this.addQueryParams(url, this._queryParams)
+          : url,
       headers: {
         "Content-Type": "application/json",
         ...this.getCustomHeaders(),
@@ -717,7 +782,7 @@ export class ApiClient {
           : {}),
       },
     } as AxiosRequestConfig;
-    if (this._data) {
+    if (this._data && Object.keys(this._data).length > 0) {
       config.data = this._data;
     }
     logger.info(`Request ${config.method}: ` + config.url);
@@ -729,14 +794,26 @@ export class ApiClient {
         return response.data;
       } catch (error) {
         logger.debug(config);
-        throwError(error.response?.status, error.response?.data?.msg, error);
+        throwError(
+          error.response?.status,
+          error.response?.data?.msg || error.message,
+          error,
+        );
       }
     });
   }
 
   addQueryParams = function (url: string, params: any) {
-    const queryParams = new URLSearchParams(JSON.parse(JSON.stringify(params)));
-    url += "?" + queryParams.toString();
+    const queryParams = Object.fromEntries(
+      Object.entries(params).filter(
+        ([_, value]) => value !== null && value !== undefined && value !== "",
+      ),
+    );
+    if (Object.keys(queryParams).length > 0) {
+      url +=
+        "?" +
+        new URLSearchParams(JSON.parse(JSON.stringify(queryParams))).toString();
+    }
     return url;
   };
 
@@ -807,6 +884,35 @@ export class ApiClient {
     });
 
     return this.post(`${this._apiUrl}/${this._folderUri}`);
+  }
+
+  /**
+   *
+   * @requires:
+   * - vaultId()
+   * @uses:
+   * - parentId()
+   * @returns {Promise<Folder>}
+   */
+  async createFolderTree(): Promise<{ folderIdMap: Record<string, string> }> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing vault id input. Use ApiClient#vaultId() to add it",
+      );
+    }
+    if (!this._data) {
+      throw new BadRequest(
+        "Missing name input. Use ApiClient#data() to add it",
+      );
+    }
+
+    this.data({
+      vaultId: this._vaultId,
+      parentId: this._parentId,
+      paths: this._data,
+    });
+
+    return this.post(`${this._apiUrl}/${this._folderUri}/tree`);
   }
 
   /**
@@ -958,6 +1064,7 @@ export class ApiClient {
       encrypted: this._encrypted,
       tags: this._tags,
       keys: this._keys,
+      whitelist: this._whitelist,
     });
 
     return this.post(`${this._apiUrl}/${this._vaultUri}`);
@@ -986,6 +1093,23 @@ export class ApiClient {
       status: this._status,
     });
     return this.patch(`${this._apiUrl}/${this._vaultUri}/${this._resourceId}`);
+  }
+
+  /**
+   *
+   * @requires:
+   * - resourceId()
+   * @returns {Promise<void>}
+   */
+  async purgeVault(): Promise<void> {
+    if (!this._resourceId) {
+      throw new BadRequest(
+        "Missing resource id input. Use ApiClient#resourceId() to add it",
+      );
+    }
+    return this.post(
+      `${this._apiUrl}/${this._vaultUri}/${this._resourceId}/purge`,
+    );
   }
 
   /**
@@ -1065,6 +1189,23 @@ export class ApiClient {
   /**
    *
    * @requires:
+   * - vaultId()
+   * @returns {Promise<Membership>}
+   */
+  async joinVault(): Promise<Membership> {
+    if (!this._vaultId) {
+      throw new BadRequest(
+        "Missing address input. Use ApiClient#vaultId() to add it",
+      );
+    }
+    return this.post(
+      `${this._apiUrl}/${this._vaultUri}/${this._vaultId}/${this._membershipUri}/join`,
+    );
+  }
+
+  /**
+   *
+   * @requires:
    * - resourceId()
    * @uses:
    * - role()
@@ -1133,22 +1274,40 @@ export class ApiClient {
     const config = {
       method: "get",
       signal: this._cancelHook ? this._cancelHook.signal : null,
-      headers: this.getCustomHeaders(),
+      headers: {
+        ...this.getCustomHeaders(),
+        ...(await this._auth.getAuthorizationHeader()),
+      },
     } as RequestInit;
 
-    if (!this._encrypted) {
-      config.headers = (await this._auth.getAuthorizationHeader()) as any;
-    }
-
-    const url = `${this._apiUrl}/files/${this._resourceId}/data`;
+    const url = `${this._cdnUrl}/${this._resourceId}`;
 
     logger.info(`Request ${config.method}: ` + url);
 
     try {
       const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorMessage: string | undefined;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.msg || errorData.message;
+        } catch {
+          try {
+            errorMessage = await response.text();
+          } catch {
+            errorMessage = undefined;
+          }
+        }
+        throwError(response.status, errorMessage);
+      }
+
       return response;
     } catch (error) {
-      throwError(error.response?.status, error.response?.data?.msg, error);
+      if (error instanceof TypeError) {
+        throwError(0, error.message, error);
+      }
+      throw error;
     }
   }
 

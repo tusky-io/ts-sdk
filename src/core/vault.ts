@@ -24,6 +24,7 @@ import { UserEncryption } from "../crypto/user-encryption";
 import * as pwd from "micro-key-producer/password.js";
 import { randomBytes } from "@noble/hashes/utils";
 import { BadRequest } from "../errors/bad-request";
+import { MISSING_ENCRYPTION_ERROR_MESSAGE } from "../crypto/encrypter";
 
 const DEFAULT_AIRDROP_ACCESS_ROLE = role.VIEWER;
 
@@ -130,12 +131,20 @@ class VaultModule {
       ...options,
     };
 
-    this.service.setEncrypted(createOptions.encrypted);
+    this.service.setEncrypted(
+      !createOptions.whitelist && createOptions.encrypted,
+    );
 
     const memberService = new MembershipService(this.service);
     memberService.setVaultId(this.service.vaultId);
 
     if (this.service.encrypted) {
+      if (!this.service.encrypter) {
+        throw new BadRequest(
+          MISSING_ENCRYPTION_ERROR_MESSAGE +
+            " or use `{ encrypted: false }` options if you want your data publicly available",
+        );
+      }
       const vaultKeyPair = await generateKeyPair();
       this.service.setDecryptedKeys([
         {
@@ -167,8 +176,8 @@ class VaultModule {
       encrypted: this.service.encrypted,
       tags: createOptions.tags,
       keys: this.service.keys,
+      whitelist: createOptions.whitelist,
     });
-
     return this.service.processVault(vault, true, this.service.keys);
   }
 
@@ -215,8 +224,19 @@ class VaultModule {
   }
 
   /**
+   * Purge the vault data
+   * @param id vault id
+   * Puts all the vault data in the trash
+   * @returns {Promise<void>}
+   */
+  public async purge(id: string): Promise<void> {
+    return this.service.api.purgeVault(id);
+  }
+
+  /**
    * Delete the vault\
    * This action must be performed only for vault with no contents, it will fail if the vault is not empty.
+   * Use vault.purge() if you would like to put all vault content in the trash
    * @param id vault id
    * @returns {Promise<void>}
    */
@@ -246,7 +266,7 @@ class VaultModule {
     memberService.setVaultId(this.service.vaultId);
 
     // generate member identity key pair for authentication
-    const memberIdentityKeyPair = new Ed25519Keypair();
+    const memberIdentityKeyPair = options.keypair || new Ed25519Keypair();
 
     let keys: EncryptedVaultKeyPair[];
     let userEncPrivateKey: string;
@@ -264,6 +284,9 @@ class VaultModule {
         // generate password & add it for owner access
         password = generateRandomPassword();
         ownerAccessJson.password = password;
+      }
+      if (!this.service.encrypter) {
+        throw new BadRequest(MISSING_ENCRYPTION_ERROR_MESSAGE);
       }
       // encrypt owner access
       ownerAccess = await this.service.encrypter.encrypt(
@@ -283,7 +306,7 @@ class VaultModule {
 
     const membership = await this.service.api.createMembership({
       vaultId: vaultId,
-      address: memberIdentityKeyPair.toSuiAddress(),
+      address: options.address || memberIdentityKeyPair.toSuiAddress(),
       allowedStorage: options.allowedStorage,
       allowedPaths: options.allowedPaths,
       expiresAt: options.expiresAt,
@@ -321,7 +344,7 @@ class VaultModule {
 
     let keys: Map<string, EncryptedVaultKeyPair[]>;
     if (memberService.encrypted && shouldRotateKeys) {
-      const memberships = await this.members(memberService.vaultId);
+      const memberships = await this.membersAll(memberService.vaultId);
 
       const activeMembers = memberships.filter(
         (member: Membership) =>
@@ -367,7 +390,7 @@ class VaultModule {
     }
 
     const memberService = new MembershipService(this.service);
-    const memberships = await this.members(memberService.vaultId);
+    const memberships = await this.membersAll(memberService.vaultId);
 
     const activeMembers = memberships.filter(
       (member: Membership) => member.status === membershipStatus.ACCEPTED,
@@ -390,6 +413,16 @@ class VaultModule {
 
   /**
    * @param  {string} membershipId membership id
+   * Join vault
+   * @param  {string} id vault id
+   * @returns {Promise<void>}
+   */
+  public async join(id: string): Promise<Membership> {
+    return this.service.api.joinVault({ vaultId: id });
+  }
+
+  /**
+   * @param  {string} id membership id
    * @param  {RoleType} role VIEWER/CONTRIBUTOR/OWNER
    * @returns {Promise<Membership>}
    */
@@ -405,13 +438,36 @@ class VaultModule {
   }
 
   /**
+   * Retrieve vault members
+   * @param  {string} vaultId
+   * @returns {Promise<Paginated<Membership>>}
+   */
+  public async members(vaultId: string): Promise<Paginated<Membership>> {
+    const paginated = await this.service.api.getMembers({ vaultId });
+    await this.service.setVaultContext(vaultId);
+    const memberService = new MembershipService(this.service);
+    return {
+      items: await Promise.all(
+        paginated.items?.map(async (member) =>
+          memberService.processMembership(
+            member,
+            this.service.vault.owner === this.service.address,
+          ),
+        ),
+      ),
+      nextToken: paginated.nextToken,
+      errors: paginated.errors,
+    };
+  }
+
+  /**
    * Retrieve all vault members
    * @param  {string} vaultId
    * @returns {Promise<Array<Membership>>}
    */
-  public async members(vaultId: string): Promise<Array<Membership>> {
+  public async membersAll(vaultId: string): Promise<Array<Membership>> {
     const list = async (listOptions: ListOptions) => {
-      return this.service.api.getMembers(listOptions.vaultId);
+      return this.service.api.getMembers(listOptions);
     };
     const members = await paginate<Membership>(list, {
       vaultId: vaultId,

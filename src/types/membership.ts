@@ -1,5 +1,6 @@
 import { Encryptable } from "../crypto";
 import { User } from "./user";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 export type RoleType = "viewer" | "contributor" | "owner";
 export type MemberRoleType = "viewer" | "contributor";
@@ -79,6 +80,8 @@ export type MembershipAirdropOptions = {
   allowedStorage?: number; // allowed storage
   allowedPaths?: AllowedPaths; // folder ids, file ids, if not provided defaults to vault id
   role?: MemberRoleType; //  member role, defaults to viewer
+  keypair?: Ed25519Keypair; // member key pair
+  address?: string; // member address
   password?: string; // password to protect member encryption keys, if not provided a random password will be generated,
   ownerAccess?: boolean; // will enable owner access to the created membership
 };

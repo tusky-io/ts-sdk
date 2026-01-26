@@ -8,7 +8,7 @@ export abstract class Encryptable {
   constructor(keys: Array<EncryptedVaultKeyPair>) {
     this.__keys__ = keys;
   }
-  __keys__: Array<EncryptedVaultKeyPair>;
+  __keys__?: Array<EncryptedVaultKeyPair>;
   __encryptProps__: Set<string>;
   [key: string]: any;
 

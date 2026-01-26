@@ -39,7 +39,7 @@ describe("Testing airdrop actions", () => {
 
   describe(`Sharing ${isEncrypted ? "private" : "public"} vault`, () => {
     it("should only list owner for all members of the vault", async () => {
-      const members = await tusky.vault.members(vaultId);
+      const members = await tusky.vault.membersAll(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(1);
@@ -116,7 +116,7 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should list all members of the vault", async () => {
-      const members = await tusky.vault.members(vaultId);
+      const members = await tusky.vault.membersAll(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(4);
@@ -133,7 +133,7 @@ describe("Testing airdrop actions", () => {
     });
 
     it("should list all members of the vault without the revoked one", async () => {
-      const members = await tusky.vault.members(vaultId);
+      const members = await tusky.vault.membersAll(vaultId);
 
       expect(members).toBeTruthy();
       expect(members.length).toEqual(3);
@@ -142,15 +142,9 @@ describe("Testing airdrop actions", () => {
       }
     });
 
-    it("should fail getting the vault from revoked member account", async () => {
+    it("should fail authenticating with revoked member account", async () => {
       await expect(async () => {
-        const memberTusky = await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
-
-        await memberTusky.addEncrypter({ password: airdropeePassword });
-
-        const vault = await memberTusky.vault.get(vaultId);
-        expect(vault).toBeTruthy();
-        expect(vault.name).toBeTruthy();
+        await initTuskyFromPrivateKey(airdropeeIdentityPrivateKey);
       }).rejects.toThrow(Unauthorized);
     });
 
@@ -297,14 +291,19 @@ describe("Testing airdrop actions", () => {
       }).rejects.toThrow(Forbidden);
     });
 
-    it("should fail downloading owner's file by the contributor member", async () => {
-      await expect(async () => {
-        const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
+    it("should fail downloading owner's private file by the contributor member", async () => {
+      const memberTusky = await initTuskyFromPrivateKey(contributorIdentityPrivateKey);
 
-        await memberTusky.addEncrypter({ password: contributorPassword });
+      await memberTusky.addEncrypter({ password: contributorPassword });
 
-        await memberTusky.file.arrayBuffer(ownerFileId);
-      }).rejects.toThrow(Forbidden);
+      if (isEncrypted) {
+        await expect(async () => {
+          await memberTusky.file.arrayBuffer(ownerFileId);
+        }).rejects.toThrow(Forbidden);
+      } else {
+        const response = await memberTusky.file.arrayBuffer(ownerFileId);
+        expect(response).toBeTruthy();
+      }
     });
 
     it("should share folder with a contributor member", async () => {

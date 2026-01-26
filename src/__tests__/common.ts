@@ -13,6 +13,7 @@ import { TuskyBuilder } from "../tusky-builder";
 // check if the encrypted flag is present
 export const isEncrypted = global.isEncrypted;
 export const LOG_LEVEL = "debug";
+
 export const ENV_TEST_RUN = (process.env.ENV || "dev") as Env;
 
 export async function initInstance(encrypted = true): Promise<Tusky> {
@@ -41,6 +42,7 @@ export async function initInstance(encrypted = true): Promise<Tusky> {
       .useEnv(ENV_TEST_RUN)
       .build();
     await tusky.auth.signIn();
+    await tusky.api.verifyMe();
   }
   if (encrypted) {
     const password = faker.random.word();
@@ -76,7 +78,6 @@ export async function cleanup(tusky?: Tusky, vaultId?: string): Promise<void> {
         }
         await tusky.folder.deletePermanently(folder.id);
       }
-      await new Promise((resolve) => setTimeout(resolve, 10000));
       await tusky.vault.delete(vaultId);
     } catch (error) {
       console.log("Post test cleanup failed");

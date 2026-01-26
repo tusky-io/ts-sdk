@@ -10,19 +10,17 @@ import { FileModule } from "@env/core/file";
 import { ZipModule } from "./core/zip";
 import { StorageModule } from "./core/storage";
 import { DEFAULT_ENV, Env } from "./types/env";
-import { Auth, AuthOptions } from "./auth";
+import { Auth, AuthConfig } from "./auth";
 import { MeModule } from "./core/me";
 import { ApiKeyModule } from "./core/api-key";
 import { Encrypter } from "./crypto/encrypter";
 import { TrashModule } from "./core/trash";
 import { Conflict } from "./errors/conflict";
-import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 import { TuskyBuilder } from "./tusky-builder";
 
 export class Tusky {
   public api: Api;
-  public pubsub: PubSub;
   private _encrypter: Encrypter;
   private _env: Env;
   private _storage: Storage;
@@ -136,7 +134,6 @@ export class Tusky {
   private getConfig() {
     return {
       api: this.api,
-      pubsub: this.pubsub,
       auth: this._auth,
       encrypter: this._encrypter,
       env: this._env,
@@ -148,7 +145,7 @@ export class Tusky {
   /**
    * @param  {ClientConfig} config
    */
-  constructor(config: ClientConfig & AuthOptions = {}) {
+  constructor(config: ClientConfig & AuthConfig = {}) {
     this._encrypter = config.encrypter;
     this._env = { ...this.getConfig(), ...config }.env || DEFAULT_ENV;
     this._storage = config.storage || defaultStorage();
@@ -156,7 +153,6 @@ export class Tusky {
       ? config.auth
       : new Auth({ ...config, ...this.getConfig() });
     this.api = config.api ? config.api : new TuskyApi(this.getConfig());
-    this.pubsub = new PubSub({ env: this._env });
     CacheBusters.cache = config?.cache;
   }
 }

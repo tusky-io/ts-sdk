@@ -5,7 +5,7 @@ import { Readable } from "stream";
 class NodeFileModule extends FileModule {
   public async download(
     id: string,
-    options: FileDownloadOptions = { path: "." },
+    options: FileDownloadOptions = { path: "./default.txt" },
   ): Promise<string> {
     const stream = await this.stream(id);
     return new Promise((resolve, reject) =>

@@ -4,7 +4,9 @@ import { Conflict } from "./conflict";
 import { Forbidden } from "./forbidden";
 import { GatewayTimeout } from "./gateway-timeout";
 import { InternalError } from "./internal-error";
+import { Locked } from "./locked";
 import { NetworkError } from "./network-error";
+import { NotAllowed } from "./not-allowed";
 import { NotEnoughStorage } from "./not-enough-storage";
 import { NotFound } from "./not-found";
 import { ServiceUnavailable } from "./service-unavailable";
@@ -23,8 +25,12 @@ export const throwError = (status: number, message?: string, error?: Error) => {
       throw new Forbidden(message, error);
     case 404:
       throw new NotFound(message, error);
+    case 405:
+      throw new NotAllowed(message, error);
     case 409:
       throw new Conflict(message, error);
+    case 423:
+      throw new Locked(message, error);
     case 429:
       throw new TooManyRequests(message, error);
     case 502:

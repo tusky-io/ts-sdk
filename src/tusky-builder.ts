@@ -1,12 +1,11 @@
-import { AuthType, OAuthConfig, WalletConfig } from "./types/auth";
+import { OAuthConfig, WalletConfig } from "./types/auth";
 import { Tusky } from "./tusky";
 import { Encrypter } from "./crypto/encrypter";
-import { Env } from "./types";
-import { Auth, AuthOptions } from "./auth";
+import { DEFAULT_ENV, Env } from "./types";
+import { Auth, AuthConfig } from "./auth";
 import { ClientConfig, EncrypterConfig, LoggerConfig } from "./config";
 import { ConsoleLogger, Logger, setLogger } from "./logger";
 import TuskyApi from "./api/tusky-api";
-import PubSub from "./api/pubsub";
 import { defaultStorage } from "./auth/jwt";
 
 export class TuskyBuilder {
@@ -15,25 +14,21 @@ export class TuskyBuilder {
   private _env: Env;
   private _storage: Storage;
   private _auth: Auth;
-  private _authType: AuthType;
-  private _authConfig: AuthOptions;
+  private _authConfig: AuthConfig;
   private _logger: Logger;
   private _clientName: string;
 
   useOAuth(config: OAuthConfig): TuskyBuilder {
-    this._authType = "OAuth";
-    this._authConfig = config;
+    this._authConfig = { oauth: config };
     return this;
   }
 
   useWallet(config: WalletConfig): TuskyBuilder {
-    this._authType = "Wallet";
-    this._authConfig = config;
+    this._authConfig = { wallet: config };
     return this;
   }
 
   useApiKey(apiKey: string): TuskyBuilder {
-    this._authType = "ApiKey";
     this._authConfig = { apiKey: apiKey };
     return this;
   }
@@ -75,11 +70,11 @@ export class TuskyBuilder {
   }
 
   async build(): Promise<Tusky> {
+    this._env = this._env || DEFAULT_ENV;
     this._storage = this._storage || defaultStorage();
     const auth = new Auth({
       ...this.getConfig(),
       ...this._authConfig,
-      authType: this._authType,
     });
     const tusky = new Tusky({
       ...this.getConfig(),
@@ -87,7 +82,6 @@ export class TuskyBuilder {
       env: this._env,
       api: new TuskyApi({ ...this.getConfig(), auth: auth }),
     });
-    tusky.pubsub = new PubSub({ env: this._env });
     await tusky.addEncrypter(this._encrypterConfig);
     setLogger(this._logger);
     return tusky;

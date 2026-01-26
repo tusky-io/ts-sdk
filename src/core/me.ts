@@ -23,8 +23,7 @@ class MeModule {
   }
 
   /**
-   * Update currently authenticated user\
-   * NOTE: by setting termsAccepted to true, the user accepts the following terms: https://tusky.com/terms-of-service-consumer
+   * Update currently authenticated user
    * @param {UserMutable} input
    * @returns {Promise<User>}
    */
@@ -49,7 +48,7 @@ class MeModule {
       true,
     );
     return {
-      user: await this.service.api.updateMe({
+      user: await this.service.api.createEncryptionKeys({
         encPrivateKey: encPrivateKey,
         publicKey: arrayToBase64(keypair.getPublicKey()),
       }),
@@ -81,7 +80,9 @@ class MeModule {
       newPassword,
       true,
     );
-    return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
+    return await this.service.api.updateEncryptionKeys({
+      encPrivateKey: encPrivateKey,
+    });
   }
 
   /**
@@ -102,7 +103,7 @@ class MeModule {
     this.userEncryption.setEncryptedPrivateKey(me.encPrivateKey);
     const { backupPhrase, encPrivateKeyBackup } =
       await this.userEncryption.backupPassword(password);
-    const user = await this.service.api.updateMe({
+    const user = await this.service.api.updateEncryptionKeys({
       encPrivateKeyBackup: encPrivateKeyBackup,
     });
     return { user, backupPhrase };
@@ -129,7 +130,18 @@ class MeModule {
       backupPhrase,
       newPassword,
     );
-    return await this.service.api.updateMe({ encPrivateKey: encPrivateKey });
+    return await this.service.api.updateEncryptionKeys({
+      encPrivateKey: encPrivateKey,
+    });
+  }
+
+  /**
+   * Reset user encryption context
+   * WARNING: It will reset user keys & will delete all private content created by the user
+   * @returns {Promise<void>}
+   */
+  public async resetEncryptionKeys(): Promise<void> {
+    return this.service.api.deleteEncryptionKeys();
   }
 
   /**

@@ -4,6 +4,9 @@ import { X25519KeyPair } from "./keypair";
 import { X25519EncryptedPayload } from "./types";
 import { IncorrectEncryptionKey } from "../errors/incorrect-encryption-key";
 
+export const MISSING_ENCRYPTION_ERROR_MESSAGE =
+  "Missing encryption context. Please configure it with tusky.addEncrypter()";
+
 export default class Encrypter {
   keypair: X25519KeyPair;
   publicKey: Uint8Array;

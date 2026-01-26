@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES2015",
-    "module": "ESNext",
+    "module": "ES2020",
     "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
-    "moduleResolution": "node",
-    "outDir": "./lib/web/types",
+    "outDir": "./lib/web/esm",
     "baseUrl": "src",
     "strict": false,
     "esModuleInterop": true,
@@ -24,7 +23,8 @@
     "plugins": [
       { "transform": "typescript-transform-paths" },
       { "transform": "typescript-transform-paths", "afterDeclarations": true }
-    ]
+    ],
+    "declarationDir": "./lib/web/types"
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*", "src/__tests__/*"]

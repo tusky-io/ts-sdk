@@ -1,16 +1,16 @@
 {
-  "name": "@akord/carmella-sdk",
-  "version": "0.26.0-dev.3",
-  "description": "A set of tools designed for integrating file and folder uploads into secure digital vaults that are stored on-chain with Akord",
-  "main": "./lib/web/cjs/index.js",
-  "module": "./lib/web/esm/index.esm.js",
-  "types": "./lib/web/types/index.d.ts",
+  "name": "@tusky-io/ts-sdk",
+  "version": "0.42.0-dev.1",
+  "description": "Tusky TypeScript SDK, the official client for Tusky API: https://docs.tusky.io",
+  "main": "./lib/node/cjs/index.js",
+  "module": "./lib/node/esm/index.esm.js",
+  "types": "./lib/node/types/index.d.ts",
   "exports": {
     ".": {
-      "require": "./lib/web/cjs/index.js",
-      "import": "./lib/web/esm/index.esm.js",
-      "default": "./lib/web/cjs/index.js",
-      "types": "./lib/web/types/index.d.ts"
+      "require": "./lib/node/cjs/index.js",
+      "import": "./lib/node/esm/index.esm.js",
+      "default": "./lib/node/cjs/index.js",
+      "types": "./lib/node/types/index.d.ts"
     },
     "./node": {
       "require": "./lib/node/cjs/index.js",
@@ -25,7 +25,7 @@
       "types": "./lib/web/types/index.d.ts"
     }
   },
-  "repository": "git@github.com:Akord-com/carmella-sdk.git",
+  "repository": "git@github.com:tusky-io/ts-sdk.git",
   "scripts": {
     "test": "jest --verbose --collectCoverage=false",
     "test:user": "jest --verbose --collectCoverage=false --selectProjects \"user tests\"",
@@ -34,8 +34,6 @@
     "build": "webpack --config webpack.config.js",
     "build:dev": "rm -r lib || true && tsc -p .",
     "analyze": "STATS=server npm run build",
-    "set:registry": "bash ./registry.sh",
-    "co:login": "aws codeartifact login --tool npm --repository carmella --domain akord --region eu-central-1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -46,32 +44,36 @@
     "lib/node/types/index.d.ts"
   ],
   "keywords": [
-    "akord",
+    "tusky",
     "storage",
-    "web3",
+    "blockchain",
+    "filesystem",
     "encryption",
-    "e2ee"
+    "sui"
   ],
   "bugs": {
-    "url": "https://github.com/Akord-com/carmella-sdk/issues"
+    "url": "https://github.com/tusky-io/ts-sdk/issues"
   },
-  "homepage": "https://github.com/Akord-com/carmella-sdk#readme",
-  "author": "Akord Team",
-  "license": "MIT",
+  "homepage": "https://github.com/tusky-io/ts-sdk/#readme",
+  "author": "Tusky Team",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=18.0.0"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@akord/browser-level": "^1.0.2",
-    "@akord/carmella-gql": "^0.51.1",
-    "@akord/ts-cacheable": "1.0.13",
     "@aws-amplify/api": "^6.0.54",
     "@aws-amplify/api-graphql": "^4.4.1",
     "@aws-amplify/core": "^6.4.5",
+    "@esm2cjs/p-limit": "^4.0.0",
     "@esm2cjs/p-queue": "^7.3.0",
+    "@mysten/sui": "^1.28.1",
     "@uppy/core": "^4.2.0",
     "@uppy/tus": "^4.1.0",
-    "agentkeepalive": "^4.5.0",
+    "agentkeepalive": "^4.6.0",
     "axios": "0.27.2",
     "bip39": "^3.1.0",
     "buffer": "^6.0.3",
@@ -85,11 +87,10 @@
     "rxjs": "^7.5.6",
     "tus-js-client": "^4.2.3",
     "uuid": "^8.3.2",
-    "web-streams-polyfill": "^3.2.1"
+    "web-streams-polyfill": "^4.1.0"
   },
   "devDependencies": {
     "@faker-js/faker": "^6.2.0",
-    "@mysten/sui": "^1.3.0",
     "@semantic-release/commit-analyzer": "13.0.0",
     "@semantic-release/git": "10.0.1",
     "@semantic-release/github": "10.1.1",

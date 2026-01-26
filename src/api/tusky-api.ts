@@ -4,9 +4,11 @@ import { ApiClient } from "./api-client";
 import { Membership } from "../types/membership";
 import { Vault } from "../types/vault";
 import {
+  CreateFolderTreeTxPayload,
   CreateFolderTxPayload,
   CreateMembershipTxPayload,
   CreateVaultTxPayload,
+  JoinVaultTxPayload,
   UpdateFileTxPayload,
   UpdateFolderTxPayload,
   UpdateMembershipTxPayload,
@@ -18,7 +20,7 @@ import {
   ListOptions,
   VaultApiGetOptions,
 } from "../types/query-options";
-import { User, UserMutable } from "../types/user";
+import { User, UserEncryptionKeys, UserMutable } from "../types/user";
 import { FileGetOptions } from "../core/file";
 import { StreamConverter } from "../util/stream-converter";
 import { File, Folder } from "../types";
@@ -102,6 +104,19 @@ export default class TuskyApi extends Api {
       .createFolder();
   }
 
+  public async createFolderTree(
+    tx: CreateFolderTreeTxPayload,
+  ): Promise<{ folderIdMap: Record<string, string> }> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .vaultId(tx.vaultId)
+      .parentId(tx.parentId)
+      .data(tx.paths)
+      .createFolderTree();
+  }
+
   public async updateFolder(tx: UpdateFolderTxPayload): Promise<Folder> {
     return new ApiClient()
       .env(this.config)
@@ -154,6 +169,7 @@ export default class TuskyApi extends Api {
       .description(tx.description)
       .tags(tx.tags)
       .keys(tx.keys)
+      .whitelist(tx.whitelist)
       .createVault();
   }
 
@@ -169,6 +185,15 @@ export default class TuskyApi extends Api {
       .status(tx.status)
       .keys(tx.keys)
       .updateVault();
+  }
+
+  public async purgeVault(id: string): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .resourceId(id)
+      .purgeVault();
   }
 
   public async deleteVault(id: string): Promise<void> {
@@ -194,6 +219,15 @@ export default class TuskyApi extends Api {
       .clientName(this.clientName)
       .auth(this.auth)
       .emptyTrash();
+  }
+
+  public async joinVault(tx: JoinVaultTxPayload): Promise<Membership> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .vaultId(tx.vaultId)
+      .joinVault();
   }
 
   public async createMembership(
@@ -242,25 +276,33 @@ export default class TuskyApi extends Api {
       .deleteMembership();
   }
 
-  public async getMembers(vaultId: string): Promise<Paginated<Membership>> {
+  public async getMembers(
+    options: ListApiOptions = {},
+  ): Promise<Paginated<Membership>> {
     return new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
       .auth(this.auth)
-      .vaultId(vaultId)
+      .vaultId(options.vaultId)
+      .queryParams({
+        limit: options.limit || DEFAULT_LIMIT,
+        nextToken: options.nextToken,
+      })
       .getMembers();
   }
 
   public async downloadFile(
     id: string,
     options: FileGetOptions = {},
-  ): Promise<ArrayBuffer | ReadableStream<Uint8Array>> {
+  ): Promise<{
+    data: ArrayBuffer | ReadableStream<Uint8Array>;
+    headers: Headers;
+  }> {
     const response = await new ApiClient()
       .env(this.config)
       .clientName(this.clientName)
       .auth(this.auth)
       .resourceId(id)
-      .encrypted(options.encrypted)
       // .progressHook(options.progressHook)
       // .cancelHook(options.cancelHook)
       .downloadFile();
@@ -277,7 +319,7 @@ export default class TuskyApi extends Api {
         );
       }
     }
-    return data;
+    return { data, headers: response.headers };
   }
 
   public async getStorage(): Promise<Storage> {
@@ -303,11 +345,45 @@ export default class TuskyApi extends Api {
       .auth(this.auth)
       .name(input.name)
       .picture(input.picture)
-      .termsAccepted(input.termsAccepted)
+      .updateMe();
+  }
+
+  public async verifyMe(): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .verifyMe();
+  }
+
+  public async createEncryptionKeys(input: UserEncryptionKeys): Promise<User> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
       .publicKey(input.publicKey)
       .encPrivateKey(input.encPrivateKey)
       .encPrivateKeyBackup(input.encPrivateKeyBackup)
-      .updateMe();
+      .createEncryptionKeys();
+  }
+
+  public async updateEncryptionKeys(input: UserEncryptionKeys): Promise<User> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .publicKey(input.publicKey)
+      .encPrivateKey(input.encPrivateKey)
+      .encPrivateKeyBackup(input.encPrivateKeyBackup)
+      .updateEncryptionKeys();
+  }
+
+  public async deleteEncryptionKeys(): Promise<void> {
+    return new ApiClient()
+      .env(this.config)
+      .clientName(this.clientName)
+      .auth(this.auth)
+      .deleteEncryptionKeys();
   }
 
   public async getFile(id: string): Promise<File> {
@@ -370,7 +446,7 @@ export default class TuskyApi extends Api {
   }
 
   public async getFiles(
-    options: ListApiOptions = {},
+    options: ListApiOptions & { uploadId?: string } = {},
   ): Promise<Paginated<File>> {
     return new ApiClient()
       .env(this.config)
@@ -379,6 +455,7 @@ export default class TuskyApi extends Api {
       .queryParams({
         vaultId: options.vaultId,
         parentId: options.parentId,
+        uploadId: options.uploadId,
         status: options.status,
         limit: options.limit || DEFAULT_LIMIT,
         nextToken: options.nextToken,
